@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/sasha2026-git/HireAIPeople
  * GitHub Plugin URI: sasha2026-git/HireAIPeople
  * Description: 案例&观点 (Blog & Case Studies) — 3×2 Case Study grid + Intelligence Journal + Newsletter + Footer. Design system v2: Aurelian Digital Excellence.
- * Version:     2.0.0
+ * Version:     2.1.0
  * Author:      Aurelian Digital Excellence
  * Requires Plugins: advanced-custom-fields
  * Text Domain: aurelian-blog
@@ -94,6 +94,44 @@ function ahai_blog_register_acf_fields() {
                 'default_value' => 'Where technical precision meets heritage aesthetic. Discover our latest case studies and industry journals.',
                 'rows'          => 3,
                 'new_lines'     => 'br',
+            ],
+
+            // ===========================
+            // NEW: Hero Background & Typography
+            // ===========================
+            [
+                'key'           => 'field_ahai_blog_hero_bg',
+                'label'         => 'Hero Background Image',
+                'name'          => 'ahai_blog_hero_bg',
+                'type'          => 'image',
+                'return_format' => 'url',
+                'preview_size'  => 'large',
+                'wrapper'       => ['width' => 50],
+                'instructions'  => 'Recommended: 1920x1080, dark/neutral tone for readability.',
+            ],
+            [
+                'key'           => 'field_ahai_blog_hero_title_size',
+                'label'         => 'Hero Title Font Size (px)',
+                'name'          => 'ahai_blog_hero_title_size',
+                'type'          => 'number',
+                'default_value' => 56,
+                'min'           => 24,
+                'max'           => 120,
+                'step'          => 2,
+                'wrapper'       => ['width' => 33],
+                'instructions'  => 'Default: 56px. For larger screens only.',
+            ],
+            [
+                'key'           => 'field_ahai_blog_section_title_size',
+                'label'         => 'Section Title Font Size (px)',
+                'name'          => 'ahai_blog_section_title_size',
+                'type'          => 'number',
+                'default_value' => 40,
+                'min'           => 18,
+                'max'           => 96,
+                'step'          => 2,
+                'wrapper'       => ['width' => 33],
+                'instructions'  => 'Default: 40px. For Case Studies & Intelligence Journal section titles.',
             ],
 
             // ===========================
@@ -466,22 +504,7 @@ function ahai_blog_default_case_studies() {
             'ahai_blog_cs_desc'     => 'Elevating high-end hospitality with a multilingual digital butler capable of managing every detail of a guest\'s stay with absolute discretion.',
             'ahai_blog_cs_link'     => '#',
         ],
-        [
-            'ahai_blog_cs_image'    => '',
-            'ahai_blog_cs_industry' => 'Horology',
-            'ahai_blog_cs_metric'   => 'Crafted Precision',
-            'ahai_blog_cs_title'    => 'Timeless Intelligence: Watchmaking Heritage',
-            'ahai_blog_cs_desc'     => 'Preserving the legacy of master watchmakers by training AI models on centuries of artisan knowledge and rare complications.',
-            'ahai_blog_cs_link'     => '#',
-        ],
-        [
-            'ahai_blog_cs_image'    => '',
-            'ahai_blog_cs_industry' => 'Real Estate',
-            'ahai_blog_cs_metric'   => 'Global Reach',
-            'ahai_blog_cs_title'    => 'Estate Ambassadors: Global Prime Portfolios',
-            'ahai_blog_cs_desc'     => 'Facilitating cross-border property acquisitions for ultra-high-net-worth individuals via localized, culturally-attuned AI agents.',
-            'ahai_blog_cs_link'     => '#',
-        ],
+
     ];
 }
 
@@ -514,33 +537,7 @@ function ahai_blog_default_journal_articles() {
             'ahai_blog_ja_readtime'  => '06 MIN READ',
             'ahai_blog_ja_link'      => '#',
         ],
-        [
-            'ahai_blog_ja_image'     => '',
-            'ahai_blog_ja_category'  => 'Innovation',
-            'ahai_blog_ja_title'     => 'Beyond Automation: The Rise of Creative AI',
-            'ahai_blog_ja_is_italic' => 0,
-            'ahai_blog_ja_desc'      => 'How generative intelligence is reshaping the boundaries between human creativity and machine capability.',
-            'ahai_blog_ja_readtime'  => '10 MIN READ',
-            'ahai_blog_ja_link'      => '#',
-        ],
-        [
-            'ahai_blog_ja_image'     => '',
-            'ahai_blog_ja_category'  => 'Luxury',
-            'ahai_blog_ja_title'     => 'The Algorithm of Elegance: Curating Taste with AI',
-            'ahai_blog_ja_is_italic' => 0,
-            'ahai_blog_ja_desc'      => 'Exploring how machine learning models are being trained on centuries of art history to predict the next aesthetic movement.',
-            'ahai_blog_ja_readtime'  => '07 MIN READ',
-            'ahai_blog_ja_link'      => '#',
-        ],
-        [
-            'ahai_blog_ja_image'     => '',
-            'ahai_blog_ja_category'  => 'Ethics',
-            'ahai_blog_ja_title'     => 'The Conscience of Code: Ethical AI in Premium Services',
-            'ahai_blog_ja_is_italic' => 0,
-            'ahai_blog_ja_desc'      => 'A deep dive into the responsibility framework guiding AI deployment in sensitive high-net-worth environments.',
-            'ahai_blog_ja_readtime'  => '09 MIN READ',
-            'ahai_blog_ja_link'      => '#',
-        ],
+
     ];
 }
 
@@ -814,6 +811,11 @@ function ahai_blog_render() {
     $hero_title_line1 = get_field('ahai_blog_hero_title_line1')  ?? 'Crafting Digital';
     $hero_title_italic= get_field('ahai_blog_hero_title_italic') ?? 'Humanity';
     $hero_subtitle    = get_field('ahai_blog_hero_subtitle')     ?? 'Where technical precision meets heritage aesthetic. Discover our latest case studies and industry journals.';
+$hero_bg            = get_field('ahai_blog_hero_bg')        ?? '';
+$hero_title_size     = get_field('ahai_blog_hero_title_size')     ? (int) get_field('ahai_blog_hero_title_size') : 56;
+$section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_field('ahai_blog_section_title_size') : 40;
+
+
 
     $cs_section_title = get_field('ahai_blog_cases_section_title') ?? 'Collaborative Excellence';
     $cs_dir_label     = get_field('ahai_blog_cases_dir_label')     ?? 'View Directory';
@@ -822,6 +824,7 @@ function ahai_blog_render() {
     if (!$case_studies || !is_array($case_studies) || count($case_studies) === 0) {
         $case_studies = ahai_blog_default_case_studies();
     }
+    $case_studies = array_slice($case_studies, 0, 4);
 
     $ja_section_title    = get_field('ahai_blog_ja_section_title')    ?? 'The Intelligence Journal';
     $ja_section_subtitle = get_field('ahai_blog_ja_section_subtitle') ?? 'Industry Insights & Thought Leadership';
@@ -829,6 +832,7 @@ function ahai_blog_render() {
     if (!$journal_articles || !is_array($journal_articles) || count($journal_articles) === 0) {
         $journal_articles = ahai_blog_default_journal_articles();
     }
+    $journal_articles = array_slice($journal_articles, 0, 3);
 
     $nl_title       = get_field('ahai_blog_nl_title')       ?? 'Subscribe to the Atelier';
     $nl_desc        = get_field('ahai_blog_nl_desc')        ?? 'Receive exclusive insights on the intersection of heritage luxury and artificial intelligence. Monthly curated journals.';
@@ -860,15 +864,22 @@ function ahai_blog_render() {
     <!-- ====== HERO SECTION ====== -->
     <section
         class="ahai-desktop-pad ahai-reveal"
-        style="padding:80px 80px 0;max-width:1440px;margin:0 auto 80px;text-align:center;"
+        style="padding:80px 80px 0;max-width:1440px;margin:0 auto 80px;text-align:center;position:relative;overflow:hidden;"
         aria-labelledby="ahai-hero-heading"
     >
+        <?php if ($hero_bg): ?>
+        <div style="position:absolute;inset:0;z-index:0;pointer-events:none;" aria-hidden="true">
+            <img src="<?php echo esc_url($hero_bg); ?>" alt=""
+                 style="width:100%;height:100%;object-fit:cover;object-position:center;opacity:0.15;">
+        </div>
+        <?php endif; ?>
+        <div style="position:relative;z-index:1;">
         <span style="font-family:Inter;font-size:14px;font-weight:600;letter-spacing:0.3em;text-transform:uppercase;color:#775a19;display:block;margin-bottom:24px;">
             <?php echo esc_html($hero_badge); ?>
         </span>
 
         <h1 id="ahai-hero-heading" class="ahai-hero-title"
-            style="font-family:'Playfair Display',serif;font-size:72px;font-weight:700;line-height:1.1;letter-spacing:-0.02em;margin:0 0 32px;color:#1a1c1c;">
+            style="font-family:'Playfair Display',serif;font-size:<?php echo esc_attr($hero_title_size); ?>px;font-weight:700;line-height:1.1;letter-spacing:-0.02em;margin:0 0 32px;color:#1a1c1c;">
             <?php echo esc_html($hero_title_line1); ?><br>
             <span style="font-style:italic;"><?php echo esc_html($hero_title_italic); ?></span>
         </h1>
@@ -876,6 +887,7 @@ function ahai_blog_render() {
         <p style="font-family:Inter;font-size:18px;font-weight:400;line-height:1.6;color:#444748;max-width:640px;margin:0 auto;">
             <?php echo esc_html($hero_subtitle); ?>
         </p>
+        </div><!-- /z-index wrapper -->
     </section>
 
     <!-- ====== COLLABORATIVE EXCELLENCE (Case Studies 3×2) ====== -->
@@ -888,7 +900,7 @@ function ahai_blog_render() {
         <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:64px;flex-wrap:wrap;gap:16px;">
             <div>
                 <h2 id="ahai-cs-heading" class="ahai-section-title"
-                    style="font-family:'Playfair Display',serif;font-size:48px;font-weight:600;margin:0 0 16px;line-height:1.2;color:#1a1c1c;">
+                    style="font-family:'Playfair Display',serif;font-size:<?php echo esc_attr($section_title_size); ?>px;font-weight:600;margin:0 0 16px;line-height:1.2;color:#1a1c1c;">
                     <?php echo esc_html($cs_section_title); ?>
                 </h2>
                 <div style="height:4px;width:96px;background:#775a19;" aria-hidden="true"></div>
@@ -994,7 +1006,7 @@ function ahai_blog_render() {
             <!-- Section Header -->
             <div style="text-align:center;margin-bottom:80px;">
                 <h2 id="ahai-ja-heading" class="ahai-section-title"
-                    style="font-family:'Playfair Display',serif;font-size:48px;font-weight:600;margin:0 0 16px;line-height:1.2;color:#1a1c1c;">
+                    style="font-family:'Playfair Display',serif;font-size:<?php echo esc_attr($section_title_size); ?>px;font-weight:600;margin:0 0 16px;line-height:1.2;color:#1a1c1c;">
                     <?php echo esc_html($ja_section_title); ?>
                 </h2>
                 <p style="font-family:Inter;font-size:14px;font-weight:600;letter-spacing:0.4em;text-transform:uppercase;color:#444748;margin:0;">
