@@ -11,8 +11,10 @@
 
 if (!defined('ABSPATH')) exit;
 
-// GitHub Updater (Plugin Update Checker)
-require_once __DIR__ . '/lib/plugin-update-checker/plugin-update-checker.php';
+// GitHub Updater (Plugin Update Checker) - with class redefinition protection
+if (!class_exists("\\YahnisElsts\\PluginUpdateChecker\\v5\\PucFactory")) {
+    require_once __DIR__ . '/lib/plugin-update-checker/plugin-update-checker.php';
+}
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 $afaq_update_checker = PucFactory::buildUpdateChecker(
