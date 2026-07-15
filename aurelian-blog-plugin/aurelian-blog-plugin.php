@@ -1,9 +1,10 @@
 <?php
 /**
  * Plugin Name: AURELIAN Blog
- * Plugin URI:  https://aurelian.ai
+ * Plugin URI: https://github.com/sasha2026-git/HireAIPeople
+ * GitHub Plugin URI: sasha2026-git/HireAIPeople
  * Description: 案例&观点 (Blog & Case Studies) — 3×2 Case Study grid + Intelligence Journal + Newsletter + Footer. Design system v2: Aurelian Digital Excellence.
- * Version:     1.0.0
+ * Version:     2.0.0
  * Author:      Aurelian Digital Excellence
  * Requires Plugins: advanced-custom-fields
  * Text Domain: aurelian-blog
@@ -15,7 +16,17 @@
 
 if (!defined('ABSPATH')) exit;
 
-/* ============================================================
+// GitHub Updater (Plugin Update Checker)
+require_once __DIR__ . '/lib/plugin-update-checker/plugin-update-checker.php';
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
+$ablog_update_checker = PucFactory::buildUpdateChecker(
+    'https://github.com/sasha2026-git/HireAIPeople',
+    __FILE__,
+    'aurelian-blog-plugin'
+);
+$ablog_update_checker->setDirectoryName('aurelian-blog-plugin');
+
    0. ACF Dependency Check
    ============================================================ */
 add_action('admin_notices', 'ahai_blog_check_acf');

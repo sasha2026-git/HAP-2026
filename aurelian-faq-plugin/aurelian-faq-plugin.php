@@ -1,6 +1,8 @@
 <?php
 /**
  * Plugin Name: Aurelian FAQ v3
+ * Plugin URI: https://github.com/sasha2026-git/HireAIPeople
+ * GitHub Plugin URI: sasha2026-git/HireAIPeople
  * Description: 常见问题页面 (FAQ) — 短码 [aurelian_faq]，支持 ACF 可视化编辑
  * Version: 3.0.0
  * Author: Codex
@@ -8,6 +10,17 @@
  */
 
 if (!defined('ABSPATH')) exit;
+
+// GitHub Updater (Plugin Update Checker)
+require_once __DIR__ . '/lib/plugin-update-checker/plugin-update-checker.php';
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
+$afaq_update_checker = PucFactory::buildUpdateChecker(
+    'https://github.com/sasha2026-git/HireAIPeople',
+    __FILE__,
+    'aurelian-faq-plugin'
+);
+$afaq_update_checker->setDirectoryName('aurelian-faq-plugin');
 
 add_action('admin_notices', 'afaq_check_acf');
 function afaq_check_acf() {

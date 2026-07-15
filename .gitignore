@@ -1,0 +1,3 @@
+# Plugin Update Checker - only need the library, not composer artifacts
+*.map
+.DS_Store
