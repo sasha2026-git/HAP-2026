@@ -1,0 +1,19 @@
+# 敏感文件（铁律）
+wp-config.php
+*.sql
+*.pem
+*.key
+.env*
+settings.yml
+*.orig
+
+# 系统/编辑器
+.DS_Store
+Thumbs.db
+*.log
+
+# 构建辅助
+design-screens/
+references/
+BUILD_PROMPT.md
+*.txt
