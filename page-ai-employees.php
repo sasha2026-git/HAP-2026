@@ -1,6 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 /**
+ * Template Name: 聘AI - AI数字员工
  * AI 数字员工列表页（category=ai-employee，每页 5 个，左右交替 + 分页）
  */
 get_header();

@@ -1,6 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 /**
+ * Template Name: 聘AI - 联系
  * 联系页：邮箱 / 微信 / 在线表单（admin-post.php + nonce + wp_mail）
  */
 get_header();

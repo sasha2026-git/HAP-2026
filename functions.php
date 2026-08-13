@@ -24,13 +24,152 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
  *       辅助函数回退 / 联系表单处理 / 分页
  */
 
-define('HIREAI_VERSION', '1.0.1');
+define('HIREAI_VERSION', '1.0.2');
 
 /* 每页数量（可通过常量覆盖） */
 define('HIREAI_EMPLOYEES_PER_PAGE', 5);
 define('HIREAI_SOLUTIONS_PER_PAGE', 9);
 define('HIREAI_CASES_PER_PAGE', 6);
 define('HIREAI_INSIGHTS_PER_PAGE', 3);
+
+/* -------------------------------------------------------------------------
+ * 0.0 默认页面 / 菜单初始化（后台模板下拉与 ACF 编辑区可见性）
+ * ---------------------------------------------------------------------- */
+function hireai_ensure_default_pages() {
+    $main_pages = [
+        'home'           => ['title' => '首页', 'template' => 'front-page.php'],
+        'ai-employees'   => ['title' => 'AI数字员工', 'template' => 'page-ai-employees.php'],
+        'ai-solutions'   => ['title' => 'AI解决方案', 'template' => 'page-ai-solutions.php'],
+        'cases-insights' => ['title' => '案例&洞察', 'template' => 'page-cases-insights.php'],
+        'faq'            => ['title' => '常见问题', 'template' => 'page-faq.php'],
+        'contact'        => ['title' => '联系', 'template' => 'page-contact.php'],
+    ];
+
+    $footer_pages = [
+        'privacy-policy' => '隐私政策',
+        'terms'          => '服务条款',
+        'refund-policy'  => '退换货政策',
+        'legal'          => '法律声明',
+    ];
+
+    $main_page_ids = [];
+
+    foreach ($main_pages as $slug => $page) {
+        $existing = get_page_by_path($slug, OBJECT, 'page');
+        $page_id  = $existing instanceof WP_Post ? (int) $existing->ID : 0;
+
+        if (!$page_id) {
+            $inserted = wp_insert_post([
+                'post_type'    => 'page',
+                'post_status'  => 'publish',
+                'post_title'   => $page['title'],
+                'post_name'    => $slug,
+                'post_content' => '',
+            ], true);
+
+            if (!$inserted || is_wp_error($inserted)) {
+                continue;
+            }
+
+            $page_id = (int) $inserted;
+        }
+
+        update_post_meta($page_id, '_wp_page_template', $page['template']);
+        $main_page_ids[$slug] = $page_id;
+    }
+
+    foreach ($footer_pages as $slug => $title) {
+        $existing = get_page_by_path($slug, OBJECT, 'page');
+        if ($existing instanceof WP_Post) {
+            continue;
+        }
+
+        $inserted = wp_insert_post([
+            'post_type'    => 'page',
+            'post_status'  => 'publish',
+            'post_title'   => $title,
+            'post_name'    => $slug,
+            'post_content' => '',
+        ], true);
+
+        if (!$inserted || is_wp_error($inserted)) {
+            continue;
+        }
+    }
+
+    if (!empty($main_page_ids['home'])) {
+        update_option('show_on_front', 'page');
+        update_option('page_on_front', (int) $main_page_ids['home']);
+    }
+
+    $menu = wp_get_nav_menu_object('主导航');
+    if (!$menu) {
+        $menu = get_term_by('name', '主导航', 'nav_menu');
+    }
+    if ($menu instanceof WP_Term) {
+        $menu_id = (int) $menu->term_id;
+    } else {
+        $menu_id = wp_create_nav_menu('主导航');
+    }
+
+    if (is_wp_error($menu_id)) {
+        return;
+    }
+
+    $existing_items      = wp_get_nav_menu_items($menu_id);
+    $existing_page_ids   = [];
+    if (is_array($existing_items)) {
+        foreach ($existing_items as $item) {
+            if (!($item instanceof WP_Post)) {
+                continue;
+            }
+            $object_id = (int) get_post_meta($item->ID, '_menu_item_object_id', true);
+            $item_type = get_post_meta($item->ID, '_menu_item_type', true);
+            if ($object_id > 0 && $item_type === 'post_type') {
+                $existing_page_ids[$object_id] = true;
+            }
+        }
+    }
+
+    $nav_page_slugs = ['home', 'ai-employees', 'ai-solutions', 'cases-insights', 'faq', 'contact'];
+    foreach ($nav_page_slugs as $slug) {
+        if (empty($main_page_ids[$slug])) {
+            continue;
+        }
+
+        $page_id = (int) $main_page_ids[$slug];
+        if (isset($existing_page_ids[$page_id])) {
+            continue;
+        }
+
+        wp_update_nav_menu_item($menu_id, 0, [
+            'menu-item-title'     => $main_pages[$slug]['title'],
+            'menu-item-object'    => 'page',
+            'menu-item-object-id' => $page_id,
+            'menu-item-type'      => 'post_type',
+            'menu-item-status'    => 'publish',
+        ]);
+    }
+
+    $locations = get_theme_mod('nav_menu_locations', []);
+    if (!is_array($locations)) {
+        $locations = [];
+    }
+    $locations['primary'] = (int) $menu_id;
+    set_theme_mod('nav_menu_locations', $locations);
+}
+
+function hireai_ensure_default_pages_once() {
+    if (get_option('hireai_pages_auto_created')) {
+        return;
+    }
+
+    hireai_ensure_default_pages();
+    update_option('hireai_pages_auto_created', 1);
+}
+
+add_action('after_switch_theme', 'hireai_ensure_default_pages');
+add_action('admin_init', 'hireai_ensure_default_pages_once');
 
 /* -------------------------------------------------------------------------
  * 0. 辅助函数（带默认值回退，ACF 未装时优雅降级）

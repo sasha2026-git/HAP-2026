@@ -1,6 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 /**
+ * Template Name: 聘AI - 首页
  * 首页 — Hero + 五个模块（数字员工 / 解决方案 / 案例&洞察 / FAQ / 联系 CTA）
  */
 get_header();

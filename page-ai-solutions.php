@@ -1,6 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 /**
+ * Template Name: 聘AI - AI解决方案
  * AI 解决方案页（WooCommerce 产品网格，按场景筛选，每页 9 个 + 分页）
  */
 get_header();

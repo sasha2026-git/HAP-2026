@@ -1,6 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 /**
+ * Template Name: 聘AI - 案例&洞察
  * 案例 & 洞察页：6 个案例（可分页）+ 3 个洞察（固定最新）
  */
 get_header();

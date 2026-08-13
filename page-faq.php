@@ -1,6 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 /**
+ * Template Name: 聘AI - 常见问题
  * 常见问题页：按 ACF 字段分组 + 关键词实时检索（纯 JS 前端过滤）
  */
 get_header();
