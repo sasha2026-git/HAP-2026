@@ -1,6 +1,19 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
+/* -------------------------------------------------------------------------
+ * 0.0 GitHub 自动更新（plugin-update-checker）
+ *     发布新版本到 GitHub Release 后，WP 后台 外观→主题 会提示一键更新
+ * ---------------------------------------------------------------------- */
+require_once __DIR__ . '/lib/plugin-update-checker/plugin-update-checker.php';
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
+$hireai_update_checker = PucFactory::buildUpdateChecker(
+    'https://github.com/sasha2026-git/HAP-2026/',
+    get_stylesheet_directory() . '/style.css',
+    'hireaipeople'
+);
+
 /**
  * 聘AI (Hire AI People) Child — Hello Elementor 子主题
  * functions.php
@@ -9,7 +22,7 @@ if (!defined('ABSPATH')) exit;
  *       辅助函数回退 / 联系表单处理 / 分页
  */
 
-define('HIREAI_VERSION', '1.0.0');
+define('HIREAI_VERSION', '1.0.1');
 
 /* 每页数量（可通过常量覆盖） */
 define('HIREAI_EMPLOYEES_PER_PAGE', 5);
