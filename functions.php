@@ -5,14 +5,16 @@ if (!defined('ABSPATH')) exit;
  * 0.0 GitHub 自动更新（plugin-update-checker）
  *     发布新版本到 GitHub Release 后，WP 后台 外观→主题 会提示一键更新
  * ---------------------------------------------------------------------- */
-require_once __DIR__ . '/lib/plugin-update-checker/plugin-update-checker.php';
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
-$hireai_update_checker = PucFactory::buildUpdateChecker(
-    'https://github.com/sasha2026-git/HAP-2026/',
-    get_stylesheet_directory() . '/style.css',
-    'hireaipeople'
-);
+if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
+    require_once __DIR__ . '/lib/plugin-update-checker/plugin-update-checker.php';
+    $hireai_update_checker = PucFactory::buildUpdateChecker(
+        'https://github.com/sasha2026-git/HAP-2026/',
+        get_stylesheet_directory() . '/style.css',
+        'hireaipeople'
+    );
+}
 
 /**
  * 聘AI (Hire AI People) Child — Hello Elementor 子主题
