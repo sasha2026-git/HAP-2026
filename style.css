@@ -3,7 +3,7 @@ Theme Name:   HireAIPeople Child
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version:      1.0.5
+Version:      1.0.6
 Text Domain:  hireaipeople
 */
 
@@ -31,6 +31,38 @@ Text Domain:  hireaipeople
   src: url('assets/fonts/HankenGrotesk-Variable.woff2') format('woff2');
   font-style: normal;
   font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  src: url('assets/fonts/NotoSerifSC-Regular.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  src: url('assets/fonts/NotoSerifSC-Bold.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans SC';
+  src: url('assets/fonts/NotoSansSC-Regular.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans SC';
+  src: url('assets/fonts/NotoSansSC-Bold.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 700;
   font-display: swap;
 }
 
@@ -64,9 +96,9 @@ Text Domain:  hireaipeople
   --error: #ba1a1a;
 
   /* Typography */
-  --font-serif: 'Playfair Display', 'Noto Serif SC', 'Songti SC', serif;
-  --font-body: 'Manrope', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-label: 'Hanken Grotesk', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-serif: 'Playfair Display', 'Noto Serif SC', 'Noto Serif CJK SC', 'Songti SC', 'SimSun', serif;
+  --font-body: 'Manrope', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-label: 'Hanken Grotesk', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 
   --fs-display: clamp(40px, 5.5vw, 72px);
   --fs-h1: clamp(32px, 4vw, 48px);
@@ -653,7 +685,12 @@ h4 {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(249, 249, 249, 0.74);
+  background: linear-gradient(
+    180deg,
+    rgba(249, 249, 249, 0.7) 0%,
+    rgba(249, 249, 249, 0.3) 48%,
+    #f9f9f9 100%
+  );
 }
 
 .hero__content {
@@ -671,6 +708,7 @@ h4 {
 
 .hero h1 {
   margin-bottom: clamp(20px, 3vw, 32px);
+  text-shadow: 0 2px 28px rgba(255, 255, 255, 0.78), 0 1px 6px rgba(255, 255, 255, 0.5);
 }
 
 .hero p {
