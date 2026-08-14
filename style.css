@@ -3,7 +3,7 @@ Theme Name:   HireAIPeople Child
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version:      1.0.9
+Version:      1.0.10
 Text Domain:  hireaipeople
 */
 
@@ -110,11 +110,11 @@ Text Domain:  hireaipeople
 
   --fs-display: clamp(40px, 5.5vw, 72px);
   --fs-h1: clamp(32px, 4vw, 48px);
-  --fs-h2: clamp(24px, 2.7vw, 32px);
+  --fs-h2: clamp(30px, 3.2vw, 48px);
   --fs-h3: clamp(18px, 1.8vw, 24px);
   --fs-body-lg: clamp(16px, 1.25vw, 18px);
   --fs-body: clamp(15px, 1.1vw, 16px);
-  --fs-label: 11px;
+  --fs-label: 12px;
   --fs-label-mono: 14px;
 
   --lh-display: 1.15;
@@ -175,6 +175,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-synthesis: none;
 }
 
 body.drawer-open {
@@ -293,7 +294,7 @@ button {
   font-family: var(--font-serif);
   font-size: var(--fs-display);
   font-weight: 600;
-  line-height: var(--lh-display);
+  line-height: 1.1;
   letter-spacing: 0.01em;
   text-wrap: balance;
 }
@@ -305,7 +306,6 @@ h1,
   font-size: var(--fs-h1);
   font-weight: 500;
   line-height: var(--lh-heading);
-  letter-spacing: 0.01em;
   text-wrap: balance;
 }
 
@@ -315,7 +315,6 @@ h2 {
   font-size: var(--fs-h2);
   font-weight: 500;
   line-height: var(--lh-heading-md);
-  letter-spacing: 0.01em;
   text-wrap: balance;
 }
 
@@ -326,7 +325,6 @@ h4 {
   font-size: var(--fs-h3);
   font-weight: 500;
   line-height: var(--lh-heading-md);
-  letter-spacing: 0.01em;
   text-wrap: balance;
 }
 
@@ -391,6 +389,7 @@ h4 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: nowrap;
   gap: clamp(20px, 3vw, 40px);
   min-height: 80px;
   padding-block: 16px;
@@ -485,11 +484,14 @@ h4 {
 }
 
 .nav-toggle {
-  display: none;
+  display: none !important;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 44px;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-default);
+  background: transparent;
   color: var(--on-surface);
 }
 
@@ -638,7 +640,7 @@ h4 {
 }
 
 .text-link:hover {
-  opacity: 0.8;
+  opacity: 1;
 }
 
 .text-link .hireai-icon {
@@ -694,17 +696,18 @@ h4 {
   background-color: var(--surface-container-high);
   background-size: cover;
   background-position: center;
+  opacity: 1;
 }
 
-.hero__media::after {
-  content: '';
+.hero__media-shade {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background: linear-gradient(
     180deg,
-    rgba(249, 249, 249, 0.7) 0%,
-    rgba(249, 249, 249, 0.3) 48%,
-    #f9f9f9 100%
+    rgba(249, 249, 249, 0.3) 0%,
+    rgba(249, 249, 249, 0.1) 48%,
+    var(--surface) 100%
   );
 }
 
@@ -723,7 +726,16 @@ h4 {
 
 .hero h1 {
   margin-bottom: clamp(20px, 3vw, 32px);
-  text-shadow: 0 2px 28px rgba(255, 255, 255, 0.78), 0 1px 6px rgba(255, 255, 255, 0.5);
+}
+
+.hero__title-line {
+  display: block;
+}
+
+.hero__title-line--accent {
+  color: var(--primary);
+  font-style: italic;
+  font-weight: 300;
 }
 
 .hero p {
@@ -791,7 +803,7 @@ h4 {
 }
 
 .module-head__kicker {
-  display: block;
+  display: none;
   margin-bottom: 16px;
   color: var(--primary);
 }
@@ -833,7 +845,7 @@ h4 {
    ========================================================================== */
 .employee-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--gutter);
 }
 
@@ -947,7 +959,7 @@ h4 {
   flex-direction: column;
   align-items: flex-start;
   flex: 1;
-  padding: clamp(20px, 2.5vw, 28px);
+  padding: clamp(24px, 3vw, 32px);
 }
 
 .solution-card__icon {
@@ -2338,7 +2350,7 @@ html.js [data-reveal].is-visible {
   }
 
   .nav-toggle {
-    display: inline-flex;
+    display: inline-flex !important;
   }
 
   .employee-row {
@@ -2513,10 +2525,14 @@ html.js [data-reveal].is-visible {
    主题右上角已内置 ZH/EN 语言切换，悬浮卡片冗余且遮挡内容） */
 #trp-floater-ls,
 .trp-floater-ls,
-.trp-language-switcher-container#trp-floater-ls {
+.trp-language-switcher-container#trp-floater-ls,
+.trp-floater-ls-codes,
+.trp-floater-ls-names,
+.trp-floater-ls-flags {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
+  opacity: 0 !important;
 }
 
 /* Elementor 导航菜单按钮：统一为设计稿金边风格，消除玫红/紫红边框 */

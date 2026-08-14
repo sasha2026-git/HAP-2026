@@ -38,9 +38,6 @@ if ($cta_text === '') {
 }
 ?>
 <article class="solution-card" data-reveal>
-	<?php if ($image) : ?>
-		<a class="solution-card__media" href="<?php echo esc_url($link); ?>" tabindex="-1" aria-hidden="true" style="background-image:url('<?php echo esc_url($image); ?>')"></a>
-	<?php endif; ?>
 	<div class="solution-card__body">
 		<span class="solution-card__icon" aria-hidden="true"><?php echo hireai_svg($icon, 20); ?></span>
 		<?php if ($cat_label !== '') : ?>

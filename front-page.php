@@ -50,7 +50,7 @@ $fallback_faq = [
     ['title' => ['zh' => '上线周期需要多久？', 'en' => 'What is the onboarding timeline?'], 'answer' => ['zh' => '标准周期为 4 至 8 周，具体取决于数据结构与定制深度。', 'en' => 'The standard integration period ranges from 4 to 8 weeks, depending on complexity and customization.']],
 ];
 
-$employees_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 3, 'category_name' => 'ai-employee', 'no_found_rows' => true]);
+$employees_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 5, 'category_name' => 'ai-employee', 'no_found_rows' => true]);
 $solutions_query = class_exists('WooCommerce') ? new WP_Query(['post_type' => 'product', 'posts_per_page' => 3, 'no_found_rows' => true]) : false;
 $cases_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 2, 'category_name' => 'cases', 'no_found_rows' => true]);
 $faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'category_name' => 'faq', 'no_found_rows' => true]);
@@ -62,8 +62,28 @@ $faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'catego
 		<div class="hero__media"></div>
 	<?php endif; ?>
 	<div class="container hero__content">
-		<span class="label hero__kicker"><?php echo esc_html(hireai_field('hero_kicker', 'HIRE AI PEOPLE')); ?></span>
-		<h1 class="display-lg"><?php echo esc_html(hireai_field('hero_title', $is_en ? "Hire Intelligence,\nArtfully Employed." : "智慧雇佣，\n臻于艺术。")); ?></h1>
+		<?php $hero_kicker = hireai_field('hero_kicker', 'HIRE AI PEOPLE'); ?>
+		<?php if ($hero_kicker) : ?>
+			<span class="label hero__kicker"><?php echo esc_html($hero_kicker); ?></span>
+		<?php endif; ?>
+		<?php
+		$hero_title = hireai_field('hero_title', $is_en ? "Hire Intelligence,\nArtfully Employed." : "智慧雇佣，\n臻于艺术。");
+		$hero_title_parts = preg_split('/\R+/', trim($hero_title), 2);
+		if (!is_array($hero_title_parts)) {
+			$hero_title_parts = [];
+		} else {
+			$hero_title_parts[0] = trim($hero_title_parts[0]);
+			$hero_title_parts[1] = isset($hero_title_parts[1]) ? trim($hero_title_parts[1]) : '';
+		}
+		?>
+		<h1 class="display-lg">
+			<?php if (count($hero_title_parts) === 2 && $hero_title_parts[1] !== '') : ?>
+				<span class="hero__title-line"><?php echo esc_html($hero_title_parts[0]); ?></span>
+				<span class="hero__title-line hero__title-line--accent"><?php echo esc_html($hero_title_parts[1]); ?></span>
+			<?php else : ?>
+				<?php echo esc_html($hero_title); ?>
+			<?php endif; ?>
+		</h1>
 		<p class="body-lg"><?php echo esc_html(hireai_field('hero_subtitle', $is_en ? 'HireAI People employs bespoke AI digital employees and solutions—crafted with artisan precision to quietly drive your growth.' : '聘AI 为企业雇聘专属 AI 数字员工与解决方案——以工匠精神雕琢算法，以静谧之力驱动增长。')); ?></p>
 		<div class="hero__actions">
 			<a class="btn btn-outline" href="<?php echo esc_url($hero_cta_1['url']); ?>"<?php echo !empty($hero_cta_1['target']) ? ' target="' . esc_attr($hero_cta_1['target']) . '" rel="noopener"' : ''; ?>><?php echo esc_html($hero_cta_1['title']); ?></a>
@@ -72,7 +92,7 @@ $faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'catego
 	</div>
 </section>
 
-<section class="section">
+<section class="section section--surface">
 	<div class="container">
 		<div class="module-head">
 			<div class="module-head__copy">
@@ -85,16 +105,18 @@ $faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'catego
 
 		<div class="employee-grid">
 			<?php if ($employees_query->have_posts()) : ?>
-				<?php while ($employees_query->have_posts()) : $employees_query->the_post(); ?>
-					<?php get_template_part('template-parts/employee-card'); ?>
+				<?php $employee_index = 0; while ($employees_query->have_posts()) : $employees_query->the_post(); ?>
+					<?php get_template_part('template-parts/employee-card', null, ['lg_only' => $employee_index >= 3]); ?>
+					<?php $employee_index++; ?>
 				<?php endwhile; wp_reset_postdata(); ?>
 			<?php else : ?>
-				<?php foreach (array_slice($fallback_employees, 0, 3) as $item) : ?>
+				<?php foreach ($fallback_employees as $employee_index => $item) : ?>
 					<?php get_template_part('template-parts/fallback-employee-card', null, [
 						'title' => $localize($item, 'title'),
 						'role'  => $localize($item, 'role'),
 						'image' => hireai_default_image($localize($item, 'image')),
 						'link'  => home_url($localize($item, 'link')),
+						'lg_only' => $employee_index >= 3,
 					]); ?>
 				<?php endforeach; ?>
 			<?php endif; ?>
@@ -102,7 +124,7 @@ $faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'catego
 	</div>
 </section>
 
-<section class="section section--surface">
+<section class="section">
 	<div class="container">
 		<div class="module-head">
 			<div class="module-head__copy">
@@ -137,7 +159,7 @@ $faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'catego
 	</div>
 </section>
 
-<section class="section">
+<section class="section section--surface">
 	<div class="container">
 		<div class="module-head">
 			<div class="module-head__copy">
@@ -172,7 +194,7 @@ $faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'catego
 	</div>
 </section>
 
-<section class="section section--surface">
+<section class="section">
 	<div class="container">
 		<div class="module-head">
 			<div class="module-head__copy">
