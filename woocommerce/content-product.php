@@ -26,12 +26,10 @@ if ($operative === '') {
 }
 ?>
 <article class="product-card" data-cats="<?php echo esc_attr($cats_attr); ?>">
-	<a class="product-card__media" href="<?php echo esc_url(get_permalink()); ?>" tabindex="-1" aria-hidden="true">
-		<?php if (has_post_thumbnail()) : ?>
-			<?php the_post_thumbnail('hireai-card'); ?>
-		<?php else : ?>
-			<span class="media-placeholder">HireAI People</span>
-		<?php endif; ?>
+	<?php
+	$product_image = has_post_thumbnail() ? get_the_post_thumbnail_url($product_id, 'hireai-card') : hireai_default_image('solution-1.jpg');
+	?>
+	<a class="product-card__media" href="<?php echo esc_url(get_permalink()); ?>" tabindex="-1" aria-hidden="true"<?php if ($product_image) : ?> style="background-image:url('<?php echo esc_url($product_image); ?>')"<?php endif; ?>>
 		<?php if ($product->is_on_sale()) : ?>
 			<span class="product-card__badge product-card__badge--sale"><?php echo esc_html($suffix === '_en' ? 'Sale' : '促销'); ?></span>
 		<?php endif; ?>

@@ -7,12 +7,13 @@
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
-    require_once __DIR__ . '/lib/plugin-update-checker/plugin-update-checker.php';
+    require_once __DIR__ . '/lib/plugin-update-checker.php';
     $hireai_update_checker = PucFactory::buildUpdateChecker(
         'https://github.com/sasha2026-git/HAP-2026/',
         get_stylesheet_directory() . '/style.css',
         'hireaipeople'
     );
+    $hireai_update_checker->setBranch('site-hireai');
 }
 
 /**
@@ -23,10 +24,10 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
  *       辅助函数回退 / 联系表单处理 / 分页
  */
 
-define('HIREAI_VERSION', '1.0.3');
+define('HIREAI_VERSION', '1.0.4');
 
 /* 每页数量（可通过常量覆盖） */
-define('HIREAI_EMPLOYEES_PER_PAGE', 6);
+define('HIREAI_EMPLOYEES_PER_PAGE', 5);
 define('HIREAI_SOLUTIONS_PER_PAGE', 9);
 define('HIREAI_CASES_PER_PAGE', 6);
 define('HIREAI_INSIGHTS_PER_PAGE', 3);
@@ -261,6 +262,45 @@ function site_link($name, $default_url = '#', $default_title = '', $post_id = fa
  */
 function hireai_link($name, $default_url = '#', $default_title = '', $post_id = false) {
     return site_link($name . hireai_lang_suffix(), $default_url, $default_title, $post_id);
+}
+
+/**
+ * 本地 SVG 图标（避免任何外部字体/图标 CDN 依赖）
+ */
+/**
+ * 本地默认图 URL：存在时返回 assets/img/defaults/ 下的素材，不存在返回空串。
+ */
+function hireai_default_image($name = '') {
+    $name = sanitize_file_name($name);
+    if ($name === '') {
+        return '';
+    }
+    $path = get_stylesheet_directory() . '/assets/img/defaults/' . $name;
+    if (file_exists($path)) {
+        return get_stylesheet_directory_uri() . '/assets/img/defaults/' . $name;
+    }
+    return '';
+}
+
+function hireai_svg($name = 'arrow', $size = 16, $class = 'hireai-icon') {
+    $icons = [
+        'menu'   => '<path d="M4 7h16M4 12h16M4 17h16"/>',
+        'close'  => '<path d="M6 6l12 12M18 6L6 18"/>',
+        'arrow'  => '<path d="M5 12h14M13 6l6 6-6 6"/>',
+        'east'   => '<path d="M5 12h14M13 6l6 6-6 6"/>',
+        'west'   => '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+        'search' => '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+        'plus'   => '<path d="M12 5v14M5 12h14"/>',
+        'mail'   => '<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/>',
+        'chevron-left'  => '<path d="M15 6l-6 6 6 6"/>',
+        'chevron-right' => '<path d="M9 6l6 6-6 6"/>',
+        'shield' => '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
+        'bolt'   => '<path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/>',
+        'image'  => '<rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 15l-5-5-9 9"/>',
+    ];
+
+    $paths = isset($icons[$name]) ? $icons[$name] : $icons['arrow'];
+    return '<svg class="' . esc_attr($class) . '" width="' . esc_attr($size) . '" height="' . esc_attr($size) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $paths . '</svg>';
 }
 
 /**

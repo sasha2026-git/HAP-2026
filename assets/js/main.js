@@ -1,6 +1,6 @@
 /**
- * HireAI People Child — main.js
- * 导航交互 / 滚动效果 / FAQ 手风琴与实时检索 / 解决方案筛选 / 滚动显现
+ * HireAI People Child v1.0.4 — main.js
+ * 抽屉导航 / FAQ 检索与分类 / 方案筛选 / 滚动显现
  */
 (function () {
 	'use strict';
@@ -9,38 +9,49 @@
 
 	var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-	/* 1. Sticky header —— 滚动后加深玻璃拟态 */
+	/* 1. Header scroll state */
 	var header = document.querySelector('.site-header');
-	function onScroll() {
-		if (!header) {
-			return;
-		}
-		if (window.scrollY > 8) {
-			header.classList.add('is-scrolled');
-		} else {
-			header.classList.remove('is-scrolled');
-		}
+	function syncHeader() {
+		if (!header) return;
+		header.classList.toggle('is-scrolled', window.scrollY > 8);
 	}
-	onScroll();
-	window.addEventListener('scroll', onScroll, { passive: true });
+	syncHeader();
+	window.addEventListener('scroll', syncHeader, { passive: true });
 
-	/* 2. 移动端导航 */
-	var navToggle = document.querySelector('.nav-toggle');
+	/* 2. Mobile drawer */
+	var navToggle = document.getElementById('nav-toggle');
+	var drawer = document.querySelector('[data-mobile-drawer]');
+	var overlay = document.querySelector('[data-drawer-overlay]');
+	var drawerClose = document.querySelector('[data-drawer-close]');
+
+	function setDrawer(open) {
+		if (!drawer) return;
+		document.body.classList.toggle('drawer-open', open);
+		drawer.classList.toggle('is-open', open);
+		drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+		if (overlay) overlay.hidden = !open;
+		if (navToggle) navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+	}
+
 	if (navToggle) {
-		navToggle.addEventListener('click', function () {
-			var open = document.body.classList.toggle('nav-open');
-			navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-		});
-		// 点击菜单链接后收起
-		document.querySelectorAll('.hireai-nav a').forEach(function (link) {
-			link.addEventListener('click', function () {
-				document.body.classList.remove('nav-open');
-				navToggle.setAttribute('aria-expanded', 'false');
-			});
+		navToggle.addEventListener('click', function () { setDrawer(true); });
+	}
+	if (drawerClose) {
+		drawerClose.addEventListener('click', function () { setDrawer(false); });
+	}
+	if (overlay) {
+		overlay.addEventListener('click', function () { setDrawer(false); });
+	}
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && drawer && drawer.classList.contains('is-open')) setDrawer(false);
+	});
+	if (drawer) {
+		drawer.querySelectorAll('a').forEach(function (link) {
+			link.addEventListener('click', function () { setDrawer(false); });
 		});
 	}
 
-	/* 3. FAQ 手风琴（页面 + 首页精选共用） */
+	/* 3. FAQ accordion */
 	document.querySelectorAll('.faq-item__toggle').forEach(function (btn) {
 		btn.addEventListener('click', function () {
 			var item = btn.closest('.faq-item');
@@ -49,28 +60,38 @@
 		});
 	});
 
-	/* 4. FAQ 关键词实时检索 + 分类筛选（纯 JS 前端过滤 + 高亮） */
+	/* 4. FAQ search + category filter */
 	var faqSearch = document.getElementById('faq-search-input');
 	var faqCategoryButtons = Array.prototype.slice.call(document.querySelectorAll('.faq-category'));
-	var faqItems  = Array.prototype.slice.call(document.querySelectorAll('.faq-item'));
+	var faqItems = Array.prototype.slice.call(document.querySelectorAll('.faq-item'));
 	var faqGroups = Array.prototype.slice.call(document.querySelectorAll('[data-faq-group]'));
-	var faqEmpty  = document.querySelector('[data-faq-empty]');
+	var faqEmpty = document.querySelector('[data-faq-empty]');
 	var activeFaqCategory = '';
 
 	function syncFaqEmpty() {
-		if (!faqEmpty) {
-			return;
-		}
+		if (!faqEmpty) return;
 		var anyVisible = false;
 		faqGroups.forEach(function (group) {
-			if (group.style.display === 'none') {
-				return;
-			}
-			anyVisible = anyVisible || Array.prototype.some.call(group.querySelectorAll('.faq-item'), function (item) {
-				return item.style.display !== 'none';
+			if (group.style.display === 'none') return;
+			Array.prototype.forEach.call(group.querySelectorAll('.faq-item'), function (item) {
+				if (item.style.display !== 'none') anyVisible = true;
 			});
 		});
 		faqEmpty.style.display = anyVisible ? 'none' : '';
+	}
+
+	function highlight(el, query) {
+		var text = el.textContent;
+		var idx = text.toLowerCase().indexOf(query);
+		if (idx === -1) return;
+		var before = document.createTextNode(text.slice(0, idx));
+		var mark = document.createElement('mark');
+		mark.textContent = text.slice(idx, idx + query.length);
+		var after = document.createTextNode(text.slice(idx + query.length));
+		el.textContent = '';
+		el.appendChild(before);
+		el.appendChild(mark);
+		el.appendChild(after);
 	}
 
 	function applyFaqSearch() {
@@ -83,13 +104,8 @@
 			var qText = q ? (q.getAttribute('data-orig') || '') : '';
 			var aText = a ? (a.getAttribute('data-orig') || '') : '';
 
-			// 恢复原始文本，避免连续搜索时反复嵌套高亮标记
-			if (q && q.getAttribute('data-orig') !== null) {
-				q.textContent = qText;
-			}
-			if (a && a.getAttribute('data-orig') !== null) {
-				a.textContent = aText;
-			}
+			if (q && q.getAttribute('data-orig') !== null) q.textContent = qText;
+			if (a && a.getAttribute('data-orig') !== null) a.textContent = aText;
 
 			if (!query) {
 				item.style.display = '';
@@ -99,22 +115,16 @@
 
 			var qMatch = qText.toLowerCase().indexOf(query) !== -1;
 			var aMatch = aText.toLowerCase().indexOf(query) !== -1;
-
 			if (qMatch || aMatch) {
 				item.style.display = '';
 				totalVisible++;
-				if (qMatch && q) {
-					highlight(q, query);
-				}
-				if (aMatch && a) {
-					highlight(a, query);
-				}
+				if (qMatch && q) highlight(q, query);
+				if (aMatch && a) highlight(a, query);
 			} else {
 				item.style.display = 'none';
 			}
 		});
 
-		// 分组显隐：同时叠加当前分类
 		faqGroups.forEach(function (group) {
 			var category = group.getAttribute('data-faq-category-group') || '';
 			var categoryMatch = activeFaqCategory === '' || category === activeFaqCategory;
@@ -127,23 +137,16 @@
 		syncFaqEmpty();
 	}
 
-	// 缓存原始文本，便于恢复后重新高亮
 	if (faqItems.length) {
 		faqItems.forEach(function (item) {
 			var q = item.querySelector('.faq-item__q-text');
 			var a = item.querySelector('.faq-item__a-text');
-			if (q) {
-				q.setAttribute('data-orig', q.textContent);
-			}
-			if (a) {
-				a.setAttribute('data-orig', a.textContent);
-			}
+			if (q) q.setAttribute('data-orig', q.textContent);
+			if (a) a.setAttribute('data-orig', a.textContent);
 		});
 	}
 
-	if (faqSearch) {
-		faqSearch.addEventListener('input', applyFaqSearch);
-	}
+	if (faqSearch) faqSearch.addEventListener('input', applyFaqSearch);
 
 	faqCategoryButtons.forEach(function (btn) {
 		btn.addEventListener('click', function () {
@@ -158,50 +161,38 @@
 		});
 	});
 
-	if (faqItems.length || faqGroups.length) {
-		applyFaqSearch();
-	}
+	if (faqItems.length || faqGroups.length) applyFaqSearch();
 
-	/* 5. 解决方案场景筛选 */
-	var chips        = Array.prototype.slice.call(document.querySelectorAll('.solution-filter-bar .solution-filter, .solution-filters .chip'));
+	/* 5. Solutions filter */
+	var chips = Array.prototype.slice.call(document.querySelectorAll('.solution-filter-bar .solution-filter'));
 	var productCards = Array.prototype.slice.call(document.querySelectorAll('.hireai-product-grid .product-card'));
-	var emptyMsg     = document.querySelector('[data-solution-empty]');
+	var emptyMsg = document.querySelector('[data-solution-empty]');
 
 	chips.forEach(function (chip) {
 		chip.addEventListener('click', function () {
-			chips.forEach(function (c) {
-				c.classList.remove('is-active');
-			});
+			chips.forEach(function (c) { c.classList.remove('is-active'); });
 			chip.classList.add('is-active');
 
 			var filter = chip.getAttribute('data-filter') || '';
 			var shown = 0;
-
 			productCards.forEach(function (card) {
 				var cats = (card.getAttribute('data-cats') || '').split(' ').filter(Boolean);
 				var match = filter === '' || cats.indexOf(filter) !== -1;
 				card.style.display = match ? '' : 'none';
-				if (match) {
-					shown++;
-				}
+				if (match) shown++;
 			});
-
-			if (emptyMsg) {
-				emptyMsg.style.display = shown ? 'none' : '';
-			}
+			if (emptyMsg) emptyMsg.style.display = shown ? 'none' : '';
 		});
 	});
 
-	/* 6. 滚动显现（尊重减少动态效果偏好） */
+	/* 6. Reveal (reduced motion safe) */
 	function showAllReveal() {
-		document.querySelectorAll('[data-reveal]').forEach(function (el) {
-			el.classList.add('is-visible');
-		});
+		document.querySelectorAll('[data-reveal]').forEach(function (el) { el.classList.add('is-visible'); });
 	}
 
-	if (prefersReduced) {
+	if (prefersReduced || !('IntersectionObserver' in window)) {
 		showAllReveal();
-	} else if ('IntersectionObserver' in window) {
+	} else {
 		var io = new IntersectionObserver(function (entries) {
 			entries.forEach(function (entry) {
 				if (entry.isIntersecting) {
@@ -209,31 +200,8 @@
 					io.unobserve(entry.target);
 				}
 			});
-		}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+		}, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
 
-		document.querySelectorAll('[data-reveal]').forEach(function (el) {
-			io.observe(el);
-		});
-	} else {
-		showAllReveal();
-	}
-
-	/**
-	 * 将 el 中首个匹配关键词高亮为 <mark>
-	 */
-	function highlight(el, query) {
-		var text = el.textContent;
-		var idx = text.toLowerCase().indexOf(query);
-		if (idx === -1) {
-			return;
-		}
-		var before = document.createTextNode(text.slice(0, idx));
-		var mark = document.createElement('mark');
-		mark.textContent = text.slice(idx, idx + query.length);
-		var after = document.createTextNode(text.slice(idx + query.length));
-		el.textContent = '';
-		el.appendChild(before);
-		el.appendChild(mark);
-		el.appendChild(after);
+		document.querySelectorAll('[data-reveal]').forEach(function (el) { io.observe(el); });
 	}
 })();

@@ -4,6 +4,7 @@
  * 用法：get_template_part('template-parts/solution-card', null, ['cta_text' => '']);
  */
 $cta_text = isset($args['cta_text']) ? $args['cta_text'] : '';
+$icon     = isset($args['icon']) ? $args['icon'] : 'arrow';
 global $product;
 if (!$product) {
 	$product = wc_get_product(get_the_ID());
@@ -13,6 +14,7 @@ $cat_label = (!is_wp_error($cat_names) && !empty($cat_names)) ? $cat_names[0] : 
 $excerpt = has_excerpt() ? get_the_excerpt() : wp_trim_words(wp_strip_all_tags(get_the_content()), 24);
 ?>
 <article class="solution-card" data-reveal>
+	<span class="solution-card__icon" aria-hidden="true"><?php echo hireai_svg($icon, 24); ?></span>
 	<?php if ($cat_label !== '') : ?>
 		<span class="label solution-card__cat"><?php echo esc_html($cat_label); ?></span>
 	<?php endif; ?>

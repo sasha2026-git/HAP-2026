@@ -55,7 +55,7 @@ $localize = function ($item, $key) use ($suffix) {
 
 		<?php else : ?>
 			<div class="hireai-product-grid">
-				<?php foreach ($fallback_products as $item) : ?>
+				<?php foreach ($fallback_products as $index => $item) : ?>
 					<?php
 					get_template_part('template-parts/fallback-product-card', null, [
 						'title'     => $localize($item, 'title'),
@@ -66,6 +66,7 @@ $localize = function ($item, $key) use ($suffix) {
 						'retainer'  => $localize($item, 'retainer'),
 						'link'      => $localize($item, 'link'),
 						'cta_text'  => $cta_text,
+						'image'     => hireai_default_image('solution-' . ($index + 1) . '.jpg'),
 					]);
 					?>
 				<?php endforeach; ?>

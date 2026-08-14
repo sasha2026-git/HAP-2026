@@ -1,24 +1,22 @@
 <?php if (!defined('ABSPATH')) exit;
 /**
- * 通用页面（隐私政策 / 服务条款 / 退换货政策 / 法律声明等）
+ * 通用页面：页头 + 正文。
  */
 get_header();
-
 $suffix = hireai_lang_suffix();
+$is_en  = $suffix === '_en';
 ?>
-<?php while (have_posts()) : the_post(); ?>
-	<header class="page-hero" data-reveal>
-		<span class="label page-hero__kicker"><?php echo esc_html($suffix === '_en' ? 'Page' : '页面'); ?></span>
-		<h1 class="headline-lg page-hero__title"><?php the_title(); ?></h1>
+<div class="container page-content">
+	<header class="page-hero">
+		<h1 class="display-lg page-hero__title"><?php the_title(); ?></h1>
 	</header>
-
-	<section class="section" style="padding-top:0;">
-		<div class="container" data-reveal>
-			<div class="entry-content">
-				<?php the_content(); ?>
-			</div>
-		</div>
-	</section>
-<?php endwhile; ?>
-
+	<div class="section" style="padding-top:0;">
+		<?php
+		while (have_posts()) {
+			the_post();
+			the_content();
+		}
+		?>
+	</div>
+</div>
 <?php get_footer(); ?>
