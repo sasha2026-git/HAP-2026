@@ -3,7 +3,7 @@ Theme Name:   HireAIPeople Child
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version:      1.0.7
+Version:      1.0.8
 Text Domain:  hireaipeople
 */
 
@@ -31,6 +31,14 @@ Text Domain:  hireaipeople
   src: url('assets/fonts/HankenGrotesk-Variable.woff2') format('woff2');
   font-style: normal;
   font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  src: url('assets/fonts/NotoSerifSC-Variable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 200 900;
   font-display: swap;
 }
 
@@ -109,7 +117,7 @@ Text Domain:  hireaipeople
   --fs-label: 11px;
   --fs-label-mono: 14px;
 
-  --lh-display: 1.1;
+  --lh-display: 1.15;
   --lh-heading: 1.2;
   --lh-heading-md: 1.3;
   --lh-body: 1.6;
@@ -286,7 +294,8 @@ button {
   font-size: var(--fs-display);
   font-weight: 600;
   line-height: var(--lh-display);
-  letter-spacing: -0.02em;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
 }
 
 .headline-lg,
@@ -296,6 +305,8 @@ h1,
   font-size: var(--fs-h1);
   font-weight: 500;
   line-height: var(--lh-heading);
+  letter-spacing: 0.01em;
+  text-wrap: balance;
 }
 
 .headline-md,
@@ -304,6 +315,8 @@ h2 {
   font-size: var(--fs-h2);
   font-weight: 500;
   line-height: var(--lh-heading-md);
+  letter-spacing: 0.01em;
+  text-wrap: balance;
 }
 
 .headline-sm,
@@ -313,6 +326,8 @@ h4 {
   font-size: var(--fs-h3);
   font-weight: 500;
   line-height: var(--lh-heading-md);
+  letter-spacing: 0.01em;
+  text-wrap: balance;
 }
 
 .body-lg {
@@ -818,7 +833,7 @@ h4 {
    ========================================================================== */
 .employee-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--gutter);
 }
 
@@ -901,7 +916,7 @@ h4 {
 .solution-card {
   display: flex;
   flex-direction: column;
-  padding: clamp(24px, 3.5vw, 32px);
+  overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: var(--radius-xl);
   background: var(--surface);
@@ -914,15 +929,41 @@ h4 {
   transform: translateY(-2px);
 }
 
+.solution-card:hover .solution-card__media {
+  transform: scale(1.04);
+}
+
+.solution-card__media {
+  position: relative;
+  height: clamp(200px, 22vw, 240px);
+  background-color: var(--surface-container-high);
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.7s ease;
+}
+
+.solution-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  padding: clamp(20px, 2.5vw, 28px);
+}
+
 .solution-card__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
-  margin-bottom: 24px;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 18px;
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-full);
+  color: var(--primary);
+}
+
+.solution-card__cat {
+  margin-bottom: 10px;
   color: var(--primary);
 }
 
@@ -931,8 +972,15 @@ h4 {
 }
 
 .solution-card p {
-  margin: 0;
+  margin: 0 0 18px;
   color: var(--on-surface-variant);
+}
+
+.solution-card__cta {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* ==========================================================================
@@ -2317,7 +2365,7 @@ html.js [data-reveal].is-visible {
 
 @media (max-width: 767px) {
   .container {
-    max-width: min(100% - 40px, 1440px);
+    max-width: min(100% - 48px, 1440px);
   }
 
   .employee-grid,
@@ -2411,7 +2459,7 @@ html.js [data-reveal].is-visible {
 
 @media (max-width: 479px) {
   .container {
-    max-width: min(100% - 32px, 1440px);
+    max-width: min(100% - 48px, 1440px);
     padding-inline: 0;
   }
 

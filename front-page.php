@@ -33,9 +33,9 @@ $fallback_employees = [
 ];
 
 $fallback_solutions = [
-    ['title' => ['zh' => '全域营销智囊', 'en' => 'Omnichannel Marketing Intelligence'], 'icon' => 'arrow', 'text' => ['zh' => '覆盖内容、投放与数据复盘的全链路营销智能体。', 'en' => 'A full-funnel marketing agent for content, media, and performance review.'], 'link' => '/ai-solutions/'],
-    ['title' => ['zh' => '电商转化引擎', 'en' => 'Commerce Conversion Engine'], 'icon' => 'arrow', 'text' => ['zh' => '从选品、定价到客服，让增长从洞察到成交顺畅闭环。', 'en' => 'Connects selection, pricing, and service into a seamless growth loop.'], 'link' => '/ai-solutions/'],
-    ['title' => ['zh' => '奢品内容工坊', 'en' => 'Luxury Content Atelier'], 'icon' => 'arrow', 'text' => ['zh' => '为高净值品牌打造有艺术质感、有销售力的内容体系。', 'en' => 'Crafts artful, conversion-ready content systems for high-net-worth brands.'], 'link' => '/ai-solutions/'],
+    ['title' => ['zh' => '全域营销智囊', 'en' => 'Omnichannel Marketing Intelligence'], 'icon' => 'arrow', 'image' => 'solution-1.jpg', 'text' => ['zh' => '覆盖内容、投放与数据复盘的全链路营销智能体。', 'en' => 'A full-funnel marketing agent for content, media, and performance review.'], 'link' => '/ai-solutions/'],
+    ['title' => ['zh' => '电商转化引擎', 'en' => 'Commerce Conversion Engine'], 'icon' => 'arrow', 'image' => 'solution-2.jpg', 'text' => ['zh' => '从选品、定价到客服，让增长从洞察到成交顺畅闭环。', 'en' => 'Connects selection, pricing, and service into a seamless growth loop.'], 'link' => '/ai-solutions/'],
+    ['title' => ['zh' => '奢品内容工坊', 'en' => 'Luxury Content Atelier'], 'icon' => 'arrow', 'image' => 'solution-3.jpg', 'text' => ['zh' => '为高净值品牌打造有艺术质感、有销售力的内容体系。', 'en' => 'Crafts artful, conversion-ready content systems for high-net-worth brands.'], 'link' => '/ai-solutions/'],
 ];
 
 $fallback_cases = [
@@ -50,7 +50,7 @@ $fallback_faq = [
     ['title' => ['zh' => '上线周期需要多久？', 'en' => 'What is the onboarding timeline?'], 'answer' => ['zh' => '标准周期为 4 至 8 周，具体取决于数据结构与定制深度。', 'en' => 'The standard integration period ranges from 4 to 8 weeks, depending on complexity and customization.']],
 ];
 
-$employees_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 5, 'category_name' => 'ai-employee', 'no_found_rows' => true]);
+$employees_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 3, 'category_name' => 'ai-employee', 'no_found_rows' => true]);
 $solutions_query = class_exists('WooCommerce') ? new WP_Query(['post_type' => 'product', 'posts_per_page' => 3, 'no_found_rows' => true]) : false;
 $cases_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 2, 'category_name' => 'cases', 'no_found_rows' => true]);
 $faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'category_name' => 'faq', 'no_found_rows' => true]);
@@ -85,22 +85,17 @@ $faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'catego
 
 		<div class="employee-grid">
 			<?php if ($employees_query->have_posts()) : ?>
-				<?php $employee_i = 0; ?>
 				<?php while ($employees_query->have_posts()) : $employees_query->the_post(); ?>
-					<?php get_template_part('template-parts/employee-card', null, ['lg_only' => $employee_i >= 3]); ?>
-					<?php $employee_i++; ?>
+					<?php get_template_part('template-parts/employee-card'); ?>
 				<?php endwhile; wp_reset_postdata(); ?>
 			<?php else : ?>
-				<?php $employee_i = 0; ?>
-				<?php foreach ($fallback_employees as $item) : ?>
+				<?php foreach (array_slice($fallback_employees, 0, 3) as $item) : ?>
 					<?php get_template_part('template-parts/fallback-employee-card', null, [
 						'title' => $localize($item, 'title'),
 						'role'  => $localize($item, 'role'),
 						'image' => hireai_default_image($localize($item, 'image')),
 						'link'  => home_url($localize($item, 'link')),
-						'lg_only' => $employee_i >= 3,
 					]); ?>
-					<?php $employee_i++; ?>
 				<?php endforeach; ?>
 			<?php endif; ?>
 		</div>
@@ -120,16 +115,22 @@ $faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'catego
 
 		<div class="solution-grid">
 			<?php if ($solutions_query && $solutions_query->have_posts()) : ?>
+				<?php $solution_i = 0; ?>
 				<?php while ($solutions_query->have_posts()) : $solutions_query->the_post(); ?>
-					<?php get_template_part('template-parts/solution-card'); ?>
+					<?php get_template_part('template-parts/solution-card', null, ['index' => $solution_i, 'cta_text' => $is_en ? 'Explore More' : '探索更多']); ?>
+					<?php $solution_i++; ?>
 				<?php endwhile; wp_reset_postdata(); ?>
 			<?php else : ?>
 				<?php foreach ($fallback_solutions as $item) : ?>
-					<article class="solution-card">
-						<span class="solution-card__icon"><?php echo hireai_svg($localize($item, 'icon'), 22); ?></span>
-						<h3><a href="<?php echo esc_url(home_url($localize($item, 'link'))); ?>"><?php echo esc_html($localize($item, 'title')); ?></a></h3>
-						<p><?php echo esc_html($localize($item, 'text')); ?></p>
-					</article>
+					<?php get_template_part('template-parts/solution-card', null, [
+						'fallback' => true,
+						'title'    => $localize($item, 'title'),
+						'text'     => $localize($item, 'text'),
+						'link'     => home_url($localize($item, 'link')),
+						'image'    => hireai_default_image($localize($item, 'image')),
+						'icon'     => $localize($item, 'icon'),
+						'cta_text' => $is_en ? 'Explore More' : '探索更多',
+					]); ?>
 				<?php endforeach; ?>
 			<?php endif; ?>
 		</div>

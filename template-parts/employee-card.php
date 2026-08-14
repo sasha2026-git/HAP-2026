@@ -1,4 +1,5 @@
 <?php if (!defined('ABSPATH')) exit;
+$args = isset($args) ? $args : [];
 $lg_only = !empty($args['lg_only']);
 $suffix = hireai_lang_suffix();
 $role = site_field('employee_role' . $suffix, '', get_the_ID());
