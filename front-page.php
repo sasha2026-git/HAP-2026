@@ -85,17 +85,22 @@ $faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'catego
 
 		<div class="employee-grid">
 			<?php if ($employees_query->have_posts()) : ?>
+				<?php $employee_i = 0; ?>
 				<?php while ($employees_query->have_posts()) : $employees_query->the_post(); ?>
-					<?php get_template_part('template-parts/employee-card'); ?>
+					<?php get_template_part('template-parts/employee-card', null, ['lg_only' => $employee_i >= 3]); ?>
+					<?php $employee_i++; ?>
 				<?php endwhile; wp_reset_postdata(); ?>
 			<?php else : ?>
+				<?php $employee_i = 0; ?>
 				<?php foreach ($fallback_employees as $item) : ?>
 					<?php get_template_part('template-parts/fallback-employee-card', null, [
 						'title' => $localize($item, 'title'),
 						'role'  => $localize($item, 'role'),
 						'image' => hireai_default_image($localize($item, 'image')),
 						'link'  => home_url($localize($item, 'link')),
+						'lg_only' => $employee_i >= 3,
 					]); ?>
+					<?php $employee_i++; ?>
 				<?php endforeach; ?>
 			<?php endif; ?>
 		</div>

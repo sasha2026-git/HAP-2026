@@ -3,7 +3,7 @@ Theme Name:   HireAIPeople Child
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version:      1.0.6
+Version:      1.0.7
 Text Domain:  hireaipeople
 */
 
@@ -826,7 +826,7 @@ h4 {
   position: relative;
   display: flex;
   align-items: flex-end;
-  min-height: clamp(340px, 32vw, 384px);
+  min-height: 384px;
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: var(--radius-xl);
@@ -853,9 +853,8 @@ h4 {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding: 24px;
-  background: rgba(249, 249, 249, 0.92);
-  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 24px 24px 22px;
+  background: linear-gradient(to top, rgba(249, 249, 249, 0.96) 0%, rgba(249, 249, 249, 0.55) 58%, rgba(249, 249, 249, 0) 100%);
 }
 
 .employee-card__role {
@@ -874,6 +873,16 @@ h4 {
   margin-top: 14px;
   background: var(--primary);
   transition: width 0.5s ease;
+}
+
+.employee-card--lg-only {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .employee-card--lg-only {
+    display: flex;
+  }
 }
 
 .employee-card:hover .employee-card__line {
@@ -2237,11 +2246,6 @@ html.js [data-reveal].is-visible {
    21. Responsive
    ========================================================================== */
 @media (max-width: 1100px) {
-  .employee-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .solution-grid,
   .hireai-product-grid,
   .post-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2261,6 +2265,14 @@ html.js [data-reveal].is-visible {
 }
 
 @media (max-width: 1023px) {
+  .employee-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .solution-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .desktop-nav {
     display: none;
   }
@@ -2410,10 +2422,6 @@ html.js [data-reveal].is-visible {
   .header-inner {
     min-height: 72px;
     padding-block: 12px;
-  }
-
-  .employee-card {
-    min-height: 340px;
   }
 
   .employee-row__media {

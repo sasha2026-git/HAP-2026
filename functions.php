@@ -24,7 +24,7 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
  *       辅助函数回退 / 联系表单处理 / 分页
  */
 
-define('HIREAI_VERSION', '1.0.6');
+define('HIREAI_VERSION', '1.0.7');
 
 /* 每页数量（可通过常量覆盖） */
 define('HIREAI_EMPLOYEES_PER_PAGE', 5);
