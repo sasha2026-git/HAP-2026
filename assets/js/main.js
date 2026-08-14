@@ -49,14 +49,86 @@
 		});
 	});
 
-	/* 4. FAQ 关键词实时检索（纯 JS 前端过滤 + 高亮） */
+	/* 4. FAQ 关键词实时检索 + 分类筛选（纯 JS 前端过滤 + 高亮） */
 	var faqSearch = document.getElementById('faq-search-input');
-	if (faqSearch) {
-		var faqItems  = Array.prototype.slice.call(document.querySelectorAll('.faq-item'));
-		var faqGroups = Array.prototype.slice.call(document.querySelectorAll('[data-faq-group]'));
-		var faqEmpty  = document.querySelector('[data-faq-empty]');
+	var faqCategoryButtons = Array.prototype.slice.call(document.querySelectorAll('.faq-category'));
+	var faqItems  = Array.prototype.slice.call(document.querySelectorAll('.faq-item'));
+	var faqGroups = Array.prototype.slice.call(document.querySelectorAll('[data-faq-group]'));
+	var faqEmpty  = document.querySelector('[data-faq-empty]');
+	var activeFaqCategory = '';
 
-		// 缓存原始文本，便于恢复后重新高亮
+	function syncFaqEmpty() {
+		if (!faqEmpty) {
+			return;
+		}
+		var anyVisible = false;
+		faqGroups.forEach(function (group) {
+			if (group.style.display === 'none') {
+				return;
+			}
+			anyVisible = anyVisible || Array.prototype.some.call(group.querySelectorAll('.faq-item'), function (item) {
+				return item.style.display !== 'none';
+			});
+		});
+		faqEmpty.style.display = anyVisible ? 'none' : '';
+	}
+
+	function applyFaqSearch() {
+		var query = faqSearch ? faqSearch.value.trim().toLowerCase() : '';
+		var totalVisible = 0;
+
+		faqItems.forEach(function (item) {
+			var q = item.querySelector('.faq-item__q-text');
+			var a = item.querySelector('.faq-item__a-text');
+			var qText = q ? (q.getAttribute('data-orig') || '') : '';
+			var aText = a ? (a.getAttribute('data-orig') || '') : '';
+
+			// 恢复原始文本，避免连续搜索时反复嵌套高亮标记
+			if (q && q.getAttribute('data-orig') !== null) {
+				q.textContent = qText;
+			}
+			if (a && a.getAttribute('data-orig') !== null) {
+				a.textContent = aText;
+			}
+
+			if (!query) {
+				item.style.display = '';
+				totalVisible++;
+				return;
+			}
+
+			var qMatch = qText.toLowerCase().indexOf(query) !== -1;
+			var aMatch = aText.toLowerCase().indexOf(query) !== -1;
+
+			if (qMatch || aMatch) {
+				item.style.display = '';
+				totalVisible++;
+				if (qMatch && q) {
+					highlight(q, query);
+				}
+				if (aMatch && a) {
+					highlight(a, query);
+				}
+			} else {
+				item.style.display = 'none';
+			}
+		});
+
+		// 分组显隐：同时叠加当前分类
+		faqGroups.forEach(function (group) {
+			var category = group.getAttribute('data-faq-category-group') || '';
+			var categoryMatch = activeFaqCategory === '' || category === activeFaqCategory;
+			var visible = categoryMatch && Array.prototype.some.call(group.querySelectorAll('.faq-item'), function (i) {
+				return i.style.display !== 'none';
+			});
+			group.style.display = visible ? '' : 'none';
+		});
+
+		syncFaqEmpty();
+	}
+
+	// 缓存原始文本，便于恢复后重新高亮
+	if (faqItems.length) {
 		faqItems.forEach(function (item) {
 			var q = item.querySelector('.faq-item__q-text');
 			var a = item.querySelector('.faq-item__a-text');
@@ -67,64 +139,31 @@
 				a.setAttribute('data-orig', a.textContent);
 			}
 		});
+	}
 
-		faqSearch.addEventListener('input', function () {
-			var query = faqSearch.value.trim().toLowerCase();
-			var totalVisible = 0;
+	if (faqSearch) {
+		faqSearch.addEventListener('input', applyFaqSearch);
+	}
 
-			faqItems.forEach(function (item) {
-				var q = item.querySelector('.faq-item__q-text');
-				var a = item.querySelector('.faq-item__a-text');
-				var qText = q ? (q.getAttribute('data-orig') || '') : '';
-				var aText = a ? (a.getAttribute('data-orig') || '') : '';
-
-				// 恢复原始文本
-				if (q && q.getAttribute('data-orig') !== null) {
-					q.textContent = qText;
-				}
-				if (a && a.getAttribute('data-orig') !== null) {
-					a.textContent = aText;
-				}
-
-				if (!query) {
-					item.style.display = '';
-					totalVisible++;
-					return;
-				}
-
-				var qMatch = qText.toLowerCase().indexOf(query) !== -1;
-				var aMatch = aText.toLowerCase().indexOf(query) !== -1;
-
-				if (qMatch || aMatch) {
-					item.style.display = '';
-					totalVisible++;
-					if (qMatch && q) {
-						highlight(q, query);
-					}
-					if (aMatch && a) {
-						highlight(a, query);
-					}
-				} else {
-					item.style.display = 'none';
-				}
+	faqCategoryButtons.forEach(function (btn) {
+		btn.addEventListener('click', function () {
+			faqCategoryButtons.forEach(function (b) {
+				b.classList.remove('is-active');
+				b.setAttribute('aria-selected', 'false');
 			});
-
-			// 分组显隐
-			faqGroups.forEach(function (group) {
-				var visible = Array.prototype.some.call(group.querySelectorAll('.faq-item'), function (i) {
-					return i.style.display !== 'none';
-				});
-				group.style.display = visible ? '' : 'none';
-			});
-
-			if (faqEmpty) {
-				faqEmpty.style.display = totalVisible ? 'none' : '';
-			}
+			btn.classList.add('is-active');
+			btn.setAttribute('aria-selected', 'true');
+			activeFaqCategory = btn.getAttribute('data-faq-category') || '';
+			applyFaqSearch();
 		});
+	});
+
+	if (faqItems.length || faqGroups.length) {
+		applyFaqSearch();
 	}
 
 	/* 5. 解决方案场景筛选 */
-	var chips        = Array.prototype.slice.call(document.querySelectorAll('.solution-filters .chip'));
+	var chips        = Array.prototype.slice.call(document.querySelectorAll('.solution-filter-bar .solution-filter, .solution-filters .chip'));
 	var productCards = Array.prototype.slice.call(document.querySelectorAll('.hireai-product-grid .product-card'));
 	var emptyMsg     = document.querySelector('[data-solution-empty]');
 

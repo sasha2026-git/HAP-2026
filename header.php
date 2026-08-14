@@ -1,12 +1,10 @@
-<?php
-if (!defined('ABSPATH')) exit;
+<?php if (!defined('ABSPATH')) exit;
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
 <meta charset="<?php bloginfo('charset'); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="profile" href="https://gmpg.org/xfn/11">
 <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
@@ -15,6 +13,7 @@ if (!defined('ABSPATH')) exit;
 <a class="skip-link screen-reader-text" href="#content"><?php echo esc_html(hireai_lang_suffix() === '_en' ? 'Skip to content' : '跳到主要内容'); ?></a>
 
 <?php
+$suffix  = hireai_lang_suffix();
 $logo    = get_theme_mod('site_logo');
 $logo_h  = get_theme_mod('site_logo_height', 44);
 if (empty($logo)) {
@@ -41,6 +40,11 @@ $logo_h = absint($logo_h) ? absint($logo_h) : 44;
 		</nav>
 
 		<div class="site-header__actions">
+			<?php
+			$hireai_contact_page = get_page_by_path('contact');
+			$hireai_contact_url = $hireai_contact_page instanceof WP_Post ? get_permalink($hireai_contact_page) : home_url('/contact/');
+			?>
+			<a class="btn btn-secondary btn-header" href="<?php echo esc_url($hireai_contact_url); ?>"><?php echo esc_html($suffix === '_en' ? 'Consultation' : '预约咨询'); ?></a>
 			<?php if (function_exists('pll_the_languages')) : ?>
 				<div class="lang-switch">
 					<?php pll_the_languages(['display_names_as' => 'slug', 'hide_current' => false, 'dropdown' => 0, 'hide_if_no_translation' => 0]); ?>

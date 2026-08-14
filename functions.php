@@ -1,5 +1,4 @@
-<?php
-if (!defined('ABSPATH')) exit;
+<?php if (!defined('ABSPATH')) exit;
 
 /* -------------------------------------------------------------------------
  * 0.0 GitHub 自动更新（plugin-update-checker）
@@ -24,10 +23,10 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
  *       辅助函数回退 / 联系表单处理 / 分页
  */
 
-define('HIREAI_VERSION', '1.0.2');
+define('HIREAI_VERSION', '1.0.3');
 
 /* 每页数量（可通过常量覆盖） */
-define('HIREAI_EMPLOYEES_PER_PAGE', 5);
+define('HIREAI_EMPLOYEES_PER_PAGE', 6);
 define('HIREAI_SOLUTIONS_PER_PAGE', 9);
 define('HIREAI_CASES_PER_PAGE', 6);
 define('HIREAI_INSIGHTS_PER_PAGE', 3);
@@ -284,7 +283,7 @@ function hireai_contact_page_id() {
 }
 
 /* -------------------------------------------------------------------------
- * 1. 资源加载：父主题 + 子主题样式 + Google Fonts + 脚本
+ * 1. 资源加载：父主题 + 子主题样式（自托管字体）+ 脚本
  * ---------------------------------------------------------------------- */
 add_action('wp_enqueue_scripts', function () {
     // 父主题样式（只加载一次）
@@ -298,14 +297,7 @@ add_action('wp_enqueue_scripts', function () {
         HIREAI_VERSION
     );
 
-    // Google Fonts（唯一允许的外部依赖）
-    wp_enqueue_style(
-        'hireaipeople-fonts',
-        'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Manrope:wght@300;400;500;600&family=Hanken+Grotesk:wght@400;600&family=Noto+Sans+SC:wght@300;400;500&family=Noto+Serif+SC:wght@500;600&display=swap',
-        [],
-        null
-    );
-
+    // 字体已本地化：@font-face 在 style.css 顶部加载 assets/fonts/*.woff2，不再请求 Google Fonts。
     // 前端脚本
     wp_enqueue_script(
         'hireaipeople-main',
@@ -482,6 +474,7 @@ function hireai_handle_contact() {
     }
 
     $name    = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
+    $company = isset($_POST['company']) ? sanitize_text_field(wp_unslash($_POST['company'])) : '';
     $email   = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
     $message = isset($_POST['message']) ? sanitize_textarea_field(wp_unslash($_POST['message'])) : '';
 
@@ -497,6 +490,9 @@ function hireai_handle_contact() {
 
     $subject = sprintf('【聘AI】新的咨询：%s', $name);
     $body    = "姓名 / Name: {$name}\n";
+    if ($company !== '') {
+        $body .= "公司 / Company: {$company}\n";
+    }
     $body   .= "邮箱 / Email: {$email}\n";
     $body   .= "------------------------------------\n";
     $body   .= wp_strip_all_tags($message) . "\n";
@@ -701,6 +697,7 @@ add_action('acf/init', function () {
     acf_add_local_field_group($hireai_make_group('group_page_cases_insights', '案例 & 洞察页', [
         ['name' => 'hero_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '案例与洞察', 'en' => 'CASES & INSIGHTS'],
         ['name' => 'hero_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '案例与洞察', 'en' => 'Cases & Insights', 'extra' => ['rows' => 1]],
+        ['name' => 'hero_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '见证数字员工如何改变企业的运营方式，洞察 AI 行业的深层趋势。', 'en' => 'See how digital employees transform operations and explore the deeper currents of AI.', 'extra' => ['rows' => 2]],
 
         ['name' => 'cases_kicker', 'label' => '案例 · 眉题', 'type' => 'text', 'zh' => '案例', 'en' => 'CASES'],
         ['name' => 'cases_title', 'label' => '案例 · 标题', 'type' => 'textarea', 'zh' => '精选案例', 'en' => 'Selected Cases', 'extra' => ['rows' => 1]],
@@ -740,7 +737,11 @@ add_action('acf/init', function () {
         ['name' => 'contact_email', 'label' => '联系邮箱', 'type' => 'text', 'zh' => 'concierge@hireaipeople.com', 'en' => 'concierge@hireaipeople.com'],
         ['name' => 'contact_wechat', 'label' => '微信号', 'type' => 'text', 'zh' => 'hireai-official', 'en' => 'hireai-official'],
         ['name' => 'wechat_qr', 'label' => '微信二维码', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array']],
+        ['name' => 'contact_address', 'label' => '总部地址', 'type' => 'textarea', 'zh' => '中国 · 上海', 'en' => 'Shanghai, China', 'extra' => ['rows' => 2]],
+        ['name' => 'contact_map_label', 'label' => '地图按钮文字', 'type' => 'text', 'zh' => '查看地图', 'en' => 'View Map'],
+        ['name' => 'contact_map_url', 'label' => '地图链接', 'type' => 'text', 'zh' => 'https://uri.amap.com/search?keyword=Shanghai%2C%20China', 'en' => 'https://uri.amap.com/search?keyword=Shanghai%2C%20China'],
         ['name' => 'form_name_label', 'label' => '表单 · 姓名', 'type' => 'text', 'zh' => '姓名', 'en' => 'Name'],
+        ['name' => 'form_company_label', 'label' => '表单 · 公司/机构', 'type' => 'text', 'zh' => '公司/机构', 'en' => 'Company Entity'],
         ['name' => 'form_email_label', 'label' => '表单 · 邮箱', 'type' => 'text', 'zh' => '邮箱', 'en' => 'Secure Email'],
         ['name' => 'form_message_label', 'label' => '表单 · 需求描述', 'type' => 'text', 'zh' => '需求描述', 'en' => 'Inquiry Details'],
         ['name' => 'form_submit_label', 'label' => '表单 · 提交按钮', 'type' => 'text', 'zh' => '提交咨询', 'en' => 'Send Inquiry'],
@@ -785,6 +786,18 @@ add_action('acf/init', function () {
             [['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:faq']],
         ],
     ]);
+
+    /* ---- 9.5 商品 ACF：解决方案卡片 / 单产品页卖点 ---- */
+    acf_add_local_field_group($hireai_make_group('group_product_meta', 'AI 解决方案 — 卡片与详情', [
+        ['name' => 'product_operative', 'label' => '执行智能体', 'type' => 'text', 'zh' => '执行智能体：聘AI', 'en' => 'OPERATIVE: HIREAI'],
+        ['name' => 'product_retainer_label', 'label' => '收费档位标签', 'type' => 'text', 'zh' => '起步档', 'en' => 'Starting Retainer'],
+        ['name' => 'product_feature_1_title', 'label' => '卖点 1 · 标题', 'type' => 'text', 'zh' => '降低品牌曝光风险', 'en' => 'Mitigating Brand Exposure'],
+        ['name' => 'product_feature_1_text', 'label' => '卖点 1 · 描述', 'type' => 'textarea', 'zh' => '即时形成保护品牌资产的高校准响应。', 'en' => 'Instantly formulate responses that protect brand equity.', 'extra' => ['rows' => 2]],
+        ['name' => 'product_feature_2_title', 'label' => '卖点 2 · 标题', 'type' => 'text', 'zh' => '自动化神经工作流', 'en' => 'Automating Neural Workflows'],
+        ['name' => 'product_feature_2_text', 'label' => '卖点 2 · 描述', 'type' => 'textarea', 'zh' => '实时情绪分析并触发自动草拟协议。', 'en' => 'Real-time sentiment analysis triggering automated draft protocols.', 'extra' => ['rows' => 2]],
+    ], [
+        [['param' => 'post_type', 'operator' => '==', 'value' => 'product']],
+    ]));
 
     /* ---- 10. 站点选项（页脚，ACF Pro Options Page）---- */
     if (function_exists('acf_add_options_page')) {

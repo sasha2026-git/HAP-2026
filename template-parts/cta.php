@@ -1,5 +1,4 @@
-<?php
-if (!defined('ABSPATH')) exit;
+<?php if (!defined('ABSPATH')) exit;
 /**
  * CTA 横幅（金色链接带）
  * 用法：get_template_part('template-parts/cta', null, [

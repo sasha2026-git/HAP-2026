@@ -1,16 +1,17 @@
-<?php
-if (!defined('ABSPATH')) exit;
+<?php if (!defined('ABSPATH')) exit;
 /**
  * 文章卡（案例 / 洞察 / 博客归档）
  * 用法：get_template_part('template-parts/post-card', null, ['cta_text' => '阅读更多', 'show_meta' => true]);
  */
 $cta_text  = isset($args['cta_text']) ? $args['cta_text'] : '阅读更多';
 $show_meta = isset($args['show_meta']) ? (bool) $args['show_meta'] : true;
+$variant   = isset($args['variant']) ? $args['variant'] : '';
+$card_class = 'card post-card' . ($variant !== '' ? ' post-card--' . esc_attr($variant) : '');
 
 $cats     = get_the_category();
 $cat_name = !empty($cats) ? $cats[0]->name : '';
 ?>
-<article class="card post-card" data-reveal>
+<article class="<?php echo esc_attr($card_class); ?>" data-reveal>
 	<a class="card__media" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true">
 		<?php if (has_post_thumbnail()) : ?>
 			<?php the_post_thumbnail('hireai-card'); ?>

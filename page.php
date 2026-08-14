@@ -1,5 +1,4 @@
-<?php
-if (!defined('ABSPATH')) exit;
+<?php if (!defined('ABSPATH')) exit;
 /**
  * 通用页面（隐私政策 / 服务条款 / 退换货政策 / 法律声明等）
  */

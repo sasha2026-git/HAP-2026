@@ -1,5 +1,4 @@
-<?php
-if (!defined('ABSPATH')) exit;
+<?php if (!defined('ABSPATH')) exit;
 /**
  * 分类归档：category=ai-employee → 数字员工交替行；其他 → 文章列表
  */

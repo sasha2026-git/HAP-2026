@@ -1,5 +1,4 @@
-<?php
-if (!defined('ABSPATH')) exit;
+<?php if (!defined('ABSPATH')) exit;
 /**
  * 区块标题（section header）
  * 用法：get_template_part('template-parts/section-header', null, ['kicker' => '', 'title' => '', 'subtitle' => '', 'align' => 'center']);

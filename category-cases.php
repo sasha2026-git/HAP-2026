@@ -1,16 +1,44 @@
-<?php
-if (!defined('ABSPATH')) exit;
+<?php if (!defined('ABSPATH')) exit;
 /**
- * 案例归档（category=cases）— blog 形式
+ * 案例归档（category=cases）— 案例卡网格
  */
 get_header();
 
 $suffix = hireai_lang_suffix();
 $paged  = max(1, get_query_var('paged'));
+
+$card_cta = $suffix === '_en' ? 'Read Case' : '阅读案例';
+$fallback_cases = [
+    [
+        'title'   => ['zh' => '奢侈品牌中国区内容焕新', 'en' => 'Luxury Brand China Content Refresh'],
+        'tag'     => ['zh' => '精选案例', 'en' => 'FEATURED CASE'],
+        'excerpt' => ['zh' => '以数字员工重建内容矩阵，让发布效率与品牌质感同步提升。', 'en' => 'Digital employees rebuild the content matrix while preserving brand polish.'],
+        'link'    => home_url('/category/cases/'),
+    ],
+    [
+        'title'   => ['zh' => '跨境电商 24×7 客服', 'en' => 'Cross-Border Commerce 24×7 Service'],
+        'tag'     => ['zh' => '精选案例', 'en' => 'FEATURED CASE'],
+        'excerpt' => ['zh' => '数字员工覆盖多时区客服，把等待变成即时响应。', 'en' => 'Digital employees cover every timezone and turn waiting into immediate response.'],
+        'link'    => home_url('/category/cases/'),
+    ],
+    [
+        'title'   => ['zh' => '高净值品牌私域增长', 'en' => 'Private Growth for a High-Net-Worth Brand'],
+        'tag'     => ['zh' => '精选案例', 'en' => 'FEATURED CASE'],
+        'excerpt' => ['zh' => '将私域内容与销售线索联动，形成可复用的增长闭环。', 'en' => 'Links private-domain content with sales signals into a reusable growth loop.'],
+        'link'    => home_url('/category/cases/'),
+    ],
+];
+$localize = function ($item, $key) use ($suffix) {
+    $value = isset($item[$key]) ? $item[$key] : '';
+    if (is_array($value)) {
+        return isset($value[$suffix === '_en' ? 'en' : 'zh']) ? $value[$suffix === '_en' ? 'en' : 'zh'] : '';
+    }
+    return $value;
+};
 ?>
-<header class="page-hero" data-reveal>
+<header class="page-hero page-hero--left" data-reveal>
 	<span class="label page-hero__kicker"><?php echo esc_html($suffix === '_en' ? 'Cases' : '案例'); ?></span>
-	<h1 class="headline-lg page-hero__title"><?php single_cat_title(); ?></h1>
+	<h1 class="display-lg page-hero__title page-hero__title--display"><?php single_cat_title(); ?></h1>
 	<?php if (category_description()) : ?>
 		<p class="body-lg page-hero__subtitle"><?php echo esc_html(strip_tags(category_description())); ?></p>
 	<?php endif; ?>
@@ -18,39 +46,34 @@ $paged  = max(1, get_query_var('paged'));
 
 <section class="section" style="padding-top:0;">
 	<div class="container">
-		<div class="archive-list">
-			<?php if (have_posts()) : ?>
+		<?php if (have_posts()) : ?>
+			<div class="grid grid--3 case-card-grid">
 				<?php while (have_posts()) : the_post(); ?>
 					<?php
-					$cats = get_the_category();
-					$cat_name = !empty($cats) ? $cats[0]->name : '';
+					get_template_part('template-parts/post-card', null, [
+						'cta_text' => $suffix === '_en' ? 'Read Case' : '阅读案例',
+						'variant'  => 'case',
+					]);
 					?>
-					<article class="card post-card post-card--list" data-reveal>
-						<a class="card__media" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true">
-							<?php if (has_post_thumbnail()) : ?>
-								<?php the_post_thumbnail('hireai-card'); ?>
-							<?php else : ?>
-								<span class="media-placeholder">HireAI People</span>
-							<?php endif; ?>
-						</a>
-						<div class="card__body">
-							<div class="card__meta">
-								<?php echo esc_html($cat_name); ?> · <?php echo esc_html(get_the_date('Y.m.d')); ?>
-							</div>
-							<h2 class="card__title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
-							<p class="card__excerpt"><?php echo esc_html(wp_trim_words(get_the_excerpt(), 28)); ?></p>
-							<a class="btn btn-ghost" href="<?php the_permalink(); ?>"><?php echo esc_html($suffix === '_en' ? 'Read More' : '阅读更多'); ?></a>
-						</div>
-					</article>
 				<?php endwhile; ?>
-
-				<?php hireai_pagination($GLOBALS['wp_query']->max_num_pages, $paged); ?>
-			<?php else : ?>
-				<p style="text-align:center;color:var(--color-text-muted);padding:80px 0;">
-					<?php echo esc_html($suffix === '_en' ? 'No cases published yet.' : '暂无案例，敬请期待。'); ?>
-				</p>
-			<?php endif; ?>
-		</div>
+			</div>
+			<?php hireai_pagination($GLOBALS['wp_query']->max_num_pages, $paged); ?>
+		<?php else : ?>
+			<div class="grid grid--3 case-card-grid">
+				<?php
+				foreach ($fallback_cases as $item) {
+					get_template_part('template-parts/fallback-post-card', null, [
+						'title'    => $localize($item, 'title'),
+						'tag'      => $localize($item, 'tag'),
+						'excerpt'  => $localize($item, 'excerpt'),
+						'link'     => $localize($item, 'link'),
+						'cta_text' => $card_cta,
+						'variant'  => 'case',
+					]);
+				}
+				?>
+			</div>
+		<?php endif; ?>
 	</div>
 </section>
 
