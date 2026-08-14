@@ -3,7 +3,7 @@ Theme Name:   HireAIPeople Child
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version:      1.0.8
+Version:      1.0.9
 Text Domain:  hireaipeople
 */
 
@@ -2293,6 +2293,14 @@ html.js [data-reveal].is-visible {
 /* ==========================================================================
    21. Responsive
    ========================================================================== */
+
+@media (min-width: 768px) {
+  .container {
+    max-width: min(100% - 160px, 1440px);
+    padding-inline: 0;
+  }
+}
+
 @media (max-width: 1100px) {
   .hireai-product-grid,
   .post-grid {
@@ -2495,4 +2503,48 @@ html.js [data-reveal].is-visible {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ==========================================================================
+   22. 第三方覆盖 — 语言切换器 & 移动端菜单按钮（对齐 Aether Luxe 设计稿）
+   ========================================================================== */
+
+/* 隐藏第三方浮动语言切换卡片（TranslatePress 等底部悬浮 "EN ^" 组件；
+   主题右上角已内置 ZH/EN 语言切换，悬浮卡片冗余且遮挡内容） */
+#trp-floater-ls,
+.trp-floater-ls,
+.trp-language-switcher-container#trp-floater-ls {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Elementor 导航菜单按钮：统一为设计稿金边风格，消除玫红/紫红边框 */
+.elementor-menu-toggle {
+  border: 1px solid rgba(212, 175, 55, 0.55) !important;
+  background: rgba(212, 175, 55, 0.08) !important;
+  color: var(--on-surface) !important;
+  border-radius: 12px !important;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+.elementor-menu-toggle:hover,
+.elementor-menu-toggle:focus-visible {
+  background: rgba(212, 175, 55, 0.18) !important;
+  border-color: var(--gold-leaf) !important;
+}
+.elementor-menu-toggle .elementor-menu-toggle__icon--open,
+.elementor-menu-toggle .elementor-menu-toggle__icon--close {
+  color: inherit !important;
+  fill: currentColor !important;
+}
+
+/* 其他常见移动端菜单按钮兜底（同样消除玫红/紫红边框） */
+button.menu-toggle,
+.navbar-toggle,
+.mobile-menu-toggle,
+button[aria-label*="menu" i][aria-expanded] {
+  border: 1px solid rgba(212, 175, 55, 0.55) !important;
+  background: rgba(212, 175, 55, 0.08) !important;
+  color: var(--on-surface) !important;
+  border-radius: 12px !important;
 }
