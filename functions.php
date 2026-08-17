@@ -14,6 +14,11 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
         'hireaipeople'
     );
     $hireai_update_checker->setBranch('site-hireai');
+
+    // GitHub Token 认证 — 在 wp-config.php 中定义 HIREAI_GITHUB_TOKEN 常量即可
+    if ( defined('HIREAI_GITHUB_TOKEN') ) {
+        $hireai_update_checker->setAuthentication( HIREAI_GITHUB_TOKEN );
+    }
 }
 
 /**
