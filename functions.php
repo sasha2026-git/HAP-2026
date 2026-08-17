@@ -216,6 +216,14 @@ function hireai_field($name, $default = '', $post_id = false) {
 }
 
 /**
+ * lookbook_field — hireai_field 的别名（v1.1.0 兼容）
+ * page-ai-employees.php 使用此函数名
+ */
+function lookbook_field($name, $default = '', $post_id = false) {
+    return hireai_field($name, $default, $post_id);
+}
+
+/**
  * 取图片 URL，兼容 ACF image 三种 return_format（数组/ID/URL）
  */
 function site_image_url($name, $default = '', $post_id = false) {
