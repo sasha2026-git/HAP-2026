@@ -224,6 +224,63 @@ function lookbook_field($name, $default = '', $post_id = false) {
 }
 
 /**
+ * lookbook_img — hireai_default_image 的别名
+ */
+function lookbook_img($name = '') {
+    return hireai_default_image($name);
+}
+
+/**
+ * lookbook_fallback_employees — 返回兜底数字员工数据
+ */
+function lookbook_fallback_employees() {
+    $suffix = function_exists('hireai_lang_suffix') ? hireai_lang_suffix() : '';
+    $is_zh  = ('_zh' === $suffix);
+    return [
+        [
+            'kicker' => $is_zh ? '战略精英' : 'Strategic Elite',
+            'title'  => $is_zh ? '公共关系审计' : 'Public Relations Audit',
+            'desc'   => $is_zh ? '基于专有神经网络，对您的线上与线下形象做取证级分析，精准测绘全球市场的认知、情绪与影响力缺口。' : 'A forensic analysis of your digital and physical presence. Leveraging proprietary neural networks to map perception, sentiment, and influence gaps in global markets.',
+            'button' => $is_zh ? '咨询' : 'Inquire',
+            'image'  => 'service-1.png',
+            'url'    => home_url('/contact/'),
+        ],
+        [
+            'kicker' => $is_zh ? '知识产权资产' : 'Intellectual Asset',
+            'title'  => $is_zh ? 'IP 联名合作' : 'IP Collaboration',
+            'desc'   => $is_zh ? '让经典品牌与数字生命力交融，以传奇 IP 与生成式架构共创元宇宙内外的新收入曲线。' : 'Bridging heritage brands with digital longevity. We facilitate the synthesis of legendary IP and generative architecture to create new revenue streams.',
+            'button' => $is_zh ? '查看作品' : 'Explore Portfolio',
+            'image'  => 'service-2.png',
+            'url'    => home_url('/contact/'),
+        ],
+        [
+            'kicker' => $is_zh ? '视觉商业' : 'Visual Commerce',
+            'title'  => $is_zh ? '电商视觉场景' : 'E-commerce Sets',
+            'desc'   => $is_zh ? '超越实体影棚。我们用 AI 驱动照片级真实感，打造沉浸式高转化视觉场景。' : 'Beyond the physical studio. We architect immersive, high-conversion visual environments using AI-driven photorealism.',
+            'button' => $is_zh ? '进入展厅' : 'View Showroom',
+            'image'  => 'service-3.png',
+            'url'    => home_url('/contact/'),
+        ],
+        [
+            'kicker' => $is_zh ? '数字精品艺术' : 'Digital Fine Art',
+            'title'  => $is_zh ? 'AI 艺术图像设计' : 'AI Art Image Design',
+            'desc'   => $is_zh ? '策展崇高。艺术家以先进生成模型为笔，创作超越物理边界的定制图像。' : 'Curating the sublime. Our artists utilize advanced generative models as their brushes to create bespoke imagery.',
+            'button' => $is_zh ? '委托创作' : 'Commission',
+            'image'  => 'service-4.png',
+            'url'    => home_url('/contact/'),
+        ],
+        [
+            'kicker' => $is_zh ? '感官生活方式' : 'Sensory Lifestyle',
+            'title'  => $is_zh ? '酒单设计师' : 'Cocktail Menu Designer',
+            'desc'   => $is_zh ? '调酒学与分子 AI 的交汇。我们用神经网络分析风味谱系，设计招牌饮品身份。' : 'The intersection of mixology and molecular AI. We design signature drink identities by analyzing flavor profiles through neural networks.',
+            'button' => $is_zh ? '预约咨询' : 'Book Consultation',
+            'image'  => 'service-5.png',
+            'url'    => home_url('/contact/'),
+        ],
+    ];
+}
+
+/**
  * 取图片 URL，兼容 ACF image 三种 return_format（数组/ID/URL）
  */
 function site_image_url($name, $default = '', $post_id = false) {
