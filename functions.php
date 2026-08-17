@@ -14,6 +14,11 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
         'hireaipeople'
     );
     $hireai_update_checker->setBranch('site-hireai');
+
+    // GitHub Token 认证 — 避免 API 429 限流
+    if ( defined('HIREAI_GITHUB_TOKEN') ) {
+        $hireai_update_checker->setAuthentication( HIREAI_GITHUB_TOKEN );
+    }
 }
 
 /**
@@ -24,7 +29,7 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
  *       辅助函数回退 / 联系表单处理 / 分页
  */
 
-define('HIREAI_VERSION', '1.1.0');
+define('HIREAI_VERSION', '1.1.1');
 
 /* 每页数量（可通过常量覆盖） */
 define('HIREAI_EMPLOYEES_PER_PAGE', 5);
@@ -677,11 +682,11 @@ add_action('acf/init', function () {
         ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '数字工坊', 'en' => 'The Atelier'],
         ['name' => 'header_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '精英数字解决方案', 'en' => 'Elite Digital Solutions', 'extra' => ['rows' => 1]],
         ['name' => 'header_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '"AI 主导流程，人类交付成果。"', 'en' => '"AI-led process, Human-delivered results."', 'extra' => ['rows' => 2]],
-        ['name' => 'card_cta_text', 'label' => '卡片按钮文字（旧版备用）', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
-        ['name' => 'cta_heading', 'label' => 'CTA 标题', 'type' => 'text', 'zh' => '准备好重新定义人性了吗？', 'en' => 'Ready to Redefine Humanity?'],
-        ['name' => 'cta_sub', 'label' => 'CTA 副标题', 'type' => 'textarea', 'zh' => '加入运用 Aurelian AI 专属生态的领袖精英之列。', 'en' => "Join the exclusive echelon of leaders leveraging Aurelian AI's bespoke ecosystem.", 'extra' => ['rows' => 2]],
-        ['name' => 'cta_btn', 'label' => 'CTA 主按钮', 'type' => 'link', 'zh' => ['url' => '/contact/', 'title' => '开启旅程'], 'en' => ['url' => '/contact/', 'title' => 'Start The Journey']],
-        ['name' => 'cta_link', 'label' => 'CTA 文字链接', 'type' => 'link', 'zh' => ['url' => '/cases-insights/', 'title' => '下载品牌手册'], 'en' => ['url' => '/cases-insights/', 'title' => 'Download Brand Book']],
+        ['name' => 'card_cta_text', 'label' => '卡片按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
+        ['name' => 'cta_heading', 'label' => 'CTA · 标题', 'type' => 'text', 'zh' => '准备好重新定义人性了吗？', 'en' => 'Ready to Redefine Humanity?'],
+        ['name' => 'cta_sub', 'label' => 'CTA · 副标题', 'type' => 'textarea', 'zh' => '加入运用 Aurelian AI 专属生态的领袖精英之列。', 'en' => "Join the exclusive echelon of leaders leveraging Aurelian AI's bespoke ecosystem.", 'extra' => ['rows' => 2]],
+        ['name' => 'cta_btn', 'label' => 'CTA · 主按钮', 'type' => 'link', 'zh' => ['url' => '/contact/', 'title' => '开启旅程'], 'en' => ['url' => '/contact/', 'title' => 'Start The Journey']],
+        ['name' => 'cta_link', 'label' => 'CTA · 文字链接', 'type' => 'link', 'zh' => ['url' => '/cases-insights/', 'title' => '下载品牌手册'], 'en' => ['url' => '/cases-insights/', 'title' => 'Download Brand Book']],
     ], [
         [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-employees.php']],
     ]));
@@ -797,19 +802,48 @@ add_action('acf/init', function () {
     ]));
 
     /* ---- 8. 数字员工文章（category=ai-employee）---- */
-    acf_add_local_field_group($hireai_make_group('group_employee_meta', '数字员工 — 详情', [
+    $employee_meta_group = $hireai_make_group('group_employee_meta', '数字员工 — 详情', [
         ['name' => 'employee_role', 'label' => '职位', 'type' => 'text', 'zh' => '数字员工', 'en' => 'Digital Employee'],
         ['name' => 'employee_soul', 'label' => '灵魂（soul）', 'type' => 'textarea', 'zh' => '以逻辑为骨、以静谧为魂，被悉心培育出独一无二的心智与气质。', 'en' => 'Cultivated with a specific psychological profile—quiet, precise, and shaped by logic.', 'extra' => ['rows' => 4]],
         ['name' => 'employee_skill', 'label' => '技能（skill）', 'type' => 'textarea', 'zh' => '精通数据分析、市场策略与内容创作，可与您的团队无缝协作。', 'en' => 'Masters data analysis, market strategy, and content creation—ready to collaborate seamlessly with your team.', 'extra' => ['rows' => 4]],
         ['name' => 'employee_capabilities', 'label' => '能力（capabilities，每行一项）', 'type' => 'textarea', 'zh' => "深度市场调研\n实时数据分析\n多语言内容创作\n24×7 待命服务", 'en' => "Deep market research\nReal-time data analysis\nMultilingual content creation\n24×7 availability", 'extra' => ['rows' => 6]],
         ['name' => 'employee_cases_link', 'label' => '案例展示链接', 'type' => 'link', 'zh' => ['url' => '/category/cases/', 'title' => '查看相关案例'], 'en' => ['url' => '/category/cases/', 'title' => 'View Related Cases']],
-        ['name' => 'employee_kicker', 'label' => '栏目标签（kicker）', 'type' => 'text', 'zh' => '战略精英', 'en' => 'Strategic Elite'],
-        ['name' => 'employee_button_text', 'label' => '按钮文字', 'type' => 'text', 'zh' => '探索', 'en' => 'Inquire'],
-        ['name' => 'employee_button_style', 'label' => '按钮样式', 'type' => 'select', 'zh' => 'auto', 'en' => 'auto', 'extra' => ['choices' => ['auto' => '自动（交替）', 'filled' => '深色实底', 'outline' => '金色描边'], 'default_value' => 'auto']],
-        ['name' => 'employee_link', 'label' => '按钮/图片链接', 'type' => 'link', 'zh' => ['url' => '', 'title' => ''], 'en' => ['url' => '', 'title' => '']],
+        ['name' => 'employee_kicker', 'label' => 'Lookbook 标签（kicker）', 'type' => 'text', 'zh' => '', 'en' => ''],
+        ['name' => 'employee_button_text', 'label' => 'Lookbook 按钮文字', 'type' => 'text', 'zh' => '探索', 'en' => 'Inquire'],
     ], [
         [['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:ai-employee']],
-    ]));
+    ]);
+
+    $employee_meta_group['fields'][] = [
+        'key'   => 'group_employee_meta_lookbook_tab',
+        'label' => 'Lookbook 通用设置',
+        'type'  => 'tab',
+    ];
+
+    $employee_meta_group['fields'][] = [
+        'key'          => 'group_employee_meta_button_style',
+        'label'        => 'Lookbook 按钮样式',
+        'name'         => 'employee_button_style',
+        'type'         => 'select',
+        'instructions' => 'auto 按行索引自动交替：偶数行 filled，奇数行 outline。',
+        'choices'      => [
+            'auto'    => '自动（奇偶交替）',
+            'filled'  => '深色实底',
+            'outline' => '金色描边',
+        ],
+        'default_value' => 'auto',
+    ];
+
+    $employee_meta_group['fields'][] = [
+        'key'          => 'group_employee_meta_lookbook_link',
+        'label'        => 'Lookbook 详情链接',
+        'name'         => 'employee_link',
+        'type'         => 'link',
+        'return_format' => 'array',
+        'instructions' => '留空时默认使用文章链接。',
+    ];
+
+    acf_add_local_field_group($employee_meta_group);
 
     /* ---- 9. FAQ 文章（category=faq）分组字段 ---- */
     acf_add_local_field_group([
@@ -866,3 +900,4 @@ add_action('acf/init', function () {
         [['param' => 'options_page', 'operator' => '==', 'value' => 'hireai-settings']],
     ]));
 });
+
