@@ -29,7 +29,10 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
  *       辅助函数回退 / 联系表单处理 / 分页
  */
 
-define('HIREAI_VERSION', '1.1.0');
+// 版本号自动从 style.css Header 读取，每次更新 style.css 的 Version 字段即可
+if (!defined('HIREAI_VERSION')) {
+    define('HIREAI_VERSION', wp_get_theme()->get('Version'));
+}
 
 /* 每页数量（可通过常量覆盖） */
 define('HIREAI_EMPLOYEES_PER_PAGE', 5);
@@ -413,7 +416,7 @@ function hireai_contact_page_id() {
  * ---------------------------------------------------------------------- */
 add_action('wp_enqueue_scripts', function () {
     // 父主题样式（只加载一次）
-    wp_enqueue_style('parent-style', get_template_directory_uri() . '/style.css');
+    wp_enqueue_style('parent-style', get_template_directory_uri() . '/style.css', [], HIREAI_VERSION);
 
     // 子主题样式
     wp_enqueue_style(
