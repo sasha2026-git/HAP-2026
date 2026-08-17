@@ -2689,7 +2689,6 @@ button[aria-label*="menu" i][aria-expanded] {
 .lb-row--reverse:hover .lb-row__border {
   transform: translate(-24px, 24px);
 }
-}
 
 /* Rows 3,7,11… (odd rows, negative y) */
 .lb-row:nth-child(4n+3) .lb-row__border {
@@ -2895,7 +2894,6 @@ button[aria-label*="menu" i][aria-expanded] {
   .lb-row--reverse:hover .lb-row__border { transform: translate(12px, 12px); }
   .lb-cta { padding: 80px 20px; }
   .lb-btn--ghost { margin-top: 8px; }
-}
 }
 
 /* Rows 3,7,11… (odd rows, negative y) */
