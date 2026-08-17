@@ -2689,6 +2689,23 @@ button[aria-label*="menu" i][aria-expanded] {
 .lb-row--reverse:hover .lb-row__border {
   transform: translate(-24px, 24px);
 }
+}
+
+/* Rows 3,7,11… (odd rows, negative y) */
+.lb-row:nth-child(4n+3) .lb-row__border {
+  transform: translate(16px, -16px);
+}
+.lb-row:nth-child(4n+3):hover .lb-row__border {
+  transform: translate(24px, -24px);
+}
+
+/* Rows 4,8,12… (even rows, negative y) */
+.lb-row:nth-child(4n+4) .lb-row__border {
+  transform: translate(-16px, -16px);
+}
+.lb-row:nth-child(4n+4):hover .lb-row__border {
+  transform: translate(-24px, -24px);
+}
 
 /* 图片 */
 .lb-row__image {
@@ -2714,7 +2731,7 @@ button[aria-label*="menu" i][aria-expanded] {
   font-family: 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--lb-secondary-dim);
   margin-bottom: 16px;
@@ -2795,6 +2812,7 @@ button[aria-label*="menu" i][aria-expanded] {
   margin-inline: auto;
 }
 .lb-cta__heading {
+  font-style: italic;
   font-family: 'Playfair Display', Georgia, serif;
   font-size: clamp(32px, 4vw, 48px);
   font-weight: 600;
@@ -2816,6 +2834,13 @@ button[aria-label*="menu" i][aria-expanded] {
   flex-direction: column;
   align-items: center;
   gap: 24px;
+}
+
+@media (min-width: 769px) {
+  .lb-cta__actions {
+    flex-direction: row;
+    justify-content: center;
+  }
 }
 
 /* ---------- 分页 ---------- */
@@ -2870,6 +2895,23 @@ button[aria-label*="menu" i][aria-expanded] {
   .lb-row--reverse:hover .lb-row__border { transform: translate(12px, 12px); }
   .lb-cta { padding: 80px 20px; }
   .lb-btn--ghost { margin-top: 8px; }
+}
+}
+
+/* Rows 3,7,11… (odd rows, negative y) */
+.lb-row:nth-child(4n+3) .lb-row__border {
+  transform: translate(16px, -16px);
+}
+.lb-row:nth-child(4n+3):hover .lb-row__border {
+  transform: translate(24px, -24px);
+}
+
+/* Rows 4,8,12… (even rows, negative y) */
+.lb-row:nth-child(4n+4) .lb-row__border {
+  transform: translate(-16px, -16px);
+}
+.lb-row:nth-child(4n+4):hover .lb-row__border {
+  transform: translate(-24px, -24px);
 }
 @media (max-width: 480px) {
   .lb-container { padding-inline: 16px; }
