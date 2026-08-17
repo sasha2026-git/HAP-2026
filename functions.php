@@ -242,7 +242,7 @@ function lookbook_fallback_employees() {
             'title'  => $is_zh ? '公共关系审计' : 'Public Relations Audit',
             'desc'   => $is_zh ? '基于专有神经网络，对您的线上与线下形象做取证级分析，精准测绘全球市场的认知、情绪与影响力缺口。' : 'A forensic analysis of your digital and physical presence. Leveraging proprietary neural networks to map perception, sentiment, and influence gaps in global markets.',
             'button' => $is_zh ? '咨询' : 'Inquire',
-            'image'  => 'service-1.png',
+            'image'  => 'lookbook/service-1.png',
             'url'    => home_url('/contact/'),
         ],
         [
@@ -250,7 +250,7 @@ function lookbook_fallback_employees() {
             'title'  => $is_zh ? 'IP 联名合作' : 'IP Collaboration',
             'desc'   => $is_zh ? '让经典品牌与数字生命力交融，以传奇 IP 与生成式架构共创元宇宙内外的新收入曲线。' : 'Bridging heritage brands with digital longevity. We facilitate the synthesis of legendary IP and generative architecture to create new revenue streams.',
             'button' => $is_zh ? '查看作品' : 'Explore Portfolio',
-            'image'  => 'service-2.png',
+            'image'  => 'lookbook/service-2.png',
             'url'    => home_url('/contact/'),
         ],
         [
@@ -258,7 +258,7 @@ function lookbook_fallback_employees() {
             'title'  => $is_zh ? '电商视觉场景' : 'E-commerce Sets',
             'desc'   => $is_zh ? '超越实体影棚。我们用 AI 驱动照片级真实感，打造沉浸式高转化视觉场景。' : 'Beyond the physical studio. We architect immersive, high-conversion visual environments using AI-driven photorealism.',
             'button' => $is_zh ? '进入展厅' : 'View Showroom',
-            'image'  => 'service-3.png',
+            'image'  => 'lookbook/service-3.png',
             'url'    => home_url('/contact/'),
         ],
         [
@@ -266,7 +266,7 @@ function lookbook_fallback_employees() {
             'title'  => $is_zh ? 'AI 艺术图像设计' : 'AI Art Image Design',
             'desc'   => $is_zh ? '策展崇高。艺术家以先进生成模型为笔，创作超越物理边界的定制图像。' : 'Curating the sublime. Our artists utilize advanced generative models as their brushes to create bespoke imagery.',
             'button' => $is_zh ? '委托创作' : 'Commission',
-            'image'  => 'service-4.png',
+            'image'  => 'lookbook/service-4.png',
             'url'    => home_url('/contact/'),
         ],
         [
@@ -274,7 +274,7 @@ function lookbook_fallback_employees() {
             'title'  => $is_zh ? '酒单设计师' : 'Cocktail Menu Designer',
             'desc'   => $is_zh ? '调酒学与分子 AI 的交汇。我们用神经网络分析风味谱系，设计招牌饮品身份。' : 'The intersection of mixology and molecular AI. We design signature drink identities by analyzing flavor profiles through neural networks.',
             'button' => $is_zh ? '预约咨询' : 'Book Consultation',
-            'image'  => 'service-5.png',
+            'image'  => 'lookbook/service-5.png',
             'url'    => home_url('/contact/'),
         ],
     ];
@@ -341,16 +341,28 @@ function hireai_link($name, $default_url = '#', $default_title = '', $post_id = 
  * 本地默认图 URL：存在时返回 assets/img/defaults/ 下的素材，不存在返回空串。
  */
 function hireai_default_image($name = '') {
+    if ($name === '') {
+        return '';
+    }
+    $base = get_stylesheet_directory() . '/assets/img/';
+    $uri  = get_stylesheet_directory_uri() . '/assets/img/';
+    // 含斜杠时视为 assets/img/ 下的相对路径，直接查找（不做 sanitize 以保留目录分隔符）
+    if (strpos($name, '/') !== false) {
+        $path = $base . $name;
+        if (file_exists($path)) {
+            return $uri . $name;
+        }
+    }
+    // 裸文件名：sanitize 后依次查 lookbook/、defaults/ 子目录
     $name = sanitize_file_name($name);
     if ($name === '') {
         return '';
     }
-    // 优先查 lookbook/ 目录，再查 defaults/
     $dirs = ['lookbook', 'defaults'];
     foreach ($dirs as $dir) {
-        $path = get_stylesheet_directory() . '/assets/img/' . $dir . '/' . $name;
+        $path = $base . $dir . '/' . $name;
         if (file_exists($path)) {
-            return get_stylesheet_directory_uri() . '/assets/img/' . $dir . '/' . $name;
+            return $uri . $dir . '/' . $name;
         }
     }
     return '';
