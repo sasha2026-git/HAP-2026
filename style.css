@@ -3,7 +3,7 @@ Theme Name:   HireAIPeople Child
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 1.2.4
+Version: 1.2.5
 Text Domain:  hireaipeople
 */
 
@@ -2620,9 +2620,9 @@ button[aria-label*="menu" i][aria-expanded] {
 .lb-main { background: var(--lb-bg); overflow-x: hidden; }
 .lb-container {
   width: 100%;
-  max-width: min(100% - 40px, 1440px);
+  max-width: min(100% - 20px, 1600px);
   margin-inline: auto;
-  padding-inline: 80px;
+  padding-inline: clamp(20px, 4vw, 60px);
   padding-bottom: 120px;
   display: flex;
   flex-direction: column;
@@ -2632,9 +2632,9 @@ button[aria-label*="menu" i][aria-expanded] {
 
 /* ---------- Hero ---------- */
 .lb-hero {
-  max-width: min(100% - 40px, 1440px);
+  max-width: min(100% - 20px, 1600px);
   margin-inline: auto;
-  padding: clamp(72px, 9vw, 96px) 80px 0;
+  padding: clamp(72px, 9vw, 96px) clamp(20px, 4vw, 60px) 0;
   text-align: center;
   margin-bottom: 120px;
 }
@@ -2837,7 +2837,7 @@ button[aria-label*="menu" i][aria-expanded] {
 .lb-cta {
   background: var(--lb-surface-low);
   border-top: 1px solid rgba(196, 199, 199, 0.3);
-  padding: 120px 80px;
+  padding: 120px clamp(20px, 4vw, 60px);
   text-align: center;
 }
 .lb-cta__inner {
