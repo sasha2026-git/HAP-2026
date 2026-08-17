@@ -345,9 +345,13 @@ function hireai_default_image($name = '') {
     if ($name === '') {
         return '';
     }
-    $path = get_stylesheet_directory() . '/assets/img/defaults/' . $name;
-    if (file_exists($path)) {
-        return get_stylesheet_directory_uri() . '/assets/img/defaults/' . $name;
+    // 优先查 lookbook/ 目录，再查 defaults/
+    $dirs = ['lookbook', 'defaults'];
+    foreach ($dirs as $dir) {
+        $path = get_stylesheet_directory() . '/assets/img/' . $dir . '/' . $name;
+        if (file_exists($path)) {
+            return get_stylesheet_directory_uri() . '/assets/img/' . $dir . '/' . $name;
+        }
     }
     return '';
 }
