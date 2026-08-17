@@ -13,7 +13,7 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
         get_stylesheet_directory() . '/style.css',
         'hireaipeople'
     );
-    $hireai_update_checker->setBranch('site-hireai');
+    $hireai_update_checker->setBranch('main');
 
     // GitHub Token 认证 — 在 wp-config.php 中定义 HIREAI_GITHUB_TOKEN 常量即可
     if ( defined('HIREAI_GITHUB_TOKEN') ) {
