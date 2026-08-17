@@ -13,14 +13,12 @@ $url   = ! empty( $item['url'] ) ? $item['url'] : '#';
 <article class="lookbook-row <?php echo ( 0 === $index % 2 ) ? 'lookbook-row--reverse' : ''; ?>" data-lb-reveal>
 	<div class="lookbook-row__media">
 		<div class="lookbook-row__frame" aria-hidden="true"></div>
-		<div class="lookbook-row__image-wrap">
-			<img class="lookbook-row__image" src="<?php echo esc_url( $img ); ?>" alt="<?php echo esc_attr( $item['title'] ); ?>" loading="lazy" />
-		</div>
+		<img class="lookbook-row__image" src="<?php echo esc_url( $img ); ?>" alt="<?php echo esc_attr( $item['title'] ); ?>" loading="lazy" />
 	</div>
-	<div class="lookbook-row__copy">
-		<p class="lookbook-row__label"><span class="lookbook-row__num"><?php echo esc_html( str_pad( (string) $index, 2, '0', STR_PAD_LEFT ) ); ?></span><span class="lookbook-row__slash" aria-hidden="true"> / </span><span class="lookbook-row__kicker"><?php echo esc_html( $item['kicker'] ); ?></span></p>
+	<div class="lookbook-row__content">
+		<p class="lookbook-row__eyebrow"><span class="lookbook-row__num"><?php echo esc_html( str_pad( (string) $index, 2, '0', STR_PAD_LEFT ) ); ?></span><span class="lookbook-row__separator" aria-hidden="true"> / </span><span class="lookbook-row__kicker"><?php echo esc_html( $item['kicker'] ); ?></span></p>
 		<h2 class="lookbook-row__title"><?php echo esc_html( $item['title'] ); ?></h2>
-		<p class="lookbook-row__desc"><?php echo esc_html( $item['desc'] ); ?></p>
-		<a class="lookbook-btn lookbook-btn--<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $item['button'] ); ?></a>
+		<p class="lookbook-row__description"><?php echo esc_html( $item['desc'] ); ?></p>
+		<a class="lookbook-row__button <?php echo esc_attr( $style === 'outline' ? 'lookbook-row__button--outline' : '' ); ?>" href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $item['button'] ); ?></a>
 	</div>
 </article>

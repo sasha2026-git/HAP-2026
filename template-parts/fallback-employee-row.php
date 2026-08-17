@@ -8,7 +8,7 @@ $button_style = isset($args['button_style']) ? $args['button_style'] : 'filled';
 $link         = isset($args['link']) ? $args['link'] : home_url('/');
 $image        = isset($args['image']) ? $args['image'] : '';
 $reverse      = !empty($args['reverse']);
-$style_class  = $button_style === 'outline' ? 'lookbook-chip--outline' : 'lookbook-chip--filled';
+$style_class  = $button_style === 'outline' ? 'lookbook-row__button--outline' : 'lookbook-row__button';
 ?>
 <article class="lookbook-row<?php echo $reverse ? ' lookbook-row--reverse' : ''; ?>" data-reveal>
 	<div class="lookbook-row__media">
@@ -18,9 +18,9 @@ $style_class  = $button_style === 'outline' ? 'lookbook-chip--outline' : 'lookbo
 		</a>
 	</div>
 	<div class="lookbook-row__content">
-		<p class="lookbook-row__kicker"><span class="lookbook-row__index"><?php echo esc_html(str_pad($index, 2, '0', STR_PAD_LEFT)); ?></span><span class="lookbook-row__divider" aria-hidden="true">/</span><?php echo esc_html($kicker); ?></p>
+		<p class="lookbook-row__eyebrow"><span class="lookbook-row__num"><?php echo esc_html(str_pad($index, 2, '0', STR_PAD_LEFT)); ?></span><span class="lookbook-row__separator" aria-hidden="true">/</span><?php echo esc_html($kicker); ?></p>
 		<h2 class="lookbook-row__title"><a href="<?php echo esc_url($link); ?>"><?php echo esc_html($title); ?></a></h2>
-		<p class="lookbook-row__text"><?php echo esc_html($text); ?></p>
-		<a class="lookbook-chip <?php echo esc_attr($style_class); ?>" href="<?php echo esc_url($link); ?>"><?php echo esc_html($button_text); ?> <?php echo hireai_svg('east', 16); ?></a>
+		<p class="lookbook-row__description"><?php echo esc_html($text); ?></p>
+		<a class="lookbook-row__button <?php echo esc_attr($style_class); ?>" href="<?php echo esc_url($link); ?>"><?php echo esc_html($button_text); ?> <?php echo hireai_svg('east', 16); ?></a>
 	</div>
 </article>
