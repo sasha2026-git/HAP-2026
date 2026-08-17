@@ -3,7 +3,7 @@ Theme Name:   HireAIPeople Child
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 1.2.5
+Version: 1.2.6
 Text Domain:  hireaipeople
 */
 
@@ -2617,26 +2617,22 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 
 /* ---------- 全局容器 ---------- */
-.lb-main { background: var(--lb-bg); overflow-x: hidden; }
+.lb-main { background: var(--lb-bg); overflow-x: hidden; width: 100%; }
 .lb-container {
   width: 100%;
-  max-width: min(100% - 20px, 1600px);
-  margin-inline: auto;
-  padding-inline: clamp(20px, 4vw, 60px);
-  padding-bottom: 120px;
+  padding-inline: clamp(16px, 5vw, 80px);
+  padding-bottom: clamp(64px, 8vw, 120px);
   display: flex;
   flex-direction: column;
   min-width: 0;
-  gap: 120px;
+  gap: clamp(64px, 8vw, 120px);
 }
 
 /* ---------- Hero ---------- */
 .lb-hero {
-  max-width: min(100% - 20px, 1600px);
-  margin-inline: auto;
-  padding: clamp(72px, 9vw, 96px) clamp(20px, 4vw, 60px) 0;
+  padding: clamp(48px, 9vw, 96px) clamp(16px, 5vw, 80px) 0;
   text-align: center;
-  margin-bottom: 120px;
+  margin-bottom: clamp(64px, 8vw, 120px);
 }
 .lb-hero__kicker {
   font-family: 'Inter', sans-serif;
@@ -2688,7 +2684,7 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 .lb-row__text {
   grid-column: 8 / span 5;
-  padding-left: 48px;
+  padding-left: clamp(24px, 3vw, 48px);
 }
 
 /* 偶数行：文左图右 */
@@ -2700,7 +2696,7 @@ button[aria-label*="menu" i][aria-expanded] {
   grid-column: 1 / span 5;
   order: 1;
   padding-left: 0;
-  padding-right: 48px;
+  padding-right: clamp(24px, 3vw, 48px);
 }
 
 /* 图片装饰边框 */
@@ -2837,7 +2833,7 @@ button[aria-label*="menu" i][aria-expanded] {
 .lb-cta {
   background: var(--lb-surface-low);
   border-top: 1px solid rgba(196, 199, 199, 0.3);
-  padding: 120px clamp(20px, 4vw, 60px);
+  padding: clamp(64px, 8vw, 120px) clamp(16px, 5vw, 80px);
   text-align: center;
 }
 .lb-cta__inner {
@@ -2906,14 +2902,7 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 
 /* ---------- 响应式 ---------- */
-@media (max-width: 1024px) {
-  .lb-container { padding-inline: 40px; gap: 80px; }
-  .lb-hero { padding-inline: 40px; }
-  .lb-cta { padding: 120px 40px; }
-}
 @media (max-width: 768px) {
-  .lb-container { padding-inline: 20px; gap: 64px; padding-bottom: 80px; }
-  .lb-hero { padding-inline: 20px; margin-bottom: 80px; }
   .lb-row { grid-template-columns: 1fr; gap: 32px; }
   .lb-row__media,
   .lb-row--reverse .lb-row__media { grid-column: 1 / -1; order: 1; }
@@ -2927,11 +2916,5 @@ button[aria-label*="menu" i][aria-expanded] {
   .lb-row--reverse .lb-row__border { transform: translate(8px, 8px); }
   .lb-row:hover .lb-row__border { transform: translate(12px, 12px); }
   .lb-row--reverse:hover .lb-row__border { transform: translate(12px, 12px); }
-  .lb-cta { padding: 80px 20px; }
   .lb-btn--ghost { margin-top: 8px; }
-}
-@media (max-width: 480px) {
-  .lb-container { padding-inline: 16px; }
-  .lb-hero { padding-inline: 16px; }
-  .lb-cta { padding: 64px 16px; }
 }
