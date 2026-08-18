@@ -6,8 +6,8 @@ AURELIAN 品牌 WordPress 插件集合。所有插件使用 ACF 可视化编辑 
 
 | 插件 | 短码 | 状态 |
 |------|------|------|
-| AURELIAN FAQ | `[aurelian_faq]` | ✅ v3.0.0 |
-| AURELIAN Blog (案例&观点) | `[aurelian_blog]` | ✅ v2.0.0 |
+| AURELIAN FAQ | `[aurelian_faq]` | ✅ v3.0.1 |
+| AURELIAN Blog (案例&观点) | `[aurelian_blog]` | ✅ v2.1.1 |
 
 ## 开发流程
 

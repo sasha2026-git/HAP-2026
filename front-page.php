@@ -147,11 +147,11 @@ $solutions = [
     background: linear-gradient(to bottom, rgba(250,249,249,0) 40%, rgba(250,249,249,0.9) 80%, rgba(250,249,249,1) 100%);
 }
 .hireai-fp-hero__content {
-    position: relative; z-index: 10; width: 100%; padding: 40vh 80px 20vh;
+    position: relative; z-index: 10; width: 100%; padding: 30vh 0 15vh;
     max-width: 1440px; margin: 0 auto;
 }
 @media (max-width: 768px) {
-    .hireai-fp-hero__content { padding: 40vh 20px 20vh; }
+    .hireai-fp-hero__content { padding: 30vh 20px 15vh; }
 }
 .hireai-fp-hero__inner { max-width: 48rem; }
 .hireai-fp-hero__kicker {
@@ -159,11 +159,11 @@ $solutions = [
     font-weight: 600; text-transform: uppercase; color: #775a19; display: inline-block; margin-bottom: 24px;
 }
 .hireai-fp-hero__title {
-    font-family: 'Playfair Display', serif; font-size: var(--fs-display); line-height: 1.05;
+    font-family: 'Playfair Display', serif; font-size: var(--fs-h2); line-height: 1.05;
     letter-spacing: -0.02em; font-weight: 700; color: #000; margin-bottom: 32px;
 }
 @media (max-width: 768px) {
-    .hireai-fp-hero__title { font-size: var(--fs-h1); }
+    .hireai-fp-hero__title { font-size: var(--fs-h2); }
 }
 .hireai-fp-hero__title em { font-style: italic; font-weight: normal; }
 .hireai-fp-hero__subtitle {

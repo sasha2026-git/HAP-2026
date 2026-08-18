@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/sasha2026-git/HireAIPeople
  * GitHub Plugin URI: sasha2026-git/HireAIPeople
  * Description: 案例&观点 (Blog & Case Studies) — 3×2 Case Study grid + Intelligence Journal + Newsletter + Footer. Design system v2: Aurelian Digital Excellence.
- * Version:     2.1.0
+ * Version:     2.1.1
  * Author:      Aurelian Digital Excellence
  * Requires Plugins: advanced-custom-fields
  * Text Domain: aurelian-blog
@@ -29,6 +29,7 @@ $ablog_update_checker = PucFactory::buildUpdateChecker(
 );
 $ablog_update_checker->setDirectoryName('aurelian-blog-plugin');
 
+/* ============================================================
    0. ACF Dependency Check
    ============================================================ */
 add_action('admin_notices', 'ahai_blog_check_acf');
@@ -751,7 +752,7 @@ function ahai_blog_shared_assets() {
   background: #000; color: #fff;
   padding: 8px 16px; z-index: 9999;
   border-radius: 0 0 4px 0;
-  font-size: 14px; font-weight: 600;
+  font-size: var(--fs-body, 14px); font-weight: 600;
   transition: top 0.2s;
 }
 #aurelian-blog .skip-link:focus {
@@ -771,10 +772,10 @@ function ahai_blog_shared_assets() {
     grid-template-columns: 1fr !important;
   }
   #aurelian-blog .ahai-hero-title {
-    font-size: 42px !important;
+    font-size: var(--fs-h1, 42px);
   }
   #aurelian-blog .ahai-section-title {
-    font-size: 32px !important;
+    font-size: var(--fs-h2, 32px);
   }
   #aurelian-blog .ahai-nl-form {
     flex-direction: column !important;
@@ -876,7 +877,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
         </div>
         <?php endif; ?>
         <div style="position:relative;z-index:1;">
-        <span style="font-family:Inter;font-size:14px;font-weight:600;letter-spacing:0.3em;text-transform:uppercase;color:#775a19;display:block;margin-bottom:24px;">
+        <span style="font-family:Inter;font-size: var(--fs-label, 14px);font-weight:600;letter-spacing:0.3em;text-transform:uppercase;color:#775a19;display:block;margin-bottom:24px;">
             <?php echo esc_html($hero_badge); ?>
         </span>
 
@@ -886,7 +887,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
             <span style="font-style:italic;"><?php echo esc_html($hero_title_italic); ?></span>
         </h1>
 
-        <p style="font-family:Inter;font-size:18px;font-weight:400;line-height:1.6;color:#444748;max-width:640px;margin:0 auto;">
+        <p style="font-family:Inter;font-size: var(--fs-body-lg, 18px);font-weight:400;line-height:1.6;color:#444748;max-width:640px;margin:0 auto;">
             <?php echo esc_html($hero_subtitle); ?>
         </p>
         </div><!-- /z-index wrapper -->
@@ -908,7 +909,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                 <div style="height:4px;width:96px;background:#775a19;" aria-hidden="true"></div>
             </div>
             <a href="<?php echo esc_url($cs_dir_url); ?>"
-               style="font-family:Inter;font-size:14px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#444748;border-bottom:1px solid #c4c7c7;padding-bottom:8px;transition:color 0.3s ease;"
+               style="font-family:Inter;font-size: var(--fs-label, 14px);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#444748;border-bottom:1px solid #c4c7c7;padding-bottom:8px;transition:color 0.3s ease;"
                onmouseover="this.style.color='#775a19';this.style.borderColor='#775a19';"
                onmouseout="this.style.color='#444748';this.style.borderColor='#c4c7c7';"
             ><?php echo esc_html($cs_dir_label); ?></a>
@@ -934,7 +935,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                             <img class="ahai-cs-img" src="<?php echo esc_url($cs_image); ?>" alt="" aria-hidden="true"
                                  style="width:100%;height:100%;object-fit:cover;display:block;">
                         <?php else: ?>
-                            <div style="width:100%;height:100%;background:#e2e2e2;display:flex;align-items:center;justify-content:center;color:#858383;font-family:Inter;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;"
+                            <div style="width:100%;height:100%;background:#e2e2e2;display:flex;align-items:center;justify-content:center;color:#858383;font-family:Inter;font-size: var(--fs-label, 12px);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;"
                                  aria-hidden="true"><?php esc_html_e('Case Image', 'aurelian-blog'); ?></div>
                         <?php endif; ?>
                     </div>
@@ -943,11 +944,11 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                     <div style="padding:48px;">
                         <!-- Industry Tag + Metric -->
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
-                            <span style="font-family:Inter;font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:#775a19;border:1px solid #775a19;padding:4px 16px;border-radius:9999px;">
+                            <span style="font-family:Inter;font-size: var(--fs-label, 12px);font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:#775a19;border:1px solid #775a19;padding:4px 16px;border-radius:9999px;">
                                 <?php echo esc_html($cs_industry); ?>
                             </span>
                             <?php if ($cs_metric): ?>
-                            <span class="burnished-gold-text" style="font-family:'Playfair Display',serif;font-size:32px;font-weight:500;">
+                            <span class="burnished-gold-text" style="font-family:'Playfair Display',serif;font-size: var(--fs-h2, 32px);font-weight:500;">
                                 <?php echo esc_html($cs_metric); ?>
                             </span>
                             <?php endif; ?>
@@ -955,20 +956,20 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
 
                         <!-- Title -->
                         <h3 id="cs-title-<?php echo esc_attr(sanitize_title($cs_title)); ?>"
-                            style="font-family:'Playfair Display',serif;font-size:32px;font-weight:500;margin:0 0 16px;line-height:1.3;color:#1a1c1c;">
+                            style="font-family:'Playfair Display',serif;font-size: var(--fs-h3, 32px);font-weight:500;margin:0 0 16px;line-height:1.3;color:#1a1c1c;">
                             <?php echo esc_html($cs_title); ?>
                         </h3>
 
                         <!-- Description -->
-                        <p style="font-family:Inter;font-size:16px;font-weight:400;line-height:1.6;color:#444748;margin:0 0 32px;">
+                        <p style="font-family:Inter;font-size: var(--fs-body-lg, 16px);font-weight:400;line-height:1.6;color:#444748;margin:0 0 32px;">
                             <?php echo esc_html($cs_desc); ?>
                         </p>
 
                         <!-- Editorial Line + Read More -->
                         <div class="editorial-line" style="width:100%;" aria-hidden="true"></div>
-                        <div style="margin-top:24px;display:flex;align-items:center;gap:8px;font-family:Inter;font-size:14px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#1a1c1c;">
+                        <div style="margin-top:24px;display:flex;align-items:center;gap:8px;font-family:Inter;font-size: var(--fs-label, 14px);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#1a1c1c;">
                             <?php esc_html_e('Read Case Study', 'aurelian-blog'); ?>
-                            <span class="material-symbols-outlined" style="font-size:16px;" aria-hidden="true">arrow_forward</span>
+                            <span class="material-symbols-outlined" style="font-size: var(--fs-body-lg, 16px);" aria-hidden="true">arrow_forward</span>
                         </div>
                     </div>
                 </a>
@@ -1011,7 +1012,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                     style="font-family:'Playfair Display',serif;font-size:<?php echo esc_attr($section_title_size); ?>px;font-weight:600;margin:0 0 16px;line-height:1.2;color:#1a1c1c;">
                     <?php echo esc_html($ja_section_title); ?>
                 </h2>
-                <p style="font-family:Inter;font-size:14px;font-weight:600;letter-spacing:0.4em;text-transform:uppercase;color:#444748;margin:0;">
+                <p style="font-family:Inter;font-size: var(--fs-label, 14px);font-weight:600;letter-spacing:0.4em;text-transform:uppercase;color:#444748;margin:0;">
                     <?php echo esc_html($ja_section_subtitle); ?>
                 </p>
             </div>
@@ -1038,7 +1039,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                                     <img class="ahai-ja-img-wrap" src="<?php echo esc_url($ja_image); ?>" alt="" aria-hidden="true"
                                          style="width:100%;height:100%;object-fit:cover;display:block;">
                                 <?php else: ?>
-                                    <div class="ahai-ja-img-wrap" style="width:100%;height:100%;background:#e2e2e2;display:flex;align-items:center;justify-content:center;color:#858383;font-family:Inter;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;"
+                                    <div class="ahai-ja-img-wrap" style="width:100%;height:100%;background:#e2e2e2;display:flex;align-items:center;justify-content:center;color:#858383;font-family:Inter;font-size: var(--fs-label, 12px);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;"
                                          aria-hidden="true"><?php esc_html_e('Journal Image', 'aurelian-blog'); ?></div>
                                 <?php endif; ?>
                             </div>
@@ -1046,25 +1047,25 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                         </div>
 
                         <!-- Category Tag -->
-                        <span style="font-family:Inter;font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:#775a19;display:block;margin-bottom:16px;">
+                        <span style="font-family:Inter;font-size: var(--fs-label, 12px);font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:#775a19;display:block;margin-bottom:16px;">
                             <?php echo esc_html($ja_category); ?>
                         </span>
 
                         <!-- Title (with optional italic) -->
                         <h4 id="ja-title-<?php echo esc_attr(sanitize_title($ja_title)); ?>"
-                            style="font-family:'Playfair Display',serif;font-size:32px;font-weight:500;margin:0 0 16px;line-height:1.3;color:#1a1c1c;<?php echo $ja_is_italic ? 'font-style:italic;' : ''; ?>">
+                            style="font-family:'Playfair Display',serif;font-size: var(--fs-h3, 32px);font-weight:500;margin:0 0 16px;line-height:1.3;color:#1a1c1c;<?php echo $ja_is_italic ? 'font-style:italic;' : ''; ?>">
                             <?php echo esc_html($ja_title); ?>
                         </h4>
 
                         <!-- Description -->
-                        <p style="font-family:Inter;font-size:16px;font-weight:400;line-height:1.6;color:#444748;margin:0 0 24px;">
+                        <p style="font-family:Inter;font-size: var(--fs-body-lg, 16px);font-weight:400;line-height:1.6;color:#444748;margin:0 0 24px;">
                             <?php echo esc_html($ja_desc); ?>
                         </p>
 
                         <!-- Read Time Line -->
                         <div style="display:flex;align-items:center;gap:16px;">
                             <div style="width:32px;height:1px;background:#747878;" aria-hidden="true"></div>
-                            <span style="font-family:Inter;font-size:12px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:#444748;">
+                            <span style="font-family:Inter;font-size: var(--fs-label, 12px);font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:#444748;">
                                 <?php echo esc_html($ja_readtime); ?>
                             </span>
                         </div>
@@ -1081,7 +1082,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                         aria-label="<?php echo esc_attr__('Previous articles', 'aurelian-blog'); ?>">
                     <span class="material-symbols-outlined" aria-hidden="true">west</span>
                 </button>
-                <div style="display:flex;gap:24px;font-family:Inter;font-size:14px;font-weight:600;letter-spacing:0.1em;">
+                <div style="display:flex;gap:24px;font-family:Inter;font-size: var(--fs-body, 14px);font-weight:600;letter-spacing:0.1em;">
                     <span style="color:#775a19;border-bottom:2px solid #775a19;padding-bottom:4px;">01</span>
                     <span style="color:rgba(68,71,72,0.4);cursor:pointer;" onmouseover="this.style.color='#775a19';" onmouseout="this.style.color='rgba(68,71,72,0.4)';">02</span>
                     <span style="color:rgba(68,71,72,0.4);cursor:pointer;" onmouseover="this.style.color='#775a19';" onmouseout="this.style.color='rgba(68,71,72,0.4)';">03</span>
@@ -1107,10 +1108,10 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
             <div style="position:absolute;top:0;right:0;width:128px;height:128px;background:rgba(119,90,25,0.1);border-radius:9999px;filter:blur(48px);transform:translate(32px,-32px);" aria-hidden="true"></div>
 
             <h3 id="ahai-nl-heading"
-                style="font-family:'Playfair Display',serif;font-size:48px;font-weight:600;margin:0 0 16px;color:#1a1c1c;position:relative;z-index:1;">
+                style="font-family:'Playfair Display',serif;font-size: var(--fs-h2, 48px);font-weight:600;margin:0 0 16px;color:#1a1c1c;position:relative;z-index:1;">
                 <?php echo esc_html($nl_title); ?>
             </h3>
-            <p style="font-family:Inter;font-size:18px;font-weight:400;line-height:1.6;color:#444748;margin:0 0 48px;position:relative;z-index:1;">
+            <p style="font-family:Inter;font-size: var(--fs-body-lg, 18px);font-weight:400;line-height:1.6;color:#444748;margin:0 0 48px;position:relative;z-index:1;">
                 <?php echo esc_html($nl_desc); ?>
             </p>
 
@@ -1129,18 +1130,18 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                         type="email"
                         placeholder="<?php echo esc_attr($nl_placeholder); ?>"
                         required
-                        style="width:100%;background:transparent;border:none;border-bottom:1px solid #c4c7c7;padding:16px 0;font-family:Inter;font-size:14px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;outline:none;color:#1a1c1c;transition:border-color 0.3s;"
+                        style="width:100%;background:transparent;border:none;border-bottom:1px solid #c4c7c7;padding:16px 0;font-family:Inter;font-size: var(--fs-body, 14px);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;outline:none;color:#1a1c1c;transition:border-color 0.3s;"
                     >
                 </div>
                 <button
                     type="submit"
-                    style="background:#1a1c1c;color:#fff;padding:16px 48px;border-radius:9999px;border:none;font-family:Inter;font-size:14px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 24px rgba(0,0,0,0.15);transition:all 0.3s;white-space:nowrap;"
+                    style="background:#1a1c1c;color:#fff;padding:16px 48px;border-radius:9999px;border:none;font-family:Inter;font-size: var(--fs-button, 14px);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 24px rgba(0,0,0,0.15);transition:all 0.3s;white-space:nowrap;"
                     onmouseover="this.style.backgroundColor='#775a19';this.style.boxShadow='0 0 25px rgba(119,90,25,0.3)';"
                     onmouseout="this.style.backgroundColor='#1a1c1c';this.style.boxShadow='0 4px 24px rgba(0,0,0,0.15)';"
                 ><?php echo esc_html($nl_btn); ?></button>
             </form>
 
-            <p style="margin-top:32px;font-family:Inter;font-size:12px;font-weight:500;letter-spacing:0.05em;color:#747878;position:relative;z-index:1;">
+            <p style="margin-top:32px;font-family:Inter;font-size: var(--fs-footer, 12px);font-weight:500;letter-spacing:0.05em;color:#747878;position:relative;z-index:1;">
                 <?php echo esc_html($nl_privacy); ?>
             </p>
         </div>
@@ -1161,7 +1162,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                          alt="<?php echo esc_attr($ft_brand_name); ?>"
                          style="height:48px;margin-bottom:32px;">
                 <?php else: ?>
-                    <div style="margin-bottom:32px;font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#1a1c1c;">
+                    <div style="margin-bottom:32px;font-family:'Playfair Display',serif;font-size: var(--fs-h3, 24px);font-weight:700;color:#1a1c1c;">
                         <?php echo esc_html($ft_brand_name); ?>
                     </div>
                 <?php endif; ?>
@@ -1173,7 +1174,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                         $fl_url   = $fl['ahai_blog_ft_link_url']   ?? '#';
                     ?>
                     <a href="<?php echo esc_url($fl_url); ?>"
-                       style="font-family:Inter;font-size:14px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#444748;transition:color 0.3s ease;"
+                       style="font-family:Inter;font-size: var(--fs-footer, 14px);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#444748;transition:color 0.3s ease;"
                        onmouseover="this.style.color='#775a19';"
                        onmouseout="this.style.color='#444748';"
                     ><?php echo esc_html($fl_label); ?></a>
@@ -1186,7 +1187,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
 
             <!-- Bottom Row: Copyright + Social Icons -->
             <div class="ahai-footer-row" style="display:flex;flex-direction:row;justify-content:space-between;align-items:center;width:100%;">
-                <p style="margin:0;font-family:Inter;font-size:16px;font-weight:400;line-height:1.6;color:#858383;text-transform:uppercase;letter-spacing:0.05em;">
+                <p style="margin:0;font-family:Inter;font-size: var(--fs-footer, 16px);font-weight:400;line-height:1.6;color:#858383;text-transform:uppercase;letter-spacing:0.05em;">
                     <?php echo esc_html($ft_copyright); ?>
                 </p>
 
@@ -1194,17 +1195,17 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                 <div style="display:flex;gap:24px;"
                      aria-label="<?php echo esc_attr__('Social media links', 'aurelian-blog'); ?>">
                     <a href="#" aria-label="<?php echo esc_attr__('Public page', 'aurelian-blog'); ?>"
-                       style="color:#444748;font-size:20px;transition:color 0.3s;"
+                       style="color:#444748;font-size: var(--fs-h3, 20px);transition:color 0.3s;"
                        onmouseover="this.style.color='#775a19';" onmouseout="this.style.color='#444748';">
                         <span class="material-symbols-outlined" aria-hidden="true">public</span>
                     </a>
                     <a href="#" aria-label="<?php echo esc_attr__('Chat with us', 'aurelian-blog'); ?>"
-                       style="color:#444748;font-size:20px;transition:color 0.3s;"
+                       style="color:#444748;font-size: var(--fs-h3, 20px);transition:color 0.3s;"
                        onmouseover="this.style.color='#775a19';" onmouseout="this.style.color='#444748';">
                         <span class="material-symbols-outlined" aria-hidden="true">chat</span>
                     </a>
                     <a href="#" aria-label="<?php echo esc_attr__('Email us', 'aurelian-blog'); ?>"
-                       style="color:#444748;font-size:20px;transition:color 0.3s;"
+                       style="color:#444748;font-size: var(--fs-h3, 20px);transition:color 0.3s;"
                        onmouseover="this.style.color='#775a19';" onmouseout="this.style.color='#444748';">
                         <span class="material-symbols-outlined" aria-hidden="true">mail</span>
                     </a>

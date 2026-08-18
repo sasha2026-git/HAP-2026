@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/sasha2026-git/HireAIPeople
  * GitHub Plugin URI: sasha2026-git/HireAIPeople
  * Description: 常见问题页面 (FAQ) — 短码 [aurelian_faq]，支持 ACF 可视化编辑
- * Version: 3.0.0
+ * Version: 3.0.1
  * Author: Codex
  * Requires Plugins: advanced-custom-fields
  */
@@ -456,7 +456,7 @@ function afaq_render() {
         padding: 12px 24px;
         background: var(--gold);
         color: #fff;
-        font-size: 14px;
+        font-size: var(--fs-body, 14px);
         font-weight: 600;
         text-decoration: none;
         border-radius: var(--radius-sm);
@@ -486,7 +486,7 @@ function afaq_render() {
         pointer-events: none;
       }
       .afaq-hero-tag {
-        font-size: 13px;
+        font-size: var(--fs-label, 13px);
         letter-spacing: 0.25em;
         text-transform: uppercase;
         color: var(--gold);
@@ -496,7 +496,7 @@ function afaq_render() {
       }
       .afaq-hero-title {
         font-family: 'Playfair Display', serif;
-        font-size: clamp(36px, 5vw, 56px);
+        font-size: var(--fs-h1, clamp(36px, 5vw, 56px));
         font-weight: 700;
         line-height: 1.15;
         letter-spacing: -0.02em;
@@ -505,7 +505,7 @@ function afaq_render() {
         position: relative;
       }
       .afaq-hero-desc {
-        font-size: 16px;
+        font-size: var(--fs-body-lg, 16px);
         line-height: 1.7;
         color: var(--text-muted);
         max-width: 600px;
@@ -533,7 +533,7 @@ function afaq_render() {
       .afaq-nav-item {
         display: block;
         padding: 10px 16px;
-        font-size: 14px;
+        font-size: var(--fs-label, 14px);
         font-weight: 500;
         color: var(--text-muted);
         text-decoration: none;
@@ -566,7 +566,7 @@ function afaq_render() {
       }
       .afaq-category-title {
         font-family: 'Playfair Display', serif;
-        font-size: 22px;
+        font-size: var(--fs-h3, 22px);
         font-weight: 600;
         color: var(--text-dark);
         margin-bottom: 20px;
@@ -582,7 +582,7 @@ function afaq_render() {
         align-items: center;
         padding: 18px 0;
         cursor: pointer;
-        font-size: 15px;
+        font-size: var(--fs-body, 15px);
         font-weight: 500;
         color: var(--text-dark);
         transition: color 0.25s;
@@ -600,7 +600,7 @@ function afaq_render() {
         justify-content: center;
         border-radius: 50%;
         border: 1.5px solid currentColor;
-        font-size: 14px;
+        font-size: var(--fs-body, 14px);
         transition: transform 0.35s;
         color: var(--gold);
       }
@@ -610,7 +610,7 @@ function afaq_render() {
         overflow: hidden;
         transition: max-height 0.45s cubic-bezier(0.16,1,0.3,1), padding 0.3s;
         padding: 0;
-        font-size: 14px;
+        font-size: var(--fs-body, 14px);
         line-height: 1.7;
         color: var(--text-muted);
       }
@@ -629,7 +629,7 @@ function afaq_render() {
       }
       .afaq-section-title {
         font-family: 'Playfair Display', serif;
-        font-size: clamp(28px, 3.5vw, 36px);
+        font-size: var(--fs-h2, clamp(28px, 3.5vw, 36px));
         font-weight: 600;
         line-height: 1.2;
         text-align: center;
@@ -637,7 +637,7 @@ function afaq_render() {
         color: var(--text-dark);
       }
       .afaq-section-desc {
-        font-size: 15px;
+        font-size: var(--fs-body-lg, 15px);
         line-height: 1.6;
         color: var(--text-muted);
         text-align: center;
@@ -669,19 +669,19 @@ function afaq_render() {
         box-shadow: 0 12px 40px rgba(119,90,25,0.08);
       }
       .afaq-sol-icon {
-        font-size: 36px;
+        font-size: var(--fs-h2, 36px);
         margin-bottom: 16px;
         display: block;
       }
       .afaq-sol-card-title {
         font-family: 'Playfair Display', serif;
-        font-size: 18px;
+        font-size: var(--fs-h3, 18px);
         font-weight: 600;
         margin-bottom: 12px;
         color: var(--text-dark);
       }
       .afaq-sol-card-desc {
-        font-size: 13px;
+        font-size: var(--fs-body, 13px);
         line-height: 1.6;
         color: var(--text-muted);
       }
@@ -721,7 +721,7 @@ function afaq_render() {
         transform: translateX(-50%);
         background: var(--gold);
         color: #fff;
-        font-size: 11px;
+        font-size: var(--fs-label, 11px);
         font-weight: 600;
         letter-spacing: 0.1em;
         text-transform: uppercase;
@@ -730,26 +730,26 @@ function afaq_render() {
       }
       .afaq-price-name {
         font-family: 'Playfair Display', serif;
-        font-size: 22px;
+        font-size: var(--fs-h3, 22px);
         font-weight: 600;
         margin-bottom: 8px;
         color: var(--text-dark);
       }
       .afaq-price-amount {
         font-family: 'Playfair Display', serif;
-        font-size: 42px;
+        font-size: var(--fs-h2, 42px);
         font-weight: 700;
         color: var(--text-dark);
         margin-bottom: 4px;
         line-height: 1.1;
       }
       .afaq-price-period {
-        font-size: 13px;
+        font-size: var(--fs-label, 13px);
         color: var(--text-muted);
         margin-bottom: 12px;
       }
       .afaq-price-desc {
-        font-size: 13px;
+        font-size: var(--fs-body, 13px);
         color: var(--text-muted);
         margin-bottom: 24px;
         line-height: 1.5;
@@ -762,7 +762,7 @@ function afaq_render() {
       }
       .afaq-price-features li {
         padding: 8px 0;
-        font-size: 14px;
+        font-size: var(--fs-body, 14px);
         color: var(--text-muted);
         border-bottom: 1px solid rgba(196,199,199,0.25);
         display: flex;
@@ -773,7 +773,7 @@ function afaq_render() {
         content: '✓';
         color: var(--gold);
         font-weight: 700;
-        font-size: 14px;
+        font-size: var(--fs-body, 14px);
       }
       .afaq-price-btn {
         display: inline-block;
@@ -782,7 +782,7 @@ function afaq_render() {
         border-radius: 9999px;
         background: var(--text-dark);
         color: #fff;
-        font-size: 14px;
+        font-size: var(--fs-button, 14px);
         font-weight: 600;
         letter-spacing: 0.05em;
         text-align: center;
@@ -817,13 +817,13 @@ function afaq_render() {
       }
       .afaq-contact-info h3 {
         font-family: 'Playfair Display', serif;
-        font-size: 28px;
+        font-size: var(--fs-h2, 28px);
         font-weight: 600;
         margin-bottom: 16px;
         color: var(--text-dark);
       }
       .afaq-contact-info p {
-        font-size: 14px;
+        font-size: var(--fs-body, 14px);
         line-height: 1.7;
         color: var(--text-muted);
         margin-bottom: 24px;
@@ -833,7 +833,7 @@ function afaq_render() {
         align-items: center;
         gap: 12px;
         margin-bottom: 12px;
-        font-size: 14px;
+        font-size: var(--fs-body, 14px);
         color: var(--text-dark);
       }
       .afaq-contact-detail a {
@@ -859,7 +859,7 @@ function afaq_render() {
         background: #fff;
       }
       .afaq-contact-qr-item span {
-        font-size: 12px;
+        font-size: var(--fs-label, 12px);
         color: var(--text-muted);
       }
       .afaq-contact-form {
@@ -870,7 +870,7 @@ function afaq_render() {
       }
       .afaq-contact-form h4 {
         font-family: 'Playfair Display', serif;
-        font-size: 18px;
+        font-size: var(--fs-h3, 18px);
         font-weight: 600;
         margin-bottom: 20px;
       }
@@ -879,7 +879,7 @@ function afaq_render() {
       }
       .afaq-form-group label {
         display: block;
-        font-size: 13px;
+        font-size: var(--fs-body, 13px);
         font-weight: 500;
         color: var(--text-dark);
         margin-bottom: 6px;
@@ -890,7 +890,7 @@ function afaq_render() {
         padding: 10px 14px;
         border: 1px solid rgba(196,199,199,0.5);
         border-radius: var(--radius-md);
-        font-size: 14px;
+        font-size: var(--fs-body, 14px);
         font-family: Inter, sans-serif;
         background: var(--bg-ivory);
         transition: border-color 0.25s;
@@ -907,7 +907,7 @@ function afaq_render() {
         border-radius: 9999px;
         background: var(--text-dark);
         color: #fff;
-        font-size: 14px;
+        font-size: var(--fs-button, 14px);
         font-weight: 600;
         border: none;
         cursor: pointer;
@@ -935,7 +935,7 @@ function afaq_render() {
       }
       .afaq-footer-brand {
         font-family: 'Playfair Display', serif;
-        font-size: 24px;
+        font-size: var(--fs-h3, 24px);
         font-weight: 500;
         color: var(--text-dark);
       }
@@ -947,14 +947,14 @@ function afaq_render() {
         gap: 24px 48px;
       }
       .afaq-footer-nav a {
-        font-size: 14px;
+        font-size: var(--fs-footer, 14px);
         color: var(--text-muted);
         text-decoration: none;
         transition: color 0.25s;
       }
       .afaq-footer-nav a:hover { color: var(--gold); }
       .afaq-footer-copy {
-        font-size: 11px;
+        font-size: var(--fs-footer, 11px);
         letter-spacing: 0.2em;
         text-transform: uppercase;
         color: rgba(68,71,72,0.5);
@@ -984,7 +984,7 @@ function afaq_render() {
           gap: 4px;
           margin-bottom: 24px;
         }
-        .afaq-nav-item { font-size: 13px; padding: 8px 12px; }
+        .afaq-nav-item { font-size: var(--fs-label, 13px); padding: 8px 12px; }
         .afaq-contact { grid-template-columns: 1fr; }
         .afaq-price-grid { grid-template-columns: 1fr; max-width: 400px; }
         .afaq-sol-grid { grid-template-columns: 1fr 1fr; }
