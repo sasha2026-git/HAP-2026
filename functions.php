@@ -736,6 +736,10 @@ add_action('acf/init', function () {
             'name' => 'hero_image', 'label' => '主视觉图', 'type' => 'image',
             'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array'],
         ],
+        [
+            'name' => 'fp_hero_image', 'label' => 'Hero 背景图片', 'type' => 'image',
+            'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url'],
+        ],
     ], [
         [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
         [['param' => 'front_page', 'operator' => '==', 'value' => '1']],

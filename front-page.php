@@ -16,7 +16,7 @@ $fallback = function ($item, $key) use ($is_en) {
 };
 
 /* ── ACF data ── */
-$hero_image    = hireai_image('fp_hero_image');
+$hero_image    = hireai_image('fp_hero_image', get_template_directory_uri() . '/assets/img/defaults/hero-home.jpg');
 $hero_kicker   = hireai_field('fp_hero_kicker', 'Prestige Digital Labor');
 $hero_title    = hireai_field('fp_hero_title', 'HireAIPeople');
 $hero_subtitle = hireai_field('fp_hero_subtitle', 'Neural Craftsmanship &amp; Digital Excellence. Leading the future of AI service with artistic soul. 将艺术灵魂注入神经算法，打造具备卓越品味的数字生产力。');
@@ -84,6 +84,10 @@ $fallback_faq = [
         'question' => $is_en ? 'How long does it take to customize a dedicated AI digital human?' : '定制一个专属AI数字人需要多久？',
         'answer'   => $is_en ? 'Basic character models are typically delivered within 7-14 business days. For deep logic customization or specific skill training, the cycle is approximately 3-5 weeks.' : '基础角色模型通常在7-14个工作日内交付。如果是深度的逻辑定制或特定技能训练，周期约为3-5周。',
     ],
+    [
+        'question' => $is_en ? 'What industries are your AI digital employees suitable for?' : '你们的AI数字员工适合哪些行业？',
+        'answer'   => $is_en ? 'Our AI digital employees cover marketing, e-commerce, customer service, HR, training, and more. We provide customized solutions based on your specific business scenario and brand requirements.' : '我们的AI数字员工覆盖营销、电商、客服、人力资源、培训等多个领域。我们会根据您的具体业务场景和品牌需求提供定制化解决方案。',
+    ],
 ];
 
 
@@ -125,7 +129,7 @@ $solutions = [
 .hireai-fp { overflow-x: hidden; background: #faf9f9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1a1c1c; line-height: 1.6; }
 
 .hireai-fp-hero {
-    position: relative; min-height: 95vh; display: flex; align-items: center; overflow: hidden;
+    position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden;
 }
 .hireai-fp-hero__bg {
     position: absolute; inset: 0; z-index: 0;
@@ -143,11 +147,11 @@ $solutions = [
     background: linear-gradient(to bottom, rgba(250,249,249,0) 40%, rgba(250,249,249,0.9) 80%, rgba(250,249,249,1) 100%);
 }
 .hireai-fp-hero__content {
-    position: relative; z-index: 10; width: 100%; padding: 0 80px;
+    position: relative; z-index: 10; width: 100%; padding: 40vh 80px 20vh;
     max-width: 1440px; margin: 0 auto;
 }
 @media (max-width: 768px) {
-    .hireai-fp-hero__content { padding: 0 20px; }
+    .hireai-fp-hero__content { padding: 40vh 20px 20vh; }
 }
 .hireai-fp-hero__inner { max-width: 48rem; }
 .hireai-fp-hero__kicker {
@@ -155,11 +159,11 @@ $solutions = [
     font-weight: 600; text-transform: uppercase; color: #775a19; display: inline-block; margin-bottom: 24px;
 }
 .hireai-fp-hero__title {
-    font-family: 'Playfair Display', serif; font-size: 72px; line-height: 1.05;
+    font-family: 'Playfair Display', serif; font-size: 58px; line-height: 1.05;
     letter-spacing: -0.02em; font-weight: 700; color: #000; margin-bottom: 32px;
 }
 @media (max-width: 768px) {
-    .hireai-fp-hero__title { font-size: 36px; }
+    .hireai-fp-hero__title { font-size: 29px; }
 }
 .hireai-fp-hero__title em { font-style: italic; font-weight: normal; }
 .hireai-fp-hero__subtitle {
@@ -271,7 +275,7 @@ $solutions = [
     .hireai-fp-solutions__grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (min-width: 1024px) {
-    .hireai-fp-solutions__grid { grid-template-columns: repeat(4, 1fr); }
+    .hireai-fp-solutions__grid { grid-template-columns: repeat(2, 1fr); }
 }
 .hireai-fp-sol-card {
     background: #fff; border: 1px solid rgba(196,199,199,0.3); transition: border-color 0.3s;
@@ -448,14 +452,10 @@ $solutions = [
     padding-top: 24px; font-family: 'Inter', sans-serif; font-size: 16px;
     line-height: 1.6; color: rgba(68,71,72,0.8);
 }
-
-/* Hide header/footer on front page only */
-body.page-template-front-page .site-header,
-body.home .site-header,
-body.page-template-front-page .site-footer,
-body.home .site-footer {
-    display: none !important;
+.hireai-fp-faq__cta {
+    text-align: center; margin-top: 64px;
 }
+
 </style>
 
 <main class="hireai-fp">
@@ -606,6 +606,9 @@ body.home .site-footer {
             </div>
         </div>
         <?php endforeach; ?>
+    </div>
+    <div class="hireai-fp-faq__cta">
+        <a class="hireai-fp-btn hireai-fp-btn--outline" href="<?php echo esc_url(home_url('/faq/')); ?>"><?php echo esc_html($is_en ? 'Explore More' : '探索更多'); ?></a>
     </div>
 </section>
 
