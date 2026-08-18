@@ -1,13 +1,13 @@
 <?php if (!defined('ABSPATH')) exit;
 /**
- * Template Name: 聘AI - 首页
- * 参考 aether_ai_light_luxe_1：全屏 Hero + 数字员工 / 解决方案 / 案例&洞察 / FAQ / CTA。
+ * Template Name: HireAI Homepage
+ * Stitch-matched design with inline CSS. No Tailwind dependency.
  */
 get_header();
 
-$suffix = hireai_lang_suffix();
-$is_en  = $suffix === '_en';
-$localize = function ($item, $key) use ($is_en) {
+$suffix   = hireai_lang_suffix();
+$is_en    = $suffix === '_en';
+$fallback = function ($item, $key) use ($is_en) {
     $value = isset($item[$key]) ? $item[$key] : '';
     if (is_array($value)) {
         return isset($value[$is_en ? 'en' : 'zh']) ? $value[$is_en ? 'en' : 'zh'] : '';
@@ -15,229 +15,702 @@ $localize = function ($item, $key) use ($is_en) {
     return $value;
 };
 
-$hero_image   = hireai_image('hero_image', hireai_default_image('hero-home.jpg'));
-$hero_cta_1   = hireai_link('hero_cta_1', '/ai-employees/', $is_en ? 'Explore AI Employees' : '探索数字员工');
-$hero_cta_2   = hireai_link('hero_cta_2', '/ai-solutions/', $is_en ? 'View Solutions' : '了解解决方案');
-$employees_cta = hireai_link('employees_cta', '/ai-employees/', $is_en ? 'Explore More' : '探索更多');
-$solutions_cta = hireai_link('solutions_cta', '/ai-solutions/', $is_en ? 'Explore More' : '探索更多');
-$cases_cta     = hireai_link('cases_cta', '/cases-insights/', $is_en ? 'View All' : '查看全部');
-$faq_cta       = hireai_link('faq_cta', '/faq/', $is_en ? 'View FAQ' : '查看 FAQ');
-$cta_button    = hireai_link('cta_button', '/contact/', $is_en ? 'Contact Us' : '联系我们');
+/* ── ACF data ── */
+$hero_image    = hireai_image('fp_hero_image');
+$hero_kicker   = hireai_field('fp_hero_kicker', 'Prestige Digital Labor');
+$hero_title    = hireai_field('fp_hero_title', 'HireAIPeople');
+$hero_subtitle = hireai_field('fp_hero_subtitle', 'Neural Craftsmanship &amp; Digital Excellence. Leading the future of AI service with artistic soul. 将艺术灵魂注入神经算法，打造具备卓越品味的数字生产力。');
+$hero_cta_1    = hireai_link('fp_hero_cta_1', home_url('/contact/'), $is_en ? 'Consult Now' : '立即咨询');
+$hero_cta_2    = hireai_link('fp_hero_cta_2', home_url('/cases-insights/'), $is_en ? 'View Cases' : '查看案例');
 
-$fallback_employees = [
-    ['title' => ['zh' => 'Nexus-01', 'en' => 'Nexus-01'], 'role' => ['zh' => '数据分析师', 'en' => 'Data Analyst'], 'image' => 'employee-1.jpg', 'link' => '/ai-employees/'],
-    ['title' => ['zh' => 'Aura', 'en' => 'Aura'], 'role' => ['zh' => '创意总监', 'en' => 'Creative Dir.'], 'image' => 'employee-2.jpg', 'link' => '/ai-employees/'],
-    ['title' => ['zh' => 'Logos', 'en' => 'Logos'], 'role' => ['zh' => '策略师', 'en' => 'Strategist'], 'image' => 'employee-3.jpg', 'link' => '/ai-employees/'],
-    ['title' => ['zh' => 'Seren', 'en' => 'Seren'], 'role' => ['zh' => '客户关系', 'en' => 'Client Rel.'], 'image' => 'employee-4.jpg', 'link' => '/ai-employees/'],
-    ['title' => ['zh' => 'Vanguard', 'en' => 'Vanguard'], 'role' => ['zh' => '架构师', 'en' => 'Architect'], 'image' => 'employee-5.jpg', 'link' => '/ai-employees/'],
+$emp_kicker = hireai_field('fp_emp_kicker', 'The Digital Atelier');
+$emp_title  = hireai_field('fp_emp_title', $is_en ? 'AI Digital Workers' : 'AI数字员工矩阵');
+$employees  = [
+    [
+        'kicker' => hireai_field('fp_emp1_kicker', 'Public Relations'),
+        'title'  => hireai_field('fp_emp1_title', $is_en ? 'PR Audit' : '公关审核'),
+        'desc'   => hireai_field('fp_emp1_desc', $is_en ? 'AI-driven media insight and copy compliance specialist, ensuring the brand maintains a dignified and tasteful voice in complex social media environments.' : '由AI驱动的舆情洞察与文案合规专家，确保品牌在复杂的社交媒体环境中保持尊贵与体面的发声。'),
+        'image'  => hireai_image('fp_emp1_image', get_stylesheet_directory_uri() . '/assets/img/employee-1.jpg'),
+    ],
+    [
+        'kicker' => hireai_field('fp_emp2_kicker', 'Branding Strategy'),
+        'title'  => hireai_field('fp_emp2_title', $is_en ? 'IP Co-branding' : 'IP联名营销'),
+        'desc'   => hireai_field('fp_emp2_desc', $is_en ? 'Orchestrating cross-dimensional creative collaborations, using AI to generate infinite visual languages that connect virtual and real top-tier commercial value.' : '策划跨次元的创意联名，利用AI生成无限可能的视觉语言，连接虚拟与现实的顶级商业价值。'),
+        'image'  => hireai_image('fp_emp2_image', get_stylesheet_directory_uri() . '/assets/img/employee-2.jpg'),
+    ],
+    [
+        'kicker' => hireai_field('fp_emp3_kicker', 'E-commerce Aesthetics'),
+        'title'  => hireai_field('fp_emp3_title', $is_en ? 'E-commerce Design' : '电商视觉设计'),
+        'desc'   => hireai_field('fp_emp3_desc', $is_en ? 'Premium visuals tailored for luxury e-commerce, generating Dior-quality product compositions in seconds, reshaping the sensory experience of online shopping.' : '为奢品电商定制的高级视觉，秒级生成具备Dior质感的产品构图，重塑线上购物的感官体验。'),
+        'image'  => hireai_image('fp_emp3_image', get_stylesheet_directory_uri() . '/assets/img/employee-3.jpg'),
+    ],
 ];
 
-$fallback_solutions = [
-    ['title' => ['zh' => '全域营销智囊', 'en' => 'Omnichannel Marketing Intelligence'], 'icon' => 'arrow', 'image' => 'solution-1.jpg', 'text' => ['zh' => '覆盖内容、投放与数据复盘的全链路营销智能体。', 'en' => 'A full-funnel marketing agent for content, media, and performance review.'], 'link' => '/ai-solutions/'],
-    ['title' => ['zh' => '电商转化引擎', 'en' => 'Commerce Conversion Engine'], 'icon' => 'arrow', 'image' => 'solution-2.jpg', 'text' => ['zh' => '从选品、定价到客服，让增长从洞察到成交顺畅闭环。', 'en' => 'Connects selection, pricing, and service into a seamless growth loop.'], 'link' => '/ai-solutions/'],
-    ['title' => ['zh' => '奢品内容工坊', 'en' => 'Luxury Content Atelier'], 'icon' => 'arrow', 'image' => 'solution-3.jpg', 'text' => ['zh' => '为高净值品牌打造有艺术质感、有销售力的内容体系。', 'en' => 'Crafts artful, conversion-ready content systems for high-net-worth brands.'], 'link' => '/ai-solutions/'],
+
+$cases_kicker = hireai_field('fp_cases_kicker', 'The Masterpieces');
+$cases_title  = hireai_field('fp_cases_title', $is_en ? 'Featured Cases' : '卓越案例展示');
+$cases_link   = hireai_link('fp_cases_link', home_url('/cases-insights/'), $is_en ? 'Explore Full Gallery' : 'Explore Full Gallery');
+
+$major_case = [
+    'kicker' => hireai_field('fp_case_major_kicker', $is_en ? 'Luxury Real Estate' : '顶级豪宅'),
+    'title'  => hireai_field('fp_case_major_title', $is_en ? 'Luxury Villa AI Virtual Curation' : '顶级豪宅AI虚拟策展项目'),
+    'desc'   => hireai_field('fp_case_major_desc', $is_en ? 'Using AI digital twin technology and visual rendering to create immersive virtual house-touring experiences for global high-net-worth individuals.' : '利用AI数字孪生技术与视觉渲染，为全球高净值人群打造沉浸式的虚拟看房体验。'),
+    'image'  => hireai_image('fp_case_major_image', get_stylesheet_directory_uri() . '/assets/img/case-major.jpg'),
 ];
 
-$fallback_cases = [
-    ['title' => ['zh' => '奢侈品牌中国区内容焕新', 'en' => 'Luxury Brand China Content Refresh'], 'kicker' => ['zh' => '精选案例 · 奢侈零售', 'en' => 'Case Study · Luxury Retail'], 'text' => ['zh' => '以数字员工重建内容矩阵，让发布效率与品牌质感同步提升。', 'en' => 'Digital employees rebuild the content matrix while preserving brand polish.'], 'link' => '/cases-insights/'],
-    ['title' => ['zh' => 'AI 雇佣时代的组织设计', 'en' => 'Organizational Design for the AI Hiring Era'], 'kicker' => ['zh' => '前沿洞察 · 科技', 'en' => 'Insight · Technology'], 'text' => ['zh' => '数字员工不是工具，而是组织能力的新单元。', 'en' => 'Digital employees are not tools; they are a new unit of organizational capability.'], 'link' => '/cases-insights/'],
+$side_cases = [
+    [
+        'kicker' => hireai_field('fp_case_side1_kicker', $is_en ? 'Haute Couture' : '高级定制'),
+        'title'  => hireai_field('fp_case_side1_title', $is_en ? 'AI Couture Fabric Patterns' : '高级定制AI面料纹样'),
+        'desc'   => hireai_field('fp_case_side1_desc', $is_en ? 'Through GAN generative adversarial networks, providing inspiration for Paris Fashion Week, replicating the intricate textures of hand-embroidery.' : '通过GAN生成对抗网络，为巴黎时装周提供灵感触点，复刻手工刺绣的精密纹理。'),
+        'image'  => hireai_image('fp_case_side1_image', get_stylesheet_directory_uri() . '/assets/img/case-side1.jpg'),
+    ],
+    [
+        'kicker' => hireai_field('fp_case_side2_kicker', $is_en ? 'Bvlgari Style Marketing' : 'Bvlgari风格营销'),
+        'title'  => hireai_field('fp_case_side2_title', $is_en ? 'Brand Social Media Visual Refresh' : '品牌社媒视觉重塑'),
+        'desc'   => hireai_field('fp_case_side2_desc', $is_en ? 'Fusing traditional luxury aesthetics with avant-garde digital beauty to create visually compelling symbols with greater social penetration.' : '将传统奢侈品调性与前卫数字美学融合，打造更具社交穿透力的视觉符号。'),
+    ],
 ];
+
+$faq_kicker = hireai_field('fp_faq_kicker', 'The Intelligence Library');
+$faq_title  = hireai_field('fp_faq_title', $is_en ? 'FAQ' : '常见问题解答');
 
 $fallback_faq = [
-    ['title' => ['zh' => '数字员工如何与我的团队协作？', 'en' => 'How do digital employees work with my team?'], 'answer' => ['zh' => '他们以专属工作台、内容交付与数据报表的方式参与项目，并可由您随时调整任务边界。', 'en' => 'They join through dedicated workspaces, content delivery, and reporting, with boundaries you can adjust at any time.']],
-    ['title' => ['zh' => '如何收费？', 'en' => 'How is pricing structured?'], 'answer' => ['zh' => '按方案与使用周期定制，首页展示的价格为入门档；我们会根据团队规模与场景给出明确报价。', 'en' => 'Pricing is tailored by scope and engagement. Homepage prices are entry-level; we provide a clear quote based on team size and use case.']],
-    ['title' => ['zh' => '数据与隐私如何保障？', 'en' => 'How is data privacy protected?'], 'answer' => ['zh' => '客户数据仅在合同约定的范围内用于交付，不用于训练其他客户模型。', 'en' => 'Client data is used only for the agreed engagement and is never used to train other clients’ models.']],
-    ['title' => ['zh' => '上线周期需要多久？', 'en' => 'What is the onboarding timeline?'], 'answer' => ['zh' => '标准周期为 4 至 8 周，具体取决于数据结构与定制深度。', 'en' => 'The standard integration period ranges from 4 to 8 weeks, depending on complexity and customization.']],
+    [
+        'question' => $is_en ? 'How are AI digital employees different from freelancers or outsourcing?' : 'AI数字员工与传统兼职/外包有什么区别？',
+        'answer'   => $is_en ? 'AI digital employees provide 24/7 uninterrupted service with consistent brand visual identity. Compared to traditional outsourcing, delivery efficiency improves by over 80%, and they continuously evolve with your brand data.' : 'AI数字员工提供24/7的不间断服务，且具备品牌专属的视觉风格一致性。相比于传统外包，其交付效率提升80%以上，且能够随着您的品牌数据不断进化。',
+    ],
+    [
+        'question' => $is_en ? 'How long does it take to customize a dedicated AI digital human?' : '定制一个专属AI数字人需要多久？',
+        'answer'   => $is_en ? 'Basic character models are typically delivered within 7-14 business days. For deep logic customization or specific skill training, the cycle is approximately 3-5 weeks.' : '基础角色模型通常在7-14个工作日内交付。如果是深度的逻辑定制或特定技能训练，周期约为3-5周。',
+    ],
 ];
 
-$employees_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 5, 'category_name' => 'ai-employee', 'no_found_rows' => true]);
-$solutions_query = class_exists('WooCommerce') ? new WP_Query(['post_type' => 'product', 'posts_per_page' => 3, 'no_found_rows' => true]) : false;
-$cases_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 2, 'category_name' => 'cases', 'no_found_rows' => true]);
-$faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 4, 'category_name' => 'faq', 'no_found_rows' => true]);
+
+/* AI Solutions (fallback data) */
+$solutions = [
+    [
+        'tag'   => ['zh' => '营销', 'en' => 'MARKETING'],
+        'title' => ['zh' => '全域营销智囊', 'en' => 'Omnichannel Marketing'],
+        'desc'  => ['zh' => '覆盖内容、投放与数据复盘的全链路营销智能体。', 'en' => 'A full-funnel marketing agent for content, media, and performance review.'],
+        'image' => get_stylesheet_directory_uri() . '/' . 'assets/img/defaults/solution-1.jpg',
+    ],
+    [
+        'tag'   => ['zh' => '电商', 'en' => 'E-COMMERCE'],
+        'title' => ['zh' => '电商转化引擎', 'en' => 'Commerce Conversion'],
+        'desc'  => ['zh' => '从选品、定价到客服，让增长从洞察到成交顺畅闭环。', 'en' => 'Connects selection, pricing, and service into a seamless growth loop.'],
+        'image' => get_stylesheet_directory_uri() . '/' . 'assets/img/defaults/solution-2.jpg',
+    ],
+    [
+        'tag'   => ['zh' => '设计', 'en' => 'DESIGN'],
+        'title' => ['zh' => '奢品内容工坊', 'en' => 'Luxury Content Atelier'],
+        'desc'  => ['zh' => '为高净值品牌打造有艺术质感、有销售力的内容体系。', 'en' => 'Crafts artful, conversion-ready content systems for high-net-worth brands.'],
+        'image' => get_stylesheet_directory_uri() . '/' . 'assets/img/defaults/solution-3.jpg',
+    ],
+    [
+        'tag'   => ['zh' => '公关', 'en' => 'PUBLIC RELATIONS'],
+        'title' => ['zh' => '危机公关文案', 'en' => 'Crisis PR Copywriting'],
+        'desc'  => ['zh' => '以毫秒级校准话术处理突发舆情，保护品牌叙事与市场信任。', 'en' => 'Immediate, highly calibrated messaging to mitigate brand exposure.'],
+        'image' => get_stylesheet_directory_uri() . '/' . 'assets/img/defaults/solution-4.jpg',
+    ],
+];
 ?>
-<section class="hero">
-	<?php if ($hero_image) : ?>
-		<div class="hero__media" style="background-image:url('<?php echo esc_url($hero_image); ?>')"></div>
-	<?php else : ?>
-		<div class="hero__media"></div>
-	<?php endif; ?>
-	<div class="container hero__content">
-		<?php $hero_kicker = hireai_field('hero_kicker', 'HIRE AI PEOPLE'); ?>
-		<?php if ($hero_kicker) : ?>
-			<span class="label hero__kicker"><?php echo esc_html($hero_kicker); ?></span>
-		<?php endif; ?>
-		<?php
-		$hero_title = hireai_field('hero_title', $is_en ? "Hire Intelligence,\nArtfully Employed." : "智慧雇佣，\n臻于艺术。");
-		$hero_title_parts = preg_split('/\R+/', trim($hero_title), 2);
-		if (!is_array($hero_title_parts)) {
-			$hero_title_parts = [];
-		} else {
-			$hero_title_parts[0] = trim($hero_title_parts[0]);
-			$hero_title_parts[1] = isset($hero_title_parts[1]) ? trim($hero_title_parts[1]) : '';
-		}
-		?>
-		<h1 class="display-lg">
-			<?php if (count($hero_title_parts) === 2 && $hero_title_parts[1] !== '') : ?>
-				<span class="hero__title-line"><?php echo esc_html($hero_title_parts[0]); ?></span>
-				<span class="hero__title-line hero__title-line--accent"><?php echo esc_html($hero_title_parts[1]); ?></span>
-			<?php else : ?>
-				<?php echo esc_html($hero_title); ?>
-			<?php endif; ?>
-		</h1>
-		<p class="body-lg"><?php echo esc_html(hireai_field('hero_subtitle', $is_en ? 'HireAI People employs bespoke AI digital employees and solutions—crafted with artisan precision to quietly drive your growth.' : '聘AI 为企业雇聘专属 AI 数字员工与解决方案——以工匠精神雕琢算法，以静谧之力驱动增长。')); ?></p>
-		<div class="hero__actions">
-			<a class="btn btn-outline" href="<?php echo esc_url($hero_cta_1['url']); ?>"<?php echo !empty($hero_cta_1['target']) ? ' target="' . esc_attr($hero_cta_1['target']) . '" rel="noopener"' : ''; ?>><?php echo esc_html($hero_cta_1['title']); ?></a>
-			<a class="btn btn-ghost" href="<?php echo esc_url($hero_cta_2['url']); ?>"<?php echo !empty($hero_cta_2['target']) ? ' target="' . esc_attr($hero_cta_2['target']) . '" rel="noopener"' : ''; ?>><?php echo esc_html($hero_cta_2['title']); ?></a>
-		</div>
-	</div>
+
+<style>
+/* ── HireAI Homepage — Inline styles (stitch-matched) ── */
+
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap');
+
+.hireai-fp, .hireai-fp * { box-sizing: border-box; margin: 0; padding: 0; }
+.hireai-fp { overflow-x: hidden; background: #faf9f9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1a1c1c; line-height: 1.6; }
+
+/* ── Header ── */
+.hireai-fp-header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(196,199,199,0.3);
+}
+.hireai-fp-header__inner {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; padding: 8px 80px; max-width: 1440px; margin: 0 auto; height: 80px;
+}
+@media (max-width: 768px) {
+    .hireai-fp-header__inner { padding: 8px 20px; }
+}
+.hireai-fp-header__logo {
+    font-family: 'Playfair Display', serif; font-size: 32px; line-height: 1.3; font-weight: 500;
+    color: #000; letter-spacing: -0.02em; text-decoration: none;
+}
+.hireai-fp-header__nav { display: flex; align-items: center; gap: 24px; }
+@media (max-width: 768px) {
+    .hireai-fp-header__nav { display: none; }
+}
+.hireai-fp-header__nav a {
+    font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.2; letter-spacing: 0.1em;
+    font-weight: 600; text-transform: uppercase; color: #444748; text-decoration: none;
+    transition: color 0.3s;
+}
+.hireai-fp-header__nav a:hover { color: #775a19; }
+.hireai-fp-header__nav a--active {
+    color: #775a19; border-bottom: 1px solid #775a19; padding-bottom: 4px;
+}
+.hireai-fp-header__cta {
+    background: #000; color: #fff; padding: 10px 32px; border-radius: 9999px; border: none; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; transition: all 0.3s; text-decoration: none; display: inline-block;
+}
+.hireai-fp-header__cta:hover { box-shadow: 0 0 20px rgba(119,90,25,0.4); }
+
+/* ── Hero ── */
+.hireai-fp-hero {
+    position: relative; min-height: 95vh; display: flex; align-items: center; overflow: hidden;
+}
+.hireai-fp-hero__bg {
+    position: absolute; inset: 0; z-index: 0;
+}
+.hireai-fp-hero__bg-img {
+    width: 100%; height: 100%; background-size: cover; background-position: center;
+    transition: transform 20s cubic-bezier(0.4,0,0.2,1); transform: scale(1.05);
+}
+.hireai-fp-hero:hover .hireai-fp-hero__bg-img { transform: scale(1); }
+.hireai-fp-hero__bg-overlay {
+    position: absolute; inset: 0; background: rgba(255,255,255,0.05);
+}
+.hireai-fp-hero__bg-gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(250,249,249,0) 40%, rgba(250,249,249,0.9) 80%, rgba(250,249,249,1) 100%);
+}
+.hireai-fp-hero__content {
+    position: relative; z-index: 10; width: 100%; padding: 0 80px;
+    max-width: 1440px; margin: 0 auto;
+}
+@media (max-width: 768px) {
+    .hireai-fp-hero__content { padding: 0 20px; }
+}
+.hireai-fp-hero__inner { max-width: 48rem; }
+.hireai-fp-hero__kicker {
+    font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.2; letter-spacing: 0.4em;
+    font-weight: 600; text-transform: uppercase; color: #775a19; display: inline-block; margin-bottom: 24px;
+}
+.hireai-fp-hero__title {
+    font-family: 'Playfair Display', serif; font-size: 72px; line-height: 1.05;
+    letter-spacing: -0.02em; font-weight: 700; color: #000; margin-bottom: 32px;
+}
+@media (max-width: 768px) {
+    .hireai-fp-hero__title { font-size: 36px; }
+}
+.hireai-fp-hero__title em { font-style: italic; font-weight: normal; }
+.hireai-fp-hero__subtitle {
+    font-family: 'Inter', sans-serif; font-size: 18px; line-height: 1.6;
+    color: rgba(68,71,72,0.8); max-width: 576px; margin-bottom: 48px;
+}
+.hireai-fp-hero__actions { display: flex; gap: 24px; flex-wrap: wrap; }
+.hireai-fp-btn {
+    display: inline-block; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 16px 48px; border-radius: 9999px;
+    text-decoration: none; text-align: center; cursor: pointer; transition: all 0.3s; border: none;
+}
+.hireai-fp-btn--primary { background: #000; color: #fff; }
+.hireai-fp-btn--primary:hover { box-shadow: 0 0 20px rgba(119,90,25,0.4); }
+.hireai-fp-btn--outline {
+    background: transparent; color: #775a19;
+    border: 1px solid rgba(119,90,25,0.4);
+}
+.hireai-fp-btn--outline:hover { background: rgba(119,90,25,0.05); }
+
+/* ── Section Utility ── */
+.hireai-fp-section {
+    padding: 120px 80px; max-width: 1440px; margin: 0 auto;
+}
+@media (max-width: 768px) {
+    .hireai-fp-section { padding: 60px 20px; }
+}
+.hireai-fp-section-header { text-align: center; margin-bottom: 96px; }
+.hireai-fp-section-header__kicker {
+    font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.2; letter-spacing: 0.3em;
+    font-weight: 600; text-transform: uppercase; color: #775a19;
+}
+.hireai-fp-section-header__title {
+    font-family: 'Playfair Display', serif; font-size: 48px; line-height: 1.2;
+    font-weight: 600; color: #000; margin-top: 16px;
+}
+@media (max-width: 768px) {
+    .hireai-fp-section-header__title { font-size: 28px; }
+}
+.hireai-fp-section-header__divider {
+    width: 96px; height: 1px; margin: 40px auto 0;
+    background: linear-gradient(90deg, transparent, rgba(119,90,25,0.4), transparent);
+}
+.hireai-fp-section-header__divider--sm {
+    width: 64px;
+}
+
+/* ── Employee Grid ── */
+.hireai-fp-grid-3 {
+    display: grid; grid-template-columns: repeat(1, 1fr); gap: 40px;
+}
+@media (min-width: 768px) {
+    .hireai-fp-grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+    .hireai-fp-grid-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── Glass Card ── */
+.hireai-fp-glass-card {
+    background: rgba(250,249,249,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(119,90,25,0.1); border-radius: 0.75rem; padding: 20px;
+    transition: all 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.hireai-fp-glass-card:hover {
+    border-color: rgba(119,90,25,0.4);
+    box-shadow: 0 30px 60px -15px rgba(0,0,0,0.1);
+    transform: translateY(-4px);
+}
+.hireai-fp-glass-card__img-wrap {
+    aspect-ratio: 4/5; overflow: hidden; position: relative; margin-bottom: 32px; border-radius: 0.5rem;
+}
+.hireai-fp-glass-card__img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 1s cubic-bezier(0.4,0,0.2,1);
+}
+.hireai-fp-glass-card:hover .hireai-fp-glass-card__img { transform: scale(1.1); }
+.hireai-fp-glass-card__img-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.2), transparent);
+    opacity: 0; transition: opacity 0.3s;
+}
+.hireai-fp-glass-card:hover .hireai-fp-glass-card__img-overlay { opacity: 1; }
+.hireai-fp-glass-card__body { padding: 8px; }
+.hireai-fp-glass-card__kicker {
+    font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.2; letter-spacing: 0.15em;
+    font-weight: 500; text-transform: uppercase; color: #775a19;
+}
+.hireai-fp-glass-card__title {
+    font-family: 'Playfair Display', serif; font-size: 28px; line-height: 1.3; font-weight: 500;
+    color: #000; margin: 8px 0 16px;
+}
+.hireai-fp-glass-card__desc {
+    color: #444748; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ── AI Solutions Grid ── */
+.hireai-fp-solutions {
+    background: #faf9f9; padding: 120px 80px; max-width: 1440px; margin: 0 auto;
+}
+@media (max-width: 768px) {
+    .hireai-fp-solutions { padding: 60px 20px; }
+}
+.hireai-fp-solutions__grid {
+    display: grid; grid-template-columns: repeat(1, 1fr); gap: 24px;
+}
+@media (min-width: 768px) {
+    .hireai-fp-solutions__grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+    .hireai-fp-solutions__grid { grid-template-columns: repeat(4, 1fr); }
+}
+.hireai-fp-sol-card {
+    background: #fff; border: 1px solid rgba(196,199,199,0.3); transition: border-color 0.3s;
+}
+.hireai-fp-sol-card:hover { border-color: #775a19; }
+.hireai-fp-sol-card__img-wrap {
+    aspect-ratio: 16/9; overflow: hidden;
+}
+.hireai-fp-sol-card__img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.hireai-fp-sol-card:hover .hireai-fp-sol-card__img { transform: scale(1.05); }
+.hireai-fp-sol-card__body { padding: 24px; }
+.hireai-fp-sol-card__tag {
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.15em; color: #775a19;
+}
+.hireai-fp-sol-card__title {
+    font-family: 'Playfair Display', serif; font-size: 24px; line-height: 1.3; font-weight: 500;
+    color: #000; margin-top: 8px;
+}
+.hireai-fp-sol-card__desc {
+    font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; color: #444748;
+    margin-top: 12px;
+}
+.hireai-fp-solutions__cta {
+    text-align: center; margin-top: 64px;
+}
+
+/* ── Featured Cases ── */
+.hireai-fp-cases {
+    background: #f4f3f3; padding: 120px 0;
+}
+.hireai-fp-cases__inner {
+    max-width: 1440px; margin: 0 auto; padding: 0 80px;
+}
+@media (max-width: 768px) {
+    .hireai-fp-cases__inner { padding: 0 20px; }
+}
+.hireai-fp-cases__header {
+    display: flex; flex-direction: column; gap: 32px; margin-bottom: 80px;
+}
+@media (min-width: 768px) {
+    .hireai-fp-cases__header { flex-direction: row; justify-content: space-between; align-items: flex-end; }
+}
+.hireai-fp-cases__header-text { max-width: 32rem; text-align: left; }
+.hireai-fp-cases__header-kicker {
+    font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.2; letter-spacing: 0.3em;
+    font-weight: 600; text-transform: uppercase; color: #775a19;
+}
+.hireai-fp-cases__header-title {
+    font-family: 'Playfair Display', serif; font-size: 48px; line-height: 1.2;
+    font-weight: 600; color: #000; margin-top: 16px;
+}
+@media (max-width: 768px) {
+    .hireai-fp-cases__header-title { font-size: 28px; }
+}
+.hireai-fp-cases__header-link {
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #000; text-decoration: none;
+    border-bottom: 1px solid rgba(26,28,28,0.2); padding-bottom: 4px;
+    display: inline-flex; align-items: center; gap: 12px; transition: all 0.3s;
+}
+.hireai-fp-cases__header-link:hover { border-color: #000; }
+.hireai-fp-cases__header-link svg { transition: transform 0.3s; }
+.hireai-fp-cases__header-link:hover svg { transform: translateX(3px); }
+
+.hireai-fp-cases__grid {
+    display: grid; grid-template-columns: 1fr; gap: 24px;
+}
+@media (min-width: 768px) {
+    .hireai-fp-cases__grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+    .hireai-fp-cases__grid { grid-template-columns: repeat(12, 1fr); }
+}
+
+/* Major case */
+.hireai-fp-case-major {
+    position: relative; overflow: hidden; background: #000; min-height: 500px; height: 650px;
+}
+@media (min-width: 1024px) {
+    .hireai-fp-case-major { grid-column: span 8; }
+}
+.hireai-fp-case-major__bg {
+    position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0.7;
+    transition: transform 3s cubic-bezier(0.4,0,0.2,1);
+}
+.hireai-fp-case-major:hover .hireai-fp-case-major__bg { transform: scale(1.05); }
+.hireai-fp-case-major__overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, #000 0%, rgba(0,0,0,0.2) 40%, transparent 100%);
+}
+.hireai-fp-case-major__content {
+    position: absolute; bottom: 0; left: 0; padding: 56px; color: #fff;
+}
+@media (max-width: 768px) {
+    .hireai-fp-case-major__content { padding: 24px; }
+}
+.hireai-fp-case-major__kicker {
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.3em; color: #775a19; margin-bottom: 24px; display: block;
+}
+.hireai-fp-case-major__title {
+    font-family: 'Playfair Display', serif; font-size: 48px; line-height: 1.2;
+    font-weight: 600; margin: 0 0 24px;
+}
+@media (max-width: 768px) {
+    .hireai-fp-case-major__title { font-size: 28px; }
+}
+.hireai-fp-case-major__desc {
+    font-family: 'Inter', sans-serif; font-size: 18px; line-height: 1.6;
+    color: rgba(255,255,255,0.6); max-width: 36rem;
+}
+
+/* Side cases */
+.hireai-fp-case-side {
+    display: flex; flex-direction: column; gap: 24px;
+}
+@media (min-width: 1024px) {
+    .hireai-fp-case-side { grid-column: span 4; }
+}
+.hireai-fp-case-card {
+    background: #fff; padding: 40px; border: 1px solid rgba(196,199,199,0.3);
+    flex: 1; transition: border-color 0.3s;
+}
+.hireai-fp-case-card:hover { border-color: #775a19; }
+.hireai-fp-case-card__kicker {
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.15em; color: #775a19; margin-bottom: 24px; display: block;
+}
+.hireai-fp-case-card__title {
+    font-family: 'Playfair Display', serif; font-size: 32px; line-height: 1.3;
+    font-weight: 500; margin: 0 0 24px;
+}
+@media (max-width: 768px) {
+    .hireai-fp-case-card__title { font-size: 24px; }
+}
+.hireai-fp-case-card__desc {
+    color: #444748; font-family: 'Inter', sans-serif; font-size: 16px;
+    line-height: 1.6; margin-bottom: 32px;
+}
+.hireai-fp-case-card__img {
+    width: 100%; height: 8rem; object-fit: cover;
+    filter: grayscale(1); transition: filter 0.5s;
+}
+.hireai-fp-case-card:hover .hireai-fp-case-card__img { filter: grayscale(0); }
+
+/* ── FAQ ── */
+.hireai-fp-faq-list {
+    max-width: 56rem; margin: 0 auto; display: flex; flex-direction: column; gap: 32px;
+}
+.hireai-fp-faq-item {
+    border-bottom: 1px solid rgba(196,199,199,0.3); padding-bottom: 32px; cursor: pointer;
+}
+.hireai-fp-faq-item__header {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+}
+.hireai-fp-faq-item__question {
+    font-family: 'Playfair Display', serif; font-size: 22px; line-height: 1.3;
+    font-weight: 500; margin: 0; transition: color 0.3s; flex: 1;
+}
+.hireai-fp-faq-item:hover .hireai-fp-faq-item__question { color: #775a19; }
+.hireai-fp-faq-item__icon {
+    font-size: 24px; color: #444748; transition: transform 0.3s; flex-shrink: 0;
+}
+.hireai-fp-faq-item.is-active .hireai-fp-faq-item__icon { transform: rotate(180deg); }
+.hireai-fp-faq-item__answer {
+    max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.hireai-fp-faq-item.is-active .hireai-fp-faq-item__answer { max-height: 500px; }
+.hireai-fp-faq-item__answer-inner {
+    padding-top: 24px; font-family: 'Inter', sans-serif; font-size: 16px;
+    line-height: 1.6; color: rgba(68,71,72,0.8);
+}
+
+/* ── Footer ── */
+.hireai-fp-footer {
+    background: #fff; border-top: 1px solid rgba(196,199,199,0.3); padding: 64px 0;
+}
+.hireai-fp-footer__inner {
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%; padding: 0 80px; max-width: 1440px; margin: 0 auto;
+}
+@media (min-width: 768px) {
+    .hireai-fp-footer__inner { flex-direction: row; justify-content: space-between; }
+}
+@media (max-width: 768px) {
+    .hireai-fp-footer__inner { padding: 0 20px; }
+}
+.hireai-fp-footer__logo {
+    font-family: 'Playfair Display', serif; font-size: 32px; line-height: 1.3; font-weight: 500;
+    color: #000; letter-spacing: -0.02em;
+}
+.hireai-fp-footer__links {
+    display: flex; gap: 24px; margin: 40px 0;
+}
+@media (min-width: 768px) {
+    .hireai-fp-footer__links { margin: 0; }
+}
+.hireai-fp-footer__links a {
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase; color: #444748;
+    text-decoration: none; transition: color 0.3s;
+}
+.hireai-fp-footer__links a:hover { color: #775a19; }
+.hireai-fp-footer__copy {
+    font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(68,71,72,0.6);
+    text-transform: uppercase; letter-spacing: 0.2em; text-align: center;
+}
+@media (min-width: 768px) {
+    .hireai-fp-footer__copy { text-align: right; }
+}
+</style>
+
+<main class="hireai-fp">
+
+<!-- ═══ Header ═══ -->
+<header class="hireai-fp-header">
+    <div class="hireai-fp-header__inner">
+        <a class="hireai-fp-header__logo" href="<?php echo esc_url(home_url('/')); ?>">HireAIPeople</a>
+        <nav class="hireai-fp-header__nav">
+            <a class="hireai-fp-header__nav hireai-fp-header__nav--active" href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html($is_en ? 'AI Digital Humans' : 'AI数字人'); ?></a>
+            <a class="hireai-fp-header__nav" href="#"><?php echo esc_html($is_en ? 'AI Solutions' : 'AI解决方案'); ?></a>
+            <a class="hireai-fp-header__nav" href="#faq"><?php echo esc_html($is_en ? 'FAQ' : 'FAQ'); ?></a>
+            <a class="hireai-fp-header__nav" href="#customization"><?php echo esc_html($is_en ? 'Custom' : '定制'); ?></a>
+            <a class="hireai-fp-header__nav" href="#"><?php echo esc_html($is_en ? 'About Us' : '关于我们'); ?></a>
+        </nav>
+        <a class="hireai-fp-header__cta" href="<?php echo esc_url($hero_cta_1['url']); ?>"<?php echo !empty($hero_cta_1['target']) ? ' target="' . esc_attr($hero_cta_1['target']) . '" rel="noopener"' : ''; ?>><?php echo esc_html($hero_cta_1['title']); ?></a>
+    </div>
+</header>
+
+<!-- ═══ Hero ═══ -->
+<section class="hireai-fp-hero">
+    <div class="hireai-fp-hero__bg">
+        <?php if ($hero_image) : ?>
+        <div class="hireai-fp-hero__bg-img" style="background-image: url('<?php echo esc_url($hero_image); ?>')"></div>
+        <?php else : ?>
+        <div class="hireai-fp-hero__bg-img"></div>
+        <?php endif; ?>
+        <div class="hireai-fp-hero__bg-overlay"></div>
+        <div class="hireai-fp-hero__bg-gradient"></div>
+    </div>
+    <div class="hireai-fp-hero__content">
+        <div class="hireai-fp-hero__inner">
+            <?php if ($hero_kicker) : ?>
+            <span class="hireai-fp-hero__kicker"><?php echo esc_html($hero_kicker); ?></span>
+            <?php endif; ?>
+            <h1 class="hireai-fp-hero__title">
+                <?php echo esc_html($hero_title); ?><br>
+                <em><?php echo esc_html($is_en ? '聘用AI数字员工' : '聘用AI数字员工'); ?></em>
+            </h1>
+            <p class="hireai-fp-hero__subtitle"><?php echo wp_kses_post($hero_subtitle); ?></p>
+            <div class="hireai-fp-hero__actions">
+                <a class="hireai-fp-btn hireai-fp-btn--primary" href="<?php echo esc_url($hero_cta_1['url']); ?>"<?php echo !empty($hero_cta_1['target']) ? ' target="' . esc_attr($hero_cta_1['target']) . '" rel="noopener"' : ''; ?>><?php echo esc_html($hero_cta_1['title']); ?></a>
+                <a class="hireai-fp-btn hireai-fp-btn--outline" href="<?php echo esc_url($hero_cta_2['url']); ?>"<?php echo !empty($hero_cta_2['target']) ? ' target="' . esc_attr($hero_cta_2['target']) . '" rel="noopener"' : ''; ?>><?php echo esc_html($hero_cta_2['title']); ?></a>
+            </div>
+        </div>
+    </div>
 </section>
 
-<section class="section section--surface">
-	<div class="container">
-		<div class="module-head">
-			<div class="module-head__copy">
-				<span class="label module-head__kicker"><?php echo esc_html(hireai_field('employees_kicker', $is_en ? 'AI EMPLOYEES' : 'AI 数字员工')); ?></span>
-				<h2><?php echo esc_html(hireai_field('employees_title', $is_en ? 'Digital Artisans' : '数字工匠')); ?></h2>
-				<p><?php echo esc_html(hireai_field('employees_subtitle', $is_en ? 'Each digital employee brings a unique soul, refined skills, and unmatched capabilities—ready to join your team.' : '每一位数字员工都拥有独特的灵魂、技能与能力，随时加入您的团队。')); ?></p>
-			</div>
-			<a class="text-link" href="<?php echo esc_url($employees_cta['url']); ?>"><?php echo esc_html($employees_cta['title']); ?> <?php echo hireai_svg('arrow', 14); ?></a>
-		</div>
-
-		<div class="employee-grid">
-			<?php if ($employees_query->have_posts()) : ?>
-				<?php $employee_index = 0; while ($employees_query->have_posts()) : $employees_query->the_post(); ?>
-					<?php get_template_part('template-parts/employee-card', null, ['lg_only' => $employee_index >= 3]); ?>
-					<?php $employee_index++; ?>
-				<?php endwhile; wp_reset_postdata(); ?>
-			<?php else : ?>
-				<?php foreach ($fallback_employees as $employee_index => $item) : ?>
-					<?php get_template_part('template-parts/fallback-employee-card', null, [
-						'title' => $localize($item, 'title'),
-						'role'  => $localize($item, 'role'),
-						'image' => hireai_default_image($localize($item, 'image')),
-						'link'  => home_url($localize($item, 'link')),
-						'lg_only' => $employee_index >= 3,
-					]); ?>
-				<?php endforeach; ?>
-			<?php endif; ?>
-		</div>
-	</div>
+<!-- ═══ AI Employee Matrix ═══ -->
+<section class="hireai-fp-section">
+    <div class="hireai-fp-section-header">
+        <span class="hireai-fp-section-header__kicker"><?php echo esc_html($emp_kicker); ?></span>
+        <h2 class="hireai-fp-section-header__title"><?php echo esc_html($emp_title); ?></h2>
+        <div class="hireai-fp-section-header__divider"></div>
+    </div>
+    <div class="hireai-fp-grid-3">
+        <?php foreach ($employees as $emp) : ?>
+        <div class="hireai-fp-glass-card">
+            <div class="hireai-fp-glass-card__img-wrap">
+                <img class="hireai-fp-glass-card__img" src="<?php echo esc_url($emp['image']); ?>" alt="<?php echo esc_attr($emp['title']); ?>">
+                <div class="hireai-fp-glass-card__img-overlay"></div>
+            </div>
+            <div class="hireai-fp-glass-card__body">
+                <span class="hireai-fp-glass-card__kicker"><?php echo esc_html($emp['kicker']); ?></span>
+                <h3 class="hireai-fp-glass-card__title"><?php echo esc_html($emp['title']); ?></h3>
+                <p class="hireai-fp-glass-card__desc"><?php echo esc_html($emp['desc']); ?></p>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <div style="text-align: center; margin-top: 48px;">
+        <a class="hireai-fp-btn hireai-fp-btn--outline" href="<?php echo esc_url(home_url('/ai-employees/')); ?>"><?php echo esc_html($is_en ? 'Explore More' : '探索更多'); ?></a>
+    </div>
 </section>
 
-<section class="section">
-	<div class="container">
-		<div class="module-head">
-			<div class="module-head__copy">
-				<span class="label module-head__kicker"><?php echo esc_html(hireai_field('solutions_kicker', $is_en ? 'AI SOLUTIONS' : 'AI 解决方案')); ?></span>
-				<h2><?php echo esc_html(hireai_field('solutions_title', $is_en ? 'Curated Solutions' : '臻选解决方案')); ?></h2>
-				<p><?php echo esc_html(hireai_field('solutions_subtitle', $is_en ? 'Bespoke intelligent services tailored for marketing, e-commerce, design, and PR.' : '面向营销、电商、设计、公关四大场景的量身定制智能服务。')); ?></p>
-			</div>
-			<a class="text-link" href="<?php echo esc_url($solutions_cta['url']); ?>"><?php echo esc_html($solutions_cta['title']); ?> <?php echo hireai_svg('arrow', 14); ?></a>
-		</div>
-
-		<div class="solution-grid">
-			<?php if ($solutions_query && $solutions_query->have_posts()) : ?>
-				<?php $solution_i = 0; ?>
-				<?php while ($solutions_query->have_posts()) : $solutions_query->the_post(); ?>
-					<?php get_template_part('template-parts/solution-card', null, ['index' => $solution_i, 'cta_text' => $is_en ? 'Explore More' : '探索更多']); ?>
-					<?php $solution_i++; ?>
-				<?php endwhile; wp_reset_postdata(); ?>
-			<?php else : ?>
-				<?php foreach ($fallback_solutions as $item) : ?>
-					<?php get_template_part('template-parts/solution-card', null, [
-						'fallback' => true,
-						'title'    => $localize($item, 'title'),
-						'text'     => $localize($item, 'text'),
-						'link'     => home_url($localize($item, 'link')),
-						'image'    => hireai_default_image($localize($item, 'image')),
-						'icon'     => $localize($item, 'icon'),
-						'cta_text' => $is_en ? 'Explore More' : '探索更多',
-					]); ?>
-				<?php endforeach; ?>
-			<?php endif; ?>
-		</div>
-	</div>
+<!-- ═══ AI Solutions ═══ -->
+<section class="hireai-fp-solutions">
+    <div class="hireai-fp-section-header">
+        <span class="hireai-fp-section-header__kicker"><?php echo esc_html($is_en ? 'AI SOLUTIONS' : 'AI SOLUTIONS'); ?></span>
+        <h2 class="hireai-fp-section-header__title"><?php echo esc_html($is_en ? 'AI Solutions' : 'AI解决方案'); ?></h2>
+        <div class="hireai-fp-section-header__divider"></div>
+    </div>
+    <div class="hireai-fp-solutions__grid">
+        <?php foreach ($solutions as $sol) : ?>
+        <div class="hireai-fp-sol-card">
+            <div class="hireai-fp-sol-card__img-wrap">
+                <img class="hireai-fp-sol-card__img" src="<?php echo esc_url($sol['image']); ?>" alt="<?php echo esc_attr($fallback($sol, 'title')); ?>">
+            </div>
+            <div class="hireai-fp-sol-card__body">
+                <span class="hireai-fp-sol-card__tag"><?php echo esc_html($fallback($sol, 'tag')); ?></span>
+                <h3 class="hireai-fp-sol-card__title"><?php echo esc_html($fallback($sol, 'title')); ?></h3>
+                <p class="hireai-fp-sol-card__desc"><?php echo esc_html($fallback($sol, 'desc')); ?></p>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <div class="hireai-fp-solutions__cta">
+        <a class="hireai-fp-btn hireai-fp-btn--outline" href="<?php echo esc_url(home_url('/ai-solutions/')); ?>"><?php echo esc_html($is_en ? 'Explore More' : '探索更多'); ?></a>
+    </div>
 </section>
 
-<section class="section section--surface">
-	<div class="container">
-		<div class="module-head">
-			<div class="module-head__copy">
-				<span class="label module-head__kicker"><?php echo esc_html(hireai_field('cases_kicker', $is_en ? 'CASES & INSIGHTS' : '案例与洞察')); ?></span>
-				<h2><?php echo esc_html(hireai_field('cases_title', $is_en ? 'Cases & Insights' : '案例与思考')); ?></h2>
-				<p><?php echo esc_html(hireai_field('cases_subtitle', $is_en ? 'See how digital employees transform operations and explore the deeper currents of AI.' : '见证数字员工如何改变企业的运营方式，洞察 AI 行业的深层趋势。')); ?></p>
-			</div>
-			<a class="text-link" href="<?php echo esc_url($cases_cta['url']); ?>"><?php echo esc_html($cases_cta['title']); ?> <?php echo hireai_svg('arrow', 14); ?></a>
-		</div>
-
-		<div class="case-grid">
-			<?php if ($cases_query->have_posts()) : ?>
-				<?php while ($cases_query->have_posts()) : $cases_query->the_post(); ?>
-					<article class="case-card">
-						<a class="case-card__media" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true"<?php if (has_post_thumbnail()) : ?> style="background-image:url('<?php echo esc_url(get_the_post_thumbnail_url(null, 'hireai-wide')); ?>')"<?php endif; ?>></a>
-						<span class="label case-card__kicker"><?php $cats = get_the_category(); echo esc_html(!empty($cats) ? $cats[0]->name : ($is_en ? 'Case Study' : '精选案例')); ?></span>
-						<h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-						<p><?php echo esc_html(wp_trim_words(get_the_excerpt(), 24)); ?></p>
-					</article>
-				<?php endwhile; wp_reset_postdata(); ?>
-			<?php else : ?>
-				<?php foreach ($fallback_cases as $item) : $case_image = hireai_default_image($localize($item, 'image')); ?>
-					<article class="case-card">
-						<a class="case-card__media" href="<?php echo esc_url(home_url($localize($item, 'link'))); ?>" tabindex="-1" aria-hidden="true"<?php if ($case_image) : ?> style="background-image:url('<?php echo esc_url($case_image); ?>')"<?php endif; ?>></a>
-						<span class="label case-card__kicker"><?php echo esc_html($localize($item, 'kicker')); ?></span>
-						<h3><a href="<?php echo esc_url(home_url($localize($item, 'link'))); ?>"><?php echo esc_html($localize($item, 'title')); ?></a></h3>
-						<p><?php echo esc_html($localize($item, 'text')); ?></p>
-					</article>
-				<?php endforeach; ?>
-			<?php endif; ?>
-		</div>
-	</div>
+<!-- ═══ Featured Cases ═══ -->
+<section class="hireai-fp-cases">
+    <div class="hireai-fp-cases__inner">
+        <div class="hireai-fp-cases__header">
+            <div class="hireai-fp-cases__header-text">
+                <span class="hireai-fp-cases__header-kicker"><?php echo esc_html($cases_kicker); ?></span>
+                <h2 class="hireai-fp-cases__header-title"><?php echo esc_html($cases_title); ?></h2>
+            </div>
+            <a class="hireai-fp-cases__header-link" href="<?php echo esc_url($cases_link['url']); ?>"<?php echo !empty($cases_link['target']) ? ' target="' . esc_attr($cases_link['target']) . '" rel="noopener"' : ''; ?>>
+                <?php echo esc_html($cases_link['title']); ?>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </a>
+        </div>
+        <div class="hireai-fp-cases__grid">
+            <!-- Major Case -->
+            <div class="hireai-fp-case-major">
+                <div class="hireai-fp-case-major__bg" style="background-image: url('<?php echo esc_url($major_case['image']); ?>')"></div>
+                <div class="hireai-fp-case-major__overlay"></div>
+                <div class="hireai-fp-case-major__content">
+                    <span class="hireai-fp-case-major__kicker"><?php echo esc_html($major_case['kicker']); ?></span>
+                    <h3 class="hireai-fp-case-major__title"><?php echo esc_html($major_case['title']); ?></h3>
+                    <p class="hireai-fp-case-major__desc"><?php echo esc_html($major_case['desc']); ?></p>
+                </div>
+            </div>
+            <!-- Side Cases -->
+            <div class="hireai-fp-case-side">
+                <?php foreach ($side_cases as $sc) : ?>
+                <div class="hireai-fp-case-card">
+                    <span class="hireai-fp-case-card__kicker"><?php echo esc_html($sc['kicker']); ?></span>
+                    <h4 class="hireai-fp-case-card__title"><?php echo esc_html($sc['title']); ?></h4>
+                    <p class="hireai-fp-case-card__desc"><?php echo esc_html($sc['desc']); ?></p>
+                    <?php if (!empty($sc['image'])) : ?>
+                    <img class="hireai-fp-case-card__img" src="<?php echo esc_url($sc['image']); ?>" alt="<?php echo esc_attr($sc['title']); ?>">
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
 </section>
 
-<section class="section">
-	<div class="container">
-		<div class="module-head">
-			<div class="module-head__copy">
-				<span class="label module-head__kicker"><?php echo esc_html(hireai_field('faq_kicker', $is_en ? 'FAQ' : '常见问题')); ?></span>
-				<h2><?php echo esc_html(hireai_field('faq_title', $is_en ? 'Answers, Immediately' : '疑问，即刻解答')); ?></h2>
-				<p><?php echo esc_html(hireai_field('faq_subtitle', $is_en ? 'Common questions about partnerships, finance, privacy, and security.' : '关于合作方式、财务、隐私与安全的常见问题。')); ?></p>
-			</div>
-			<a class="text-link" href="<?php echo esc_url($faq_cta['url']); ?>"><?php echo esc_html($faq_cta['title']); ?> <?php echo hireai_svg('arrow', 14); ?></a>
-		</div>
-
-		<div class="faq-panel">
-			<?php if ($faq_query->have_posts()) : ?>
-				<?php while ($faq_query->have_posts()) : $faq_query->the_post(); ?>
-					<article class="faq-item">
-						<button class="faq-item__toggle" type="button" aria-expanded="false">
-							<span class="faq-item__q"><span class="faq-item__q-text"><?php the_title(); ?></span></span>
-							<span class="faq-item__icon" aria-hidden="true"><?php echo hireai_svg('plus', 22); ?></span>
-						</button>
-						<div class="faq-item__a">
-							<div class="faq-item__a-inner"><p><span class="faq-item__a-text"><?php echo esc_html(wp_strip_all_tags(get_the_content())); ?></span></p></div>
-						</div>
-					</article>
-				<?php endwhile; wp_reset_postdata(); ?>
-			<?php else : ?>
-				<?php foreach ($fallback_faq as $item) : ?>
-					<?php get_template_part('template-parts/fallback-faq', null, [
-						'question' => $localize($item, 'title'),
-						'answer'   => $localize($item, 'answer'),
-					]); ?>
-				<?php endforeach; ?>
-			<?php endif; ?>
-		</div>
-	</div>
+<!-- ═══ FAQ ═══ -->
+<section class="hireai-fp-section" id="faq">
+    <div class="hireai-fp-section-header">
+        <span class="hireai-fp-section-header__kicker"><?php echo esc_html($faq_kicker); ?></span>
+        <h2 class="hireai-fp-section-header__title"><?php echo esc_html($faq_title); ?></h2>
+        <div class="hireai-fp-section-header__divider hireai-fp-section-header__divider--sm"></div>
+    </div>
+    <div class="hireai-fp-faq-list">
+        <?php foreach ($fallback_faq as $item) : ?>
+        <div class="hireai-fp-faq-item">
+            <div class="hireai-fp-faq-item__header" onclick="this.closest('.hireai-fp-faq-item').classList.toggle('is-active')">
+                <h4 class="hireai-fp-faq-item__question"><?php echo esc_html($item['question']); ?></h4>
+                <span class="hireai-fp-faq-item__icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </span>
+            </div>
+            <div class="hireai-fp-faq-item__answer">
+                <div class="hireai-fp-faq-item__answer-inner">
+                    <p><?php echo esc_html($item['answer']); ?></p>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
 </section>
 
-<section class="cta-section">
-	<div class="container">
-		<div class="cta-section__inner">
-			<h2><?php echo esc_html(hireai_field('cta_title', $is_en ? 'Begin Your AI Hiring Journey' : '开启您的 AI 雇佣之旅')); ?></h2>
-			<p><?php echo esc_html(hireai_field('cta_subtitle', $is_en ? 'Speak with our team and craft a digital workforce made for you.' : '与我们的团队对话，打造专属您的数字员工阵容。')); ?></p>
-			<a class="btn btn-solid" href="<?php echo esc_url($cta_button['url']); ?>"><?php echo esc_html($cta_button['title']); ?> <?php echo hireai_svg('arrow', 14); ?></a>
-		</div>
-	</div>
-</section>
+</main>
+
+<!-- ═══ Footer ═══ -->
+<footer class="hireai-fp-footer">
+    <div class="hireai-fp-footer__inner">
+        <div class="hireai-fp-footer__logo">HireAIPeople</div>
+        <div class="hireai-fp-footer__links">
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Social</a>
+            <a href="#">Contact</a>
+        </div>
+        <div class="hireai-fp-footer__copy">
+            &copy; <?php echo date('Y'); ?> HireAIPeople. The Future of Excellence.
+        </div>
+    </div>
+</footer>
 
 <?php get_footer(); ?>
