@@ -155,25 +155,25 @@ $solutions = [
 }
 .hireai-fp-hero__inner { max-width: 48rem; }
 .hireai-fp-hero__kicker {
-    font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.2; letter-spacing: 0.4em;
+    font-family: 'Inter', sans-serif; font-size: var(--fs-label); line-height: 1.2; letter-spacing: 0.12em;
     font-weight: 600; text-transform: uppercase; color: #775a19; display: inline-block; margin-bottom: 24px;
 }
 .hireai-fp-hero__title {
-    font-family: 'Playfair Display', serif; font-size: 58px; line-height: 1.05;
+    font-family: 'Playfair Display', serif; font-size: var(--fs-display); line-height: 1.05;
     letter-spacing: -0.02em; font-weight: 700; color: #000; margin-bottom: 32px;
 }
 @media (max-width: 768px) {
-    .hireai-fp-hero__title { font-size: 29px; }
+    .hireai-fp-hero__title { font-size: var(--fs-h1); }
 }
 .hireai-fp-hero__title em { font-style: italic; font-weight: normal; }
 .hireai-fp-hero__subtitle {
-    font-family: 'Inter', sans-serif; font-size: 18px; line-height: 1.6;
+    font-family: 'Inter', sans-serif; font-size: var(--fs-body-lg); line-height: 1.6;
     color: rgba(68,71,72,0.8); max-width: 576px; margin-bottom: 48px;
 }
 .hireai-fp-hero__actions { display: flex; gap: 24px; flex-wrap: wrap; }
 .hireai-fp-btn {
-    display: inline-block; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
-    letter-spacing: 0.1em; text-transform: uppercase; padding: 16px 48px; border-radius: 9999px;
+    display: inline-block; font-family: 'Inter', sans-serif; font-size: var(--fs-button); font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase; padding: 16px 48px; border-radius: 9999px;
     text-decoration: none; text-align: center; cursor: pointer; transition: all 0.3s; border: none;
 }
 .hireai-fp-btn--primary { background: #000; color: #fff; }
@@ -193,15 +193,15 @@ $solutions = [
 }
 .hireai-fp-section-header { text-align: center; margin-bottom: 96px; }
 .hireai-fp-section-header__kicker {
-    font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.2; letter-spacing: 0.3em;
+    font-family: 'Inter', sans-serif; font-size: var(--fs-label); line-height: 1.2; letter-spacing: 0.12em;
     font-weight: 600; text-transform: uppercase; color: #775a19;
 }
 .hireai-fp-section-header__title {
-    font-family: 'Playfair Display', serif; font-size: 48px; line-height: 1.2;
+    font-family: 'Playfair Display', serif; font-size: var(--fs-h2); line-height: 1.2;
     font-weight: 600; color: #000; margin-top: 16px;
 }
 @media (max-width: 768px) {
-    .hireai-fp-section-header__title { font-size: 28px; }
+    .hireai-fp-section-header__title { font-size: var(--fs-h2); }
 }
 .hireai-fp-section-header__divider {
     width: 96px; height: 1px; margin: 40px auto 0;
@@ -249,15 +249,15 @@ $solutions = [
 .hireai-fp-glass-card:hover .hireai-fp-glass-card__img-overlay { opacity: 1; }
 .hireai-fp-glass-card__body { padding: 8px; }
 .hireai-fp-glass-card__kicker {
-    font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.2; letter-spacing: 0.15em;
+    font-family: 'Inter', sans-serif; font-size: var(--fs-label); line-height: 1.2; letter-spacing: 0.12em;
     font-weight: 500; text-transform: uppercase; color: #775a19;
 }
 .hireai-fp-glass-card__title {
-    font-family: 'Playfair Display', serif; font-size: 28px; line-height: 1.3; font-weight: 500;
+    font-family: 'Playfair Display', serif; font-size: var(--fs-h3); line-height: 1.3; font-weight: 500;
     color: #000; margin: 8px 0 16px;
 }
 .hireai-fp-glass-card__desc {
-    color: #444748; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6;
+    color: #444748; font-family: 'Inter', sans-serif; font-size: var(--fs-body); line-height: 1.6;
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 
@@ -291,15 +291,15 @@ $solutions = [
 .hireai-fp-sol-card:hover .hireai-fp-sol-card__img { transform: scale(1.05); }
 .hireai-fp-sol-card__body { padding: 24px; }
 .hireai-fp-sol-card__tag {
-    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; text-transform: uppercase;
+    font-family: 'Inter', sans-serif; font-size: var(--fs-label); font-weight: 500; text-transform: uppercase;
     letter-spacing: 0.15em; color: #775a19;
 }
 .hireai-fp-sol-card__title {
-    font-family: 'Playfair Display', serif; font-size: 24px; line-height: 1.3; font-weight: 500;
+    font-family: 'Playfair Display', serif; font-size: var(--fs-h3); line-height: 1.3; font-weight: 500;
     color: #000; margin-top: 8px;
 }
 .hireai-fp-sol-card__desc {
-    font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; color: #444748;
+    font-family: 'Inter', sans-serif; font-size: var(--fs-body); line-height: 1.6; color: #444748;
     margin-top: 12px;
 }
 .hireai-fp-solutions__cta {
@@ -324,18 +324,18 @@ $solutions = [
 }
 .hireai-fp-cases__header-text { max-width: 32rem; text-align: left; }
 .hireai-fp-cases__header-kicker {
-    font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.2; letter-spacing: 0.3em;
+    font-family: 'Inter', sans-serif; font-size: var(--fs-label); line-height: 1.2; letter-spacing: 0.12em;
     font-weight: 600; text-transform: uppercase; color: #775a19;
 }
 .hireai-fp-cases__header-title {
-    font-family: 'Playfair Display', serif; font-size: 48px; line-height: 1.2;
+    font-family: 'Playfair Display', serif; font-size: var(--fs-h2); line-height: 1.2;
     font-weight: 600; color: #000; margin-top: 16px;
 }
 @media (max-width: 768px) {
-    .hireai-fp-cases__header-title { font-size: 28px; }
+    .hireai-fp-cases__header-title { font-size: var(--fs-h2); }
 }
 .hireai-fp-cases__header-link {
-    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.1em;
+    font-family: 'Inter', sans-serif; font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.12em;
     text-transform: uppercase; color: #000; text-decoration: none;
     border-bottom: 1px solid rgba(26,28,28,0.2); padding-bottom: 4px;
     display: inline-flex; align-items: center; gap: 12px; transition: all 0.3s;
@@ -377,18 +377,18 @@ $solutions = [
     .hireai-fp-case-major__content { padding: 24px; }
 }
 .hireai-fp-case-major__kicker {
-    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; text-transform: uppercase;
+    font-family: 'Inter', sans-serif; font-size: var(--fs-label); font-weight: 500; text-transform: uppercase;
     letter-spacing: 0.3em; color: #775a19; margin-bottom: 24px; display: block;
 }
 .hireai-fp-case-major__title {
-    font-family: 'Playfair Display', serif; font-size: 48px; line-height: 1.2;
+    font-family: 'Playfair Display', serif; font-size: var(--fs-h1); line-height: 1.2;
     font-weight: 600; margin: 0 0 24px;
 }
 @media (max-width: 768px) {
-    .hireai-fp-case-major__title { font-size: 28px; }
+    .hireai-fp-case-major__title { font-size: var(--fs-h2); }
 }
 .hireai-fp-case-major__desc {
-    font-family: 'Inter', sans-serif; font-size: 18px; line-height: 1.6;
+    font-family: 'Inter', sans-serif; font-size: var(--fs-body-lg); line-height: 1.6;
     color: rgba(255,255,255,0.6); max-width: 36rem;
 }
 
@@ -405,18 +405,18 @@ $solutions = [
 }
 .hireai-fp-case-card:hover { border-color: #775a19; }
 .hireai-fp-case-card__kicker {
-    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; text-transform: uppercase;
+    font-family: 'Inter', sans-serif; font-size: var(--fs-label); font-weight: 500; text-transform: uppercase;
     letter-spacing: 0.15em; color: #775a19; margin-bottom: 24px; display: block;
 }
 .hireai-fp-case-card__title {
-    font-family: 'Playfair Display', serif; font-size: 32px; line-height: 1.3;
+    font-family: 'Playfair Display', serif; font-size: var(--fs-h3); line-height: 1.3;
     font-weight: 500; margin: 0 0 24px;
 }
 @media (max-width: 768px) {
-    .hireai-fp-case-card__title { font-size: 24px; }
+    .hireai-fp-case-card__title { font-size: var(--fs-h3); }
 }
 .hireai-fp-case-card__desc {
-    color: #444748; font-family: 'Inter', sans-serif; font-size: 16px;
+    color: #444748; font-family: 'Inter', sans-serif; font-size: var(--fs-body);
     line-height: 1.6; margin-bottom: 32px;
 }
 .hireai-fp-case-card__img {
@@ -436,12 +436,12 @@ $solutions = [
     display: flex; justify-content: space-between; align-items: center; gap: 16px;
 }
 .hireai-fp-faq-item__question {
-    font-family: 'Playfair Display', serif; font-size: 22px; line-height: 1.3;
+    font-family: 'Playfair Display', serif; font-size: var(--fs-h3); line-height: 1.3;
     font-weight: 500; margin: 0; transition: color 0.3s; flex: 1;
 }
 .hireai-fp-faq-item:hover .hireai-fp-faq-item__question { color: #775a19; }
 .hireai-fp-faq-item__icon {
-    font-size: 24px; color: #444748; transition: transform 0.3s; flex-shrink: 0;
+    font-size: clamp(20px, 2vw, 24px); color: #444748; transition: transform 0.3s; flex-shrink: 0;
 }
 .hireai-fp-faq-item.is-active .hireai-fp-faq-item__icon { transform: rotate(180deg); }
 .hireai-fp-faq-item__answer {
@@ -449,7 +449,7 @@ $solutions = [
 }
 .hireai-fp-faq-item.is-active .hireai-fp-faq-item__answer { max-height: 500px; }
 .hireai-fp-faq-item__answer-inner {
-    padding-top: 24px; font-family: 'Inter', sans-serif; font-size: 16px;
+    padding-top: 24px; font-family: 'Inter', sans-serif; font-size: var(--fs-body);
     line-height: 1.6; color: rgba(68,71,72,0.8);
 }
 .hireai-fp-faq__cta {

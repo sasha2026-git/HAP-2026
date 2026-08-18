@@ -126,12 +126,15 @@ Text Domain:  hireaipeople
 
   --fs-display: clamp(40px, 5.5vw, 72px);
   --fs-h1: clamp(32px, 4vw, 48px);
-  --fs-h2: clamp(30px, 3.2vw, 48px);
+  --fs-h2: clamp(28px, 3vw, 42px);
   --fs-h3: clamp(18px, 1.8vw, 24px);
-  --fs-body-lg: clamp(16px, 1.25vw, 18px);
-  --fs-body: clamp(15px, 1.1vw, 16px);
-  --fs-label: 12px;
-  --fs-label-mono: 14px;
+  --fs-body-lg: clamp(14px, 1.2vw, 16px);
+  --fs-body: clamp(13px, 1.1vw, 15px);
+  --fs-label: clamp(11px, 0.9vw, 12px);
+  --fs-label-mono: clamp(12px, 1vw, 14px);
+  --fs-button: 12px;
+  --fs-nav: 12px;
+  --fs-footer: 11px;
 
   --lh-display: 1.15;
   --lh-heading: 1.2;
@@ -436,7 +439,7 @@ h4 {
 .desktop-nav a,
 .mobile-drawer a {
   font-family: var(--font-label);
-  font-size: var(--fs-label);
+  font-size: var(--fs-nav);
   font-weight: 600;
   line-height: 1;
   letter-spacing: 0.2em;
@@ -468,7 +471,7 @@ h4 {
 
 .lang-switch a {
   font-family: var(--font-label);
-  font-size: var(--fs-label);
+  font-size: var(--fs-nav);
   letter-spacing: 0.18em;
   color: var(--on-surface-variant);
 }
@@ -486,7 +489,7 @@ h4 {
   border-radius: var(--radius-default);
   padding: 12px 24px;
   font-family: var(--font-label);
-  font-size: var(--fs-label);
+  font-size: var(--fs-button);
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -599,7 +602,7 @@ h4 {
   border-radius: var(--radius-default);
   padding: 16px 32px;
   font-family: var(--font-label);
-  font-size: var(--fs-label);
+  font-size: var(--fs-button);
   font-weight: 600;
   letter-spacing: 0.2em;
   line-height: 1;
@@ -649,7 +652,7 @@ h4 {
   padding-bottom: 6px;
   border-bottom: 1px solid var(--primary);
   font-family: var(--font-label);
-  font-size: var(--fs-label);
+  font-size: var(--fs-button);
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -1388,7 +1391,7 @@ mark {
   padding: 6px 2px 9px;
   border-bottom: 1px solid transparent;
   font-family: var(--font-label);
-  font-size: var(--fs-label-mono);
+  font-size: var(--fs-button);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2205,7 +2208,7 @@ mark {
 .footer-nav a,
 .footer-menu a {
   font-family: var(--font-label);
-  font-size: var(--fs-label-mono);
+  font-size: var(--fs-footer);
   font-weight: 500;
   color: var(--on-surface-variant);
 }
@@ -2636,7 +2639,7 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 .lb-hero__kicker {
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.3em;
   text-transform: uppercase;
@@ -2645,7 +2648,7 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 .lb-hero__title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(40px, 6vw, 72px);
+  font-size: var(--fs-display);
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -2654,7 +2657,7 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 .lb-hero__subtitle {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(16px, 1.3vw, 18px);
+  font-size: var(--fs-body-lg);
   font-weight: 400;
   line-height: 1.6;
   color: var(--lb-on-surface-variant);
@@ -2758,7 +2761,7 @@ button[aria-label*="menu" i][aria-expanded] {
 .lb-row__kicker {
   display: block;
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: var(--fs-label);
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -2767,7 +2770,7 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 .lb-row__title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(32px, 4vw, 48px);
+  font-size: var(--fs-h1);
   font-weight: 600;
   line-height: 1.2;
   color: var(--lb-on-surface);
@@ -2775,7 +2778,7 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 .lb-row__desc {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(15px, 1.1vw, 16px);
+  font-size: var(--fs-body);
   font-weight: 400;
   line-height: 1.7;
   color: var(--lb-on-surface-variant);
@@ -2791,7 +2794,7 @@ button[aria-label*="menu" i][aria-expanded] {
   padding: 16px 40px;
   border-radius: 999px;
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: var(--fs-button);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2843,7 +2846,7 @@ button[aria-label*="menu" i][aria-expanded] {
 .lb-cta__heading {
   font-style: italic;
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(32px, 4vw, 48px);
+  font-size: var(--fs-h1);
   font-weight: 600;
   line-height: 1.2;
   font-style: italic;
@@ -2852,7 +2855,7 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 .lb-cta__sub {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(16px, 1.3vw, 18px);
+  font-size: var(--fs-body-lg);
   font-weight: 400;
   line-height: 1.6;
   color: var(--lb-on-surface-variant);
@@ -2880,7 +2883,7 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 .lb-pagination a {
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: var(--fs-nav);
   color: var(--lb-on-surface-variant);
   text-decoration: none;
   margin: 0 8px;
@@ -3049,7 +3052,7 @@ main,
 
 .hp-section__title {
   font-family: var(--hp-font-serif);
-  font-size: clamp(32px, 3.5vw, 48px);
+  font-size: var(--fs-h2);
   font-weight: 600;
   line-height: 1.2;
   color: var(--hp-on-surface);
@@ -3057,14 +3060,14 @@ main,
 }
 
 .hp-section__title--lg {
-  font-size: clamp(32px, 3.5vw, 48px);
+  font-size: var(--fs-h2);
 }
 
 /* ---------- Kicker 标签 ---------- */
 .hp-kicker {
   display: block;
   font-family: var(--hp-font-body);
-  font-size: 14px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.3em;
   text-transform: uppercase;
@@ -3074,7 +3077,7 @@ main,
 .hp-kicker-sm {
   display: block;
   font-family: var(--hp-font-body);
-  font-size: 12px;
+  font-size: var(--fs-label);
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -3102,7 +3105,7 @@ main,
   padding: 16px 48px;
   border-radius: 999px;
   font-family: var(--hp-font-body);
-  font-size: 14px;
+  font-size: var(--fs-button);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -3142,7 +3145,7 @@ main,
   align-items: center;
   gap: 12px;
   font-family: var(--hp-font-body);
-  font-size: 14px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -3230,7 +3233,7 @@ main,
 .hp-hero__kicker {
   display: block;
   font-family: var(--hp-font-body);
-  font-size: 14px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.4em;
   text-transform: uppercase;
@@ -3240,7 +3243,7 @@ main,
 
 .hp-hero__title {
   font-family: var(--hp-font-serif);
-  font-size: clamp(40px, 6vw, 72px);
+  font-size: var(--fs-display);
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.02em;
@@ -3254,7 +3257,7 @@ main,
 
 .hp-hero__subtitle {
   font-family: var(--hp-font-body);
-  font-size: clamp(16px, 1.3vw, 18px);
+  font-size: var(--fs-body-lg);
   font-weight: 400;
   line-height: 1.6;
   color: rgba(68, 71, 72, 0.8);
@@ -3328,7 +3331,7 @@ main,
 
 .hp-glass-card__title {
   font-family: var(--hp-font-serif);
-  font-size: 28px;
+  font-size: var(--fs-h3);
   font-weight: 500;
   line-height: 1.3;
   color: var(--hp-on-surface);
@@ -3338,7 +3341,7 @@ main,
 
 .hp-glass-card__desc {
   font-family: var(--hp-font-body);
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 400;
   line-height: 1.6;
   color: var(--hp-on-surface-var);
@@ -3363,7 +3366,7 @@ main,
 
 .hp-brand-statement__title {
   font-family: var(--hp-font-serif);
-  font-size: clamp(42px, 5vw, 72px);
+  font-size: var(--fs-display);
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -3373,7 +3376,7 @@ main,
 
 .hp-brand-statement__subtitle {
   font-family: var(--hp-font-body);
-  font-size: 14px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.4em;
   text-transform: uppercase;
@@ -3481,7 +3484,7 @@ main,
 
 .hp-case-major__title {
   font-family: var(--hp-font-serif);
-  font-size: clamp(24px, 2.5vw, 48px);
+  font-size: var(--fs-h2);
   font-weight: 600;
   line-height: 1.2;
   margin: 24px 0;
@@ -3489,7 +3492,7 @@ main,
 
 .hp-case-major__desc {
   font-family: var(--hp-font-body);
-  font-size: clamp(16px, 1.3vw, 18px);
+  font-size: var(--fs-body-lg);
   font-weight: 400;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.6);
@@ -3511,7 +3514,7 @@ main,
 
 .hp-case-small__title {
   font-family: var(--hp-font-serif);
-  font-size: clamp(20px, 2vw, 32px);
+  font-size: var(--fs-h3);
   font-weight: 500;
   line-height: 1.3;
   color: var(--hp-on-surface);
@@ -3520,7 +3523,7 @@ main,
 
 .hp-case-small__desc {
   font-family: var(--hp-font-body);
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 400;
   line-height: 1.6;
   color: var(--hp-on-surface-var);
@@ -3575,7 +3578,7 @@ main,
 
 .hp-faq-item__q {
   font-family: var(--hp-font-serif);
-  font-size: clamp(18px, 2vw, 22px);
+  font-size: var(--fs-h3);
   font-weight: 500;
   line-height: 1.3;
   color: var(--hp-on-surface);
@@ -3609,7 +3612,7 @@ main,
 .hp-faq-item__answer p {
   padding-top: 24px;
   font-family: var(--hp-font-body);
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 400;
   line-height: 1.6;
   color: rgba(68, 71, 72, 0.8);
@@ -3656,7 +3659,7 @@ main,
 
 .hp-contact__desc {
   font-family: var(--hp-font-body);
-  font-size: clamp(16px, 1.3vw, 18px);
+  font-size: var(--fs-body-lg);
   font-weight: 400;
   line-height: 1.6;
   color: var(--hp-on-surface-var);
@@ -3683,7 +3686,7 @@ main,
 
 .hp-contact__channel span {
   font-family: var(--hp-font-body);
-  font-size: 18px;
+  font-size: var(--fs-body-lg);
   font-weight: 400;
   letter-spacing: 0.02em;
   color: var(--hp-on-surface);
@@ -3728,7 +3731,7 @@ main,
 
 .hp-contact__qr-label {
   font-family: var(--hp-font-body);
-  font-size: 12px;
+  font-size: var(--fs-label);
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -3738,7 +3741,7 @@ main,
 
 .hp-contact__qr-sublabel {
   font-family: var(--hp-font-body);
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 400;
   color: var(--hp-on-surface-var);
   margin: 0;
@@ -3777,7 +3780,7 @@ main,
 
 .hp-form-label {
   font-family: var(--hp-font-body);
-  font-size: 14px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -3793,7 +3796,7 @@ main,
   border-bottom: 1px solid var(--hp-outline-variant);
   padding: 16px 0;
   font-family: var(--hp-font-body);
-  font-size: 16px;
+  font-size: var(--fs-body);
   color: var(--hp-on-surface);
   transition: border-color 0.3s ease;
   outline: none;
@@ -3897,3 +3900,75 @@ main,
   width: auto !important;
 }
 
+
+
+/* Dior audit typography normalization */
+.kicker,
+.tag,
+.label,
+.label-caps,
+.chip,
+.employee-tag,
+.solution-card__cat,
+.employee-card__role,
+.archive-header__kicker,
+.cta-band__kicker,
+.product-card__badge,
+.product-card__retainer,
+.hp-kicker,
+.hp-kicker-sm,
+.hp-hero__kicker,
+.hp-brand-statement__subtitle,
+.hp-contact__qr-label,
+.hp-form-label,
+.lb-hero__kicker,
+.lb-row__kicker,
+.hp-link-arrow {
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.label-mono,
+.employee-row__role,
+.product-card__operative {
+  font-size: var(--fs-label-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.btn,
+.btn-consult,
+.btn-round,
+.text-link,
+.lb-btn,
+.hp-btn,
+.solution-filter,
+.woocommerce #respond input#submit,
+.woocommerce a.button,
+.woocommerce button.button,
+.woocommerce input.button {
+  font-size: var(--fs-button);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.desktop-nav a,
+.mobile-drawer a,
+.lang-switch a,
+.lb-pagination a {
+  font-size: var(--fs-nav);
+  letter-spacing: 0.12em;
+}
+
+.footer-nav a,
+.footer-menu a {
+  font-size: var(--fs-footer);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.footer-brand__desc,
+.footer-copyright {
+  font-size: var(--fs-footer);
+}
