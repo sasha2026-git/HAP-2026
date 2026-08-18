@@ -125,46 +125,6 @@ $solutions = [
 .hireai-fp, .hireai-fp * { box-sizing: border-box; margin: 0; padding: 0; }
 .hireai-fp { overflow-x: hidden; background: #faf9f9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1a1c1c; line-height: 1.6; }
 
-/* ── Header ── */
-.hireai-fp-header {
-    position: sticky; top: 0; z-index: 50;
-    background: rgba(255,255,255,0.8);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border-bottom: 1px solid rgba(196,199,199,0.3);
-}
-.hireai-fp-header__inner {
-    display: flex; justify-content: space-between; align-items: center;
-    width: 100%; padding: 8px 80px; max-width: 1440px; margin: 0 auto; height: 80px;
-}
-@media (max-width: 768px) {
-    .hireai-fp-header__inner { padding: 8px 20px; }
-}
-.hireai-fp-header__logo {
-    font-family: 'Playfair Display', serif; font-size: 32px; line-height: 1.3; font-weight: 500;
-    color: #000; letter-spacing: -0.02em; text-decoration: none;
-}
-.hireai-fp-header__nav { display: flex; align-items: center; gap: 24px; }
-@media (max-width: 768px) {
-    .hireai-fp-header__nav { display: none; }
-}
-.hireai-fp-header__nav a {
-    font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.2; letter-spacing: 0.1em;
-    font-weight: 600; text-transform: uppercase; color: #444748; text-decoration: none;
-    transition: color 0.3s;
-}
-.hireai-fp-header__nav a:hover { color: #775a19; }
-.hireai-fp-header__nav a--active {
-    color: #775a19; border-bottom: 1px solid #775a19; padding-bottom: 4px;
-}
-.hireai-fp-header__cta {
-    background: #000; color: #fff; padding: 10px 32px; border-radius: 9999px; border: none; cursor: pointer;
-    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
-    text-transform: uppercase; transition: all 0.3s; text-decoration: none; display: inline-block;
-}
-.hireai-fp-header__cta:hover { box-shadow: 0 0 20px rgba(119,90,25,0.4); }
-
-/* ── Hero ── */
 .hireai-fp-hero {
     position: relative; min-height: 95vh; display: flex; align-items: center; overflow: hidden;
 }
@@ -490,61 +450,9 @@ $solutions = [
     line-height: 1.6; color: rgba(68,71,72,0.8);
 }
 
-/* ── Footer ── */
-.hireai-fp-footer {
-    background: #fff; border-top: 1px solid rgba(196,199,199,0.3); padding: 64px 0;
-}
-.hireai-fp-footer__inner {
-    display: flex; flex-direction: column; align-items: center;
-    width: 100%; padding: 0 80px; max-width: 1440px; margin: 0 auto;
-}
-@media (min-width: 768px) {
-    .hireai-fp-footer__inner { flex-direction: row; justify-content: space-between; }
-}
-@media (max-width: 768px) {
-    .hireai-fp-footer__inner { padding: 0 20px; }
-}
-.hireai-fp-footer__logo {
-    font-family: 'Playfair Display', serif; font-size: 32px; line-height: 1.3; font-weight: 500;
-    color: #000; letter-spacing: -0.02em;
-}
-.hireai-fp-footer__links {
-    display: flex; gap: 24px; margin: 40px 0;
-}
-@media (min-width: 768px) {
-    .hireai-fp-footer__links { margin: 0; }
-}
-.hireai-fp-footer__links a {
-    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
-    letter-spacing: 0.1em; text-transform: uppercase; color: #444748;
-    text-decoration: none; transition: color 0.3s;
-}
-.hireai-fp-footer__links a:hover { color: #775a19; }
-.hireai-fp-footer__copy {
-    font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(68,71,72,0.6);
-    text-transform: uppercase; letter-spacing: 0.2em; text-align: center;
-}
-@media (min-width: 768px) {
-    .hireai-fp-footer__copy { text-align: right; }
-}
 </style>
 
 <main class="hireai-fp">
-
-<!-- ═══ Header ═══ -->
-<header class="hireai-fp-header">
-    <div class="hireai-fp-header__inner">
-        <a class="hireai-fp-header__logo" href="<?php echo esc_url(home_url('/')); ?>">HireAIPeople</a>
-        <nav class="hireai-fp-header__nav">
-            <a class="hireai-fp-header__nav hireai-fp-header__nav--active" href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html($is_en ? 'AI Digital Humans' : 'AI数字人'); ?></a>
-            <a class="hireai-fp-header__nav" href="#"><?php echo esc_html($is_en ? 'AI Solutions' : 'AI解决方案'); ?></a>
-            <a class="hireai-fp-header__nav" href="#faq"><?php echo esc_html($is_en ? 'FAQ' : 'FAQ'); ?></a>
-            <a class="hireai-fp-header__nav" href="#customization"><?php echo esc_html($is_en ? 'Custom' : '定制'); ?></a>
-            <a class="hireai-fp-header__nav" href="#"><?php echo esc_html($is_en ? 'About Us' : '关于我们'); ?></a>
-        </nav>
-        <a class="hireai-fp-header__cta" href="<?php echo esc_url($hero_cta_1['url']); ?>"<?php echo !empty($hero_cta_1['target']) ? ' target="' . esc_attr($hero_cta_1['target']) . '" rel="noopener"' : ''; ?>><?php echo esc_html($hero_cta_1['title']); ?></a>
-    </div>
-</header>
 
 <!-- ═══ Hero ═══ -->
 <section class="hireai-fp-hero">
@@ -697,20 +605,5 @@ $solutions = [
 
 </main>
 
-<!-- ═══ Footer ═══ -->
-<footer class="hireai-fp-footer">
-    <div class="hireai-fp-footer__inner">
-        <div class="hireai-fp-footer__logo">HireAIPeople</div>
-        <div class="hireai-fp-footer__links">
-            <a href="#">Privacy</a>
-            <a href="#">Terms</a>
-            <a href="#">Social</a>
-            <a href="#">Contact</a>
-        </div>
-        <div class="hireai-fp-footer__copy">
-            &copy; <?php echo date('Y'); ?> HireAIPeople. The Future of Excellence.
-        </div>
-    </div>
-</footer>
 
 <?php get_footer(); ?>

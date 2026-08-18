@@ -3,7 +3,7 @@ Theme Name:   HireAIPeople Child
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 1.3.3
+Version: 1.4.0
 Text Domain:  hireaipeople
 */
 
@@ -121,8 +121,8 @@ Text Domain:  hireaipeople
 
   /* Typography */
   --font-serif: 'Playfair Display', 'Noto Serif SC', 'Noto Serif CJK SC', 'Songti SC', 'SimSun', serif;
-  --font-body: 'Manrope', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-label: 'Hanken Grotesk', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Inter', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-label: 'Inter', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 
   --fs-display: clamp(40px, 5.5vw, 72px);
   --fs-h1: clamp(32px, 4vw, 48px);
@@ -419,7 +419,7 @@ h4 {
 
 .site-brand img {
   width: auto;
-  max-height: 44px;
+  max-height: 220px;
 }
 
 .desktop-nav {
@@ -2518,7 +2518,7 @@ html.js [data-reveal].is-visible {
   }
 
   .site-brand img {
-    max-height: 38px;
+    max-height: 190px;
   }
 
   .header-inner {
@@ -3882,4 +3882,17 @@ main,
   .hp-case-small__img {
     transition: none !important;
   }
+}
+
+/* ==========================================================================
+   26. WordPress custom-logo / site-logo — 5× enlarged
+   ========================================================================== */
+.custom-logo {
+  width: auto !important;
+  height: 60px !important;
+}
+
+.site-logo img {
+  height: 60px !important;
+  width: auto !important;
 }
