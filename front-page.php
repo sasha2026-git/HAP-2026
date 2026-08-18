@@ -120,7 +120,6 @@ $solutions = [
 /* ── HireAI Homepage — Inline styles (stitch-matched) ── */
 
 /* Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap');
 
 .hireai-fp, .hireai-fp * { box-sizing: border-box; margin: 0; padding: 0; }
 .hireai-fp { overflow-x: hidden; background: #faf9f9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1a1c1c; line-height: 1.6; }
@@ -450,6 +449,13 @@ $solutions = [
     line-height: 1.6; color: rgba(68,71,72,0.8);
 }
 
+/* Hide header/footer on front page only */
+body.page-template-front-page .site-header,
+body.home .site-header,
+body.page-template-front-page .site-footer,
+body.home .site-footer {
+    display: none !important;
+}
 </style>
 
 <main class="hireai-fp">
