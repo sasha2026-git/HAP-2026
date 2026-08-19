@@ -331,7 +331,14 @@ $cases_json = wp_json_encode($normalized, JSON_UNESCAPED_SLASHES | JSON_UNESCAPE
   position: relative;
   padding: 150px 20px 120px;
   text-align: center;
+  background: linear-gradient(180deg, #1a1c1c 0%, #0f1010 100%);
+  border-radius: 16px;
+  margin: 20px auto;
+  max-width: 1200px;
 }
+.ci-hero__title { color: #ffffff !important; }
+.ci-hero__kicker { color: #e9c176 !important; }
+.ci-hero__sub, .ci-hero__rule + p { color: rgba(255,255,255,.7) !important; }
 @media (min-width: 768px) { .ci-hero { padding: 150px 80px 120px; } }
 .ci-hero__kicker {
   display: block;
