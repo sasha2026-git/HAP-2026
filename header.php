@@ -14,14 +14,7 @@
 
 <?php
 $suffix = hireai_lang_suffix();
-$logo   = get_theme_mod('site_logo');
-$logo_h = absint(get_theme_mod('site_logo_height', 46));
-if ($logo_h < 20) {
-    $logo_h = 46;
-}
-if (empty($logo)) {
-    $logo = get_stylesheet_directory_uri() . '/assets/img/logo.png';
-}
+$logo_url = get_stylesheet_directory_uri() . '/assets/img/logo.png';
 $contact_page  = get_page_by_path('contact');
 $contact_url   = $contact_page instanceof WP_Post ? get_permalink($contact_page) : home_url('/contact/');
 $consult_label = $suffix === '_en' ? 'Consultation' : '预约咨询';
@@ -30,7 +23,7 @@ $consult_label = $suffix === '_en' ? 'Consultation' : '预约咨询';
 <header class="site-header" id="site-header">
 	<div class="container header-inner">
 		<a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="Hire AI People">
-			<img src="<?php echo esc_url($logo); ?>" alt="Hire AI People" style="height:<?php echo esc_attr($logo_h); ?>px">
+			<img src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People" style="height:46px !important;width:auto !important;display:block;">
 		</a>
 
 		<nav class="desktop-nav" aria-label="<?php echo esc_attr($suffix === '_en' ? 'Primary navigation' : '主导航'); ?>">
@@ -64,8 +57,8 @@ $consult_label = $suffix === '_en' ? 'Consultation' : '预约咨询';
 <div class="drawer-overlay" data-drawer-overlay hidden></div>
 <aside class="mobile-drawer" id="mobile-drawer" data-mobile-drawer aria-hidden="true">
 	<div class="mobile-drawer__head">
-		<a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home">
-			<img src="<?php echo esc_url($logo); ?>" alt="Hire AI People">
+		<a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="Hire AI People">
+			<img src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People" style="height:46px !important;width:auto !important;display:block;">
 		</a>
 		<button class="mobile-drawer__close" type="button" data-drawer-close aria-label="<?php echo esc_attr($suffix === '_en' ? 'Close menu' : '关闭菜单'); ?>">
 			<?php echo hireai_svg('close', 24); ?>
