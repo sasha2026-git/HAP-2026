@@ -236,7 +236,7 @@ $fallback_faq = [
     align-items: center;
     justify-content: center;
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -269,7 +269,7 @@ $fallback_faq = [
 /* ── Shared: section header ── */
 .hireai-fp__section-label {
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1.2;
     letter-spacing: 0.3em;
     font-weight: 600;
@@ -278,14 +278,21 @@ $fallback_faq = [
 }
 .hireai-fp__section-title {
     font-family: 'Playfair Display', serif;
-    font-size: 48px;
+    font-size: clamp(28px, 3.5vw, 44px);
     line-height: 1.2;
     font-weight: 600;
     color: #000;
     margin-top: 16px;
 }
 @media (max-width: 767px) {
-    .hireai-fp__section-title { font-size: 32px; }
+    .hireai-fp__section-title { font-size: clamp(24px, 4.5vw, 32px); }
+}
+
+
+/* ── Section spacing ── */
+.hireai-fp__section + .hireai-fp__section { margin-top: 64px; }
+@media (max-width: 767px) {
+    .hireai-fp__section + .hireai-fp__section { margin-top: 32px; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -321,13 +328,13 @@ $fallback_faq = [
     position: relative;
     z-index: 2;
     text-align: center;
-    padding: 160px var(--side-pad) 80px;
+    padding: 30vh var(--side-pad) 80px;
     max-width: 56rem;
     width: 100%;
 }
 .hireai-fp-hero__title {
     font-family: 'Playfair Display', serif;
-    font-size: 72px;
+    font-size: clamp(34px, 5vw, 56px);
     line-height: 1.1;
     letter-spacing: -0.02em;
     font-weight: 700;
@@ -335,7 +342,7 @@ $fallback_faq = [
     margin-bottom: 24px;
 }
 @media (max-width: 767px) {
-    .hireai-fp-hero__title { font-size: 36px; }
+    .hireai-fp-hero__title { font-size: clamp(28px, 4.5vw, 36px); }
 }
 .hireai-fp-hero__title em {
     font-style: italic;
@@ -343,7 +350,7 @@ $fallback_faq = [
 }
 .hireai-fp-hero__subtitle {
     font-family: 'Inter', sans-serif;
-    font-size: 18px;
+    font-size: clamp(13px, 1.4vw, 16px);
     line-height: 1.6;
     color: rgba(0,0,0,0.65);
     letter-spacing: 0.05em;
@@ -387,25 +394,27 @@ $fallback_faq = [
 .hireai-fp-intro {
     background: var(--surface);
     text-align: center;
-    max-width: 48rem;
+    max-width: var(--max-w);
     margin: 0 auto;
 }
 .hireai-fp-intro__title {
     font-family: 'Playfair Display', serif;
-    font-size: 48px;
+    font-size: clamp(28px, 3.5vw, 48px);
     line-height: 1.2;
     font-weight: 600;
     color: var(--black);
     margin-bottom: 32px;
 }
 @media (max-width: 767px) {
-    .hireai-fp-intro__title { font-size: 28px; }
+    .hireai-fp-intro__title { font-size: clamp(24px, 4vw, 32px); }
 }
 .hireai-fp-intro__desc {
     font-family: 'Inter', sans-serif;
-    font-size: 18px;
+    font-size: clamp(14px, 1.2vw, 18px);
     line-height: 1.6;
     color: var(--text-secondary);
+    max-width: 720px;
+    margin: 0 auto;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -468,7 +477,7 @@ $fallback_faq = [
     padding: 4px 16px;
     border-radius: 9999px;
     border: 1px solid rgba(0,0,0,0.06);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -481,7 +490,7 @@ $fallback_faq = [
 }
 .hireai-fp-product-card__name {
     font-family: 'Playfair Display', serif;
-    font-size: 32px;
+    font-size: clamp(22px, 2.4vw, 32px);
     line-height: 1.3;
     font-weight: 500;
     color: var(--black);
@@ -489,7 +498,7 @@ $fallback_faq = [
 }
 .hireai-fp-product-card__desc {
     font-family: 'Inter', sans-serif;
-    font-size: 16px;
+    font-size: clamp(13px, 1.1vw, 15px);
     line-height: 1.6;
     color: var(--text-secondary);
     margin-bottom: 16px;
@@ -498,7 +507,7 @@ $fallback_faq = [
     width: 100%;
     margin-top: auto;
     padding: 16px 0;
-    font-size: 14px;
+    font-size: 12px;
     border-radius: 9999px;
 }
 
@@ -566,14 +575,14 @@ $fallback_faq = [
 }
 .hireai-fp-sol-card__title {
     font-family: 'Playfair Display', serif;
-    font-size: 24px;
+    font-size: clamp(18px, 1.8vw, 24px);
     line-height: 1.3;
     font-weight: 500;
     margin-bottom: 8px;
 }
 .hireai-fp-sol-card__desc {
     font-family: 'Inter', sans-serif;
-    font-size: 16px;
+    font-size: clamp(13px, 1.1vw, 15px);
     line-height: 1.6;
     opacity: 0.8;
 }
@@ -589,8 +598,11 @@ $fallback_faq = [
     background: var(--surface);
     padding: var(--section-pad);
     max-width: var(--max-w);
-    margin: 0 auto;
+    margin: 64px auto 0;
     border-top: 1px solid var(--border-light);
+}
+@media (max-width: 767px) {
+    .hireai-fp-cases { margin-top: 32px; }
 }
 .hireai-fp-cases__header {
     display: flex;
@@ -639,7 +651,7 @@ $fallback_faq = [
 .hireai-fp-case-major__label {
     display: block;
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.15em;
@@ -648,7 +660,7 @@ $fallback_faq = [
 }
 .hireai-fp-case-major__title {
     font-family: 'Playfair Display', serif;
-    font-size: 32px;
+    font-size: clamp(22px, 2.4vw, 32px);
     line-height: 1.3;
     font-weight: 500;
     color: var(--black);
@@ -660,7 +672,7 @@ $fallback_faq = [
 }
 .hireai-fp-case-major__desc {
     font-family: 'Inter', sans-serif;
-    font-size: 16px;
+    font-size: clamp(13px, 1.1vw, 15px);
     line-height: 1.6;
     color: var(--text-secondary);
     display: -webkit-box;
@@ -698,7 +710,7 @@ $fallback_faq = [
 }
 .hireai-fp-case-side-card__tag {
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.15em;
@@ -707,7 +719,7 @@ $fallback_faq = [
 }
 .hireai-fp-case-side-card__title {
     font-family: 'Playfair Display', serif;
-    font-size: 20px;
+    font-size: clamp(17px, 1.5vw, 20px);
     line-height: 1.3;
     font-weight: 500;
     color: var(--black);
@@ -719,7 +731,7 @@ $fallback_faq = [
 }
 .hireai-fp-case-side-card__desc {
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-size: clamp(13px, 1.1vw, 14px);
     line-height: 1.6;
     color: var(--text-secondary);
     display: -webkit-box;
@@ -742,7 +754,7 @@ $fallback_faq = [
 }
 .hireai-fp-faq__subtitle {
     font-family: 'Inter', sans-serif;
-    font-size: 18px;
+    font-size: clamp(14px, 1.2vw, 18px);
     line-height: 1.6;
     color: var(--text-secondary);
     margin-top: 16px;
@@ -769,7 +781,7 @@ $fallback_faq = [
 }
 .hireai-fp-faq-item__question {
     font-family: 'Playfair Display', serif;
-    font-size: 28px;
+    font-size: clamp(18px, 2.2vw, 28px);
     line-height: 1.3;
     font-weight: 500;
     color: var(--black);
@@ -777,7 +789,7 @@ $fallback_faq = [
     transition: color 0.3s;
 }
 @media (max-width: 767px) {
-    .hireai-fp-faq-item__question { font-size: 22px; }
+    .hireai-fp-faq-item__question { font-size: clamp(17px, 3.5vw, 22px); }
 }
 .hireai-fp-faq-item__icon {
     flex-shrink: 0;
@@ -800,7 +812,7 @@ $fallback_faq = [
 .hireai-fp-faq-item__answer {
     padding-bottom: 24px;
     font-family: 'Inter', sans-serif;
-    font-size: 16px;
+    font-size: clamp(13px, 1.1vw, 16px);
     line-height: 1.6;
     color: rgba(68,71,72,0.8);
 }
@@ -1020,7 +1032,7 @@ $fallback_faq = [
         <?php endforeach; ?>
     </div>
     <div class="hireai-fp-faq__cta">
-        <a class="hireai-fp__btn hireai-fp__btn--outline"
+        <a class="hireai-fp__btn hireai-fp__btn--primary"
            href="<?php echo esc_url($faq_explore_url); ?>">
             <?php echo esc_html($faq_explore_label); ?>
         </a>
