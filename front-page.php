@@ -1,13 +1,16 @@
 <?php if (!defined('ABSPATH')) exit;
 /**
  * Template Name: HireAI Homepage
- * Stitch-matched design with inline CSS. No Tailwind dependency.
+ * Stitch-matched v1.7.0 — inline CSS, local assets, no Tailwind dependency.
  */
 get_header();
 
-$suffix   = hireai_lang_suffix();
-$is_en    = $suffix === '_en';
-$fallback = function ($item, $key) use ($is_en) {
+$suffix = hireai_lang_suffix();
+$is_en  = $suffix === '_en';
+$home   = get_stylesheet_directory_uri();
+
+/* ── Helper ── */
+$fb = function ($item, $key) use ($is_en) {
     $value = isset($item[$key]) ? $item[$key] : '';
     if (is_array($value)) {
         return isset($value[$is_en ? 'en' : 'zh']) ? $value[$is_en ? 'en' : 'zh'] : '';
@@ -15,604 +18,1007 @@ $fallback = function ($item, $key) use ($is_en) {
     return $value;
 };
 
-/* ── ACF data ── */
-$hero_image    = hireai_image('fp_hero_image', get_template_directory_uri() . '/assets/img/defaults/hero-home.jpg');
-$hero_kicker   = hireai_field('fp_hero_kicker', 'Prestige Digital Labor');
-$hero_title    = hireai_field('fp_hero_title', 'HireAIPeople');
-$hero_subtitle = hireai_field('fp_hero_subtitle', 'Neural Craftsmanship &amp; Digital Excellence. Leading the future of AI service with artistic soul. 将艺术灵魂注入神经算法，打造具备卓越品味的数字生产力。');
-$hero_cta_1    = hireai_link('fp_hero_cta_1', home_url('/contact/'), $is_en ? 'Consult Now' : '立即咨询');
-$hero_cta_2    = hireai_link('fp_hero_cta_2', home_url('/cases-insights/'), $is_en ? 'View Cases' : '查看案例');
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACF Data (fields auto-append language suffix via hireai_field)
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-$emp_kicker = hireai_field('fp_emp_kicker', 'The Digital Atelier');
-$emp_title  = hireai_field('fp_emp_title', $is_en ? 'AI Digital Workers' : 'AI数字员工矩阵');
-$employees  = [
+/* Hero */
+$hero_image    = hireai_image('fp_hero_image', $home . '/assets/img/home/hero.png');
+$hero_kicker   = hireai_field('fp_hero_kicker', $is_en ? 'Prestige Digital Labor' : '工匠精神与算法');
+$hero_title_zh = hireai_field('fp_hero_title', '重新定义数字劳动力');
+$hero_en_line  = hireai_field('fp_hero_en_line', 'Redefine Digital Labor');
+$hero_subtitle = hireai_field('fp_hero_subtitle', $is_en
+    ? 'Fusing cutting-edge technology with a luxurious aesthetic to craft your exclusive digital employees.'
+    : '融合尖端科技与奢华质感，为您打造专属数字员工。');
+$hero_cta_1    = hireai_link('fp_hero_cta_1', home_url('/ai-employees/'), $is_en ? 'EXPLORE SERIES' : '探索系列');
+$hero_cta_2    = hireai_link('fp_hero_cta_2', home_url('/contact/'), $is_en ? 'CONSULTATION' : '定制咨询');
+
+/* Intro */
+$intro_kicker  = hireai_field('fp_intro_kicker', $is_en ? 'Craftsmanship Meets Algorithm' : '工匠精神与算法');
+$intro_title   = hireai_field('fp_intro_title', $is_en
+    ? 'Shaping existence beyond physical boundaries.'
+    : '塑造超越物理边界的存在。');
+$intro_desc    = hireai_field('fp_intro_desc', $is_en
+    ? 'We combine the rigor of traditional luxury with the infinite potential of neural networks. Every digital employee is a one-of-a-kind masterpiece, designed for elegance, intelligence, and resonance.'
+    : '我们结合传统奢华的严谨工艺与神经网络的无限可能。每一位数字员工都是独一无二的杰作，专为优雅、智慧与共鸣而设计。');
+
+/* Products */
+$products_section_kicker = hireai_field('fp_products_kicker', $is_en ? 'Limited Neural Series' : '限量神经元系列');
+$products_section_title  = hireai_field('fp_products_title', 'AI ' . ($is_en ? 'Digital Employees' : '数字员工'));
+$products_explore_url    = home_url('/ai-employees/');
+$products_explore_label  = $is_en ? 'Explore More' : '探索更多';
+
+$products = [
     [
-        'kicker' => hireai_field('fp_emp1_kicker', 'Public Relations'),
-        'title'  => hireai_field('fp_emp1_title', $is_en ? 'PR Audit' : '公关审核'),
-        'desc'   => hireai_field('fp_emp1_desc', $is_en ? 'AI-driven media insight and copy compliance specialist, ensuring the brand maintains a dignified and tasteful voice in complex social media environments.' : '由AI驱动的舆情洞察与文案合规专家，确保品牌在复杂的社交媒体环境中保持尊贵与体面的发声。'),
-        'image'  => hireai_image('fp_emp1_image', get_stylesheet_directory_uri() . '/assets/img/employee-1.jpg'),
+        'title' => hireai_field('fp_prod1_title', 'Aurelian Prime'),
+        'desc'  => hireai_field('fp_prod1_desc', $is_en ? 'Elite female digital avatar' : '精英女性数字分身'),
+        'badge' => $is_en ? 'Edition 01/50' : '限量 01/50',
+        'img'   => hireai_image('fp_prod1_image', $home . '/assets/img/home/product-prime.png'),
+        'url'   => hireai_link('fp_prod1_url', home_url('/ai-employees/'), ''),
     ],
     [
-        'kicker' => hireai_field('fp_emp2_kicker', 'Branding Strategy'),
-        'title'  => hireai_field('fp_emp2_title', $is_en ? 'IP Co-branding' : 'IP联名营销'),
-        'desc'   => hireai_field('fp_emp2_desc', $is_en ? 'Orchestrating cross-dimensional creative collaborations, using AI to generate infinite visual languages that connect virtual and real top-tier commercial value.' : '策划跨次元的创意联名，利用AI生成无限可能的视觉语言，连接虚拟与现实的顶级商业价值。'),
-        'image'  => hireai_image('fp_emp2_image', get_stylesheet_directory_uri() . '/assets/img/employee-2.jpg'),
+        'title' => hireai_field('fp_prod2_title', 'Aurelian Executive'),
+        'desc'  => hireai_field('fp_prod2_desc', $is_en ? 'Authority & diplomacy protocol' : '权威与外交协议'),
+        'badge' => 'Executive Series',
+        'img'   => hireai_image('fp_prod2_image', $home . '/assets/img/home/product-exec.png'),
+        'url'   => hireai_link('fp_prod2_url', home_url('/ai-employees/'), ''),
     ],
     [
-        'kicker' => hireai_field('fp_emp3_kicker', 'E-commerce Aesthetics'),
-        'title'  => hireai_field('fp_emp3_title', $is_en ? 'E-commerce Design' : '电商视觉设计'),
-        'desc'   => hireai_field('fp_emp3_desc', $is_en ? 'Premium visuals tailored for luxury e-commerce, generating Dior-quality product compositions in seconds, reshaping the sensory experience of online shopping.' : '为奢品电商定制的高级视觉，秒级生成具备Dior质感的产品构图，重塑线上购物的感官体验。'),
-        'image'  => hireai_image('fp_emp3_image', get_stylesheet_directory_uri() . '/assets/img/employee-3.jpg'),
+        'title' => hireai_field('fp_prod3_title', 'Neural Sales Core'),
+        'desc'  => hireai_field('fp_prod3_desc', $is_en ? 'Enterprise-grade AI optimization' : '企业级AI优化'),
+        'badge' => 'Neural Series',
+        'img'   => hireai_image('fp_prod3_image', $home . '/assets/img/home/product-neural.png'),
+        'url'   => hireai_link('fp_prod3_url', home_url('/ai-employees/'), ''),
     ],
 ];
 
+/* Solutions */
+$solutions_kicker = hireai_field('fp_solutions_kicker', $is_en ? 'Industry Empowerment' : '行业赋能');
+$solutions_title  = hireai_field('fp_solutions_title', $is_en ? 'AI Solutions' : 'AI 解决方案');
+$solutions_explore_url   = home_url('/ai-solutions/');
+$solutions_explore_label = $is_en ? 'Explore More' : '探索更多';
 
-$cases_kicker = hireai_field('fp_cases_kicker', 'The Masterpieces');
-$cases_title  = hireai_field('fp_cases_title', $is_en ? 'Featured Cases' : '卓越案例展示');
-$cases_link   = hireai_link('fp_cases_link', home_url('/cases-insights/'), $is_en ? 'Explore Full Gallery' : 'Explore Full Gallery');
+$solutions = [
+    [
+        'title' => hireai_field('fp_sol1_title', $is_en ? 'Finance & Wealth Management' : '金融与财富管理'),
+        'desc'  => hireai_field('fp_sol1_desc',  $is_en ? 'Digital reshaping of intelligent advisors and client relationship management.' : '智能顾问与客户关系维护的数字化重塑。'),
+        'img'   => hireai_image('fp_sol1_image', $home . '/assets/img/home/solution-finance.png'),
+    ],
+    [
+        'title' => hireai_field('fp_sol2_title', $is_en ? 'Premium Retail & E-commerce' : '高端零售与电商'),
+        'desc'  => hireai_field('fp_sol2_desc',  $is_en ? '24/7 all-day luxury shopping experience upgrade.' : '24/7全天候奢华购物体验升级。'),
+        'img'   => hireai_image('fp_sol2_image', $home . '/assets/img/home/solution-retail.png'),
+    ],
+    [
+        'title' => hireai_field('fp_sol3_title', $is_en ? 'Healthcare & Companionship' : '医疗健康与陪伴'),
+        'desc'  => hireai_field('fp_sol3_desc',  $is_en ? 'Empathetic intelligent care and health consultation.' : '充满同理心的智能关怀与健康咨询。'),
+        'img'   => hireai_image('fp_sol3_image', ''),
+        'icon'  => 'health_and_safety',
+    ],
+    [
+        'title' => hireai_field('fp_sol4_title', $is_en ? 'Entertainment & Virtual Idols' : '泛娱乐与虚拟偶像'),
+        'desc'  => hireai_field('fp_sol4_desc',  $is_en ? 'Build the ultimate never-fail super IP and interactive experience.' : '打造永不塌房的超级IP与互动体验。'),
+        'img'   => hireai_image('fp_sol4_image', ''),
+        'icon'  => 'auto_awesome',
+    ],
+];
+
+/* Cases & Insights */
+$cases_kicker = hireai_field('fp_cases_kicker', $is_en ? 'Frontier Vision' : '前沿视野');
+$cases_title  = hireai_field('fp_cases_title', '案例 ' . ($is_en ? '& Insights' : '& 洞察'));
+$cases_explore_url   = home_url('/cases-insights/');
+$cases_explore_label = $is_en ? 'Explore More' : '探索更多';
 
 $major_case = [
-    'kicker' => hireai_field('fp_case_major_kicker', $is_en ? 'Luxury Real Estate' : '顶级豪宅'),
-    'title'  => hireai_field('fp_case_major_title', $is_en ? 'Luxury Villa AI Virtual Curation' : '顶级豪宅AI虚拟策展项目'),
-    'desc'   => hireai_field('fp_case_major_desc', $is_en ? 'Using AI digital twin technology and visual rendering to create immersive virtual house-touring experiences for global high-net-worth individuals.' : '利用AI数字孪生技术与视觉渲染，为全球高净值人群打造沉浸式的虚拟看房体验。'),
-    'image'  => hireai_image('fp_case_major_image', get_stylesheet_directory_uri() . '/assets/img/case-major.jpg'),
+    'title' => hireai_field('fp_case_major_title', $is_en
+        ? 'Aurelian Prime in Private Banking'
+        : 'Aurelian Prime 在私人银行的应用'),
+    'desc'  => hireai_field('fp_case_major_desc', $is_en
+        ? 'Learn how our top digital employee boosts retention and satisfaction for high-net-worth clients.'
+        : '了解我们的顶级数字员工如何提升高净值客户的留存率与满意度。'),
+    'img'   => hireai_image('fp_case_major_image', $home . '/assets/img/home/solution-finance.png'),
 ];
 
 $side_cases = [
     [
-        'kicker' => hireai_field('fp_case_side1_kicker', $is_en ? 'Haute Couture' : '高级定制'),
-        'title'  => hireai_field('fp_case_side1_title', $is_en ? 'AI Couture Fabric Patterns' : '高级定制AI面料纹样'),
-        'desc'   => hireai_field('fp_case_side1_desc', $is_en ? 'Through GAN generative adversarial networks, providing inspiration for Paris Fashion Week, replicating the intricate textures of hand-embroidery.' : '通过GAN生成对抗网络，为巴黎时装周提供灵感触点，复刻手工刺绣的精密纹理。'),
-        'image'  => hireai_image('fp_case_side1_image', get_stylesheet_directory_uri() . '/assets/img/case-side1.jpg'),
+        'tag'   => $is_en ? 'CASE STUDY' : '案例研究',
+        'title' => hireai_field('fp_case1_title', $is_en
+            ? 'E-commerce Visual Revolution: +55% Conversion'
+            : '电商视觉革命：转化率提升55%'),
+        'desc'  => hireai_field('fp_case1_desc', $is_en
+            ? 'Reshaping online shopping with virtual try-on and personalized recommendations.'
+            : '重塑线上购物体验，结合虚拟试穿与个性化推荐带来的商业增长。'),
+        'img'   => hireai_image('fp_case1_image', $home . '/assets/img/home/product-prime.png'),
     ],
     [
-        'kicker' => hireai_field('fp_case_side2_kicker', $is_en ? 'Bvlgari Style Marketing' : 'Bvlgari风格营销'),
-        'title'  => hireai_field('fp_case_side2_title', $is_en ? 'Brand Social Media Visual Refresh' : '品牌社媒视觉重塑'),
-        'desc'   => hireai_field('fp_case_side2_desc', $is_en ? 'Fusing traditional luxury aesthetics with avant-garde digital beauty to create visually compelling symbols with greater social penetration.' : '将传统奢侈品调性与前卫数字美学融合，打造更具社交穿透力的视觉符号。'),
+        'tag'   => $is_en ? 'DEEP INSIGHT' : '深度洞察',
+        'title' => hireai_field('fp_case2_title', $is_en
+            ? '"The future is no longer just code, but a symphony."'
+            : '"未来不再仅仅是代码，更是交响乐。"'),
+        'desc'  => hireai_field('fp_case2_desc', $is_en
+            ? 'Exploring the trend of humanized digital beings and our approach to building warm AI.'
+            : '探讨数字人性化的趋势，以及我们在构建有温度的AI方面的思考与实践。'),
+        'img'   => hireai_image('fp_case2_image', $home . '/assets/img/home/solution-retail.png'),
     ],
 ];
 
-$faq_kicker = hireai_field('fp_faq_kicker', 'The Intelligence Library');
-$faq_title  = hireai_field('fp_faq_title', $is_en ? 'FAQ' : '常见问题解答');
+/* FAQ */
+$faq_kicker = hireai_field('fp_faq_kicker', $is_en ? 'FAQ' : '常见问题');
+$faq_title  = hireai_field('fp_faq_title', $is_en
+    ? 'Answers to your questions about digital employees.'
+    : '解答关于数字员工的疑虑，开启智能新纪元。');
+$faq_explore_url   = home_url('/faq/');
+$faq_explore_label = $is_en ? 'Explore More' : '探索更多';
 
 $fallback_faq = [
     [
-        'question' => $is_en ? 'How are AI digital employees different from freelancers or outsourcing?' : 'AI数字员工与传统兼职/外包有什么区别？',
-        'answer'   => $is_en ? 'AI digital employees provide 24/7 uninterrupted service with consistent brand visual identity. Compared to traditional outsourcing, delivery efficiency improves by over 80%, and they continuously evolve with your brand data.' : 'AI数字员工提供24/7的不间断服务，且具备品牌专属的视觉风格一致性。相比于传统外包，其交付效率提升80%以上，且能够随着您的品牌数据不断进化。',
+        'question' => hireai_field('fp_faq1_q', $is_en
+            ? 'How long does it take to customize a digital employee?'
+            : '定制一位数字员工需要多长时间？'),
+        'answer'   => hireai_field('fp_faq1_a', $is_en
+            ? 'This depends on the complexity of the customization. Basic model fine-tuning typically takes 2-4 weeks, while full customization (including unique appearance modeling, voice cloning, and deep industry knowledge base training) may require 8-12 weeks.'
+            : '这取决于定制的复杂程度。基础模型微调通常需要2-4周，而完全定制化（包括独特的外观建模、声音克隆和深度行业知识库训练）可能需要8-12周。'),
     ],
     [
-        'question' => $is_en ? 'How long does it take to customize a dedicated AI digital human?' : '定制一个专属AI数字人需要多久？',
-        'answer'   => $is_en ? 'Basic character models are typically delivered within 7-14 business days. For deep logic customization or specific skill training, the cycle is approximately 3-5 weeks.' : '基础角色模型通常在7-14个工作日内交付。如果是深度的逻辑定制或特定技能训练，周期约为3-5周。',
+        'question' => hireai_field('fp_faq2_q', $is_en
+            ? "Can a digital employee's knowledge base be updated in real-time?"
+            : '数字员工的知识库可以实时更新吗？'),
+        'answer'   => hireai_field('fp_faq2_a', $is_en
+            ? 'Yes, our system supports real-time knowledge base updates via API. You can add new product information, policy changes, or industry dynamics at any time, ensuring the digital employee always掌握s the latest information.'
+            : '是的，我们的系统支持通过API进行实时知识库更新。您可以随时添加新的产品信息、政策变更或行业动态，确保数字员工始终掌握最新资讯。'),
     ],
     [
-        'question' => $is_en ? 'What industries are your AI digital employees suitable for?' : '你们的AI数字员工适合哪些行业？',
-        'answer'   => $is_en ? 'Our AI digital employees cover marketing, e-commerce, customer service, HR, training, and more. We provide customized solutions based on your specific business scenario and brand requirements.' : '我们的AI数字员工覆盖营销、电商、客服、人力资源、培训等多个领域。我们会根据您的具体业务场景和品牌需求提供定制化解决方案。',
+        'question' => hireai_field('fp_faq3_q', $is_en
+            ? 'How do you ensure data privacy and security?'
+            : '如何保障数据隐私与安全？'),
+        'answer'   => hireai_field('fp_faq3_a', $is_en
+            ? 'We employ enterprise-grade encryption standards. All interaction data is processed in local or dedicated private clouds. We strictly comply with global data protection regulations, ensuring your business secrets and customer privacy are absolutely secure.'
+            : '我们采用企业级加密标准，所有交互数据均在本地或专属私有云中处理。我们严格遵守全球数据保护法规，确保您的商业机密与客户隐私绝对安全。'),
     ],
 ];
 
-
-/* AI Solutions (fallback data) */
-$solutions = [
-    [
-        'tag'   => ['zh' => '营销', 'en' => 'MARKETING'],
-        'title' => ['zh' => '全域营销智囊', 'en' => 'Omnichannel Marketing'],
-        'desc'  => ['zh' => '覆盖内容、投放与数据复盘的全链路营销智能体。', 'en' => 'A full-funnel marketing agent for content, media, and performance review.'],
-        'image' => get_stylesheet_directory_uri() . '/' . 'assets/img/defaults/solution-1.jpg',
-    ],
-    [
-        'tag'   => ['zh' => '电商', 'en' => 'E-COMMERCE'],
-        'title' => ['zh' => '电商转化引擎', 'en' => 'Commerce Conversion'],
-        'desc'  => ['zh' => '从选品、定价到客服，让增长从洞察到成交顺畅闭环。', 'en' => 'Connects selection, pricing, and service into a seamless growth loop.'],
-        'image' => get_stylesheet_directory_uri() . '/' . 'assets/img/defaults/solution-2.jpg',
-    ],
-    [
-        'tag'   => ['zh' => '设计', 'en' => 'DESIGN'],
-        'title' => ['zh' => '奢品内容工坊', 'en' => 'Luxury Content Atelier'],
-        'desc'  => ['zh' => '为高净值品牌打造有艺术质感、有销售力的内容体系。', 'en' => 'Crafts artful, conversion-ready content systems for high-net-worth brands.'],
-        'image' => get_stylesheet_directory_uri() . '/' . 'assets/img/defaults/solution-3.jpg',
-    ],
-    [
-        'tag'   => ['zh' => '公关', 'en' => 'PUBLIC RELATIONS'],
-        'title' => ['zh' => '危机公关文案', 'en' => 'Crisis PR Copywriting'],
-        'desc'  => ['zh' => '以毫秒级校准话术处理突发舆情，保护品牌叙事与市场信任。', 'en' => 'Immediate, highly calibrated messaging to mitigate brand exposure.'],
-        'image' => get_stylesheet_directory_uri() . '/' . 'assets/img/defaults/solution-4.jpg',
-    ],
-];
 ?>
 
 <style>
-/* ── HireAI Homepage — Inline styles (stitch-matched) ── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   HireAI Homepage v1.7.0 — Stitch-matched inline styles
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Fonts */
+/* ── Scoped tokens ── */
+.hireai-fp {
+    --gold:       #775a19;
+    --gold-light: #e9c176;
+    --gold-pale:  #ffdea5;
+    --surface:    #faf9f9;
+    --black:      #000;
+    --text-secondary: #444748;
+    --border-light:   rgba(196,199,199,0.3);
+    --border-gold:    rgba(119,90,25,0.3);
+    --section-pad: 120px 80px;
+    --side-pad:    80px;
+    --max-w: 1440px;
+}
 
 .hireai-fp, .hireai-fp * { box-sizing: border-box; margin: 0; padding: 0; }
-.hireai-fp { overflow-x: hidden; background: #faf9f9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1a1c1c; line-height: 1.6; }
+.hireai-fp {
+    overflow-x: hidden;
+    background: var(--surface);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1a1c1c;
+    line-height: 1.6;
+}
+.hireai-fp img { display: block; max-width: 100%; }
+.hireai-fp a  { text-decoration: none; color: inherit; }
 
+@media (max-width: 767px) {
+    .hireai-fp { --section-pad: 60px 20px; --side-pad: 20px; }
+}
+
+/* ── Shared: burnished gold text ── */
+.hireai-fp__burnished {
+    background: linear-gradient(135deg, #e9c176 0%, #775a19 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ── Shared: section utility ── */
+.hireai-fp__section {
+    padding: var(--section-pad);
+    max-width: var(--max-w);
+    margin: 0 auto;
+}
+
+/* ── Shared: pill button ── */
+.hireai-fp__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 16px 48px;
+    border-radius: 9999px;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    white-space: nowrap;
+}
+.hireai-fp__btn--primary {
+    background: #000;
+    color: #fff;
+}
+.hireai-fp__btn--primary:hover {
+    box-shadow: 0 0 20px rgba(119,90,25,0.4);
+}
+.hireai-fp__btn--outline {
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: blur(8px);
+    color: var(--gold);
+    border: 1px solid var(--border-gold);
+}
+.hireai-fp__btn--outline:hover {
+    background: rgba(119,90,25,0.08);
+}
+
+/* ── Shared: section header ── */
+.hireai-fp__section-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    line-height: 1.2;
+    letter-spacing: 0.3em;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--gold);
+}
+.hireai-fp__section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    line-height: 1.2;
+    font-weight: 600;
+    color: #000;
+    margin-top: 16px;
+}
+@media (max-width: 767px) {
+    .hireai-fp__section-title { font-size: 32px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   HERO
+   ══════════════════════════════════════════════════════════════════════════ */
 .hireai-fp-hero {
-    position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden;
+    position: relative;
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--surface);
 }
 .hireai-fp-hero__bg {
-    position: absolute; inset: 0; z-index: 0;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
 }
-.hireai-fp-hero__bg-img {
-    width: 100%; height: 100%; background-size: cover; background-position: center;
-    transition: transform 20s cubic-bezier(0.4,0,0.2,1); transform: scale(1.05);
+.hireai-fp-hero__bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
-.hireai-fp-hero:hover .hireai-fp-hero__bg-img { transform: scale(1); }
-.hireai-fp-hero__bg-overlay {
-    position: absolute; inset: 0; background: rgba(255,255,255,0.05);
-}
-.hireai-fp-hero__bg-gradient {
-    position: absolute; inset: 0;
-    background: linear-gradient(to bottom, rgba(250,249,249,0) 40%, rgba(250,249,249,0.9) 80%, rgba(250,249,249,1) 100%);
+.hireai-fp-hero__gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, var(--surface) 0%, transparent 50%, transparent 100%);
+    z-index: 1;
 }
 .hireai-fp-hero__content {
-    position: relative; z-index: 10; width: 100%; padding: 30vh 0 15vh;
-    max-width: 1440px; margin: 0 auto;
-}
-@media (max-width: 768px) {
-    .hireai-fp-hero__content { padding: 30vh 20px 15vh; }
-}
-.hireai-fp-hero__inner { max-width: 48rem; }
-.hireai-fp-hero__kicker {
-    font-family: 'Inter', sans-serif; font-size: var(--fs-label); line-height: 1.2; letter-spacing: 0.12em;
-    font-weight: 600; text-transform: uppercase; color: #775a19; display: inline-block; margin-bottom: 24px;
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 160px var(--side-pad) 80px;
+    max-width: 56rem;
+    width: 100%;
 }
 .hireai-fp-hero__title {
-    font-family: 'Playfair Display', serif; font-size: var(--fs-h2); line-height: 1.05;
-    letter-spacing: -0.02em; font-weight: 700; color: #000; margin-bottom: 32px;
+    font-family: 'Playfair Display', serif;
+    font-size: 72px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 24px;
 }
-@media (max-width: 768px) {
-    .hireai-fp-hero__title { font-size: var(--fs-h2); }
+@media (max-width: 767px) {
+    .hireai-fp-hero__title { font-size: 36px; }
 }
-.hireai-fp-hero__title em { font-style: italic; font-weight: normal; }
+.hireai-fp-hero__title em {
+    font-style: italic;
+    font-weight: normal;
+}
 .hireai-fp-hero__subtitle {
-    font-family: 'Inter', sans-serif; font-size: var(--fs-body-lg); line-height: 1.6;
-    color: rgba(68,71,72,0.8); max-width: 576px; margin-bottom: 48px;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    color: rgba(0,0,0,0.65);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 300;
+    margin-bottom: 48px;
+    max-width: 576px;
+    margin-left: auto;
+    margin-right: auto;
 }
-.hireai-fp-hero__actions { display: flex; gap: 24px; flex-wrap: wrap; }
-.hireai-fp-btn {
-    display: inline-block; font-family: 'Inter', sans-serif; font-size: var(--fs-button); font-weight: 600;
-    letter-spacing: 0.12em; text-transform: uppercase; padding: 16px 48px; border-radius: 9999px;
-    text-decoration: none; text-align: center; cursor: pointer; transition: all 0.3s; border: none;
+.hireai-fp-hero__actions {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
-.hireai-fp-btn--primary { background: #000; color: #fff; }
-.hireai-fp-btn--primary:hover { box-shadow: 0 0 20px rgba(119,90,25,0.4); }
-.hireai-fp-btn--outline {
-    background: transparent; color: #775a19;
-    border: 1px solid rgba(119,90,25,0.4);
+.hireai-fp-hero__scroll {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
 }
-.hireai-fp-btn--outline:hover { background: rgba(119,90,25,0.05); }
-
-/* ── Section Utility ── */
-.hireai-fp-section {
-    padding: 120px 80px; max-width: 1440px; margin: 0 auto;
+.hireai-fp-hero__scroll span {
+    display: block;
+    width: 24px;
+    height: 24px;
+    border-right: 2px solid rgba(0,0,0,0.25);
+    border-bottom: 2px solid rgba(0,0,0,0.25);
+    transform: rotate(45deg);
+    animation: hireai-fp-bounce 2s infinite;
 }
-@media (max-width: 768px) {
-    .hireai-fp-section { padding: 60px 20px; }
-}
-.hireai-fp-section-header { text-align: center; margin-bottom: 96px; }
-.hireai-fp-section-header__kicker {
-    font-family: 'Inter', sans-serif; font-size: var(--fs-label); line-height: 1.2; letter-spacing: 0.12em;
-    font-weight: 600; text-transform: uppercase; color: #775a19;
-}
-.hireai-fp-section-header__title {
-    font-family: 'Playfair Display', serif; font-size: var(--fs-h2); line-height: 1.2;
-    font-weight: 600; color: #000; margin-top: 16px;
-}
-@media (max-width: 768px) {
-    .hireai-fp-section-header__title { font-size: var(--fs-h2); }
-}
-.hireai-fp-section-header__divider {
-    width: 96px; height: 1px; margin: 40px auto 0;
-    background: linear-gradient(90deg, transparent, rgba(119,90,25,0.4), transparent);
-}
-.hireai-fp-section-header__divider--sm {
-    width: 64px;
+@keyframes hireai-fp-bounce {
+    0%, 100% { transform: rotate(45deg) translateY(0); }
+    50%      { transform: rotate(45deg) translateY(8px); }
 }
 
-/* ── Employee Grid ── */
-.hireai-fp-grid-3 {
-    display: grid; grid-template-columns: repeat(1, 1fr); gap: 40px;
+/* ══════════════════════════════════════════════════════════════════════════
+   INTRO
+   ══════════════════════════════════════════════════════════════════════════ */
+.hireai-fp-intro {
+    background: var(--surface);
+    text-align: center;
+    max-width: 48rem;
+    margin: 0 auto;
+}
+.hireai-fp-intro__title {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    line-height: 1.2;
+    font-weight: 600;
+    color: var(--black);
+    margin-bottom: 32px;
+}
+@media (max-width: 767px) {
+    .hireai-fp-intro__title { font-size: 28px; }
+}
+.hireai-fp-intro__desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PRODUCTS
+   ══════════════════════════════════════════════════════════════════════════ */
+.hireai-fp-products {
+    background: #fff;
+}
+.hireai-fp-products__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 80px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid var(--border-light);
+}
+@media (max-width: 767px) {
+    .hireai-fp-products__header { flex-direction: column; align-items: flex-start; gap: 24px; }
+}
+.hireai-fp-products__grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 24px;
 }
 @media (min-width: 768px) {
-    .hireai-fp-grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .hireai-fp-products__grid { grid-template-columns: repeat(3, 1fr); }
 }
-@media (min-width: 1024px) {
-    .hireai-fp-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.hireai-fp-product-card {
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.6s ease-out;
+}
+.hireai-fp-product-card__img-wrap {
+    position: relative;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    margin-bottom: 24px;
+    border: 1px solid rgba(196,199,199,0.2);
+    background: #eee;
+    transition: border-color 0.5s;
+}
+.hireai-fp-product-card:hover .hireai-fp-product-card__img-wrap {
+    border-color: var(--gold-light);
+}
+.hireai-fp-product-card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s ease-out;
+}
+.hireai-fp-product-card:hover .hireai-fp-product-card__img {
+    transform: scale(1.05);
+}
+.hireai-fp-product-card__badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(12px);
+    padding: 4px 16px;
+    border-radius: 9999px;
+    border: 1px solid rgba(0,0,0,0.06);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #000;
+}
+.hireai-fp-product-card__info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.hireai-fp-product-card__name {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    line-height: 1.3;
+    font-weight: 500;
+    color: var(--black);
+    margin-bottom: 8px;
+}
+.hireai-fp-product-card__desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+.hireai-fp-product-card .hireai-fp__btn {
+    width: 100%;
+    margin-top: auto;
+    padding: 16px 0;
+    font-size: 14px;
+    border-radius: 9999px;
 }
 
-/* ── Glass Card ── */
-.hireai-fp-glass-card {
-    background: rgba(250,249,249,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(119,90,25,0.1); border-radius: 0.75rem; padding: 20px;
-    transition: all 0.5s cubic-bezier(0.4,0,0.2,1);
-}
-.hireai-fp-glass-card:hover {
-    border-color: rgba(119,90,25,0.4);
-    box-shadow: 0 30px 60px -15px rgba(0,0,0,0.1);
-    transform: translateY(-4px);
-}
-.hireai-fp-glass-card__img-wrap {
-    aspect-ratio: 4/5; overflow: hidden; position: relative; margin-bottom: 32px; border-radius: 0.5rem;
-}
-.hireai-fp-glass-card__img {
-    width: 100%; height: 100%; object-fit: cover;
-    transition: transform 1s cubic-bezier(0.4,0,0.2,1);
-}
-.hireai-fp-glass-card:hover .hireai-fp-glass-card__img { transform: scale(1.1); }
-.hireai-fp-glass-card__img-overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.2), transparent);
-    opacity: 0; transition: opacity 0.3s;
-}
-.hireai-fp-glass-card:hover .hireai-fp-glass-card__img-overlay { opacity: 1; }
-.hireai-fp-glass-card__body { padding: 8px; }
-.hireai-fp-glass-card__kicker {
-    font-family: 'Inter', sans-serif; font-size: var(--fs-label); line-height: 1.2; letter-spacing: 0.12em;
-    font-weight: 500; text-transform: uppercase; color: #775a19;
-}
-.hireai-fp-glass-card__title {
-    font-family: 'Playfair Display', serif; font-size: var(--fs-h3); line-height: 1.3; font-weight: 500;
-    color: #000; margin: 8px 0 16px;
-}
-.hireai-fp-glass-card__desc {
-    color: #444748; font-family: 'Inter', sans-serif; font-size: var(--fs-body); line-height: 1.6;
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-}
-
-/* ── AI Solutions Grid ── */
+/* ══════════════════════════════════════════════════════════════════════════
+   SOLUTIONS
+   ══════════════════════════════════════════════════════════════════════════ */
 .hireai-fp-solutions {
-    background: #faf9f9; padding: 120px 80px; max-width: 1440px; margin: 0 auto;
+    background: var(--surface);
+    overflow: hidden;
 }
-@media (max-width: 768px) {
-    .hireai-fp-solutions { padding: 60px 20px; }
+.hireai-fp-solutions__header {
+    max-width: 640px;
+    margin-bottom: 64px;
 }
 .hireai-fp-solutions__grid {
-    display: grid; grid-template-columns: repeat(1, 1fr); gap: 24px;
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 24px;
 }
 @media (min-width: 768px) {
-    .hireai-fp-solutions__grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (min-width: 1024px) {
     .hireai-fp-solutions__grid { grid-template-columns: repeat(2, 1fr); }
 }
 .hireai-fp-sol-card {
-    background: #fff; border: 1px solid rgba(196,199,199,0.3); transition: border-color 0.3s;
+    position: relative;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border: 1px solid rgba(196,199,199,0.2);
+    transition: border-color 0.3s;
 }
-.hireai-fp-sol-card:hover { border-color: #775a19; }
-.hireai-fp-sol-card__img-wrap {
-    aspect-ratio: 16/9; overflow: hidden;
+.hireai-fp-sol-card:hover {
+    border-color: var(--gold);
 }
 .hireai-fp-sol-card__img {
-    width: 100%; height: 100%; object-fit: cover;
-    transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease-out;
 }
-.hireai-fp-sol-card:hover .hireai-fp-sol-card__img { transform: scale(1.05); }
-.hireai-fp-sol-card__body { padding: 24px; }
-.hireai-fp-sol-card__tag {
-    font-family: 'Inter', sans-serif; font-size: var(--fs-label); font-weight: 500; text-transform: uppercase;
-    letter-spacing: 0.15em; color: #775a19;
+.hireai-fp-sol-card:hover .hireai-fp-sol-card__img {
+    transform: scale(1.05);
+}
+.hireai-fp-sol-card__icon-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e2e2e2;
+}
+.hireai-fp-sol-card__icon-placeholder .material-symbols-outlined {
+    font-size: 64px;
+    color: var(--gold);
+    opacity: 0.5;
+}
+.hireai-fp-sol-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2) 50%, transparent);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 32px;
+    color: #fff;
 }
 .hireai-fp-sol-card__title {
-    font-family: 'Playfair Display', serif; font-size: var(--fs-h3); line-height: 1.3; font-weight: 500;
-    color: #000; margin-top: 8px;
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    line-height: 1.3;
+    font-weight: 500;
+    margin-bottom: 8px;
 }
 .hireai-fp-sol-card__desc {
-    font-family: 'Inter', sans-serif; font-size: var(--fs-body); line-height: 1.6; color: #444748;
-    margin-top: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    opacity: 0.8;
 }
 .hireai-fp-solutions__cta {
-    text-align: center; margin-top: 64px;
+    text-align: center;
+    margin-top: 48px;
 }
 
-/* ── Featured Cases ── */
+/* ══════════════════════════════════════════════════════════════════════════
+   CASES
+   ══════════════════════════════════════════════════════════════════════════ */
 .hireai-fp-cases {
-    background: #f4f3f3; padding: 120px 0;
-}
-.hireai-fp-cases__inner {
-    max-width: 1440px; margin: 0 auto; padding: 0 80px;
-}
-@media (max-width: 768px) {
-    .hireai-fp-cases__inner { padding: 0 20px; }
+    background: var(--surface);
+    padding: var(--section-pad);
+    max-width: var(--max-w);
+    margin: 0 auto;
+    border-top: 1px solid var(--border-light);
 }
 .hireai-fp-cases__header {
-    display: flex; flex-direction: column; gap: 32px; margin-bottom: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    margin-bottom: 64px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid var(--border-light);
 }
 @media (min-width: 768px) {
-    .hireai-fp-cases__header { flex-direction: row; justify-content: space-between; align-items: flex-end; }
+    .hireai-fp-cases__header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
 }
-.hireai-fp-cases__header-text { max-width: 32rem; text-align: left; }
-.hireai-fp-cases__header-kicker {
-    font-family: 'Inter', sans-serif; font-size: var(--fs-label); line-height: 1.2; letter-spacing: 0.12em;
-    font-weight: 600; text-transform: uppercase; color: #775a19;
-}
-.hireai-fp-cases__header-title {
-    font-family: 'Playfair Display', serif; font-size: var(--fs-h2); line-height: 1.2;
-    font-weight: 600; color: #000; margin-top: 16px;
-}
-@media (max-width: 768px) {
-    .hireai-fp-cases__header-title { font-size: var(--fs-h2); }
-}
-.hireai-fp-cases__header-link {
-    font-family: 'Inter', sans-serif; font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.12em;
-    text-transform: uppercase; color: #000; text-decoration: none;
-    border-bottom: 1px solid rgba(26,28,28,0.2); padding-bottom: 4px;
-    display: inline-flex; align-items: center; gap: 12px; transition: all 0.3s;
-}
-.hireai-fp-cases__header-link:hover { border-color: #000; }
-.hireai-fp-cases__header-link svg { transition: transform 0.3s; }
-.hireai-fp-cases__header-link:hover svg { transform: translateX(3px); }
-
 .hireai-fp-cases__grid {
-    display: grid; grid-template-columns: 1fr; gap: 24px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
 }
 @media (min-width: 768px) {
-    .hireai-fp-cases__grid { grid-template-columns: repeat(2, 1fr); }
+    .hireai-fp-cases__grid {
+        grid-template-columns: repeat(12, 1fr);
+    }
 }
-@media (min-width: 1024px) {
-    .hireai-fp-cases__grid { grid-template-columns: repeat(12, 1fr); }
-}
-
 /* Major case */
 .hireai-fp-case-major {
-    position: relative; overflow: hidden; background: #000; min-height: 500px; height: 650px;
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    border: 1px solid rgba(196,199,199,0.2);
 }
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
     .hireai-fp-case-major { grid-column: span 8; }
 }
-.hireai-fp-case-major__bg {
-    position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0.7;
-    transition: transform 3s cubic-bezier(0.4,0,0.2,1);
+.hireai-fp-case-major__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s ease-out;
 }
-.hireai-fp-case-major:hover .hireai-fp-case-major__bg { transform: scale(1.05); }
-.hireai-fp-case-major__overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(to top, #000 0%, rgba(0,0,0,0.2) 40%, transparent 100%);
+.hireai-fp-case-major:hover .hireai-fp-case-major__img {
+    transform: scale(1.05);
 }
-.hireai-fp-case-major__content {
-    position: absolute; bottom: 0; left: 0; padding: 56px; color: #fff;
-}
-@media (max-width: 768px) {
-    .hireai-fp-case-major__content { padding: 24px; }
-}
-.hireai-fp-case-major__kicker {
-    font-family: 'Inter', sans-serif; font-size: var(--fs-label); font-weight: 500; text-transform: uppercase;
-    letter-spacing: 0.3em; color: #775a19; margin-bottom: 24px; display: block;
+.hireai-fp-case-major__label {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    margin-bottom: 8px;
 }
 .hireai-fp-case-major__title {
-    font-family: 'Playfair Display', serif; font-size: var(--fs-h1); line-height: 1.2;
-    font-weight: 600; margin: 0 0 24px;
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    line-height: 1.3;
+    font-weight: 500;
+    color: var(--black);
+    margin-bottom: 16px;
+    transition: color 0.3s;
 }
-@media (max-width: 768px) {
-    .hireai-fp-case-major__title { font-size: var(--fs-h2); }
+.hireai-fp-case-major:hover .hireai-fp-case-major__title {
+    color: var(--gold);
 }
 .hireai-fp-case-major__desc {
-    font-family: 'Inter', sans-serif; font-size: var(--fs-body-lg); line-height: 1.6;
-    color: rgba(255,255,255,0.6); max-width: 36rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
-
 /* Side cases */
-.hireai-fp-case-side {
-    display: flex; flex-direction: column; gap: 24px;
+.hireai-fp-cases__side {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
 }
-@media (min-width: 1024px) {
-    .hireai-fp-case-side { grid-column: span 4; }
+@media (min-width: 768px) {
+    .hireai-fp-cases__side { grid-column: span 4; }
 }
-.hireai-fp-case-card {
-    background: #fff; padding: 40px; border: 1px solid rgba(196,199,199,0.3);
-    flex: 1; transition: border-color 0.3s;
+.hireai-fp-case-side-card {
+    display: flex;
+    flex-direction: column;
 }
-.hireai-fp-case-card:hover { border-color: #775a19; }
-.hireai-fp-case-card__kicker {
-    font-family: 'Inter', sans-serif; font-size: var(--fs-label); font-weight: 500; text-transform: uppercase;
-    letter-spacing: 0.15em; color: #775a19; margin-bottom: 24px; display: block;
+.hireai-fp-case-side-card__img-wrap {
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border: 1px solid rgba(196,199,199,0.2);
+    margin-bottom: 16px;
 }
-.hireai-fp-case-card__title {
-    font-family: 'Playfair Display', serif; font-size: var(--fs-h3); line-height: 1.3;
-    font-weight: 500; margin: 0 0 24px;
+.hireai-fp-case-side-card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s ease-out;
 }
-@media (max-width: 768px) {
-    .hireai-fp-case-card__title { font-size: var(--fs-h3); }
+.hireai-fp-case-side-card:hover .hireai-fp-case-side-card__img {
+    transform: scale(1.05);
 }
-.hireai-fp-case-card__desc {
-    color: #444748; font-family: 'Inter', sans-serif; font-size: var(--fs-body);
-    line-height: 1.6; margin-bottom: 32px;
+.hireai-fp-case-side-card__tag {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    margin-bottom: 8px;
 }
-.hireai-fp-case-card__img {
-    width: 100%; height: 8rem; object-fit: cover;
-    filter: grayscale(1); transition: filter 0.5s;
+.hireai-fp-case-side-card__title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    line-height: 1.3;
+    font-weight: 500;
+    color: var(--black);
+    margin-bottom: 8px;
+    transition: color 0.3s;
 }
-.hireai-fp-case-card:hover .hireai-fp-case-card__img { filter: grayscale(0); }
+.hireai-fp-case-side-card:hover .hireai-fp-case-side-card__title {
+    color: var(--gold);
+}
+.hireai-fp-case-side-card__desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.hireai-fp-cases__cta {
+    text-align: center;
+    margin-top: 48px;
+}
 
-/* ── FAQ ── */
-.hireai-fp-faq-list {
-    max-width: 56rem; margin: 0 auto; display: flex; flex-direction: column; gap: 32px;
+/* ══════════════════════════════════════════════════════════════════════════
+   FAQ
+   ══════════════════════════════════════════════════════════════════════════ */
+.hireai-fp-faq {
+    background: var(--surface);
+    border-top: 1px solid var(--border-light);
+    text-align: center;
+}
+.hireai-fp-faq__subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-top: 16px;
+}
+.hireai-fp-faq__list {
+    max-width: 56rem;
+    margin: 64px auto 0;
+    text-align: left;
 }
 .hireai-fp-faq-item {
-    border-bottom: 1px solid rgba(196,199,199,0.3); padding-bottom: 32px; cursor: pointer;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 0;
 }
 .hireai-fp-faq-item__header {
-    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 0;
+    cursor: pointer;
+}
+.hireai-fp-faq-item__header:hover .hireai-fp-faq-item__question {
+    color: var(--gold);
 }
 .hireai-fp-faq-item__question {
-    font-family: 'Playfair Display', serif; font-size: var(--fs-h3); line-height: 1.3;
-    font-weight: 500; margin: 0; transition: color 0.3s; flex: 1;
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    line-height: 1.3;
+    font-weight: 500;
+    color: var(--black);
+    flex: 1;
+    transition: color 0.3s;
 }
-.hireai-fp-faq-item:hover .hireai-fp-faq-item__question { color: #775a19; }
+@media (max-width: 767px) {
+    .hireai-fp-faq-item__question { font-size: 22px; }
+}
 .hireai-fp-faq-item__icon {
-    font-size: clamp(20px, 2vw, 24px); color: #444748; transition: transform 0.3s; flex-shrink: 0;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    color: var(--text-secondary);
+    transition: transform 0.3s;
 }
-.hireai-fp-faq-item.is-active .hireai-fp-faq-item__icon { transform: rotate(180deg); }
+.hireai-fp-faq-item.is-active .hireai-fp-faq-item__icon {
+    transform: rotate(180deg);
+}
+.hireai-fp-faq-item__body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+}
+.hireai-fp-faq-item.is-active .hireai-fp-faq-item__body {
+    max-height: 500px;
+}
 .hireai-fp-faq-item__answer {
-    max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1);
-}
-.hireai-fp-faq-item.is-active .hireai-fp-faq-item__answer { max-height: 500px; }
-.hireai-fp-faq-item__answer-inner {
-    padding-top: 24px; font-family: 'Inter', sans-serif; font-size: var(--fs-body);
-    line-height: 1.6; color: rgba(68,71,72,0.8);
+    padding-bottom: 24px;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(68,71,72,0.8);
 }
 .hireai-fp-faq__cta {
-    text-align: center; margin-top: 64px;
+    text-align: center;
+    margin-top: 48px;
 }
-
 </style>
 
-<main class="hireai-fp">
-
-<!-- ═══ Hero ═══ -->
+<!-- ══════════════════════════════════════════════════════════════════════════
+     HERO
+     ══════════════════════════════════════════════════════════════════════════ -->
 <section class="hireai-fp-hero">
     <div class="hireai-fp-hero__bg">
         <?php if ($hero_image) : ?>
-        <div class="hireai-fp-hero__bg-img" style="background-image: url('<?php echo esc_url($hero_image); ?>')"></div>
-        <?php else : ?>
-        <div class="hireai-fp-hero__bg-img"></div>
+        <img src="<?php echo esc_url($hero_image); ?>" alt="<?php echo esc_attr($is_en ? 'AI Digital Employees' : 'AI数字员工'); ?>">
         <?php endif; ?>
-        <div class="hireai-fp-hero__bg-overlay"></div>
-        <div class="hireai-fp-hero__bg-gradient"></div>
     </div>
+    <div class="hireai-fp-hero__gradient"></div>
     <div class="hireai-fp-hero__content">
-        <div class="hireai-fp-hero__inner">
-            <?php if ($hero_kicker) : ?>
-            <span class="hireai-fp-hero__kicker"><?php echo esc_html($hero_kicker); ?></span>
+        <?php if ($hero_kicker) : ?>
+        <p class="hireai-fp__section-label" style="margin-bottom:24px;display:block;"><?php echo esc_html($hero_kicker); ?></p>
+        <?php endif; ?>
+        <h1 class="hireai-fp-hero__title">
+            <?php echo esc_html($hero_title_zh); ?>
+            <?php if ($hero_en_line) : ?>
+            <br><em class="hireai-fp__burnished"><?php echo esc_html($hero_en_line); ?></em>
             <?php endif; ?>
-            <h1 class="hireai-fp-hero__title">
-                <?php echo esc_html($hero_title); ?><br>
-                <em><?php echo esc_html($is_en ? '聘用AI数字员工' : '聘用AI数字员工'); ?></em>
-            </h1>
-            <p class="hireai-fp-hero__subtitle"><?php echo wp_kses_post($hero_subtitle); ?></p>
-            <div class="hireai-fp-hero__actions">
-                <a class="hireai-fp-btn hireai-fp-btn--primary" href="<?php echo esc_url($hero_cta_1['url']); ?>"<?php echo !empty($hero_cta_1['target']) ? ' target="' . esc_attr($hero_cta_1['target']) . '" rel="noopener"' : ''; ?>><?php echo esc_html($hero_cta_1['title']); ?></a>
-                <a class="hireai-fp-btn hireai-fp-btn--outline" href="<?php echo esc_url($hero_cta_2['url']); ?>"<?php echo !empty($hero_cta_2['target']) ? ' target="' . esc_attr($hero_cta_2['target']) . '" rel="noopener"' : ''; ?>><?php echo esc_html($hero_cta_2['title']); ?></a>
-            </div>
+        </h1>
+        <?php if ($hero_subtitle) : ?>
+        <p class="hireai-fp-hero__subtitle"><?php echo wp_kses_post($hero_subtitle); ?></p>
+        <?php endif; ?>
+        <div class="hireai-fp-hero__actions">
+            <a class="hireai-fp__btn hireai-fp__btn--primary"
+               href="<?php echo esc_url($hero_cta_1['url']); ?>"
+               <?php echo !empty($hero_cta_1['target']) ? ' target="' . esc_attr($hero_cta_1['target']) . '" rel="noopener"' : ''; ?>>
+                <?php echo esc_html($hero_cta_1['title']); ?>
+            </a>
+            <a class="hireai-fp__btn hireai-fp__btn--outline"
+               href="<?php echo esc_url($hero_cta_2['url']); ?>"
+               <?php echo !empty($hero_cta_2['target']) ? ' target="' . esc_attr($hero_cta_2['target']) . '" rel="noopener"' : ''; ?>>
+                <?php echo esc_html($hero_cta_2['title']); ?>
+            </a>
         </div>
+    </div>
+    <div class="hireai-fp-hero__scroll"><span></span></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     INTRODUCTION
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="hireai-fp__section">
+    <div class="hireai-fp-intro">
+        <?php if ($intro_kicker) : ?>
+        <p class="hireai-fp__section-label" style="margin-bottom:16px;display:block;"><?php echo esc_html($intro_kicker); ?></p>
+        <?php endif; ?>
+        <h2 class="hireai-fp-intro__title"><?php echo esc_html($intro_title); ?></h2>
+        <?php if ($intro_desc) : ?>
+        <p class="hireai-fp-intro__desc"><?php echo wp_kses_post($intro_desc); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 
-<!-- ═══ AI Employee Matrix ═══ -->
-<section class="hireai-fp-section">
-    <div class="hireai-fp-section-header">
-        <span class="hireai-fp-section-header__kicker"><?php echo esc_html($emp_kicker); ?></span>
-        <h2 class="hireai-fp-section-header__title"><?php echo esc_html($emp_title); ?></h2>
-        <div class="hireai-fp-section-header__divider"></div>
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PRODUCTS (AI 数字员工)
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="hireai-fp-products hireai-fp__section">
+    <div class="hireai-fp-products__header">
+        <div>
+            <h2 class="hireai-fp__section-title hireai-fp__burnished"><?php echo esc_html($products_section_title); ?></h2>
+            <?php if ($products_section_kicker) : ?>
+            <p class="hireai-fp__section-label" style="text-transform:uppercase;margin-top:8px;display:block;"><?php echo esc_html($products_section_kicker); ?></p>
+            <?php endif; ?>
+            <a href="<?php echo esc_url($products_explore_url); ?>"
+               style="display:inline-block;margin-top:16px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#000;border-bottom:1px solid rgba(0,0,0,0.2);padding-bottom:4px;transition:all 0.3s;">
+                <?php echo esc_html($products_explore_label); ?>
+            </a>
+        </div>
     </div>
-    <div class="hireai-fp-grid-3">
-        <?php foreach ($employees as $emp) : ?>
-        <div class="hireai-fp-glass-card">
-            <div class="hireai-fp-glass-card__img-wrap">
-                <img class="hireai-fp-glass-card__img" src="<?php echo esc_url($emp['image']); ?>" alt="<?php echo esc_attr($emp['title']); ?>">
-                <div class="hireai-fp-glass-card__img-overlay"></div>
+    <div class="hireai-fp-products__grid">
+        <?php foreach ($products as $prod) : ?>
+        <div class="hireai-fp-product-card">
+            <div class="hireai-fp-product-card__img-wrap">
+                <img class="hireai-fp-product-card__img"
+                     src="<?php echo esc_url($prod['img']); ?>"
+                     alt="<?php echo esc_attr($prod['title']); ?>">
+                <?php if (!empty($prod['badge'])) : ?>
+                <span class="hireai-fp-product-card__badge"><?php echo esc_html($prod['badge']); ?></span>
+                <?php endif; ?>
             </div>
-            <div class="hireai-fp-glass-card__body">
-                <span class="hireai-fp-glass-card__kicker"><?php echo esc_html($emp['kicker']); ?></span>
-                <h3 class="hireai-fp-glass-card__title"><?php echo esc_html($emp['title']); ?></h3>
-                <p class="hireai-fp-glass-card__desc"><?php echo esc_html($emp['desc']); ?></p>
+            <div class="hireai-fp-product-card__info">
+                <div>
+                    <h3 class="hireai-fp-product-card__name"><?php echo esc_html($prod['title']); ?></h3>
+                    <p class="hireai-fp-product-card__desc"><?php echo esc_html($prod['desc']); ?></p>
+                </div>
             </div>
+            <a class="hireai-fp__btn hireai-fp__btn--outline"
+               href="<?php echo esc_url($prod['url']['url'] ?? home_url('/ai-employees/')); ?>">
+                <?php echo esc_html($is_en ? 'Explore More' : '探索更多'); ?>
+            </a>
         </div>
         <?php endforeach; ?>
     </div>
-    <div style="text-align: center; margin-top: 48px;">
-        <a class="hireai-fp-btn hireai-fp-btn--outline" href="<?php echo esc_url(home_url('/ai-employees/')); ?>"><?php echo esc_html($is_en ? 'Explore More' : '探索更多'); ?></a>
-    </div>
 </section>
 
-<!-- ═══ AI Solutions ═══ -->
-<section class="hireai-fp-solutions">
-    <div class="hireai-fp-section-header">
-        <span class="hireai-fp-section-header__kicker"><?php echo esc_html($is_en ? 'AI SOLUTIONS' : 'AI SOLUTIONS'); ?></span>
-        <h2 class="hireai-fp-section-header__title"><?php echo esc_html($is_en ? 'AI Solutions' : 'AI解决方案'); ?></h2>
-        <div class="hireai-fp-section-header__divider"></div>
+<!-- ══════════════════════════════════════════════════════════════════════════
+     AI SOLUTIONS
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="hireai-fp-solutions hireai-fp__section">
+    <div class="hireai-fp-solutions__header">
+        <p class="hireai-fp__section-label" style="margin-bottom:16px;display:block;"><?php echo esc_html($solutions_kicker); ?></p>
+        <h2 class="hireai-fp__section-title hireai-fp__burnished"><?php echo esc_html($solutions_title); ?></h2>
     </div>
     <div class="hireai-fp-solutions__grid">
         <?php foreach ($solutions as $sol) : ?>
         <div class="hireai-fp-sol-card">
-            <div class="hireai-fp-sol-card__img-wrap">
-                <img class="hireai-fp-sol-card__img" src="<?php echo esc_url($sol['image']); ?>" alt="<?php echo esc_attr($fallback($sol, 'title')); ?>">
+            <?php if (!empty($sol['img'])) : ?>
+            <img class="hireai-fp-sol-card__img"
+                 src="<?php echo esc_url($sol['img']); ?>"
+                 alt="<?php echo esc_attr($fb($sol, 'title')); ?>">
+            <?php elseif (!empty($sol['icon'])) : ?>
+            <div class="hireai-fp-sol-card__icon-placeholder">
+                <span class="material-symbols-outlined"><?php echo esc_html($sol['icon']); ?></span>
             </div>
-            <div class="hireai-fp-sol-card__body">
-                <span class="hireai-fp-sol-card__tag"><?php echo esc_html($fallback($sol, 'tag')); ?></span>
-                <h3 class="hireai-fp-sol-card__title"><?php echo esc_html($fallback($sol, 'title')); ?></h3>
-                <p class="hireai-fp-sol-card__desc"><?php echo esc_html($fallback($sol, 'desc')); ?></p>
+            <?php endif; ?>
+            <div class="hireai-fp-sol-card__overlay">
+                <h3 class="hireai-fp-sol-card__title"><?php echo esc_html($fb($sol, 'title')); ?></h3>
+                <p class="hireai-fp-sol-card__desc"><?php echo esc_html($fb($sol, 'desc')); ?></p>
             </div>
         </div>
         <?php endforeach; ?>
     </div>
     <div class="hireai-fp-solutions__cta">
-        <a class="hireai-fp-btn hireai-fp-btn--outline" href="<?php echo esc_url(home_url('/ai-solutions/')); ?>"><?php echo esc_html($is_en ? 'Explore More' : '探索更多'); ?></a>
+        <a class="hireai-fp__btn hireai-fp__btn--primary"
+           href="<?php echo esc_url($solutions_explore_url); ?>">
+            <?php echo esc_html($solutions_explore_label); ?>
+        </a>
     </div>
 </section>
 
-<!-- ═══ Featured Cases ═══ -->
+<!-- ══════════════════════════════════════════════════════════════════════════
+     CASES & INSIGHTS
+     ══════════════════════════════════════════════════════════════════════════ -->
 <section class="hireai-fp-cases">
-    <div class="hireai-fp-cases__inner">
-        <div class="hireai-fp-cases__header">
-            <div class="hireai-fp-cases__header-text">
-                <span class="hireai-fp-cases__header-kicker"><?php echo esc_html($cases_kicker); ?></span>
-                <h2 class="hireai-fp-cases__header-title"><?php echo esc_html($cases_title); ?></h2>
-            </div>
-            <a class="hireai-fp-cases__header-link" href="<?php echo esc_url($cases_link['url']); ?>"<?php echo !empty($cases_link['target']) ? ' target="' . esc_attr($cases_link['target']) . '" rel="noopener"' : ''; ?>>
-                <?php echo esc_html($cases_link['title']); ?>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-            </a>
+    <div class="hireai-fp-cases__header">
+        <div>
+            <p class="hireai-fp__section-label" style="margin-bottom:16px;display:block;"><?php echo esc_html($cases_kicker); ?></p>
+            <h2 class="hireai-fp__section-title hireai-fp__burnished"><?php echo esc_html($cases_title); ?></h2>
         </div>
-        <div class="hireai-fp-cases__grid">
-            <!-- Major Case -->
-            <div class="hireai-fp-case-major">
-                <div class="hireai-fp-case-major__bg" style="background-image: url('<?php echo esc_url($major_case['image']); ?>')"></div>
-                <div class="hireai-fp-case-major__overlay"></div>
-                <div class="hireai-fp-case-major__content">
-                    <span class="hireai-fp-case-major__kicker"><?php echo esc_html($major_case['kicker']); ?></span>
-                    <h3 class="hireai-fp-case-major__title"><?php echo esc_html($major_case['title']); ?></h3>
-                    <p class="hireai-fp-case-major__desc"><?php echo esc_html($major_case['desc']); ?></p>
-                </div>
+    </div>
+    <div class="hireai-fp-cases__grid">
+        <!-- Major Case -->
+        <div class="hireai-fp-case-major">
+            <img class="hireai-fp-case-major__img"
+                 src="<?php echo esc_url($major_case['img']); ?>"
+                 alt="<?php echo esc_attr($major_case['title']); ?>">
+            <div style="padding:32px;">
+                <span class="hireai-fp-case-major__label"><?php echo esc_html($is_en ? 'CASE STUDY' : '案例研究'); ?></span>
+                <h3 class="hireai-fp-case-major__title"><?php echo esc_html($major_case['title']); ?></h3>
+                <p class="hireai-fp-case-major__desc"><?php echo esc_html($major_case['desc']); ?></p>
             </div>
-            <!-- Side Cases -->
-            <div class="hireai-fp-case-side">
-                <?php foreach ($side_cases as $sc) : ?>
-                <div class="hireai-fp-case-card">
-                    <span class="hireai-fp-case-card__kicker"><?php echo esc_html($sc['kicker']); ?></span>
-                    <h4 class="hireai-fp-case-card__title"><?php echo esc_html($sc['title']); ?></h4>
-                    <p class="hireai-fp-case-card__desc"><?php echo esc_html($sc['desc']); ?></p>
-                    <?php if (!empty($sc['image'])) : ?>
-                    <img class="hireai-fp-case-card__img" src="<?php echo esc_url($sc['image']); ?>" alt="<?php echo esc_attr($sc['title']); ?>">
+        </div>
+        <!-- Side Cases -->
+        <div class="hireai-fp-cases__side">
+            <?php foreach ($side_cases as $sc) : ?>
+            <div class="hireai-fp-case-side-card">
+                <div class="hireai-fp-case-side-card__img-wrap">
+                    <?php if (!empty($sc['img'])) : ?>
+                    <img class="hireai-fp-case-side-card__img"
+                         src="<?php echo esc_url($sc['img']); ?>"
+                         alt="<?php echo esc_attr($sc['title']); ?>">
                     <?php endif; ?>
                 </div>
-                <?php endforeach; ?>
+                <span class="hireai-fp-case-side-card__tag"><?php echo esc_html($sc['tag']); ?></span>
+                <h4 class="hireai-fp-case-side-card__title"><?php echo esc_html($sc['title']); ?></h4>
+                <p class="hireai-fp-case-side-card__desc"><?php echo esc_html($sc['desc']); ?></p>
             </div>
+            <?php endforeach; ?>
         </div>
+    </div>
+    <div class="hireai-fp-cases__cta">
+        <a class="hireai-fp__btn hireai-fp__btn--primary"
+           href="<?php echo esc_url($cases_explore_url); ?>">
+            <?php echo esc_html($cases_explore_label); ?>
+        </a>
     </div>
 </section>
 
-<!-- ═══ FAQ ═══ -->
-<section class="hireai-fp-section" id="faq">
-    <div class="hireai-fp-section-header">
-        <span class="hireai-fp-section-header__kicker"><?php echo esc_html($faq_kicker); ?></span>
-        <h2 class="hireai-fp-section-header__title"><?php echo esc_html($faq_title); ?></h2>
-        <div class="hireai-fp-section-header__divider hireai-fp-section-header__divider--sm"></div>
-    </div>
-    <div class="hireai-fp-faq-list">
+<!-- ══════════════════════════════════════════════════════════════════════════
+     FAQ
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="hireai-fp-faq hireai-fp__section" id="faq">
+    <h2 class="hireai-fp__section-title hireai-fp__burnished"><?php echo esc_html($faq_kicker); ?></h2>
+    <?php if ($faq_title) : ?>
+    <p class="hireai-fp-faq__subtitle"><?php echo wp_kses_post($faq_title); ?></p>
+    <?php endif; ?>
+    <div class="hireai-fp-faq__list">
         <?php foreach ($fallback_faq as $item) : ?>
         <div class="hireai-fp-faq-item">
             <div class="hireai-fp-faq-item__header" onclick="this.closest('.hireai-fp-faq-item').classList.toggle('is-active')">
                 <h4 class="hireai-fp-faq-item__question"><?php echo esc_html($item['question']); ?></h4>
-                <span class="hireai-fp-faq-item__icon" aria-hidden="true">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                </span>
+                <svg class="hireai-fp-faq-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
             </div>
-            <div class="hireai-fp-faq-item__answer">
-                <div class="hireai-fp-faq-item__answer-inner">
-                    <p><?php echo esc_html($item['answer']); ?></p>
+            <div class="hireai-fp-faq-item__body">
+                <div class="hireai-fp-faq-item__answer">
+                    <p><?php echo wp_kses_post($item['answer']); ?></p>
                 </div>
             </div>
         </div>
         <?php endforeach; ?>
     </div>
     <div class="hireai-fp-faq__cta">
-        <a class="hireai-fp-btn hireai-fp-btn--outline" href="<?php echo esc_url(home_url('/faq/')); ?>"><?php echo esc_html($is_en ? 'Explore More' : '探索更多'); ?></a>
+        <a class="hireai-fp__btn hireai-fp__btn--outline"
+           href="<?php echo esc_url($faq_explore_url); ?>">
+            <?php echo esc_html($faq_explore_label); ?>
+        </a>
     </div>
 </section>
-
-</main>
 
 
 <?php get_footer(); ?>
