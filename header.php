@@ -14,7 +14,7 @@
 
 <?php
 $suffix = hireai_lang_suffix();
-$logo_url = hireai_image('header_logo', get_stylesheet_directory_uri() . '/assets/img/logo.png', 'option');
+$logo_url = hireai_logo_url('header_logo');
 $contact_page  = get_page_by_path('contact');
 $contact_url   = $contact_page instanceof WP_Post ? get_permalink($contact_page) : home_url('/contact/');
 $consult_label = hireai_field('header_consult_label', $suffix === '_en' ? 'Consultation' : '预约咨询', 'option');

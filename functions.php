@@ -311,6 +311,21 @@ function hireai_image($name, $default = '', $post_id = false) {
 }
 
 /**
+ * Logo URL with cache-busting filemtime param.
+ * Prevents browser/WP-cache/CDN from serving stale logo images.
+ *
+ * @param string $acf_field  ACF field name (already lang-suffixed by caller).
+ * @param string $default    Default logo relative path under theme dir (e.g. /assets/img/logo.png).
+ * @return string  Full URL with ?v=<filemtime> suffix.
+ */
+function hireai_logo_url($acf_field, $default = '/assets/img/logo.png') {
+    $url = hireai_image($acf_field, get_stylesheet_directory_uri() . $default, "option");
+    $abs = get_stylesheet_directory() . $default;
+    $v   = file_exists($abs) ? filemtime($abs) : time();
+    return $url . '?v=' . $v;
+}
+
+/**
  * 取 ACF link 字段，统一返回 ['url','title','target']
  */
 function site_link($name, $default_url = '#', $default_title = '', $post_id = false) {
@@ -445,7 +460,7 @@ footer.site-footer {
   padding-block: 0 !important;
 }
 .footer-brand { margin: 0 !important; padding: 0 !important; }
-.footer-brand img { height: 120px !important; width: auto !important; margin: 0 !important; }
+.footer-brand img { width: auto !important; margin: 0 !important; }
 .footer-nav { margin: 4px 0 !important; }
 .footer-copyright { margin: 2px 0 0 !important; }
 
