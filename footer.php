@@ -14,7 +14,7 @@ $copyright = hireai_field('footer_copyright', $suffix === '_en' ? '© 2026 Hire 
 <footer class="site-footer">
 	<div class="container footer-inner">
 		<div class="footer-brand">
-			<img class="footer-brand__logo" src="<?php echo esc_url($logo); ?>" alt="Hire AI People">
+			<img class="footer-brand__logo" src="<?php echo esc_url($logo); ?>" alt="Hire AI People" style="height:40px;width:auto;">
 		</div>
 
 		<nav class="footer-nav" aria-label="<?php echo esc_attr($suffix === '_en' ? 'Footer navigation' : '页脚导航'); ?>">

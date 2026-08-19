@@ -427,7 +427,7 @@ h4 {
 
 .site-brand img {
   width: auto;
-  max-height: 64px;
+  max-height: 46px;
 }
 
 .desktop-nav {
@@ -2203,7 +2203,7 @@ mark {
 
 .footer-brand__logo {
   width: auto;
-  max-height: 56px;
+  max-height: 40px;
   margin-inline: auto;
 }
 
@@ -2544,7 +2544,7 @@ html.js [data-reveal].is-visible {
   }
 
   .site-brand img {
-    max-height: 48px;
+    max-height: 46px;
   }
 
   .header-inner {

@@ -15,9 +15,9 @@
 <?php
 $suffix = hireai_lang_suffix();
 $logo   = get_theme_mod('site_logo');
-$logo_h = absint(get_theme_mod('site_logo_height', 64));
+$logo_h = absint(get_theme_mod('site_logo_height', 46));
 if ($logo_h < 20) {
-    $logo_h = 64;
+    $logo_h = 46;
 }
 if (empty($logo)) {
     $logo = get_stylesheet_directory_uri() . '/assets/img/logo.png';
