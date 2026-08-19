@@ -431,7 +431,7 @@ header .header-inner {
 header.site-header {
   padding-block: 0 !important;
 }
-.site-brand img { max-height: 40px !important; width: auto !important; }
+.site-brand img { max-height: 64px !important; width: auto !important; }
 .header-actions { gap: 8px !important; }
 
 /* 页脚紧凑 */
@@ -445,7 +445,7 @@ footer.site-footer {
   padding-block: 0 !important;
 }
 .footer-brand { margin: 0 !important; padding: 0 !important; }
-.footer-brand img { height: 36px !important; width: auto !important; margin: 0 !important; }
+.footer-brand img { height: 56px !important; width: auto !important; margin: 0 !important; }
 .footer-nav { margin: 4px 0 !important; }
 .footer-copyright { margin: 2px 0 0 !important; }
 
@@ -630,7 +630,7 @@ add_action('customize_register', function ($wp_customize) {
         'section' => 'title_tagline',
     ]));
 
-    $wp_customize->add_setting('site_logo_height', ['default' => '44', 'sanitize_callback' => 'absint']);
+    $wp_customize->add_setting('site_logo_height', ['default' => '64', 'sanitize_callback' => 'absint']);
     $wp_customize->add_control('site_logo_height', [
         'label'   => 'Logo 高度（px）',
         'section' => 'title_tagline',
