@@ -416,7 +416,7 @@ function hireai_contact_page_id() {
  * ---------------------------------------------------------------------- */
 
 add_action('wp_enqueue_scripts', function () {
-    wp_add_inline_style('hireai-child', '
+    wp_add_inline_style('hireaipeople-style', '
 /* ===== 全局调整（强 specificity） ===== */
 /* 页眉高度缩减 */
 #site-header .header-inner,
