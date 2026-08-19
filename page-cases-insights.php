@@ -1,995 +1,224 @@
 <?php if (!defined('ABSPATH')) exit;
 /**
- * Template Name: 聘AI - 案例&洞察
- * The Archive of Excellence — Cases & Insights v5.0
- * Reference: hireai-cases-archive-reference.html (authoritative design)
- * ACF: caseRepeater (cases), pure-JS filter + pagination, CN/EN toggle.
+ * Template Name: 案例与洞察 (杂志版)
+ * Description: 杂志排版风格的案例展示与洞察页面
  */
-get_header();
 
-$lang        = function_exists('pll_current_language') ? pll_current_language() : 'zh';
-$site_suffix = function_exists('hireai_lang_suffix') ? hireai_lang_suffix() : '_zh';
-$is_en       = ($site_suffix === '_en');
-
-$contact_url = home_url('/contact/');
-if (function_exists('get_page_by_path')) {
-    $contact_page = get_page_by_path('contact');
-    if ($contact_page instanceof WP_Post) {
-        $contact_url = get_permalink($contact_page);
-    }
-}
-
-$default_img = function ($i) {
-    return get_stylesheet_directory_uri() . '/assets/img/defaults/case-' . $i . '.jpg';
-};
-
-$bi = function ($value) {
-    if (is_array($value)) {
-        return [
-            'zh' => isset($value['zh']) ? (string) $value['zh'] : '',
-            'en' => isset($value['en']) ? (string) $value['en'] : '',
-        ];
-    }
-    $v = (string) $value;
-    return ['zh' => $v, 'en' => $v];
-};
-
-$case_bi = function ($c, $key, $fallback = '') use ($bi) {
-    if (is_array($c)) {
-        if (array_key_exists($key . '_zh', $c) || array_key_exists($key . '_en', $c)) {
-            return [
-                'zh' => isset($c[$key . '_zh']) ? (string) $c[$key . '_zh'] : '',
-                'en' => isset($c[$key . '_en']) ? (string) $c[$key . '_en'] : '',
-            ];
-        }
-        if (array_key_exists($key, $c)) {
-            return $bi($c[$key]);
-        }
-    }
-    return $bi($fallback);
-};
-
-$img_url = function ($c) {
-    if (!is_array($c)) {
-        return is_string($c) ? $c : '';
-    }
-    if (!empty($c['image'])) {
-        $img = $c['image'];
-        if (is_array($img) && !empty($img['url'])) {
-            return $img['url'];
-        }
-        if (is_numeric($img)) {
-            $u = wp_get_attachment_image_url((int) $img, 'full');
-            return $u ? $u : '';
-        }
-        return (string) $img;
-    }
-    if (!empty($c['url'])) {
-        return (string) $c['url'];
-    }
-    return '';
-};
-
-$link_url = function ($c) {
-    if (is_array($c) && !empty($c['link'])) {
-        $l = $c['link'];
-        if (is_array($l) && !empty($l['url'])) {
-            return (string) $l['url'];
-        }
-        if (is_string($l) && $l !== '') {
-            return $l;
-        }
-    }
-    return '#';
-};
-
-/* ── Fallback cases (matched to the Archive design copy) ── */
-$fallback_cases = [
-    [
-        'image'    => $default_img(1),
-        'tag'      => ['zh' => '私人银行', 'en' => 'Private Banking'],
-        'metric'   => ['zh' => '+42% 留存', 'en' => '+42% Retention'],
-        'category' => ['zh' => '公关审计', 'en' => 'PR Audit'],
-        'title'    => ['zh' => '奥瑞利安：私人银行数字礼宾', 'en' => 'Aurelian Prime for Private Banking'],
-        'desc'     => ['zh' => '通过为独立个体量身打造的超写实数字礼宾，重塑财富管理体验。', 'en' => 'Reimagining the wealth management experience through a hyper-realistic digital concierge designed for the sovereign individual.'],
-        'link'     => '#',
-    ],
-    [
-        'image'    => $default_img(2),
-        'tag'      => ['zh' => 'AI 艺术', 'en' => 'AI Art'],
-        'metric'   => ['zh' => 'AI 艺术整合', 'en' => 'AI Art Integration'],
-        'category' => ['zh' => 'AI 艺术', 'en' => 'AI Art'],
-        'title'    => ['zh' => 'Lumina NFT 系列', 'en' => 'Lumina NFT Series'],
-        'desc'     => ['zh' => '融合生成算法与传统工艺的独家 IP 合作。', 'en' => 'An exclusive IP collaboration merging generative algorithms with heritage craftsmanship.'],
-        'link'     => '#',
-    ],
-    [
-        'image'    => $default_img(3),
-        'tag'      => ['zh' => '电商', 'en' => 'E-commerce'],
-        'metric'   => ['zh' => '3.4 倍转化', 'en' => '3.4x Conversion'],
-        'category' => ['zh' => '电商', 'en' => 'E-commerce'],
-        'title'    => ['zh' => '电商进化', 'en' => 'E-commerce Evolution'],
-        'desc'     => ['zh' => '通过个性化数字孪生顾问，实现奢侈零售业绩规模化增长。', 'en' => 'Luxury retail performance scaling through personalized digital twin advisors.'],
-        'link'     => '#',
-    ],
-    [
-        'image'    => $default_img(4),
-        'tag'      => ['zh' => 'IP 资产库', 'en' => 'IP Vault'],
-        'metric'   => ['zh' => 'IP 保护 100%', 'en' => 'IP Protection 100%'],
-        'category' => ['zh' => 'IP 合作', 'en' => 'IP Collaboration'],
-        'title'    => ['zh' => '数字 IP 资产库', 'en' => 'The Digital IP Vault'],
-        'desc'     => ['zh' => '面向 AI 整合型奢侈资产，提供全球公关审计与声誉管理。', 'en' => 'Global PR audit and reputation management for AI-integrated luxury estates.'],
-        'link'     => '#',
-    ],
-];
-
-/* ── ACF repeater → normalized JSON ── */
-$cases = site_field('caseRepeater', []);
-if (!is_array($cases)) {
-    $cases = [];
-}
-$cases = count($cases) > 0 ? array_values($cases) : $fallback_cases;
-
-$normalized = [];
-foreach ($cases as $c) {
-    $normalized[] = [
-        'image'    => $img_url($c),
-        'link'     => $link_url($c),
-        'tag'      => $case_bi($c, 'tag', ['zh' => '', 'en' => '']),
-        'metric'   => $case_bi($c, 'metric', ['zh' => '', 'en' => '']),
-        'category' => $case_bi($c, 'category', ['zh' => '', 'en' => '']),
-        'title'    => $case_bi($c, 'title', ['zh' => '', 'en' => '']),
-        'desc'     => $case_bi($c, 'desc', ['zh' => '', 'en' => '']),
-    ];
-}
-$cases_json = wp_json_encode($normalized, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-?>
+get_header(); ?>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
-.ci-archive, .ci-archive *, .ci-archive *::before, .ci-archive *::after { box-sizing: border-box; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#775a19;--gold-l:#e9c176;--txt:#1a1c1c;--txt-v:#444748;--out-v:#c4c7c7;--bg:#faf9f9;--bg-s:#f4f3f3;--dark:#1b1c19;--fd:'Playfair Display',serif;--fb:'Inter',sans-serif}
+body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
 
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  display: inline-block;
-  line-height: 1;
-  text-transform: none;
-  letter-spacing: normal;
-  word-wrap: normal;
-  white-space: nowrap;
-  direction: ltr;
-  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-  font-feature-settings: 'liga';
-  -webkit-font-feature-settings: 'liga';
-}
+.lang-bar{display:flex;justify-content:flex-end;padding:60px 24px 0;max-width:1200px;margin:0 auto}
+.lang-btn{font-family:var(--fb);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:10px 24px;border:1px solid var(--out-v);background:transparent;color:var(--txt-v);cursor:pointer;transition:all .3s}
+.lang-btn:first-child{border-radius:24px 0 0 24px}
+.lang-btn:last-child{border-radius:0 24px 24px 0;border-left:0}
+.lang-btn.on{background:var(--txt);border-color:var(--txt);color:#fff}
 
-.ci-archive {
-  --surface: #faf9f9;
-  --surface-container-low: #f4f3f3;
-  --surface-container: #eeeeee;
-  --on-surface: #1a1c1c;
-  --on-surface-variant: #444748;
-  --on-primary: #ffffff;
-  --on-secondary: #ffffff;
-  --on-secondary-container: #785a1a;
-  --on-tertiary-container: #848480;
-  --gold-primary: #775a19;
-  --gold-light: #e9c176;
-  --gold-soft: #fed488;
-  --secondary-fixed: #ffdea5;
-  --secondary-container: #fed488;
-  --tertiary: #000000;
-  --primary: #000000;
-  --outline: #747878;
-  --outline-variant: #c4c7c7;
-  --bg-alpha: rgba(250, 249, 249, 0.70);
-  --bg-alpha-solid: rgba(250, 249, 249, 0.92);
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --spring: cubic-bezier(0.4, 0, 0.2, 1);
-  margin: 0;
-  overflow-x: hidden;
-  background: var(--surface);
-  color: var(--on-surface);
-  font-family: var(--font-body);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
+.hero{text-align:center;padding:60px 24px 60px;max-width:800px;margin:0 auto;background:linear-gradient(180deg,#1a1c1c 0%,#0f1010 100%);border-radius:16px;margin-top:20px}
+.hero h1{color:#fff}
+.hero p{color:rgba(255,255,255,.7)}
+.hero span.kicker{font-size:12px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:20px}
+.hero h1{font-family:var(--fd);font-size:clamp(32px,5vw,56px);font-weight:600;line-height:1.1;margin:0 0 20px}
+.hero h1 em{font-style:italic}
+.hero p{font-size:clamp(14px,1.2vw,16px);line-height:1.6;color:var(--txt-v)}
 
-/* ── Language toggle visibility ── */
-.ci-archive .lang-zh,
-.ci-archive .lang-en { display: none; }
-.ci-archive .ci-lang-inline .lang-zh,
-.ci-archive .ci-lang-inline .lang-en { display: none; }
-.ci-archive .ci-lang-block .lang-zh,
-.ci-archive .ci-lang-block .lang-en { display: none; }
-.ci-archive .ci-lang-flex .lang-zh,
-.ci-archive .ci-lang-flex .lang-en { display: none; }
-.ci-archive[data-lang="zh"] .ci-lang-inline .lang-zh { display: inline; }
-.ci-archive[data-lang="en"] .ci-lang-inline .lang-en { display: inline; }
-.ci-archive[data-lang="zh"] .ci-lang-block .lang-zh { display: block; }
-.ci-archive[data-lang="en"] .ci-lang-block .lang-en { display: block; }
-.ci-archive[data-lang="zh"] .ci-lang-flex .lang-zh { display: inline-flex; }
-.ci-archive[data-lang="en"] .ci-lang-flex .lang-en { display: inline-flex; }
+.cases{max-width:1200px;margin:0 auto;padding:0 24px 40px}
+.sec-hdr{margin-bottom:40px}
+.sec-hdr h2{font-family:var(--fd);font-size:32px;font-weight:600}
+.sec-hdr__line{height:4px;width:48px;background:var(--gold);margin-top:10px}
 
-/* ── Fixed top nav ── */
-.ci-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 60;
-  background: var(--bg-alpha);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  border-bottom: 0.5px solid var(--outline-variant);
-  box-shadow: 0 1px 24px rgba(0, 0, 0, 0.04);
-  transition: background 0.4s var(--spring), box-shadow 0.4s var(--spring), height 0.4s var(--spring);
-}
-.ci-nav.is-scrolled {
-  background: var(--bg-alpha-solid);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-}
-.ci-nav__inner {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 20px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  transition: height 0.4s var(--spring);
-}
-.ci-nav.is-scrolled .ci-nav__inner { height: 64px; }
-@media (min-width: 768px) {
-  .ci-nav__inner { padding: 0 80px; }
-}
-.ci-nav__brand {
-  font-family: var(--font-serif);
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.15;
-  color: var(--on-surface);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.ci-nav__links {
-  display: none;
-  align-items: center;
-  gap: 24px;
-}
-@media (min-width: 768px) { .ci-nav__links { display: flex; } }
-.ci-nav__link {
-  font-size: 14px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--on-surface-variant);
-  text-decoration: none;
-  transition: opacity 0.3s;
-}
-.ci-nav__link:hover { opacity: 0.72; }
-.ci-nav__right { display: flex; align-items: center; gap: 18px; }
-.ci-nav__icons { display: none; align-items: center; gap: 16px; }
-@media (min-width: 768px) { .ci-nav__icons { display: flex; } }
-.ci-nav-icon {
-  color: var(--on-surface-variant);
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  user-select: none;
-  transition: opacity 0.3s;
-}
-.ci-nav-icon:hover { opacity: 0.72; }
-.ci-nav__lang { display: flex; gap: 4px; }
-.ci-lang-btn {
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 6px 12px;
-  border: 1px solid var(--outline-variant);
-  border-radius: 9999px;
-  background: transparent;
-  color: var(--on-surface-variant);
-  cursor: pointer;
-  transition: all 0.3s var(--spring);
-  line-height: 1.2;
-}
-.ci-lang-btn.is-active {
-  background: var(--primary);
-  color: var(--on-primary);
-  border-color: var(--primary);
-}
-.ci-btn-consult {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 24px;
-  border-radius: 9999px;
-  background: var(--primary);
-  color: var(--on-primary);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: box-shadow 0.3s var(--spring), background 0.3s, color 0.3s;
-}
-.ci-btn-consult:hover { box-shadow: 0 0 15px rgba(119, 90, 25, 0.35); }
+.cases-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:20px;align-items:start}
+.case{position:relative;overflow:hidden;border-radius:12px}
+.case__media{position:relative;overflow:hidden;border-radius:12px}
+.case__img{width:90%;display:block;object-fit:cover;transition:transform .7s;margin:0 auto}
+.case:hover .case__img{transform:scale(1.05)}
+.case__badge{position:absolute;padding:6px 16px;background:rgba(249,248,243,.7);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(119,90,25,.2);border-radius:9999px;font-size:12px;font-weight:600;color:var(--gold);letter-spacing:.05em;white-space:nowrap;z-index:2}
+.badge-tr{top:20px;right:20px}
+.badge-bl{bottom:20px;left:20px}
+.badge-tl{top:20px;left:20px}
+.badge-br{bottom:20px;right:20px}
+.case__body{padding:20px 0 0}
+.case__body h3{font-family:var(--fd);font-size:20px;margin:0 0 6px}
+.case__body p{font-size:14px;line-height:1.5;color:var(--txt-v)}
 
-/* ── Hero ── */
-.ci-hero {
-  position: relative;
-  padding: 150px 20px 120px;
-  text-align: center;
-  background: linear-gradient(180deg, #1a1c1c 0%, #0f1010 100%);
-  border-radius: 16px;
-  margin: 20px auto;
-  max-width: 1200px;
-}
-.ci-hero__title { color: #ffffff !important; }
-.ci-hero__kicker { color: #e9c176 !important; }
-.ci-hero__sub, .ci-hero__rule + p { color: rgba(255,255,255,.7) !important; }
-@media (min-width: 768px) { .ci-hero { padding: 150px 80px 120px; } }
-.ci-hero__kicker {
-  display: block;
-  margin-bottom: 24px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--gold-primary);
-}
-.ci-hero__title {
-  font-family: var(--font-serif);
-  font-size: 42px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  font-weight: 700;
-  color: var(--on-surface);
-  margin: 0 auto 32px;
-  max-width: 54rem;
-}
-@media (min-width: 768px) { .ci-hero__title { font-size: 72px; max-width: 56rem; } }
-.ci-hero__title .burnished {
-  font-style: italic;
-  background: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-.ci-hero__rule {
-  width: 1px;
-  height: 96px;
-  margin: 48px auto 0;
-  background: linear-gradient(to bottom, var(--gold-primary), transparent);
+/* ★ 正确的 Grid 列跨度（有空格） */
+.case-1{grid-column: span 8}
+.case-1 .case__img{aspect-ratio:16/9}
+.case-2{grid-column: span 4;margin-top:128px}
+.case-2 .case__img{aspect-ratio:3/4}
+.case-3{grid-column: span 6}
+.case-3 .case__img{aspect-ratio:1/1}
+.case-4{grid-column: span 6;margin-top:96px}
+.case-4 .case__img{aspect-ratio:4/5}
+
+.pagi{display:flex;justify-content:center;gap:8px;padding:24px 0}
+.pagi__dot{width:8px;height:8px;border-radius:50%;border:1px solid var(--out-v);background:transparent;cursor:pointer;padding:0;transition:all .3s}
+.pagi__dot.on{background:var(--gold);border-color:var(--gold)}
+
+.insights{background:var(--bg-s);margin:0 -24px;padding:60px 24px}
+.insights-hdr{text-align:center;margin-bottom:48px}
+.insights-hdr h2{font-family:var(--fd);font-size:32px;margin-bottom:6px}
+.insights-hdr p{font-size:12px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--txt-v)}
+.art-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;max-width:1200px;margin:0 auto}
+.art{cursor:pointer}
+.art__iw{aspect-ratio:4/5;border-radius:8px;overflow:hidden;margin-bottom:16px}
+.art__ph{width:100%;height:100%;background:linear-gradient(135deg,var(--bg),#e8e5df);display:flex;align-items:center;justify-content:center;font-size:48px;color:#747878;transition:transform .7s}
+.art:hover .art__ph{transform:scale(1.05)}
+.art__cat{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:block}
+.art h4{font-family:var(--fd);font-size:18px;line-height:1.3;margin:0 0 8px}
+.art h4 em{font-style:italic}
+.art:hover h4{color:var(--gold)}
+.art p{font-size:13px;line-height:1.5;color:var(--txt-v);margin:0 0 12px}
+.art__rt{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-v)}
+
+.consult{background:var(--dark);position:relative;overflow:hidden;padding:80px 24px;text-align:center}
+.consult__glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(119,90,25,.2),transparent 70%);pointer-events:none}
+.consult h2{font-family:var(--fd);font-size:clamp(28px,3.5vw,48px);color:#fff;margin:0 0 16px;position:relative}
+.consult p{font-size:16px;line-height:1.6;color:rgba(255,255,255,.7);margin:0 0 32px;position:relative}
+.consult__btn{display:inline-block;padding:16px 48px;background:linear-gradient(135deg,var(--gold),var(--gold-l));color:#fff;border:none;border-radius:9999px;font-family:var(--fb);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .3s;position:relative}
+.consult__btn:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(119,90,25,.4)}
+
+footer{border-top:1px solid var(--out-v);padding:40px 24px;text-align:center;max-width:1200px;margin:0 auto}
+footer .links{display:flex;justify-content:center;gap:28px;margin-bottom:20px;flex-wrap:wrap}
+footer .links a{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-v);text-decoration:none}
+footer .links a:hover{color:var(--gold)}
+footer .copy{font-size:13px;color:var(--txt-v)}
+
+/* ★ 移动端：单列 */
+@media(max-width:768px){
+  .cases-grid{grid-template-columns:1fr}
+  .case-1,.case-2,.case-3,.case-4{grid-column:span 1;margin-top:0}
+  .case-1 .case__img{aspect-ratio:16/9}
+  .case-2 .case__img{aspect-ratio:3/4}
+  .case-3 .case__img{aspect-ratio:1/1}
+  .case-4 .case__img{aspect-ratio:4/5}
+  .art-grid{grid-template-columns:1fr}
+  .consult__btn{width:100%;text-align:center}
 }
 
-/* ── Category filter ── */
-.ci-filter {
-  max-width: 1440px;
-  margin: 0 auto 64px;
-  padding: 0 20px;
-}
-@media (min-width: 768px) { .ci-filter { padding: 0 80px; } }
-.ci-filter__row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px 32px;
-  border-top: 1px solid var(--outline-variant);
-  border-bottom: 1px solid var(--outline-variant);
-  padding: 32px 0;
-}
-.ci-filter__btn {
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--on-surface-variant);
-  background: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  padding: 6px 2px 8px;
-  cursor: pointer;
-  transition: color 0.3s, border-color 0.3s;
-}
-.ci-filter__btn:hover { color: var(--primary); }
-.ci-filter__btn.is-active { color: var(--primary); border-bottom-color: var(--primary); }
-
-/* ── Editorial grid ── */
-.ci-main {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 20px 120px;
-}
-@media (min-width: 768px) { .ci-main { padding: 0 80px 120px; } }
-.ci-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 28px;
-  align-items: start;
-}
-@media (min-width: 768px) {
-  .ci-grid {
-    grid-template-columns: repeat(12, 1fr);
-    gap: 24px 64px;
-  }
-}
-.ci-case { display: block; color: inherit; text-decoration: none; }
-.ci-case.pos-1 { grid-column: span 8; }
-.ci-case.pos-2 { grid-column: span 4; margin-top: 128px; }
-.ci-case.pos-3 { grid-column: span 6; }
-.ci-case.pos-4 { grid-column: span 6; margin-top: 96px; }
-@media (max-width: 768px) {
-  .ci-grid {
-    grid-template-columns: 1fr !important;
-    gap: 24px;
-  }
-  .ci-case.pos-1, .ci-case.pos-2, .ci-case.pos-3, .ci-case.pos-4 {
-    grid-column: 1 / -1 !important;
-    margin-top: 0 !important;
-  }
-  .ci-case__media {
-    aspect-ratio: 4 / 3 !important;
-  }
-  .ci-case.pos-1 .ci-case__media { aspect-ratio: 16 / 9 !important; }
-  .ci-case.pos-2 .ci-case__media { aspect-ratio: 3 / 4 !important; }
-  .ci-case.pos-3 .ci-case__media { aspect-ratio: 1 / 1 !important; }
-  .ci-case.pos-4 .ci-case__media { aspect-ratio: 4 / 5 !important; }
-  .ci-case__title {
-    font-size: 22px !important;
-    line-height: 1.3;
-    margin-bottom: 8px;
-  }
-  .ci-case.pos-2 .ci-case__title { font-size: 20px !important; }
-  .ci-case__desc {
-    font-size: 14px !important;
-    line-height: 1.65;
-  }
-  .ci-case.pos-2 .ci-case__desc { font-size: 14px !important; }
-  .ci-case__body { padding: 0 0 8px; }
-  .ci-case__badge {
-    font-size: 11px;
-    padding: 6px 14px;
-  }
-  .ci-hero__title { font-size: 28px !important; }
-  .ci-hero { padding: 120px 20px 80px; }
-  .ci-cta__btn {
-    display: flex !important;
-    width: 100% !important;
-    padding: 14px 24px !important;
-    box-sizing: border-box;
-  }
-  .ci-cta__title { font-size: 24px !important; margin-bottom: 20px; }
-  .ci-cta__desc { font-size: 14px !important; margin-bottom: 32px; }
-  .ci-cta { padding: 80px 20px !important; }
-  .ci-footer { padding: 60px 20px !important; }
-  .ci-footer__links { gap: 12px 24px; }
-  .ci-nav__inner { padding: 0 16px; }
-  .ci-filter { padding: 0 16px; margin-bottom: 32px; }
-  .ci-filter__row { gap: 12px 20px; padding: 20px 0; }
-  .ci-main { padding: 0 16px 80px; }
-}
-@media (min-width: 769px) and (max-width: 1024px) {
-  .ci-case.pos-1, .ci-case.pos-2, .ci-case.pos-3, .ci-case.pos-4 {
-    grid-column: span 6;
-    margin-top: 0;
-  }
-}
-.ci-case__media {
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 32px;
-  border: 0.5px solid var(--outline-variant);
-  box-shadow: 0 40px 40px -20px rgba(119, 90, 25, 0.06);
-  background: var(--surface-container-low);
-}
-.ci-case.pos-1 .ci-case__media { aspect-ratio: 16 / 9; }
-.ci-case.pos-2 .ci-case__media { aspect-ratio: 3 / 4; }
-.ci-case.pos-3 .ci-case__media { aspect-ratio: 1 / 1; }
-.ci-case.pos-4 .ci-case__media { aspect-ratio: 4 / 5; }
-.ci-case__img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.7s var(--spring);
-}
-.ci-case:hover .ci-case__img { transform: scale(1.05); }
-.ci-case__badge {
-  position: absolute;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 20px;
-  border-radius: 9999px;
-  background: rgba(249, 248, 243, 0.7);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(119, 90, 25, 0.2);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--gold-primary);
-  white-space: nowrap;
-}
-.ci-case.pos-1 .ci-case__badge { top: 24px; right: 24px; }
-.ci-case.pos-2 .ci-case__badge { bottom: 24px; left: 24px; }
-.ci-case.pos-3 .ci-case__badge { top: 24px; left: 24px; }
-.ci-case.pos-4 .ci-case__badge { bottom: 24px; right: 24px; }
-.ci-case__body { padding: 0 4px 8px; }
-.ci-case__tag {
-  display: block;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--gold-primary);
-  margin-bottom: 8px;
-}
-.ci-case__title {
-  font-family: var(--font-serif);
-  font-size: clamp(24px, 2.2vw, 32px);
-  line-height: 1.3;
-  font-weight: 500;
-  color: var(--on-surface);
-  margin-bottom: 12px;
-  transition: color 0.3s;
-}
-.ci-case:hover .ci-case__title { color: var(--gold-primary); }
-.ci-case.pos-2 .ci-case__title { font-size: clamp(20px, 1.8vw, 28px); }
-.ci-case__desc {
-  font-size: clamp(14px, 1.05vw, 18px);
-  line-height: 1.6;
-  color: var(--on-surface-variant);
-  max-width: 42rem;
-}
-.ci-case.pos-2 .ci-case__desc { font-size: 16px; }
-.ci-empty {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--on-surface-variant);
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* ── Pagination ── */
-.ci-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 24px;
-  margin-top: 48px;
-}
-.ci-pagination__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 10px 28px;
-  border: 1px solid var(--outline-variant);
-  border-radius: 9999px;
-  background: transparent;
-  color: var(--on-surface);
-  cursor: pointer;
-  transition: all 0.3s var(--spring);
-}
-.ci-pagination__btn:hover {
-  background: var(--gold-primary);
-  color: #fff;
-  border-color: var(--gold-primary);
-}
-.ci-pagination__btn:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
-.ci-pagination__dots { display: flex; gap: 8px; align-items: center; }
-.ci-pagination__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--outline-variant);
-  cursor: pointer;
-  transition: all 0.3s var(--spring);
-}
-.ci-pagination__dot.is-active {
-  background: var(--gold-primary);
-  width: 24px;
-  border-radius: 4px;
-}
-
-/* ── CTA ── */
-.ci-cta {
-  position: relative;
-  background: var(--tertiary);
-  color: var(--on-tertiary);
-  overflow: hidden;
-  padding: 120px 20px;
-  text-align: center;
-}
-@media (min-width: 768px) { .ci-cta { padding: 120px 80px; } }
-.ci-cta::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.2;
-  background: radial-gradient(circle at 50% 50%, #775a19 0%, transparent 70%);
-  pointer-events: none;
-}
-.ci-cta__inner { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; }
-.ci-cta__title {
-  font-family: var(--font-serif);
-  font-size: 32px;
-  line-height: 1.2;
-  font-weight: 600;
-  margin: 0 auto 32px;
-  max-width: 800px;
-}
-@media (min-width: 768px) { .ci-cta__title { font-size: 48px; } }
-.ci-cta__desc {
-  font-size: clamp(15px, 1.2vw, 18px);
-  line-height: 1.6;
-  color: var(--on-tertiary-container);
-  max-width: 600px;
-  margin: 0 auto 48px;
-}
-.ci-cta__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 48px;
-  border-radius: 9999px;
-  border: 0;
-  cursor: pointer;
-  background: linear-gradient(135deg, #775a19 0%, #fed488 55%, #e9c176 100%);
-  color: #261900;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition: transform 0.3s var(--spring), box-shadow 0.3s var(--spring), background 0.3s;
-}
-.ci-cta__btn:hover {
-  background: #ffffff;
-  color: var(--on-surface);
-  box-shadow: 0 12px 40px rgba(119, 90, 25, 0.35);
-  transform: translateY(-2px);
-}
-
-/* ── Footer ── */
-.ci-footer {
-  background: var(--surface);
-  border-top: 1px solid var(--outline-variant);
-  padding: 120px 20px;
-  text-align: center;
-}
-@media (min-width: 768px) { .ci-footer { padding: 120px 80px; } }
-.ci-footer__brand {
-  display: inline-block;
-  font-family: var(--font-serif);
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--on-surface);
-  margin-bottom: 48px;
-}
-.ci-footer__links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px 32px;
-  margin-bottom: 48px;
-}
-.ci-footer__link {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--on-surface-variant);
-  text-decoration: none;
-  transition: color 0.3s;
-}
-.ci-footer__link:hover { color: var(--gold-primary); }
-.ci-footer__copy {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--on-tertiary-container);
-}
 </style>
 
-<div class="ci-archive" id="ciArchive" data-lang="<?php echo esc_attr($lang); ?>">
 
-<!-- Fixed Top Navbar (in-page minimal) -->
-<nav class="ci-nav" aria-label="<?php echo esc_attr($is_en ? 'Primary' : '主导航'); ?>">
-    <div class="ci-nav__inner">
-        <a class="ci-nav__brand" href="<?php echo esc_url(home_url('/')); ?>">The Archive of Excellence</a>
-        <div class="ci-nav__links">
-            <a class="ci-nav__link ci-lang-inline" href="#archiveMain"><span class="lang-zh">数字人文</span><span class="lang-en">Digital Humanity</span></a>
-        </div>
-        <div class="ci-nav__right">
-            <div class="ci-nav__lang" role="group" aria-label="<?php echo esc_attr($is_en ? 'Language' : '语言'); ?>">
-                <button type="button" class="ci-lang-btn <?php echo $lang === 'zh' ? 'is-active' : ''; ?>" data-lang="zh">中文</button>
-                <button type="button" class="ci-lang-btn <?php echo $lang === 'en' ? 'is-active' : ''; ?>" data-lang="en">EN</button>
-            </div>
-            <div class="ci-nav__icons">
-                <span class="material-symbols-outlined ci-nav-icon" aria-hidden="true">shopping_bag</span>
-                <span class="material-symbols-outlined ci-nav-icon" aria-hidden="true">account_circle</span>
-            </div>
-            <a class="ci-btn-consult ci-lang-inline" href="<?php echo esc_url($contact_url); ?>"><span class="lang-zh">预约咨询</span><span class="lang-en">Consultation</span></a>
-        </div>
-    </div>
-</nav>
 
-<!-- Hero -->
-<header class="ci-hero">
-    <span class="ci-hero__kicker ci-lang-inline"><span class="lang-zh">卓越档案</span><span class="lang-en">The Archive of Excellence</span></span>
-    <h1 class="ci-hero__title">
-        <span class="ci-lang-inline"><span class="lang-zh">定义数字人文的</span><span class="lang-en">Defining the Future of</span></span><br>
-        <span class="burnished ci-lang-inline"><span class="lang-zh">未来</span><span class="lang-en">Digital Humanity</span></span>
-    </h1>
-    <div class="ci-hero__rule" aria-hidden="true"></div>
-</header>
-
-<!-- Category Filter -->
-<section class="ci-filter" aria-label="<?php echo esc_attr($is_en ? 'Case collections' : '案例分类'); ?>">
-    <div class="ci-filter__row">
-        <button type="button" class="ci-filter__btn is-active ci-lang-inline" data-cat="" data-cat-zh=""><span class="lang-zh">全部案例</span><span class="lang-en">All Collections</span></button>
-        <button type="button" class="ci-filter__btn ci-lang-inline" data-cat="PR Audit" data-cat-zh="公关审计"><span class="lang-zh">公关审计</span><span class="lang-en">PR Audit</span></button>
-        <button type="button" class="ci-filter__btn ci-lang-inline" data-cat="IP Collaboration" data-cat-zh="IP 合作"><span class="lang-zh">IP 合作</span><span class="lang-en">IP Collaboration</span></button>
-        <button type="button" class="ci-filter__btn ci-lang-inline" data-cat="E-commerce" data-cat-zh="电商"><span class="lang-zh">电商</span><span class="lang-en">E-commerce</span></button>
-        <button type="button" class="ci-filter__btn ci-lang-inline" data-cat="AI Art" data-cat-zh="AI 艺术"><span class="lang-zh">AI 艺术</span><span class="lang-en">AI Art</span></button>
-    </div>
-</section>
-
-<!-- Editorial Grid (The Archive) -->
-<main class="ci-main" id="archiveMain">
-    <div class="ci-grid" id="ciGrid"></div>
-    <div class="ci-pagination" id="ciPagination">
-        <button class="ci-pagination__btn ci-pagination__prev ci-lang-inline" type="button" disabled>
-            <span aria-hidden="true">&lt;</span><span class="lang-zh">上一页</span><span class="lang-en">Prev</span>
-        </button>
-        <div class="ci-pagination__dots" aria-label="<?php echo esc_attr($is_en ? 'Pages' : '分页'); ?>"></div>
-        <button class="ci-pagination__btn ci-pagination__next ci-lang-inline" type="button">
-            <span class="lang-zh">下一页</span><span class="lang-en">Next</span><span aria-hidden="true">&gt;</span>
-        </button>
-    </div>
-</main>
-
-<!-- Consultation CTA -->
-<section class="ci-cta" id="contact">
-    <div class="ci-cta__inner">
-        <h2 class="ci-cta__title ci-lang-block"><span class="lang-zh">准备好定义你的传承了吗？</span><span class="lang-en">Ready to define your legacy?</span></h2>
-        <p class="ci-cta__desc ci-lang-block"><span class="lang-zh">与全球领先品牌和家族办公室一起，进入数字人文卓越的新时代。</span><span class="lang-en">Join the world's leading brands and family offices in the new era of digital human excellence.</span></p>
-        <a class="ci-cta__btn ci-lang-inline" href="<?php echo esc_url($contact_url); ?>"><span class="lang-zh">发起咨询</span><span class="lang-en">Initiate Consultation</span></a>
-    </div>
-</section>
-
-<!-- Footer (in-page minimal) -->
-<footer class="ci-footer">
-    <div class="ci-footer__brand">The Archive of Excellence</div>
-    <div class="ci-footer__links">
-        <a class="ci-footer__link ci-lang-inline" href="#"><span class="lang-zh">隐私政策</span><span class="lang-en">Privacy Policy</span></a>
-        <a class="ci-footer__link ci-lang-inline" href="#"><span class="lang-zh">服务条款</span><span class="lang-en">Terms of Service</span></a>
-        <a class="ci-footer__link ci-lang-inline" href="#"><span class="lang-zh">媒体</span><span class="lang-en">Press</span></a>
-        <a class="ci-footer__link ci-lang-inline" href="#"><span class="lang-zh">联系</span><span class="lang-en">Contact</span></a>
-    </div>
-    <p class="ci-footer__copy ci-lang-inline"><span class="lang-zh">© 2024 HireAIPeople。数字人文卓越新时代。</span><span class="lang-en">© 2024 HireAIPeople. The New Era of Digital Human Excellence.</span></p>
-</footer>
-
-<script type="application/json" id="archiveCases"><?php echo $cases_json; ?></script>
+<div class="lang-bar">
+  <button class="lang-btn on" onclick="sw('zh')">CN</button>
+  <button class="lang-btn" onclick="sw('en')">EN</button>
 </div>
 
+<section class="hero">
+  <span class="kicker zh">智慧工坊</span><span class="kicker en" style="display:none">THE ATELIER OF INTELLIGENCE</span>
+  <h1><span class="zh">打造数字 <em>人文</em></span><span class="en" style="display:none">Crafting Digital <em>Humanity</em></span></h1>
+  <p><span class="zh">技术精度与传承美学的交汇之处。</span><span class="en" style="display:none">Where technical precision meets heritage aesthetic.</span></p>
+</section>
+
+<section class="cases">
+  <div class="sec-hdr">
+    <h2><span class="zh">卓越案例</span><span class="en" style="display:none">Collaborative Excellence</span></h2>
+    <div class="sec-hdr__line"></div>
+  </div>
+  <div class="cases-grid">
+    <!-- 案例1: 大图 span 8 -->
+    <div class="case case-1">
+      <div class="case__media">
+        <img class="case__img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKTez5bKYX8hkcGYIQTY7AQolcclgmGZVyeYdO7wtjzKGi1KGDp3W2_rnyulzx-fXVnwh8gbqlgLhL7rQYDO1Hy15ExxYsRLQtHY7utzChF5Rbbt_kkIEIxWTZRt6UaN0wAUNxg3cMa-JBP4U6F5ayebnM_4V0l7fTBRWgVMtAtDjYDzOfIoeVjRBeqtwa1JkujelvLr8_CVdXDxk8Fk5JPJgXAgj5o8PW25SxvcGZNL4zqNxKLunY37DbMfsijcrosruEz0jP5B8" alt="">
+        <div class="case__badge badge-tr">+42% Retention</div>
+      </div>
+      <div class="case__body">
+        <h3 class="zh">数字礼宾：高定精品馆</h3><h3 class="en" style="display:none">Aurelian Prime for Private Banking</h3>
+        <p class="zh">为高净值客户打造超写实数字人，引领其在元宇宙私密展厅中探索收藏系列。</p>
+        <p class="en" style="display:none">Reimagining wealth management through a hyper-realistic digital concierge.</p>
+      </div>
+    </div>
+    <!-- 案例2: 小图 span 4 + 下移 -->
+    <div class="case case-2">
+      <div class="case__media">
+        <img class="case__img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbzyCKncNddZWI4AL9W1PzTrf87dAdc15bSa6Fd3YrSSGFEuBfJ3GhCFLTHnITaPoy4NCIEIDZOeUKsHJd6e2c7FDaew9HCkxeuTv03yNA4X7y-qTkiFY4MOvSk2zrCu5GQ_p65NrRMz_GNOBLtPNKFzrS-Ckc5gm5l8yNmgXbThtaUMNmdR8RX5fPFCm2HTkfsWAPWB_exmyy2S83jKAisRxFIzhTpkKULDmR2dsgcRNJKdBeEcyuvWMQJMYMmhDdxAF54pTW_lY" alt="">
+        <div class="case__badge badge-bl">AI Art Integration</div>
+      </div>
+      <div class="case__body">
+        <h3 class="zh">Lumina NFT 系列</h3><h3 class="en" style="display:none">Lumina NFT Series</h3>
+        <p class="zh">独家 IP 合作，将生成算法与传统工艺融合。</p>
+        <p class="en" style="display:none">Exclusive IP collaboration merging generative algorithms with heritage craft.</p>
+      </div>
+    </div>
+    <!-- 案例3: 方形 span 6 -->
+    <div class="case case-3">
+      <div class="case__media">
+        <img class="case__img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4H19rUAh5_bCz2v1ci1tseGa-Di5jpnBrAnHe-YgawYATxXGmS91wVn2gBXbFf_0wxBUsuUY2OiauRcb-ihfSKdfpgDOKtdR6DPZPZ5hw5AN05sbGZDMOlJEQ7CyYm2vkYhqAeH64sLBuIhllT8g3Xj4Qtxu37Ey2Ec9ghcAQALQT7gvWNeq6ZYILIiQ17Q68TUDhnEJH1gswkrK2eVMzgllPbeCSTXoDVClzV4puDtJEM4bQXxHHSDexA5tek-i9d0zjTNG9gCI" alt="">
+        <div class="case__badge badge-tl">3.4x Conversion</div>
+      </div>
+      <div class="case__body">
+        <h3 class="zh">电商进化论</h3><h3 class="en" style="display:none">E-commerce Evolution</h3>
+        <p class="zh">将浏览转化为沉浸式策展体验。</p>
+        <p class="en" style="display:none">Luxury retail performance scaling through personalized digital twin advisors.</p>
+      </div>
+    </div>
+    <!-- 案例4: 大图 span 6 + 下移 -->
+    <div class="case case-4">
+      <div class="case__media">
+        <img class="case__img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA07OHePXio7nWOjPsAAu22p1aEQmProB1QS2hd7-Dql9qnXIqTKGADFpMMJtQ7qjpsHvNaVVo1dP2zxURta_vFC6fKely12_ZmG1HXrJqIAf2mbwUgFewx_rSk1qT5UVJHJxUcXL-PEUsEAOkAezFV3CHIZCY4WD19WyO0KAcbMDq6Xa5pLw1HP0yU4oC697R8GifXGbWNOELwTRpCdraofjCGcJNz0GeZHhTKRb7gscadQ6qmTOUHImlIz4vTnY55Hec6Z9fGPyQ" alt="">
+        <div class="case__badge badge-br">IP Protection 100%</div>
+      </div>
+      <div class="case__body">
+        <h3 class="zh">数字 IP 金库</h3><h3 class="en" style="display:none">The Digital IP Vault</h3>
+        <p class="zh">AI 集成奢侈房产的全球 PR 审计与声誉管理。</p>
+        <p class="en" style="display:none">Global PR audit and reputation management for AI-integrated luxury estates.</p>
+      </div>
+    </div>
+  </div>
+  <div class="pagi"><button class="pagi__dot on"></button><button class="pagi__dot"></button></div>
+</section>
+
+<section class="insights">
+  <div class="insights-hdr">
+    <h2><span class="zh">前沿洞察</span><span class="en" style="display:none">The Intelligence Journal</span></h2>
+    <p><span class="zh">行业洞察与思想领导力</span><span class="en" style="display:none">INDUSTRY INSIGHTS & THOUGHT LEADERSHIP</span></p>
+  </div>
+  <div class="art-grid">
+    <article class="art">
+      <div class="art__iw"><div class="art__ph">✦</div></div>
+      <span class="art__cat">Aesthetics</span>
+      <h4 class="zh">机器中的幽灵：<em>定义</em> AI 之美</h4><h4 class="en" style="display:none">The Ghost in the Machine: <em>Defining</em> AI Beauty</h4>
+      <p class="zh">为何传统品牌正走向超风格化的数字表达。</p><p class="en" style="display:none">Moving beyond uncanny valley into hyper-stylized digital.</p>
+      <span class="art__rt">8 MIN READ</span>
+    </article>
+    <article class="art">
+      <div class="art__iw"><div class="art__ph">◈</div></div>
+      <span class="art__cat">Technology</span>
+      <h4 class="zh">神经网络与丝绸：<em>未来</em>服务的织物</h4><h4 class="en" style="display:none">Neural Networks & Silk: Future Service</h4>
+      <p class="zh">在不失去专属触感的前提下扩展个性化关怀。</p><p class="en" style="display:none">Scaling personalized attention without losing human touch.</p>
+      <span class="art__rt">12 MIN READ</span>
+    </article>
+    <article class="art">
+      <div class="art__iw"><div class="art__ph">❖</div></div>
+      <span class="art__cat">Strategy</span>
+      <h4 class="zh">新白手套：<em>AI</em> 作为终极礼宾</h4><h4 class="en" style="display:none">The New White Glove: AI as Ultimate Concierge</h4>
+      <p class="zh">审视自动化高端体验时代中忠诚度的演变。</p><p class="en" style="display:none">Loyalty evolution in automated high-end experiences.</p>
+      <span class="art__rt">6 MIN READ</span>
+    </article>
+  </div>
+  <div class="pagi"><button class="pagi__dot on"></button></div>
+</section>
+
+<section class="consult">
+  <div class="consult__glow"></div>
+  <h2><span class="zh">准备好定义您的传承了吗？</span><span class="en" style="display:none">Ready to define your legacy?</span></h2>
+  <p><span class="zh">加入全球领先的品牌 AI 数字员工计划。迈出第一步。</span><span class="en" style="display:none">Join the world's leading brands in the new era of digital human excellence.</span></p>
+  <button class="consult__btn"><span class="zh">立即咨询</span><span class="en" style="display:none">Initiate Consultation</span></button>
+</section>
+
+<footer>
+  <div class="links"><a href="#">Brand Story</a><a href="#">Sustainability</a><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a></div>
+  <p class="copy">© 2024 HIREAIPEOPLE. THE NEW ERA OF DIGITAL HUMAN EXCELLENCE.</p>
+</footer>
+
 <script>
-(function () {
-    var page = document.getElementById('ciArchive');
-    if (!page) return;
-
-    var source = document.getElementById('archiveCases');
-    var allCases = [];
-    try { allCases = source ? JSON.parse(source.textContent || '[]') : []; } catch (e) { allCases = []; }
-
-    var grid = document.getElementById('ciGrid');
-    var pagination = document.getElementById('ciPagination');
-    var filterBtns = Array.prototype.slice.call(page.querySelectorAll('.ci-filter__btn'));
-    var langBtns = Array.prototype.slice.call(page.querySelectorAll('.ci-lang-btn'));
-    var prevBtn = pagination.querySelector('.ci-pagination__prev');
-    var nextBtn = pagination.querySelector('.ci-pagination__next');
-    var dotsEl = pagination.querySelector('.ci-pagination__dots');
-
-    var PER_PAGE = 4;
-    var activeCat = '';
-    var activePage = 0;
-    var currentLang = page.getAttribute('data-lang') || 'en';
-
-    function catOf(c) {
-        return {
-            zh: (c.category && c.category.zh) || '',
-            en: (c.category && c.category.en) || ''
-        };
-    }
-    function matches(c) {
-        if (!activeCat) return true;
-        var cat = catOf(c);
-        return cat.en === activeCat || cat.zh === activeCat ||
-            cat.zh === (filterBtnCatZh(activeCat) || activeCat) ||
-            cat.en === (filterBtnCatZh(activeCat) || activeCat);
-    }
-    function filterBtnCatZh(en) {
-        var b = filterBtns.filter(function (x) { return x.getAttribute('data-cat') === en; })[0];
-        return b ? b.getAttribute('data-cat-zh') || '' : '';
-    }
-    function filtered() {
-        return allCases.filter(matches);
-    }
-
-    function biSpan(bi, cls) {
-        var wrap = document.createElement('span');
-        wrap.className = cls;
-        var zh = document.createElement('span');
-        zh.className = 'lang-zh';
-        zh.textContent = (bi && bi.zh) || '';
-        var en = document.createElement('span');
-        en.className = 'lang-en';
-        en.textContent = (bi && bi.en) || '';
-        wrap.appendChild(zh);
-        wrap.appendChild(en);
-        return wrap;
-    }
-
-    function buildCard(c, pos) {
-        var card = document.createElement('a');
-        card.className = 'ci-case pos-' + pos;
-        card.href = c.link || '#';
-
-        var media = document.createElement('div');
-        media.className = 'ci-case__media';
-
-        var gradients = [
-            'linear-gradient(145deg, #1a1207 0%, #3d2b0f 40%, #5a3d1a 70%, #1a1207 100%)',
-            'linear-gradient(145deg, #0d1117 0%, #1b2838 40%, #2d4a6f 70%, #0d1117 100%)',
-            'linear-gradient(145deg, #1a0a1e 0%, #3d1a45 40%, #5a2d6e 70%, #1a0a1e 100%)',
-            'linear-gradient(145deg, #0a1a1a 0%, #1a3d3d 40%, #2d5a5a 70%, #0a1a1a 100%)',
-        ];
-        media.className += ' ci-case__media--grad-' + pos;
-        media.style.background = gradients[(pos - 1) % gradients.length];
-
-        if (c.metric && (c.metric.zh || c.metric.en)) {
-            var badge = document.createElement('span');
-            badge.className = 'ci-case__badge ci-lang-flex';
-            badge.appendChild(biSpan(c.metric, ''));
-            media.appendChild(badge);
-        }
-
-        var body = document.createElement('div');
-        body.className = 'ci-case__body';
-
-        if (c.tag && (c.tag.zh || c.tag.en)) {
-            var tag = document.createElement('div');
-            tag.className = 'ci-case__tag ci-lang-block';
-            tag.appendChild(biSpan(c.tag, ''));
-            body.appendChild(tag);
-        }
-
-        var title = document.createElement('h3');
-        title.className = 'ci-case__title ci-lang-block';
-        title.appendChild(biSpan(c.title || {}, ''));
-        body.appendChild(title);
-
-        if (c.desc && (c.desc.zh || c.desc.en)) {
-            var desc = document.createElement('p');
-            desc.className = 'ci-case__desc ci-lang-block';
-            desc.appendChild(biSpan(c.desc, ''));
-            body.appendChild(desc);
-        }
-
-        card.appendChild(media);
-        card.appendChild(body);
-        return card;
-    }
-
-    function writeHash() {
-        var h = '#cases=' + activePage;
-        try { history.replaceState(null, '', h); } catch (e) { window.location.hash = h; }
-    }
-    function readHash() {
-        var m = window.location.hash.match(/cases=(\d+)/);
-        return m ? parseInt(m[1], 10) : 0;
-    }
-
-    function renderPagination(totalPages) {
-        dotsEl.innerHTML = '';
-        for (var i = 0; i < totalPages; i++) {
-            (function (idx) {
-                var d = document.createElement('span');
-                d.className = 'ci-pagination__dot' + (idx === activePage ? ' is-active' : '');
-                d.setAttribute('data-page', idx);
-                d.addEventListener('click', function () {
-                    activePage = idx;
-                    writeHash();
-                    render();
-                });
-                dotsEl.appendChild(d);
-            }(i));
-        }
-        prevBtn.disabled = activePage === 0;
-        nextBtn.disabled = activePage >= totalPages - 1;
-    }
-
-    function render() {
-        var list = filtered();
-        var totalPages = Math.max(1, Math.ceil(list.length / PER_PAGE));
-        if (activePage >= totalPages) activePage = totalPages - 1;
-        if (activePage < 0) activePage = 0;
-
-        grid.innerHTML = '';
-        if (list.length === 0) {
-            var empty = document.createElement('p');
-            empty.className = 'ci-empty ci-lang-inline';
-            empty.appendChild(biSpan({ zh: '暂无案例', en: 'No cases found' }, ''));
-            grid.appendChild(empty);
-        } else {
-            var items = list.slice(activePage * PER_PAGE, activePage * PER_PAGE + PER_PAGE);
-            items.forEach(function (c, i) {
-                grid.appendChild(buildCard(c, i + 1));
-            });
-        }
-        renderPagination(totalPages);
-    }
-
-    prevBtn.addEventListener('click', function () {
-        if (activePage > 0) { activePage--; writeHash(); render(); }
-    });
-    nextBtn.addEventListener('click', function () {
-        var list = filtered();
-        var totalPages = Math.max(1, Math.ceil(list.length / PER_PAGE));
-        if (activePage < totalPages - 1) { activePage++; writeHash(); render(); }
-    });
-
-    filterBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            activeCat = btn.getAttribute('data-cat') || '';
-            activePage = 0;
-            filterBtns.forEach(function (b) { b.classList.toggle('is-active', b === btn); });
-            writeHash();
-            render();
-        });
-    });
-
-    langBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            currentLang = btn.getAttribute('data-lang');
-            page.setAttribute('data-lang', currentLang);
-            langBtns.forEach(function (b) { b.classList.toggle('is-active', b === btn); });
-            render();
-        });
-    });
-
-    var nav = page.querySelector('.ci-nav');
-    window.addEventListener('scroll', function () {
-        if (nav) nav.classList.toggle('is-scrolled', window.scrollY > 50);
-    }, { passive: true });
-
-    activePage = readHash();
-    render();
-})();
+function sw(l){document.querySelectorAll('.zh').forEach(e=>e.style.display=l==='zh'?'':'none');document.querySelectorAll('.en').forEach(e=>e.style.display=l==='en'?'':'none');document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('on'));document.querySelector('.lang-btn[onclick*="'+l+'"]').classList.add('on')}
 </script>
+
 
 <?php get_footer(); ?>
