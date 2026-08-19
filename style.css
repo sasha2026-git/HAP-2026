@@ -3,7 +3,7 @@ Theme Name:   HireAIPeople Child
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 1.6.5
+Version: 1.6.6
 Text Domain:  hireaipeople
 */
 
@@ -469,21 +469,38 @@ h4 {
   gap: clamp(14px, 2vw, 24px);
 }
 
-.lang-switch ul {
+.header-lang {
   display: flex;
-  gap: 8px;
+  align-items: center;
 }
 
-.lang-switch a {
+.lang-btn {
   font-family: var(--font-label);
-  font-size: var(--fs-nav);
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.12em;
-  color: var(--on-surface-variant);
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border: 1px solid var(--on-surface-variant, #c4c7c7);
+  background: transparent;
+  color: var(--on-surface-variant, #444748);
+  cursor: pointer;
+  transition: all 0.3s;
 }
 
-.lang-switch .current-lang a,
-.lang-switch a:hover {
-  color: var(--primary);
+.lang-btn:first-child {
+  border-radius: 24px 0 0 24px;
+}
+
+.lang-btn:last-child {
+  border-radius: 0 24px 24px 0;
+  border-left: 0;
+}
+
+.lang-btn.on {
+  background: var(--primary, #1a1c1c);
+  border-color: var(--primary, #1a1c1c);
+  color: #fff;
 }
 
 .btn-consult {
@@ -3961,7 +3978,7 @@ main,
 
 .desktop-nav a,
 .mobile-drawer a,
-.lang-switch a,
+.lang-btn,
 .lb-pagination a {
   font-size: var(--fs-nav);
   letter-spacing: 0.12em;
