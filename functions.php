@@ -417,28 +417,56 @@ function hireai_contact_page_id() {
 
 add_action('wp_enqueue_scripts', function () {
     wp_add_inline_style('hireai-child', '
-/* ===== 全局调整 ===== */
+/* ===== 全局调整（强 specificity） ===== */
 /* 页眉高度缩减 */
-.site-header .header-inner { padding-block: 8px !important; min-height: 48px !important; }
-.site-header { padding-block: 0 !important; }
+#site-header .header-inner,
+.site-header .header-inner,
+header .header-inner {
+  padding-block: 6px !important;
+  min-height: 40px !important;
+}
+#site-header,
+.site-header,
+header.site-header {
+  padding-block: 0 !important;
+}
 
 /* 页脚高度缩减 */
-.site-footer { padding-block: 20px 16px !important; }
-.site-footer .footer-inner { padding-block: 0 !important; }
+#site-footer,
+.site-footer,
+footer.site-footer {
+  padding-block: 24px 16px !important;
+}
+#site-footer .footer-inner,
+.site-footer .footer-inner {
+  padding-block: 0 !important;
+}
 
 /* header-lang 样式 */
-.header-lang { display: flex; gap: 0; margin-left: 12px; }
-.header-lang .lang-btn {
-  font-family: var(--font-body, Inter), sans-serif;
-  font-size: 11px; font-weight: 600; letter-spacing: .12em;
-  text-transform: uppercase; padding: 6px 16px;
-  border: 1px solid var(--outline-variant, #c4c4c4);
-  background: transparent; color: var(--on-surface-variant, #444);
-  cursor: pointer; transition: all .3s;
+.header-lang { display: flex; gap: 0; margin-left: 12px; flex-shrink: 0; }
+.header-lang .lang-btn,
+#site-header .lang-btn {
+  font-family: var(--font-body, Inter), sans-serif !important;
+  font-size: 11px !important; font-weight: 600 !important; letter-spacing: .12em !important;
+  text-transform: uppercase !important; padding: 6px 16px !important;
+  border: 1px solid var(--outline-variant, #c4c4c4) !important;
+  background: transparent !important; color: var(--on-surface-variant, #444) !important;
+  cursor: pointer !important; transition: all .3s !important;
 }
-.header-lang .lang-btn:first-child { border-radius: 16px 0 0 16px; }
-.header-lang .lang-btn:last-child { border-radius: 0 16px 16px 0; border-left: 0; }
-.header-lang .lang-btn.on { background: var(--on-surface, #1a1c1c); border-color: var(--on-surface, #1a1c1c); color: #fff; }
+.header-lang .lang-btn:first-child { border-radius: 16px 0 0 16px !important; }
+.header-lang .lang-btn:last-child { border-radius: 0 16px 16px 0 !important; border-left: 0 !important; }
+.header-lang .lang-btn.on,
+.header-lang .lang-btn:hover {
+  background: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%) !important;
+  border-color: #775a19 !important;
+  color: #fff !important;
+}
+
+/* btn-consult hover 改金色 */
+.btn-consult:hover {
+  background: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%) !important;
+  color: #fff !important;
+}
 ');}, 20);
 add_action('wp_enqueue_scripts', function () {
     // 父主题样式（只加载一次）
