@@ -18,7 +18,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-sm
 .lang-btn:last-child{border-radius:0 24px 24px 0;border-left:0}
 .lang-btn.on{background:var(--txt);border-color:var(--txt);color:#fff}
 
-.hero{text-align:center;padding:60px 24px 60px;max-width:800px;margin:0 auto;background:#faf9f9;border-radius:0;margin-top:0}
+.hero{text-align:center;padding:40px 24px 32px;max-width:1200px;margin:0 auto;background:#faf9f9;border-radius:0;margin-top:0}
 .hero h1{color:#1a1c1c}
 .hero p{color:#444748}
 .hero span.kicker{font-size:12px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:20px}
@@ -59,7 +59,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-sm
 .pagi__dot{width:8px;height:8px;border-radius:50%;border:1px solid var(--out-v);background:transparent;cursor:pointer;padding:0;transition:all .3s}
 .pagi__dot.on{background:var(--gold);border-color:var(--gold)}
 
-.insights{background:var(--bg-s);margin:0 -24px;padding:60px 24px}
+.insights{background:var(--bg-s);padding:60px 24px}
 .insights-hdr{text-align:center;margin-bottom:48px}
 .insights-hdr h2{font-family:var(--fd);font-size:32px;margin-bottom:6px}
 .insights-hdr p{font-size:12px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--txt-v)}
@@ -211,11 +211,6 @@ footer .copy{font-size:13px;color:var(--txt-v)}
   <p><span class="zh">加入全球领先的品牌 AI 数字员工计划。迈出第一步。</span><span class="en" style="display:none">Join the world's leading brands in the new era of digital human excellence.</span></p>
   <button class="consult__btn"><span class="zh">立即咨询</span><span class="en" style="display:none">Initiate Consultation</span></button>
 </section>
-
-<footer>
-  <div class="links"><a href="#">Brand Story</a><a href="#">Sustainability</a><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a></div>
-  <p class="copy">© 2024 HIREAIPEOPLE. THE NEW ERA OF DIGITAL HUMAN EXCELLENCE.</p>
-</footer>
 
 <script>
 function sw(l){document.querySelectorAll('.zh').forEach(e=>e.style.display=l==='zh'?'':'none');document.querySelectorAll('.en').forEach(e=>e.style.display=l==='en'?'':'none');document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('on'));document.querySelector('.lang-btn[onclick*="'+l+'"]').classList.add('on')}
