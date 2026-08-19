@@ -18,12 +18,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-sm
 .lang-btn:last-child{border-radius:0 24px 24px 0;border-left:0}
 .lang-btn.on{background:var(--txt);border-color:var(--txt);color:#fff}
 
-.hero{text-align:center;padding:60px 24px 60px;max-width:800px;margin:0 auto;background:linear-gradient(180deg,#1a1c1c 0%,#0f1010 100%);border-radius:16px;margin-top:20px}
-.hero h1{color:#fff}
-.hero p{color:rgba(255,255,255,.7)}
+.hero{text-align:center;padding:60px 24px 60px;max-width:800px;margin:0 auto;background:#faf9f9;border-radius:0;margin-top:0}
+.hero h1{color:#1a1c1c}
+.hero p{color:#444748}
 .hero span.kicker{font-size:12px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:20px}
 .hero h1{font-family:var(--fd);font-size:clamp(32px,5vw,56px);font-weight:600;line-height:1.1;margin:0 0 20px}
-.hero h1 em{font-style:italic}
+.hero h1 em{font-style:italic;background:linear-gradient(135deg,#775a19 0%,#fed488 50%,#775a19 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .hero p{font-size:clamp(14px,1.2vw,16px);line-height:1.6;color:var(--txt-v)}
 
 .cases{max-width:1200px;margin:0 auto;padding:0 24px 40px}
@@ -113,6 +113,7 @@ footer .copy{font-size:13px;color:var(--txt-v)}
   <span class="kicker zh">智慧工坊</span><span class="kicker en" style="display:none">THE ATELIER OF INTELLIGENCE</span>
   <h1><span class="zh">打造数字 <em>人文</em></span><span class="en" style="display:none">Crafting Digital <em>Humanity</em></span></h1>
   <p><span class="zh">技术精度与传承美学的交汇之处。</span><span class="en" style="display:none">Where technical precision meets heritage aesthetic.</span></p>
+<div style="width:1px;height:80px;background:linear-gradient(180deg,#775a19,transparent);margin:40px auto 0"></div>
 </section>
 
 <section class="cases">
