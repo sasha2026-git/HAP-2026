@@ -46,11 +46,12 @@ $consult_label = $suffix === '_en' ? 'Consultation' : '预约咨询';
 		</nav>
 
 		<div class="header-actions">
-			<?php if (function_exists('pll_the_languages')) : ?>
-				<div class="lang-switch"><?php pll_the_languages(['display_names_as' => 'slug', 'hide_current' => false, 'hide_if_no_translation' => 0]); ?></div>
-			<?php endif; ?>
-
 			<a class="btn-consult" href="<?php echo esc_url($contact_url); ?>"><?php echo esc_html($consult_label); ?></a>
+
+			<div class="header-lang">
+				<button class="lang-btn" id="hireai-lang-zh" onclick="hireaiSwitchLang('zh')">CN</button>
+				<button class="lang-btn" id="hireai-lang-en" onclick="hireaiSwitchLang('en')">EN</button>
+			</div>
 
 			<button class="nav-toggle" id="nav-toggle" type="button" aria-label="<?php echo esc_attr($suffix === '_en' ? 'Toggle menu' : '切换菜单'); ?>" aria-expanded="false" aria-controls="mobile-drawer">
 				<?php echo hireai_svg('menu', 24, 'hireai-icon nav-toggle__open'); ?>
