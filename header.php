@@ -14,16 +14,16 @@
 
 <?php
 $suffix = hireai_lang_suffix();
-$logo_url = get_stylesheet_directory_uri() . '/assets/img/logo.png';
+$logo_url = hireai_image('header_logo', get_stylesheet_directory_uri() . '/assets/img/logo.png', 'option');
 $contact_page  = get_page_by_path('contact');
 $contact_url   = $contact_page instanceof WP_Post ? get_permalink($contact_page) : home_url('/contact/');
-$consult_label = $suffix === '_en' ? 'Consultation' : '预约咨询';
+$consult_label = hireai_field('header_consult_label', $suffix === '_en' ? 'Consultation' : '预约咨询', 'option');
 ?>
 
 <header class="site-header" id="site-header">
 	<div class="container header-inner">
 		<a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="Hire AI People">
-			<img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People" style="height:46px !important;width:auto !important;display:block;">
+			<img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People" style="height:138px !important;width:auto !important;display:block;">
 		</a>
 
 		<nav class="desktop-nav" aria-label="<?php echo esc_attr($suffix === '_en' ? 'Primary navigation' : '主导航'); ?>">
@@ -58,7 +58,7 @@ $consult_label = $suffix === '_en' ? 'Consultation' : '预约咨询';
 <aside class="mobile-drawer" id="mobile-drawer" data-mobile-drawer aria-hidden="true">
 	<div class="mobile-drawer__head">
 		<a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="Hire AI People">
-			<img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People" style="height:46px !important;width:auto !important;display:block;">
+			<img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People" style="height:138px !important;width:auto !important;display:block;">
 		</a>
 		<button class="mobile-drawer__close" type="button" data-drawer-close aria-label="<?php echo esc_attr($suffix === '_en' ? 'Close menu' : '关闭菜单'); ?>">
 			<?php echo hireai_svg('close', 24); ?>

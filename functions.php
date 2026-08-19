@@ -423,7 +423,7 @@ add_action('wp_enqueue_scripts', function () {
 .site-header .header-inner,
 header .header-inner {
   padding-block: 2px !important;
-  min-height: 32px !important;
+  min-height: 96px !important;
   align-items: center !important;
 }
 #site-header,
@@ -431,7 +431,7 @@ header .header-inner {
 header.site-header {
   padding-block: 0 !important;
 }
-.site-brand img { max-height: 46px !important; width: auto !important; }
+.site-brand img { max-height: 138px !important; width: auto !important; }
 .header-actions { gap: 8px !important; }
 
 /* 页脚紧凑 */
@@ -445,7 +445,7 @@ footer.site-footer {
   padding-block: 0 !important;
 }
 .footer-brand { margin: 0 !important; padding: 0 !important; }
-.footer-brand img { height: 40px !important; width: auto !important; margin: 0 !important; }
+.footer-brand img { height: 120px !important; width: auto !important; margin: 0 !important; }
 .footer-nav { margin: 4px 0 !important; }
 .footer-copyright { margin: 2px 0 0 !important; }
 
@@ -1030,6 +1030,9 @@ add_action('acf/init', function () {
     }
 
     acf_add_local_field_group($hireai_make_group('group_site_options', '站点设置 — 页脚', [
+        ['name' => 'header_logo', 'label' => '页眉 Logo', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
+        ['name' => 'footer_logo', 'label' => '页脚 Logo', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
+        ['name' => 'header_consult_label', 'label' => '页眉咨询按钮文字', 'type' => 'text', 'zh' => '预约咨询', 'en' => 'Consultation'],
         ['name' => 'footer_copyright', 'label' => '版权信息', 'type' => 'text', 'zh' => '© 2026 聘AI（Hire AI People）。保留所有权利。', 'en' => '© 2026 Hire AI People. All rights reserved.'],
         ['name' => 'footer_slogan', 'label' => '品牌 Slogan', 'type' => 'text', 'zh' => '雇佣智慧 · 臻于艺术', 'en' => 'Hire Intelligence, Artfully Employed.'],
         ['name' => 'footer_desc', 'label' => '页脚介绍', 'type' => 'textarea', 'zh' => 'AI 数字员工与 AI 解决方案平台——以极简奢华之姿，重塑企业智能雇佣。', 'en' => 'A platform for AI digital employees and AI solutions—reshaping intelligent hiring with minimalist luxury.', 'extra' => ['rows' => 3]],

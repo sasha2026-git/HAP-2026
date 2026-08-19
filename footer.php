@@ -4,7 +4,7 @@
 
 <?php
 $suffix    = hireai_lang_suffix();
-$logo_url  = get_stylesheet_directory_uri() . '/assets/img/logo.png';
+$logo_url  = hireai_image('footer_logo', get_stylesheet_directory_uri() . '/assets/img/logo.png', 'option');
 $copyright = hireai_field('footer_copyright', $suffix === '_en' ? '© 2026 Hire AI People. All rights reserved.' : '© 2026 聘AI（Hire AI People）。保留所有权利。', 'option');
 ?>
 

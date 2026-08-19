@@ -1,7 +1,7 @@
 <?php if (!defined('ABSPATH')) exit;
 /**
  * Template Name: HireAI Homepage
- * Stitch-matched v1.7.0 — inline CSS, local assets, no Tailwind dependency.
+ * Stitch-matched v1.9.0 — inline CSS, local assets, no Tailwind dependency.
  */
 get_header();
 
@@ -182,7 +182,7 @@ $fallback_faq = [
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;display=swap">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════════
-   HireAI Homepage v1.7.0 — Stitch-matched inline styles
+   HireAI Homepage v1.9.0 — Stitch-matched inline styles
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Scoped tokens ── */
@@ -195,8 +195,8 @@ $fallback_faq = [
     --text-secondary: #444748;
     --border-light:   rgba(196,199,199,0.3);
     --border-gold:    rgba(119,90,25,0.3);
-    --section-pad: 120px 80px;
-    --side-pad:    80px;
+    --section-pad: 300px 80px;
+    --side-pad:    140px;
     --max-w: 1440px;
 }
 
@@ -212,7 +212,7 @@ $fallback_faq = [
 .hireai-fp a  { text-decoration: none; color: inherit; }
 
 @media (max-width: 767px) {
-    .hireai-fp { --section-pad: 60px 20px; --side-pad: 20px; }
+    .hireai-fp { --section-pad: 150px 20px; --side-pad: 30px; }
 }
 
 /* ── Shared: burnished gold text ── */
@@ -290,9 +290,9 @@ $fallback_faq = [
 
 
 /* ── Section spacing ── */
-.hireai-fp__section + .hireai-fp__section { margin-top: 64px; }
+.hireai-fp__section + .hireai-fp__section { margin-top: 160px; }
 @media (max-width: 767px) {
-    .hireai-fp__section + .hireai-fp__section { margin-top: 32px; }
+    .hireai-fp__section + .hireai-fp__section { margin-top: 80px; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -328,13 +328,13 @@ $fallback_faq = [
     position: relative;
     z-index: 2;
     text-align: center;
-    padding: 30vh var(--side-pad) 80px;
-    max-width: 56rem;
+    padding: 45vh var(--side-pad) 80px;
+    max-width: 44.8rem;
     width: 100%;
 }
 .hireai-fp-hero__title {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(34px, 5vw, 56px);
+    font-size: clamp(27px, 4vw, 45px);
     line-height: 1.1;
     letter-spacing: -0.02em;
     font-weight: 700;
@@ -342,7 +342,7 @@ $fallback_faq = [
     margin-bottom: 24px;
 }
 @media (max-width: 767px) {
-    .hireai-fp-hero__title { font-size: clamp(28px, 4.5vw, 36px); }
+    .hireai-fp-hero__title { font-size: clamp(22px, 4vw, 29px); }
 }
 .hireai-fp-hero__title em {
     font-style: italic;
@@ -350,20 +350,20 @@ $fallback_faq = [
 }
 .hireai-fp-hero__subtitle {
     font-family: 'Inter', sans-serif;
-    font-size: clamp(13px, 1.4vw, 16px);
+    font-size: clamp(10px, 1.1vw, 13px);
     line-height: 1.6;
     color: rgba(0,0,0,0.65);
     letter-spacing: 0.05em;
     text-transform: uppercase;
     font-weight: 300;
-    margin-bottom: 48px;
+    margin-bottom: 38px;
     max-width: 576px;
     margin-left: auto;
     margin-right: auto;
 }
 .hireai-fp-hero__actions {
     display: flex;
-    gap: 24px;
+    gap: 20px;
     justify-content: center;
     flex-wrap: wrap;
 }
@@ -432,12 +432,12 @@ $fallback_faq = [
     border-bottom: 1px solid var(--border-light);
 }
 @media (max-width: 767px) {
-    .hireai-fp-products__header { flex-direction: column; align-items: flex-start; gap: 24px; }
+    .hireai-fp-products__header { flex-direction: column; align-items: flex-start; gap: 20px; }
 }
 .hireai-fp-products__grid {
     display: grid;
     grid-template-columns: repeat(1, 1fr);
-    gap: 24px;
+    gap: 20px;
 }
 @media (min-width: 768px) {
     .hireai-fp-products__grid { grid-template-columns: repeat(3, 1fr); }
@@ -525,7 +525,7 @@ $fallback_faq = [
 .hireai-fp-solutions__grid {
     display: grid;
     grid-template-columns: repeat(1, 1fr);
-    gap: 24px;
+    gap: 20px;
 }
 @media (min-width: 768px) {
     .hireai-fp-solutions__grid { grid-template-columns: repeat(2, 1fr); }
@@ -598,11 +598,11 @@ $fallback_faq = [
     background: var(--surface);
     padding: var(--section-pad);
     max-width: var(--max-w);
-    margin: 64px auto 0;
+    margin: 160px auto 0;
     border-top: 1px solid var(--border-light);
 }
 @media (max-width: 767px) {
-    .hireai-fp-cases { margin-top: 32px; }
+    .hireai-fp-cases { margin-top: 80px; }
 }
 .hireai-fp-cases__header {
     display: flex;
@@ -760,8 +760,8 @@ $fallback_faq = [
     margin-top: 16px;
 }
 .hireai-fp-faq__list {
-    max-width: 56rem;
-    margin: 64px auto 0;
+    max-width: 44.8rem;
+    margin: 160px auto 0;
     text-align: left;
 }
 .hireai-fp-faq-item {
