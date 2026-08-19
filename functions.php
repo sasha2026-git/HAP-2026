@@ -475,16 +475,23 @@ footer.site-footer {
   color: #fff !important;
 }
 ');}, 20);
-add_action('wp_enqueue_scripts', function () {
+// 每次文件改动自动生成新版本号 → 强制浏览器/CDN/全页缓存刷新（无需手动清缓存）
+$ver = function ($file) {
+    $path = get_stylesheet_directory() . $file;
+    $mtime = file_exists($path) ? filemtime($path) : HIREAI_VERSION;
+    return HIREAI_VERSION . '-' . $mtime;
+};
+
+add_action('wp_enqueue_scripts', function () use ($ver) {
     // 父主题样式（只加载一次）
     wp_enqueue_style('parent-style', get_template_directory_uri() . '/style.css', [], HIREAI_VERSION);
 
-    // 子主题样式
+    // 子主题样式（版本号随文件时间戳变化，缓存自动失效）
     wp_enqueue_style(
         'hireaipeople-style',
         get_stylesheet_directory_uri() . '/style.css',
         ['parent-style'],
-        HIREAI_VERSION
+        $ver('/style.css')
     );
 
     // 首页专用样式
@@ -493,7 +500,7 @@ add_action('wp_enqueue_scripts', function () {
             'hireaipeople-front-page',
             get_stylesheet_directory_uri() . '/assets/css/front-page.css',
             ['hireaipeople-style'],
-            HIREAI_VERSION
+            $ver('/assets/css/front-page.css')
         );
     }
 
@@ -503,7 +510,7 @@ add_action('wp_enqueue_scripts', function () {
         'hireaipeople-main',
         get_stylesheet_directory_uri() . '/assets/js/main.js',
         [],
-        HIREAI_VERSION,
+        $ver('/assets/js/main.js'),
         true
     );
 
