@@ -205,3 +205,33 @@
 		document.querySelectorAll('[data-reveal]').forEach(function (el) { io.observe(el); });
 	}
 })();
+
+/* 7. Global language switch (header CN/EN buttons) */
+(function () {
+	'use strict';
+
+	function applyLang(lang) {
+		document.querySelectorAll('.zh').forEach(function (el) {
+			el.style.display = lang === 'zh' ? '' : 'none';
+		});
+		document.querySelectorAll('.en').forEach(function (el) {
+			el.style.display = lang === 'en' ? '' : 'none';
+		});
+		document.querySelectorAll('.lang-btn').forEach(function (btn) {
+			btn.classList.remove('on');
+		});
+		var active = document.querySelector('.lang-btn[onclick*="' + lang + '"]');
+		if (active) active.classList.add('on');
+	}
+
+	window.hireaiSwitchLang = function (lang) {
+		applyLang(lang);
+		try { localStorage.setItem('hireai_lang', lang); } catch (e) {}
+	};
+
+	document.addEventListener('DOMContentLoaded', function () {
+		var saved;
+		try { saved = localStorage.getItem('hireai_lang'); } catch (e) {}
+		applyLang(saved === 'en' ? 'en' : 'zh');
+	});
+})();

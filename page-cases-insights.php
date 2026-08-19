@@ -12,11 +12,6 @@ get_header(); ?>
 :root{--gold:#775a19;--gold-l:#e9c176;--txt:#1a1c1c;--txt-v:#444748;--out-v:#c4c7c7;--bg:#faf9f9;--bg-s:#f4f3f3;--dark:#1b1c19;--fd:'Playfair Display',serif;--fb:'Inter',sans-serif}
 body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
 
-.lang-bar{display:flex;justify-content:flex-end;padding:60px 24px 0;max-width:1200px;margin:0 auto}
-.lang-btn{font-family:var(--fb);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:10px 24px;border:1px solid var(--out-v);background:transparent;color:var(--txt-v);cursor:pointer;transition:all .3s}
-.lang-btn:first-child{border-radius:24px 0 0 24px}
-.lang-btn:last-child{border-radius:0 24px 24px 0;border-left:0}
-.lang-btn.on{background:var(--txt);border-color:var(--txt);color:#fff}
 
 .hero{
   display:block !important;
@@ -126,10 +121,6 @@ footer .copy{font-size:13px;color:var(--txt-v)}
 
 
 
-<div class="lang-bar">
-  <button class="lang-btn on" onclick="sw('zh')">CN</button>
-  <button class="lang-btn" onclick="sw('en')">EN</button>
-</div>
 
 <section class="hero">
   <span class="kicker zh">智慧工坊</span><span class="kicker en" style="display:none">THE ATELIER OF INTELLIGENCE</span>
@@ -233,10 +224,5 @@ footer .copy{font-size:13px;color:var(--txt-v)}
   <p><span class="zh">加入全球领先的品牌 AI 数字员工计划。迈出第一步。</span><span class="en" style="display:none">Join the world's leading brands in the new era of digital human excellence.</span></p>
   <button class="consult__btn"><span class="zh">立即咨询</span><span class="en" style="display:none">Initiate Consultation</span></button>
 </section>
-
-<script>
-function sw(l){document.querySelectorAll('.zh').forEach(e=>e.style.display=l==='zh'?'':'none');document.querySelectorAll('.en').forEach(e=>e.style.display=l==='en'?'':'none');document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('on'));document.querySelector('.lang-btn[onclick*="'+l+'"]').classList.add('on')}
-</script>
-
 
 <?php get_footer(); ?>

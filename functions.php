@@ -422,25 +422,32 @@ add_action('wp_enqueue_scripts', function () {
 #site-header .header-inner,
 .site-header .header-inner,
 header .header-inner {
-  padding-block: 6px !important;
-  min-height: 40px !important;
+  padding-block: 2px !important;
+  min-height: 32px !important;
+  align-items: center !important;
 }
 #site-header,
 .site-header,
 header.site-header {
   padding-block: 0 !important;
 }
+.site-brand img { max-height: 40px !important; width: auto !important; }
+.header-actions { gap: 8px !important; }
 
-/* 页脚高度缩减 */
+/* 页脚紧凑 */
 #site-footer,
 .site-footer,
 footer.site-footer {
-  padding-block: 24px 16px !important;
+  padding-block: 10px !important;
 }
 #site-footer .footer-inner,
 .site-footer .footer-inner {
   padding-block: 0 !important;
 }
+.footer-brand { margin: 0 !important; padding: 0 !important; }
+.footer-brand img { height: 36px !important; width: auto !important; margin: 0 !important; }
+.footer-nav { margin: 4px 0 !important; }
+.footer-copyright { margin: 2px 0 0 !important; }
 
 /* header-lang 样式 */
 .header-lang { display: flex; gap: 0; margin-left: 12px; flex-shrink: 0; }
