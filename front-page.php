@@ -25,8 +25,8 @@ $fb = function ($item, $key) use ($is_en) {
 /* Hero */
 $hero_image    = hireai_image('fp_hero_image', $home . '/assets/img/home/hero.png');
 $hero_kicker   = hireai_field('fp_hero_kicker', $is_en ? 'Prestige Digital Labor' : '工匠精神与算法');
-$hero_title_zh = hireai_field('fp_hero_title', '重新定义数字劳动力');
-$hero_en_line  = hireai_field('fp_hero_en_line', 'Redefine Digital Labor');
+$hero_static = hireai_field('fp_hero_static', $is_en ? 'Redefine' : '重新定义');
+$hero_accent = hireai_field('fp_hero_accent', $is_en ? 'Digital Labor' : '数字劳动力');
 $hero_subtitle = hireai_field('fp_hero_subtitle', $is_en
     ? 'Fusing cutting-edge technology with a luxurious aesthetic to craft your exclusive digital employees.'
     : '融合尖端科技与奢华质感，为您打造专属数字员工。');
@@ -164,7 +164,7 @@ $fallback_faq = [
             ? "Can a digital employee's knowledge base be updated in real-time?"
             : '数字员工的知识库可以实时更新吗？'),
         'answer'   => hireai_field('fp_faq2_a', $is_en
-            ? 'Yes, our system supports real-time knowledge base updates via API. You can add new product information, policy changes, or industry dynamics at any time, ensuring the digital employee always掌握s the latest information.'
+            ? 'Yes, our system supports real-time knowledge base updates via API. You can add new product information, policy changes, or industry dynamics at any time, ensuring the digital employee always stays current with the latest information.'
             : '是的，我们的系统支持通过API进行实时知识库更新。您可以随时添加新的产品信息、政策变更或行业动态，确保数字员工始终掌握最新资讯。'),
     ],
     [
@@ -179,6 +179,7 @@ $fallback_faq = [
 
 ?>
 
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;display=swap">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════════
    HireAI Homepage v1.7.0 — Stitch-matched inline styles
@@ -547,10 +548,11 @@ $fallback_faq = [
     justify-content: center;
     background: #e2e2e2;
 }
-.hireai-fp-sol-card__icon-placeholder .material-symbols-outlined {
-    font-size: 64px;
+.hireai-fp-sol-card__icon {
+    width: 72px;
+    height: 72px;
     color: var(--gold);
-    opacity: 0.5;
+    opacity: 0.55;
 }
 .hireai-fp-sol-card__overlay {
     position: absolute;
@@ -823,10 +825,8 @@ $fallback_faq = [
         <p class="hireai-fp__section-label" style="margin-bottom:24px;display:block;"><?php echo esc_html($hero_kicker); ?></p>
         <?php endif; ?>
         <h1 class="hireai-fp-hero__title">
-            <?php echo esc_html($hero_title_zh); ?>
-            <?php if ($hero_en_line) : ?>
-            <br><em class="hireai-fp__burnished"><?php echo esc_html($hero_en_line); ?></em>
-            <?php endif; ?>
+            <?php echo esc_html($hero_static); ?>
+            <em class="hireai-fp__burnished"><?php echo esc_html($hero_accent); ?></em>
         </h1>
         <?php if ($hero_subtitle) : ?>
         <p class="hireai-fp-hero__subtitle"><?php echo wp_kses_post($hero_subtitle); ?></p>
@@ -921,7 +921,14 @@ $fallback_faq = [
                  alt="<?php echo esc_attr($fb($sol, 'title')); ?>">
             <?php elseif (!empty($sol['icon'])) : ?>
             <div class="hireai-fp-sol-card__icon-placeholder">
-                <span class="material-symbols-outlined"><?php echo esc_html($sol['icon']); ?></span>
+                <svg class="hireai-fp-sol-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <?php if ($sol['icon'] === 'health_and_safety') : ?>
+                    <path d="M12 3 5 6v5c0 4.2 2.9 7.7 7 9 4.1-1.3 7-4.8 7-9V6l-7-3z"/>
+                    <path d="m9 12 2 2 4-4"/>
+                    <?php else : ?>
+                    <path d="M12 3l2.3 5.2L20 9l-4.2 3.7L17.3 19 12 15.8 6.7 19l1.5-6.3L4 9l5.7-.8z"/>
+                    <?php endif; ?>
+                </svg>
             </div>
             <?php endif; ?>
             <div class="hireai-fp-sol-card__overlay">
