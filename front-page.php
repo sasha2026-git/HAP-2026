@@ -9,31 +9,20 @@ $suffix = hireai_lang_suffix();
 $is_en  = $suffix === '_en';
 $home   = get_stylesheet_directory_uri();
 
-/* ── Helper: 取 zh/en 双语字段 ── */
-$b = function ($name, $zh_default = '', $en_default = '') {
-    return [
-        'zh' => hireai_field_lang($name, 'zh', $zh_default),
-        'en' => hireai_field_lang($name, 'en', $en_default),
-    ];
+/* ── Helper: 取当前语言字段/链接 ── */
+$b = function ($name, $zh_default = '', $en_default = '') use ($is_en) {
+    return hireai_field_lang($name, $is_en ? 'en' : 'zh', $is_en ? $en_default : $zh_default);
 };
-$bl = function ($name, $zh_url, $en_url, $zh_title, $en_title) {
-    return [
-        'zh' => hireai_link_lang($name, 'zh', $zh_url, $zh_title),
-        'en' => hireai_link_lang($name, 'en', $en_url, $en_title),
-    ];
+$bl = function ($name, $zh_url, $en_url, $zh_title, $en_title) use ($is_en) {
+    return hireai_link_lang($name, $is_en ? 'en' : 'zh', $is_en ? $en_url : $zh_url, $is_en ? $en_title : $zh_title);
 };
 $fb = function ($item, $key) use ($is_en) {
-    if (isset($item[$key])) {
-        $v = $item[$key];
-        if (is_array($v) && isset($v['zh']) && isset($v['en'])) {
-            return $v;
-        }
-        if (is_array($v)) {
-            return isset($v[$is_en ? 'en' : 'zh']) ? $v[$is_en ? 'en' : 'zh'] : '';
-        }
-        return $v;
+    if (!isset($item[$key])) return '';
+    $v = $item[$key];
+    if (is_array($v)) {
+        return isset($v[$is_en ? 'en' : 'zh']) ? $v[$is_en ? 'en' : 'zh'] : '';
     }
-    return '';
+    return $v;
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════

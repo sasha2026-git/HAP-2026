@@ -793,7 +793,7 @@ add_action('acf/init', function () {
         ],
     ], [
         [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
-        [['param' => 'front_page', 'operator' == '==', 'value' => '1']],
+        [['param' => 'front_page', 'operator' => '==', 'value' => '1']],
     ]));
 
     /* ---- 2. 首页各模块（字段名与 front-page.php 读取的 fp_* 一一对应） ---- */
