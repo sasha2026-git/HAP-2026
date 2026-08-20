@@ -151,16 +151,16 @@ $faq_explore_url   = home_url('/faq/');
 
 $fallback_faq = [
     [
-        'q' => $b('fp_faq1_q', '定制一位数字员工需要多长时间？', 'How long does it take to customize a digital employee?'),
-        'a' => $b('fp_faq1_a', '这取决于定制的复杂程度。基础模型微调通常需要2-4周，而完全定制化可能需要8-12周。', 'This depends on the complexity of the customization. Basic model fine-tuning typically takes 2-4 weeks, while full customization may require 8-12 weeks.'),
+         'question' => $b('fp_faq1_q', '定制一位数字员工需要多长时间？', 'How long does it take to customize a digital employee?'),
+         'answer' => $b('fp_faq1_a', '这取决于定制的复杂程度。基础模型微调通常需要2-4周，而完全定制化可能需要8-12周。', 'This depends on the complexity of the customization. Basic model fine-tuning typically takes 2-4 weeks, while full customization may require 8-12 weeks.'),
     ],
     [
-        'q' => $b('fp_faq2_q', '数字员工的知识库可以实时更新吗？', "Can a digital employee's knowledge base be updated in real-time?"),
-        'a' => $b('fp_faq2_a', '是的，我们的系统支持通过API进行实时知识库更新。', 'Yes, our system supports real-time knowledge base updates via API.'),
+         'question' => $b('fp_faq2_q', '数字员工的知识库可以实时更新吗？', "Can a digital employee's knowledge base be updated in real-time?"),
+         'answer' => $b('fp_faq2_a', '是的，我们的系统支持通过API进行实时知识库更新。', 'Yes, our system supports real-time knowledge base updates via API.'),
     ],
     [
-        'q' => $b('fp_faq3_q', '如何保障数据隐私与安全？', 'How do you ensure data privacy and security?'),
-        'a' => $b('fp_faq3_a', '我们采用企业级加密标准，所有交互数据均在本地或专属私有云中处理。', 'We employ enterprise-grade encryption standards. All interaction data is processed in local or dedicated private clouds.'),
+         'question' => $b('fp_faq3_q', '如何保障数据隐私与安全？', 'How do you ensure data privacy and security?'),
+         'answer' => $b('fp_faq3_a', '我们采用企业级加密标准，所有交互数据均在本地或专属私有云中处理。', 'We employ enterprise-grade encryption standards. All interaction data is processed in local or dedicated private clouds.'),
     ],
 ];
 
@@ -321,13 +321,13 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     position: relative;
     z-index: 2;
     text-align: center;
-    padding: 52vh var(--side-pad) 80px;
+    padding: 62vh var(--side-pad) 80px;
     max-width: 44.8rem;
     width: 100%;
 }
 .hireai-fp-hero__title {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(27px, 4vw, 45px);
+    font-size: clamp(24px, 3.4vw, 38px);
     line-height: 1.1;
     letter-spacing: -0.02em;
     font-weight: 700;
@@ -335,7 +335,8 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     margin-bottom: 24px;
 }
 @media (max-width: 767px) {
-    .hireai-fp-hero__title { font-size: clamp(22px, 4vw, 29px); }
+    .hireai-fp-hero__title { font-size: clamp(20px, 3.6vw, 27px); }
+    .hireai-fp-hero__content { padding-top: 62vh; }
 }
 .hireai-fp-hero__title em {
     font-style: italic;
@@ -417,7 +418,9 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     background: #fff;
     max-width: 1200px;
     margin: 0 auto;
+    padding-inline: 80px;
 }
+@media (max-width: 767px) { .hireai-fp-products { padding-inline: 24px; } }
 .hireai-fp-products__header {
     display: flex;
     justify-content: space-between;
@@ -522,7 +525,9 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     overflow: hidden;
     max-width: 1200px;
     margin: 0 auto;
+    padding-inline: 80px;
 }
+@media (max-width: 767px) { .hireai-fp-solutions { padding-inline: 24px; } }
 .hireai-fp-solutions__header {
     max-width: 640px;
     margin-bottom: 64px;
@@ -606,9 +611,10 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     max-width: 1200px;
     margin: 160px auto 0;
     border-top: 1px solid var(--border-light);
+    padding-inline: 80px;
 }
 @media (max-width: 767px) {
-    .hireai-fp-cases { margin-top: 80px; }
+    .hireai-fp-cases { margin-top: 80px; padding-inline: 24px; }
 }
 .hireai-fp-cases__header {
     display: flex;
