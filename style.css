@@ -3,7 +3,7 @@ Theme Name:   HireAIPeople Child
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 2.0.0
+Version: 2.1.0
 Text Domain:  hireaipeople
 */
 
@@ -397,147 +397,213 @@ h4 {
 }
 
 /* ==========================================================================
-   4. Header / mobile drawer
+   4. Header / mobile drawer — 0819 three-column top nav
+      0819 palette is scoped to these components so it overrides the
+      theme's gold-brown global :root tokens.
    ========================================================================== */
-.site-header {
+.hai-header,
+.hai-footer {
+  --hai-surface-lowest: #ffffff;
+  --hai-primary: #000000;
+  --hai-on-primary: #ffffff;
+  --hai-on-surface-variant: #444748;
+  --hai-secondary: #775a19;
+  --hai-outline-variant: rgba(196, 199, 199, 0.3);
+}
+
+.hai-header {
   position: sticky;
   top: 0;
   z-index: 60;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  background: rgba(249, 249, 249, 0.82);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
+  background: rgba(250, 249, 249, 0.90);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--hai-outline-variant);
 }
 
-.header-inner {
+.hai-header__inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: nowrap;
-  gap: clamp(20px, 3vw, 40px);
-  min-height: 80px;
-  padding-block: 16px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 20px;
+  min-height: 64px;
+  gap: 0;
 }
 
-.site-brand {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
+@media (min-width: 768px) {
+  .hai-header__inner { padding: 0 80px; }
 }
 
-.site-brand img {
-  width: auto;
-  max-height: 46px;
-}
-
-.desktop-nav {
-  display: flex;
-  align-items: center;
-}
-
-.desktop-nav__menu {
-  display: flex;
-  align-items: center;
-  gap: clamp(20px, 2.2vw, 32px);
-}
-
-.desktop-nav a,
-.mobile-drawer a {
-  font-family: var(--font-label);
-  font-size: var(--fs-nav);
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--on-surface-variant);
-}
-
-.desktop-nav a {
-  padding: 8px 0 9px;
-  border-bottom: 1px solid transparent;
-}
-
-.desktop-nav a:hover,
-.desktop-nav .current-menu-item > a {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: clamp(14px, 2vw, 24px);
-}
-
-.header-lang {
-  display: flex;
-  align-items: center;
-}
-
-.lang-btn {
-  font-family: var(--font-label);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 8px 18px;
-  border: 1px solid var(--on-surface-variant, #c4c7c7);
-  background: transparent;
-  color: var(--on-surface-variant, #444748);
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.lang-btn:first-child {
-  border-radius: 24px 0 0 24px;
-}
-
-.lang-btn:last-child {
-  border-radius: 0 24px 24px 0;
-  border-left: 0;
-}
-
-.lang-btn.on {
-  background: var(--primary, #1a1c1c);
-  border-color: var(--primary, #1a1c1c);
-  color: #fff;
-}
-
-.btn-consult {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--primary);
-  border-radius: var(--radius-default);
-  padding: 12px 24px;
-  font-family: var(--font-label);
-  font-size: var(--fs-button);
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--primary);
-  white-space: nowrap;
-  transition: background-color var(--transition), opacity var(--transition), transform var(--transition);
-}
-
-.btn-consult:hover {
-  background: rgba(115, 92, 0, 0.08);
-}
-
-.nav-toggle {
-  display: none !important;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-default);
-  background: transparent;
-  color: var(--on-surface);
-}
-
-.nav-toggle .nav-toggle__close {
+/* Left nav (desktop only) */
+.hai-header__nav {
+  flex: 1;
   display: none;
+}
+@media (min-width: 768px) {
+  .hai-header__nav { display: flex; }
+}
+
+.hai-header__nav-list {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+/* label-md: 14px / Inter / 600 / uppercase / 0.1em */
+.hai-header__nav-list li a {
+  font-family: var(--font-label, Inter), sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hai-on-surface-variant, #444748);
+  text-decoration: none;
+  padding: 8px 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.3s, border-color 0.3s;
+}
+
+.hai-header__nav-list li a:hover,
+.hai-header__nav-list .current-menu-item > a {
+  color: var(--hai-primary, #000);
+  border-bottom-color: var(--hai-primary, #000);
+}
+
+/* Center logo — absolute centered */
+.hai-header__brand {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.hai-header__logo {
+  height: 32px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+@media (min-width: 768px) {
+  .hai-header__logo { height: 40px; }
+}
+
+/* Right actions */
+.hai-header__actions {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+  min-width: 0;
+}
+
+/* "My Account" — label-sm: 12px */
+.hai-header__account {
+  display: none;
+  font-family: var(--font-label, Inter), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--hai-on-surface-variant, #444748);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+@media (min-width: 768px) {
+  .hai-header__account { display: block; }
+}
+.hai-header__account:hover { color: var(--hai-primary, #000); }
+
+/* Language pill */
+.hai-header__lang {
+  font-family: var(--font-label, Inter), sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border: 1px solid var(--hai-primary, #000);
+  border-radius: var(--radius-full, 9999px);
+  background: transparent;
+  color: var(--hai-primary, #000);
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+}
+.hai-header__lang:hover {
+  background: var(--hai-primary, #000);
+  color: var(--hai-on-primary, #ffffff);
+}
+
+/* Search icon */
+.hai-header__search {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--hai-primary, #000);
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.3s;
+}
+@media (min-width: 768px) {
+  .hai-header__search { display: flex; }
+}
+.hai-header__search:hover { opacity: 0.7; }
+
+.hai-header__icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.hai-header .material-symbols-outlined,
+.hai-footer .material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: inherit;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Mobile menu toggle */
+.hai-header__menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--hai-primary, #000);
+  cursor: pointer;
+  padding: 0;
+}
+@media (min-width: 768px) {
+  .hai-header__menu-toggle { display: none; }
+}
+
+/* Mobile drawer overlay */
+.hai-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 55;
 }
 
 .drawer-overlay {
@@ -2186,64 +2252,106 @@ mark {
   color: var(--on-surface-variant);
 }
 
-.site-footer {
-  padding-block: clamp(48px, 7vw, 64px);
-  border-top: 1px solid var(--outline-variant);
-  background: var(--surface-container);
+/* ==========================================================================
+   4b. Footer — redesigned (0819)
+   ========================================================================== */
+.hai-footer {
+  background: var(--hai-surface-lowest, #ffffff);
+  border-top: 1px solid var(--hai-outline-variant, rgba(196, 199, 199, 0.3));
 }
 
-.footer-inner {
+.hai-footer__inner {
   display: flex;
   flex-direction: column;
-  min-width: 0;
   align-items: center;
-  gap: 28px;
-  text-align: center;
+  gap: 48px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 120px 20px;
+}
+@media (min-width: 768px) {
+  .hai-footer__inner { padding: 120px 80px; }
 }
 
-.footer-brand__logo {
+/* Footer logo */
+.hai-footer__logo-wrap {
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hai-footer__logo {
+  height: 48px;
   width: auto;
-  max-height: 40px;
-  margin-inline: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+@media (min-width: 768px) {
+  .hai-footer__logo { height: 64px; }
 }
 
-.footer-brand__slogan {
-  margin: 16px 0 8px;
-  font-family: var(--font-serif);
-  font-size: var(--fs-h3);
-  color: var(--primary);
-}
-
-.footer-brand__desc {
-  max-width: 620px;
-  margin: 0;
-  color: var(--on-surface-variant);
-}
-
-.footer-nav__menu,
-.footer-menu {
+/* Footer nav — policy links */
+.hai-footer__nav-list {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: clamp(16px, 3vw, 32px);
-}
-
-.footer-nav a,
-.footer-menu a {
-  font-family: var(--font-label);
-  font-size: var(--fs-footer);
-  font-weight: 500;
-  color: var(--on-surface-variant);
-}
-
-.footer-nav a:hover,
-.footer-menu a:hover {
-  color: var(--primary);
-}
-
-.footer-copyright {
+  gap: 48px;
+  list-style: none;
   margin: 0;
-  color: var(--on-surface-variant);
+  padding: 0;
+}
+
+/* body-md: 16px / Inter / 400 */
+.hai-footer__nav-list li a {
+  font-family: var(--font-body, Inter), sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--hai-on-surface-variant, #444748);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.hai-footer__nav-list li a:hover {
+  color: var(--hai-secondary, #775a19);
+}
+
+/* Social icons row with top/bottom border dividers */
+.hai-footer__social {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  border-top: 1px solid var(--hai-outline-variant, rgba(196, 199, 199, 0.3));
+  border-bottom: 1px solid var(--hai-outline-variant, rgba(196, 199, 199, 0.3));
+  padding: 32px 0;
+}
+
+.hai-footer__social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.6);
+  transition: color 0.3s;
+}
+.hai-footer__social-link:hover {
+  color: var(--hai-primary, #000);
+}
+
+.hai-footer__social-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* Copyright — body-md: 16px */
+.hai-footer__copyright {
+  font-family: var(--font-body, Inter), sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--hai-on-surface-variant, #444748);
+  text-align: center;
+  margin: 0;
 }
 
 .not-found {
@@ -2400,17 +2508,7 @@ html.js [data-reveal].is-visible {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .desktop-nav {
-    display: none;
-  }
-
-  .header-actions .btn-consult {
-    display: none;
-  }
-
-  .nav-toggle {
-    display: inline-flex !important;
-  }
+  /* Mobile: hide desktop nav actions (handled by hai-header CSS media queries) */
 
   .employee-row {
     gap: 0;
@@ -2515,7 +2613,7 @@ html.js [data-reveal].is-visible {
     width: 100%;
   }
 
-  .footer-inner {
+  .hai-footer__inner {
     gap: 24px;
   }
 
@@ -2547,9 +2645,9 @@ html.js [data-reveal].is-visible {
     max-height: 46px;
   }
 
-  .header-inner {
-    min-height: 72px;
-    padding-block: 12px;
+  .hai-header__inner {
+    min-height: 56px;
+    padding-block: 8px 0;
   }
 
   .employee-row__media {
@@ -2971,10 +3069,8 @@ main,
 }
 
 /* --- Site header: must span full viewport width --- */
-.site-header,
 #site-header,
-.site-header .container,
-.site-header .header-inner {
+.hai-header {
   max-width: none !important;
   width: 100% !important;
   margin-left: 0 !important;
@@ -3018,7 +3114,7 @@ main,
 }
 
 /* --- Site footer: full width --- */
-.site-footer {
+.hai-footer {
   max-width: none !important;
   width: 100% !important;
 }
@@ -3976,7 +4072,6 @@ main,
   text-transform: uppercase;
 }
 
-.desktop-nav a,
 .mobile-drawer a,
 .lang-btn,
 .lb-pagination a {
@@ -3984,35 +4079,41 @@ main,
   letter-spacing: 0.12em;
 }
 
-.footer-nav a,
-.footer-menu a {
-  font-size: var(--fs-footer);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+/* New header/footer typography — overrides above where needed */
+.hai-header__nav-list li a {
+  font-size: 14px;
+  letter-spacing: 0.1em;
 }
 
-.footer-brand__desc,
-.footer-copyright {
-  font-size: var(--fs-footer);
+.hai-header__account {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.hai-header__lang {
+  font-size: 14px;
+  letter-spacing: 0.1em;
+}
+
+.hai-footer__nav-list li a {
+  font-size: 16px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.hai-footer__copyright {
+  font-size: 16px;
 }
 
 /* ==========================================================================
-   27. Header / Footer logo — forced sizing (v1.6.16 rebuild)
-       Hard-coded dimensions; immune to Customizer overrides and
-       Hello Elementor / Elementor global img rules.
+   27. Mobile drawer logo sizing (header/footer logo rules live in sections
+       4 / 4b above; only the drawer keeps a dedicated size here).
    ========================================================================== */
 .header-logo-img {
   display: block;
   width: auto !important;
-  max-width: none !important;
+  max-width: 100% !important;
   height: 46px !important;
   max-height: 46px !important;
-}
-
-.footer-logo-img {
-  display: block;
-  width: 306px !important;
-  max-width: none !important;
-  height: auto !important;
-  max-height: none !important;
+  object-fit: contain;
 }

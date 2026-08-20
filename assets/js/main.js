@@ -10,7 +10,7 @@
 	var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 	/* 1. Header scroll state */
-	var header = document.querySelector('.site-header');
+	var header = document.querySelector('.hai-header') || document.querySelector('.site-header') || document.getElementById('site-header');
 	function syncHeader() {
 		if (!header) return;
 		header.classList.toggle('is-scrolled', window.scrollY > 8);

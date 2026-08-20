@@ -13,69 +13,80 @@
 <a class="skip-link screen-reader-text" href="#content"><?php echo esc_html(hireai_lang_suffix() === '_en' ? 'Skip to content' : '跳到主要内容'); ?></a>
 
 <?php
-$suffix = hireai_lang_suffix();
+$suffix  = hireai_lang_suffix();
 $logo_url = hireai_image('header_logo', get_stylesheet_directory_uri() . '/assets/img/logo.png', 'option');
-$contact_page  = get_page_by_path('contact');
-$contact_url   = $contact_page instanceof WP_Post ? get_permalink($contact_page) : home_url('/contact/');
-$consult_label = hireai_field('header_consult_label', $suffix === '_en' ? 'Consultation' : '预约咨询', 'option');
+$search_url = home_url('/?s=');
+$search_placeholder = $suffix === '_en' ? 'Search' : '搜索';
 ?>
 
-<header class="site-header" id="site-header">
-	<div class="container header-inner">
-		<a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="Hire AI People">
-			<img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People" style="height:138px !important;width:auto !important;display:block;">
-		</a>
+<!-- Header: sticky-glass three-column -->
+<header class="hai-header" id="site-header">
+  <div class="hai-header__inner">
+    <!-- Left: main nav (desktop only) -->
+    <nav class="hai-header__nav" aria-label="<?php echo esc_attr($suffix === '_en' ? 'Primary navigation' : '主导航'); ?>">
+      <?php
+      wp_nav_menu([
+        'theme_location' => 'primary',
+        'container'      => false,
+        'menu_class'     => 'hai-header__nav-list',
+        'fallback_cb'    => 'hireai_fallback_nav',
+        'depth'          => 1,
+      ]);
+      ?>
+    </nav>
 
-		<nav class="desktop-nav" aria-label="<?php echo esc_attr($suffix === '_en' ? 'Primary navigation' : '主导航'); ?>">
-			<?php
-			wp_nav_menu([
-				'theme_location' => 'primary',
-				'container'      => false,
-				'menu_class'     => 'desktop-nav__menu',
-				'fallback_cb'    => 'hireai_fallback_nav',
-				'depth'          => 1,
-			]);
-			?>
-		</nav>
+    <!-- Center: logo -->
+    <a class="hai-header__brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="Hire AI People">
+      <img class="hai-header__logo" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People">
+    </a>
 
-		<div class="header-actions">
-			<a class="btn-consult" href="<?php echo esc_url($contact_url); ?>"><?php echo esc_html($consult_label); ?></a>
+    <!-- Right: actions -->
+    <div class="hai-header__actions">
+      <a class="hai-header__account" href="<?php echo esc_url(function_exists('wc_get_account_endpoint_url') ? wc_get_account_endpoint_url('dashboard') : home_url('/my-account/')); ?>">
+        <?php echo esc_html($suffix === '_en' ? 'MY ACCOUNT' : '我的账户'); ?>
+      </a>
 
-			<div class="header-lang">
-				<button class="lang-btn" id="hireai-lang-zh" onclick="hireaiSwitchLang('zh')">CN</button>
-				<button class="lang-btn" id="hireai-lang-en" onclick="hireaiSwitchLang('en')">EN</button>
-			</div>
+      <button class="hai-header__lang" type="button" onclick="hireaiSwitchLang((localStorage.getItem('hireai_lang') || 'zh') === 'zh' ? 'en' : 'zh')">
+        EN / 中
+      </button>
 
-			<button class="nav-toggle" id="nav-toggle" type="button" aria-label="<?php echo esc_attr($suffix === '_en' ? 'Toggle menu' : '切换菜单'); ?>" aria-expanded="false" aria-controls="mobile-drawer">
-				<?php echo hireai_svg('menu', 24, 'hireai-icon nav-toggle__open'); ?>
-				<?php echo hireai_svg('close', 24, 'hireai-icon nav-toggle__close'); ?>
-			</button>
-		</div>
-	</div>
+      <button class="hai-header__search" type="button" aria-label="<?php echo esc_attr($search_placeholder); ?>" onclick="document.getElementById('hai-header-search-form').submit();">
+        <span class="material-symbols-outlined hai-header__icon" aria-hidden="true">search</span>
+      </button>
+      <form id="hai-header-search-form" class="screen-reader-text" action="<?php echo esc_url($search_url); ?>" method="get">
+        <input type="search" name="s" value="" placeholder="<?php echo esc_attr($search_placeholder); ?>">
+      </form>
+
+      <button class="hai-header__menu-toggle" id="nav-toggle" type="button" aria-label="<?php echo esc_attr($suffix === '_en' ? 'Toggle menu' : '切换菜单'); ?>" aria-expanded="false" aria-controls="mobile-drawer">
+        <span class="material-symbols-outlined hai-header__icon" aria-hidden="true">menu</span>
+      </button>
+    </div>
+  </div>
 </header>
 
-<div class="drawer-overlay" data-drawer-overlay hidden></div>
+<!-- Mobile drawer overlay -->
+<div class="hai-drawer-overlay" data-drawer-overlay hidden></div>
+<!-- Mobile drawer -->
 <aside class="mobile-drawer" id="mobile-drawer" data-mobile-drawer aria-hidden="true">
-	<div class="mobile-drawer__head">
-		<a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="Hire AI People">
-			<img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People" style="height:138px !important;width:auto !important;display:block;">
-		</a>
-		<button class="mobile-drawer__close" type="button" data-drawer-close aria-label="<?php echo esc_attr($suffix === '_en' ? 'Close menu' : '关闭菜单'); ?>">
-			<?php echo hireai_svg('close', 24); ?>
-		</button>
-	</div>
-	<nav class="mobile-drawer__nav" aria-label="<?php echo esc_attr($suffix === '_en' ? 'Mobile navigation' : '移动端导航'); ?>">
-		<?php
-		wp_nav_menu([
-			'theme_location' => 'primary',
-			'container'      => false,
-			'menu_class'     => 'mobile-drawer__menu',
-			'fallback_cb'    => 'hireai_fallback_nav',
-			'depth'          => 1,
-		]);
-		?>
-	</nav>
-	<a class="btn-consult mobile-drawer__cta" href="<?php echo esc_url($contact_url); ?>"><?php echo esc_html($consult_label); ?></a>
+  <div class="mobile-drawer__head">
+    <a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="Hire AI People">
+      <img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People">
+    </a>
+    <button class="mobile-drawer__close" type="button" data-drawer-close aria-label="<?php echo esc_attr($suffix === '_en' ? 'Close menu' : '关闭菜单'); ?>">
+      <span class="material-symbols-outlined hai-header__icon" aria-hidden="true">close</span>
+    </button>
+  </div>
+  <nav class="mobile-drawer__nav" aria-label="<?php echo esc_attr($suffix === '_en' ? 'Mobile navigation' : '移动端导航'); ?>">
+    <?php
+    wp_nav_menu([
+      'theme_location' => 'primary',
+      'container'      => false,
+      'menu_class'     => 'mobile-drawer__menu',
+      'fallback_cb'    => 'hireai_fallback_nav',
+      'depth'          => 1,
+    ]);
+    ?>
+  </nav>
 </aside>
 
 <main id="content" class="site-main">

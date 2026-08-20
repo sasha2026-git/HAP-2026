@@ -1,7 +1,7 @@
 <?php if (!defined('ABSPATH')) exit;
 /**
  * Template Name: HireAI Homepage
- * Stitch-matched v1.9.0 — inline CSS, local assets, no Tailwind dependency.
+ * Stitch-matched v2.0.0 — inline CSS, local assets, no Tailwind dependency.
  */
 get_header();
 
@@ -9,173 +9,177 @@ $suffix = hireai_lang_suffix();
 $is_en  = $suffix === '_en';
 $home   = get_stylesheet_directory_uri();
 
-/* ── Helper ── */
+/* ── Helper: 取 zh/en 双语字段 ── */
+$b = function ($name, $zh_default = '', $en_default = '') {
+    return [
+        'zh' => hireai_field_lang($name, 'zh', $zh_default),
+        'en' => hireai_field_lang($name, 'en', $en_default),
+    ];
+};
+$bl = function ($name, $zh_url, $en_url, $zh_title, $en_title) {
+    return [
+        'zh' => hireai_link_lang($name, 'zh', $zh_url, $zh_title),
+        'en' => hireai_link_lang($name, 'en', $en_url, $en_title),
+    ];
+};
 $fb = function ($item, $key) use ($is_en) {
-    $value = isset($item[$key]) ? $item[$key] : '';
-    if (is_array($value)) {
-        return isset($value[$is_en ? 'en' : 'zh']) ? $value[$is_en ? 'en' : 'zh'] : '';
+    if (isset($item[$key])) {
+        $v = $item[$key];
+        if (is_array($v) && isset($v['zh']) && isset($v['en'])) {
+            return $v;
+        }
+        if (is_array($v)) {
+            return isset($v[$is_en ? 'en' : 'zh']) ? $v[$is_en ? 'en' : 'zh'] : '';
+        }
+        return $v;
     }
-    return $value;
+    return '';
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   ACF Data (fields auto-append language suffix via hireai_field)
+   ACF Data (双语：zh/en 双字段，前端 .zh/.en 双块切换)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Hero */
 $hero_image    = hireai_image('fp_hero_image', $home . '/assets/img/home/hero.png');
-$hero_kicker   = hireai_field('fp_hero_kicker', $is_en ? 'Prestige Digital Labor' : '工匠精神与算法');
-$hero_static = hireai_field('fp_hero_static', $is_en ? 'Redefine' : '重新定义');
-$hero_accent = hireai_field('fp_hero_accent', $is_en ? 'Digital Labor' : '数字劳动力');
-$hero_subtitle = hireai_field('fp_hero_subtitle', $is_en
-    ? 'Fusing cutting-edge technology with a luxurious aesthetic to craft your exclusive digital employees.'
-    : '融合尖端科技与奢华质感，为您打造专属数字员工。');
-$hero_cta_1    = hireai_link('fp_hero_cta_1', home_url('/ai-employees/'), $is_en ? 'EXPLORE SERIES' : '探索系列');
-$hero_cta_2    = hireai_link('fp_hero_cta_2', home_url('/contact/'), $is_en ? 'CONSULTATION' : '定制咨询');
+$hero_kicker   = $b('fp_hero_kicker', '工匠精神与算法', 'Prestige Digital Labor');
+$hero_static   = $b('fp_hero_static', '重新定义', 'Redefine');
+$hero_accent   = $b('fp_hero_accent', '数字劳动力', 'Digital Labor');
+$hero_subtitle = $b('fp_hero_subtitle',
+    '融合尖端科技与奢华质感，为您打造专属数字员工。',
+    'Fusing cutting-edge technology with a luxurious aesthetic to craft your exclusive digital employees.');
+$hero_cta_1    = $bl('fp_hero_cta_1', home_url('/ai-employees/'), home_url('/ai-employees/'), '探索系列', 'EXPLORE SERIES');
+$hero_cta_2    = $bl('fp_hero_cta_2', home_url('/contact/'), home_url('/contact/'), '定制咨询', 'CONSULTATION');
 
 /* Intro */
-$intro_kicker  = hireai_field('fp_intro_kicker', $is_en ? 'Craftsmanship Meets Algorithm' : '工匠精神与算法');
-$intro_title   = hireai_field('fp_intro_title', $is_en
-    ? 'Shaping existence beyond physical boundaries.'
-    : '塑造超越物理边界的存在。');
-$intro_desc    = hireai_field('fp_intro_desc', $is_en
-    ? 'We combine the rigor of traditional luxury with the infinite potential of neural networks. Every digital employee is a one-of-a-kind masterpiece, designed for elegance, intelligence, and resonance.'
-    : '我们结合传统奢华的严谨工艺与神经网络的无限可能。每一位数字员工都是独一无二的杰作，专为优雅、智慧与共鸣而设计。');
+$intro_kicker = $b('fp_intro_kicker', '工匠精神与算法', 'Craftsmanship Meets Algorithm');
+$intro_title  = $b('fp_intro_title', '塑造超越物理边界的存在。', 'Shaping existence beyond physical boundaries.');
+$intro_desc   = $b('fp_intro_desc',
+    '我们结合传统奢华的严谨工艺与神经网络的无限可能。每一位数字员工都是独一无二的杰作，专为优雅、智慧与共鸣而设计。',
+    'We combine the rigor of traditional luxury with the infinite potential of neural networks. Every digital employee is a one-of-a-kind masterpiece, designed for elegance, intelligence, and resonance.');
+$intro_cta_url   = hireai_field_lang('fp_intro_cta_url', 'zh', '/ai-employees/') ?: hireai_field_lang('fp_intro_cta_url', 'en', '/ai-employees/');
+$intro_cta_title = $b('fp_intro_cta_title', '探索更多', 'Explore More');
 
 /* Products */
-$products_section_kicker = hireai_field('fp_products_kicker', $is_en ? 'Limited Neural Series' : '限量神经元系列');
-$products_section_title  = hireai_field('fp_products_title', 'AI ' . ($is_en ? 'Digital Employees' : '数字员工'));
+$products_section_kicker = $b('fp_products_kicker', '限量神经元系列', 'Limited Neural Series');
+$products_section_title  = $b('fp_products_title', 'AI 数字员工', 'AI Digital Employees');
+$products_section_sub    = $b('fp_products_subtitle',
+    '每一位数字员工都拥有独特的灵魂、技能与能力，随时加入您的团队。',
+    'Each digital employee brings a unique soul, refined skills, and unmatched capabilities.');
+$products_explore_label  = $b('fp_products_explore_label', '探索更多', 'Explore More');
 $products_explore_url    = home_url('/ai-employees/');
-$products_explore_label  = $is_en ? 'Explore More' : '探索更多';
 
 $products = [
     [
-        'title' => hireai_field('fp_prod1_title', 'Aurelian Prime'),
-        'desc'  => hireai_field('fp_prod1_desc', $is_en ? 'Elite female digital avatar' : '精英女性数字分身'),
-        'badge' => $is_en ? 'Edition 01/50' : '限量 01/50',
+        'title' => $b('fp_prod1_title', 'Aurelian Prime', 'Aurelian Prime'),
+        'desc'  => $b('fp_prod1_desc', '精英女性数字分身', 'Elite female digital avatar'),
+        'badge' => $b('fp_prod1_badge', '限量 01/50', 'Edition 01/50'),
         'img'   => hireai_image('fp_prod1_image', $home . '/assets/img/home/product-prime.png'),
-        'url'   => hireai_link('fp_prod1_url', home_url('/ai-employees/'), ''),
+        'url'   => $bl('fp_prod1_url', home_url('/ai-employees/'), home_url('/ai-employees/'), '', ''),
     ],
     [
-        'title' => hireai_field('fp_prod2_title', 'Aurelian Executive'),
-        'desc'  => hireai_field('fp_prod2_desc', $is_en ? 'Authority & diplomacy protocol' : '权威与外交协议'),
-        'badge' => 'Executive Series',
+        'title' => $b('fp_prod2_title', 'Aurelian Executive', 'Aurelian Executive'),
+        'desc'  => $b('fp_prod2_desc', '权威与外交协议', 'Authority & diplomacy protocol'),
+        'badge' => $b('fp_prod2_badge', 'Executive Series', 'Executive Series'),
         'img'   => hireai_image('fp_prod2_image', $home . '/assets/img/home/product-exec.png'),
-        'url'   => hireai_link('fp_prod2_url', home_url('/ai-employees/'), ''),
+        'url'   => $bl('fp_prod2_url', home_url('/ai-employees/'), home_url('/ai-employees/'), '', ''),
     ],
     [
-        'title' => hireai_field('fp_prod3_title', 'Neural Sales Core'),
-        'desc'  => hireai_field('fp_prod3_desc', $is_en ? 'Enterprise-grade AI optimization' : '企业级AI优化'),
-        'badge' => 'Neural Series',
+        'title' => $b('fp_prod3_title', 'Neural Sales Core', 'Neural Sales Core'),
+        'desc'  => $b('fp_prod3_desc', '企业级AI优化', 'Enterprise-grade AI optimization'),
+        'badge' => $b('fp_prod3_badge', 'Neural Series', 'Neural Series'),
         'img'   => hireai_image('fp_prod3_image', $home . '/assets/img/home/product-neural.png'),
-        'url'   => hireai_link('fp_prod3_url', home_url('/ai-employees/'), ''),
+        'url'   => $bl('fp_prod3_url', home_url('/ai-employees/'), home_url('/ai-employees/'), '', ''),
     ],
 ];
 
 /* Solutions */
-$solutions_kicker = hireai_field('fp_solutions_kicker', $is_en ? 'Industry Empowerment' : '行业赋能');
-$solutions_title  = hireai_field('fp_solutions_title', $is_en ? 'AI Solutions' : 'AI 解决方案');
+$solutions_kicker = $b('fp_solutions_kicker', '行业赋能', 'Industry Empowerment');
+$solutions_title  = $b('fp_solutions_title', 'AI 解决方案', 'AI Solutions');
+$solutions_sub    = $b('fp_solutions_subtitle', '面向多个行业的量身定制智能方案。', 'Bespoke intelligent solutions across industries.');
+$solutions_explore_label = $b('fp_solutions_explore_label', '探索更多', 'Explore More');
 $solutions_explore_url   = home_url('/ai-solutions/');
-$solutions_explore_label = $is_en ? 'Explore More' : '探索更多';
 
 $solutions = [
     [
-        'title' => hireai_field('fp_sol1_title', $is_en ? 'Finance & Wealth Management' : '金融与财富管理'),
-        'desc'  => hireai_field('fp_sol1_desc',  $is_en ? 'Digital reshaping of intelligent advisors and client relationship management.' : '智能顾问与客户关系维护的数字化重塑。'),
+        'title' => $b('fp_sol1_title', '金融与财富管理', 'Finance & Wealth Management'),
+        'desc'  => $b('fp_sol1_desc', '智能顾问与客户关系维护的数字化重塑。', 'Digital reshaping of intelligent advisors and client relationship management.'),
         'img'   => hireai_image('fp_sol1_image', $home . '/assets/img/home/solution-finance.png'),
     ],
     [
-        'title' => hireai_field('fp_sol2_title', $is_en ? 'Premium Retail & E-commerce' : '高端零售与电商'),
-        'desc'  => hireai_field('fp_sol2_desc',  $is_en ? '24/7 all-day luxury shopping experience upgrade.' : '24/7全天候奢华购物体验升级。'),
+        'title' => $b('fp_sol2_title', '高端零售与电商', 'Premium Retail & E-commerce'),
+        'desc'  => $b('fp_sol2_desc', '24/7全天候奢华购物体验升级。', '24/7 all-day luxury shopping experience upgrade.'),
         'img'   => hireai_image('fp_sol2_image', $home . '/assets/img/home/solution-retail.png'),
     ],
     [
-        'title' => hireai_field('fp_sol3_title', $is_en ? 'Healthcare & Companionship' : '医疗健康与陪伴'),
-        'desc'  => hireai_field('fp_sol3_desc',  $is_en ? 'Empathetic intelligent care and health consultation.' : '充满同理心的智能关怀与健康咨询。'),
+        'title' => $b('fp_sol3_title', '医疗健康与陪伴', 'Healthcare & Companionship'),
+        'desc'  => $b('fp_sol3_desc', '充满同理心的智能关怀与健康咨询。', 'Empathetic intelligent care and health consultation.'),
         'img'   => hireai_image('fp_sol3_image', ''),
         'icon'  => 'health_and_safety',
     ],
     [
-        'title' => hireai_field('fp_sol4_title', $is_en ? 'Entertainment & Virtual Idols' : '泛娱乐与虚拟偶像'),
-        'desc'  => hireai_field('fp_sol4_desc',  $is_en ? 'Build the ultimate never-fail super IP and interactive experience.' : '打造永不塌房的超级IP与互动体验。'),
+        'title' => $b('fp_sol4_title', '泛娱乐与虚拟偶像', 'Entertainment & Virtual Idols'),
+        'desc'  => $b('fp_sol4_desc', '打造永不塌房的超级IP与互动体验。', 'Build the ultimate never-fail super IP and interactive experience.'),
         'img'   => hireai_image('fp_sol4_image', ''),
         'icon'  => 'auto_awesome',
     ],
 ];
 
 /* Cases & Insights */
-$cases_kicker = hireai_field('fp_cases_kicker', $is_en ? 'Frontier Vision' : '前沿视野');
-$cases_title  = hireai_field('fp_cases_title', '案例 ' . ($is_en ? '& Insights' : '& 洞察'));
+$cases_kicker = $b('fp_cases_kicker', '前沿视野', 'Frontier Vision');
+$cases_title  = $b('fp_cases_title', '案例 & 洞察', 'Cases & Insights');
+$cases_sub    = $b('fp_cases_subtitle', '见证数字员工如何改变企业的运营方式。', 'See how digital employees transform operations.');
+$cases_explore_label = $b('fp_cases_explore_label', '探索更多', 'Explore More');
 $cases_explore_url   = home_url('/cases-insights/');
-$cases_explore_label = $is_en ? 'Explore More' : '探索更多';
 
 $major_case = [
-    'title' => hireai_field('fp_case_major_title', $is_en
-        ? 'Aurelian Prime in Private Banking'
-        : 'Aurelian Prime 在私人银行的应用'),
-    'desc'  => hireai_field('fp_case_major_desc', $is_en
-        ? 'Learn how our top digital employee boosts retention and satisfaction for high-net-worth clients.'
-        : '了解我们的顶级数字员工如何提升高净值客户的留存率与满意度。'),
+    'label' => $b('fp_case_major_label', '案例研究', 'CASE STUDY'),
+    'title' => $b('fp_case_major_title', 'Aurelian Prime 在私人银行的应用', 'Aurelian Prime in Private Banking'),
+    'desc'  => $b('fp_case_major_desc', '了解我们的顶级数字员工如何提升高净值客户的留存率与满意度。', 'Learn how our top digital employee boosts retention and satisfaction for high-net-worth clients.'),
     'img'   => hireai_image('fp_case_major_image', $home . '/assets/img/home/solution-finance.png'),
 ];
 
 $side_cases = [
     [
-        'tag'   => $is_en ? 'CASE STUDY' : '案例研究',
-        'title' => hireai_field('fp_case1_title', $is_en
-            ? 'E-commerce Visual Revolution: +55% Conversion'
-            : '电商视觉革命：转化率提升55%'),
-        'desc'  => hireai_field('fp_case1_desc', $is_en
-            ? 'Reshaping online shopping with virtual try-on and personalized recommendations.'
-            : '重塑线上购物体验，结合虚拟试穿与个性化推荐带来的商业增长。'),
+        'tag'   => $b('fp_case1_tag', '案例研究', 'CASE STUDY'),
+        'title' => $b('fp_case1_title', '电商视觉革命：转化率提升55%', 'E-commerce Visual Revolution: +55% Conversion'),
+        'desc'  => $b('fp_case1_desc', '重塑线上购物体验，结合虚拟试穿与个性化推荐带来的商业增长。', 'Reshaping online shopping with virtual try-on and personalized recommendations.'),
         'img'   => hireai_image('fp_case1_image', $home . '/assets/img/home/product-prime.png'),
     ],
     [
-        'tag'   => $is_en ? 'DEEP INSIGHT' : '深度洞察',
-        'title' => hireai_field('fp_case2_title', $is_en
-            ? '"The future is no longer just code, but a symphony."'
-            : '"未来不再仅仅是代码，更是交响乐。"'),
-        'desc'  => hireai_field('fp_case2_desc', $is_en
-            ? 'Exploring the trend of humanized digital beings and our approach to building warm AI.'
-            : '探讨数字人性化的趋势，以及我们在构建有温度的AI方面的思考与实践。'),
+        'tag'   => $b('fp_case2_tag', '深度洞察', 'DEEP INSIGHT'),
+        'title' => $b('fp_case2_title', '"未来不再仅仅是代码，更是交响乐。"', '"The future is no longer just code, but a symphony."'),
+        'desc'  => $b('fp_case2_desc', '探讨数字人性化的趋势，以及我们在构建有温度的AI方面的思考与实践。', 'Exploring the trend of humanized digital beings and our approach to building warm AI.'),
         'img'   => hireai_image('fp_case2_image', $home . '/assets/img/home/solution-retail.png'),
     ],
 ];
 
 /* FAQ */
-$faq_kicker = hireai_field('fp_faq_kicker', $is_en ? 'FAQ' : '常见问题');
-$faq_title  = hireai_field('fp_faq_title', $is_en
-    ? 'Answers to your questions about digital employees.'
-    : '解答关于数字员工的疑虑，开启智能新纪元。');
+$faq_kicker = $b('fp_faq_kicker', '常见问题', 'FAQ');
+$faq_title  = $b('fp_faq_title', '解答关于数字员工的疑虑，开启智能新纪元。', 'Answers to your questions about digital employees.');
+$faq_explore_label = $b('fp_faq_explore_label', '探索更多', 'Explore More');
 $faq_explore_url   = home_url('/faq/');
-$faq_explore_label = $is_en ? 'Explore More' : '探索更多';
 
 $fallback_faq = [
     [
-        'question' => hireai_field('fp_faq1_q', $is_en
-            ? 'How long does it take to customize a digital employee?'
-            : '定制一位数字员工需要多长时间？'),
-        'answer'   => hireai_field('fp_faq1_a', $is_en
-            ? 'This depends on the complexity of the customization. Basic model fine-tuning typically takes 2-4 weeks, while full customization (including unique appearance modeling, voice cloning, and deep industry knowledge base training) may require 8-12 weeks.'
-            : '这取决于定制的复杂程度。基础模型微调通常需要2-4周，而完全定制化（包括独特的外观建模、声音克隆和深度行业知识库训练）可能需要8-12周。'),
+        'q' => $b('fp_faq1_q', '定制一位数字员工需要多长时间？', 'How long does it take to customize a digital employee?'),
+        'a' => $b('fp_faq1_a', '这取决于定制的复杂程度。基础模型微调通常需要2-4周，而完全定制化可能需要8-12周。', 'This depends on the complexity of the customization. Basic model fine-tuning typically takes 2-4 weeks, while full customization may require 8-12 weeks.'),
     ],
     [
-        'question' => hireai_field('fp_faq2_q', $is_en
-            ? "Can a digital employee's knowledge base be updated in real-time?"
-            : '数字员工的知识库可以实时更新吗？'),
-        'answer'   => hireai_field('fp_faq2_a', $is_en
-            ? 'Yes, our system supports real-time knowledge base updates via API. You can add new product information, policy changes, or industry dynamics at any time, ensuring the digital employee always stays current with the latest information.'
-            : '是的，我们的系统支持通过API进行实时知识库更新。您可以随时添加新的产品信息、政策变更或行业动态，确保数字员工始终掌握最新资讯。'),
+        'q' => $b('fp_faq2_q', '数字员工的知识库可以实时更新吗？', "Can a digital employee's knowledge base be updated in real-time?"),
+        'a' => $b('fp_faq2_a', '是的，我们的系统支持通过API进行实时知识库更新。', 'Yes, our system supports real-time knowledge base updates via API.'),
     ],
     [
-        'question' => hireai_field('fp_faq3_q', $is_en
-            ? 'How do you ensure data privacy and security?'
-            : '如何保障数据隐私与安全？'),
-        'answer'   => hireai_field('fp_faq3_a', $is_en
-            ? 'We employ enterprise-grade encryption standards. All interaction data is processed in local or dedicated private clouds. We strictly comply with global data protection regulations, ensuring your business secrets and customer privacy are absolutely secure.'
-            : '我们采用企业级加密标准，所有交互数据均在本地或专属私有云中处理。我们严格遵守全球数据保护法规，确保您的商业机密与客户隐私绝对安全。'),
+        'q' => $b('fp_faq3_q', '如何保障数据隐私与安全？', 'How do you ensure data privacy and security?'),
+        'a' => $b('fp_faq3_a', '我们采用企业级加密标准，所有交互数据均在本地或专属私有云中处理。', 'We employ enterprise-grade encryption standards. All interaction data is processed in local or dedicated private clouds.'),
     ],
 ];
+
+/* CTA band */
+$cta_title = $b('fp_cta_title', '开启您的 AI 雇佣之旅', 'Begin Your AI Hiring Journey');
+$cta_desc  = $b('fp_cta_desc', '与我们的团队对话，打造专属您的数字员工阵容。', 'Speak with our team and craft a digital workforce made for you.');
+$cta_btn_title = $b('fp_cta_btn_title', '联系我们', 'Contact Us');
+$cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hireai_field_lang('fp_cta_btn_url', 'en', '/contact/');
 
 ?>
 
@@ -195,8 +199,8 @@ $fallback_faq = [
     --text-secondary: #444748;
     --border-light:   rgba(196,199,199,0.3);
     --border-gold:    rgba(119,90,25,0.3);
-    --section-pad: 300px 80px;
-    --side-pad:    140px;
+    --section-pad: 120px 80px;
+    --side-pad:    80px;
     --max-w: 1440px;
 }
 
@@ -212,7 +216,7 @@ $fallback_faq = [
 .hireai-fp a  { text-decoration: none; color: inherit; }
 
 @media (max-width: 767px) {
-    .hireai-fp { --section-pad: 150px 20px; --side-pad: 30px; }
+    .hireai-fp { --section-pad: 80px 20px; --side-pad: 20px; }
 }
 
 /* ── Shared: burnished gold text ── */
@@ -328,7 +332,7 @@ $fallback_faq = [
     position: relative;
     z-index: 2;
     text-align: center;
-    padding: 45vh var(--side-pad) 80px;
+    padding: 52vh var(--side-pad) 80px;
     max-width: 44.8rem;
     width: 100%;
 }
@@ -363,7 +367,7 @@ $fallback_faq = [
 }
 .hireai-fp-hero__actions {
     display: flex;
-    gap: 20px;
+    gap: 24px;
     justify-content: center;
     flex-wrap: wrap;
 }
@@ -422,6 +426,8 @@ $fallback_faq = [
    ══════════════════════════════════════════════════════════════════════════ */
 .hireai-fp-products {
     background: #fff;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 .hireai-fp-products__header {
     display: flex;
@@ -446,6 +452,12 @@ $fallback_faq = [
     display: flex;
     flex-direction: column;
     transition: transform 0.6s ease-out;
+    background: rgba(249, 248, 243, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(119, 90, 25, 0.15);
+    border-radius: 0.5rem;
+    padding: 20px;
 }
 .hireai-fp-product-card__img-wrap {
     position: relative;
@@ -455,6 +467,7 @@ $fallback_faq = [
     border: 1px solid rgba(196,199,199,0.2);
     background: #eee;
     transition: border-color 0.5s;
+    border-radius: 0.5rem;
 }
 .hireai-fp-product-card:hover .hireai-fp-product-card__img-wrap {
     border-color: var(--gold-light);
@@ -474,6 +487,7 @@ $fallback_faq = [
     right: 16px;
     background: rgba(255,255,255,0.8);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     padding: 4px 16px;
     border-radius: 9999px;
     border: 1px solid rgba(0,0,0,0.06);
@@ -517,6 +531,8 @@ $fallback_faq = [
 .hireai-fp-solutions {
     background: var(--surface);
     overflow: hidden;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 .hireai-fp-solutions__header {
     max-width: 640px;
@@ -536,6 +552,7 @@ $fallback_faq = [
     overflow: hidden;
     border: 1px solid rgba(196,199,199,0.2);
     transition: border-color 0.3s;
+    border-radius: 0.5rem;
 }
 .hireai-fp-sol-card:hover {
     border-color: var(--gold);
@@ -588,7 +605,7 @@ $fallback_faq = [
 }
 .hireai-fp-solutions__cta {
     text-align: center;
-    margin-top: 48px;
+    margin-top: 32px;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -597,7 +614,7 @@ $fallback_faq = [
 .hireai-fp-cases {
     background: var(--surface);
     padding: var(--section-pad);
-    max-width: var(--max-w);
+    max-width: 1200px;
     margin: 160px auto 0;
     border-top: 1px solid var(--border-light);
 }
@@ -611,6 +628,13 @@ $fallback_faq = [
     margin-bottom: 64px;
     padding-bottom: 48px;
     border-bottom: 1px solid var(--border-light);
+}
+@media (min-width: 768px) {
+    .hireai-fp-cases__header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
 }
 @media (min-width: 768px) {
     .hireai-fp-cases__header {
@@ -633,8 +657,8 @@ $fallback_faq = [
 .hireai-fp-case-major {
     position: relative;
     overflow: hidden;
-    aspect-ratio: 16/9;
     border: 1px solid rgba(196,199,199,0.2);
+    border-radius: 0.5rem;
 }
 @media (min-width: 768px) {
     .hireai-fp-case-major { grid-column: span 8; }
@@ -698,6 +722,7 @@ $fallback_faq = [
     overflow: hidden;
     border: 1px solid rgba(196,199,199,0.2);
     margin-bottom: 16px;
+    border-radius: 0.5rem;
 }
 .hireai-fp-case-side-card__img {
     width: 100%;
@@ -751,6 +776,10 @@ $fallback_faq = [
     background: var(--surface);
     border-top: 1px solid var(--border-light);
     text-align: center;
+    margin-top: 160px;
+}
+@media (max-width: 767px) {
+    .hireai-fp-faq { margin-top: 80px; }
 }
 .hireai-fp-faq__subtitle {
     font-family: 'Inter', sans-serif;
@@ -773,7 +802,7 @@ $fallback_faq = [
     justify-content: space-between;
     align-items: center;
     gap: 16px;
-    padding: 24px 0;
+    padding: 16px 0;
     cursor: pointer;
 }
 .hireai-fp-faq-item__header:hover .hireai-fp-faq-item__question {
@@ -810,7 +839,7 @@ $fallback_faq = [
     max-height: 500px;
 }
 .hireai-fp-faq-item__answer {
-    padding-bottom: 24px;
+    padding-bottom: 16px;
     font-family: 'Inter', sans-serif;
     font-size: clamp(13px, 1.1vw, 16px);
     line-height: 1.6;
@@ -819,6 +848,59 @@ $fallback_faq = [
 .hireai-fp-faq__cta {
     text-align: center;
     margin-top: 48px;
+}
+
+/* ══ CTA band ══ */
+.hireai-fp-cta {
+    background: var(--black);
+    margin: 160px auto 0;
+    padding: clamp(80px, 10vw, 160px) var(--side-pad);
+    max-width: 1200px;
+    text-align: center;
+    color: #fff;
+}
+@media (max-width: 767px) {
+    .hireai-fp-cta { margin-top: 80px; }
+}
+.hireai-fp-cta__inner {
+    max-width: 640px;
+    margin: 0 auto;
+}
+.hireai-fp-cta__title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(30px, 4vw, 52px);
+    line-height: 1.2;
+    font-weight: 600;
+    margin-bottom: 24px;
+}
+.hireai-fp-cta__desc {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(15px, 1.2vw, 18px);
+    line-height: 1.6;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 40px;
+}
+.hireai-fp-cta__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 16px 48px;
+    border-radius: 9999px;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    background: linear-gradient(135deg, #e9c176 0%, #775a19 100%);
+    color: #fff;
+    transition: all 0.3s;
+    border: none;
+}
+.hireai-fp-cta__btn:hover {
+    box-shadow: 0 0 30px rgba(233,193,118,0.35);
 }
 </style>
 
