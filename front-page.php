@@ -1,6 +1,6 @@
 <?php if (!defined('ABSPATH')) exit;
 /**
- * Template Name: HireAI Homepage
+ * Template Name: Front Page
  * Stitch-matched v2.0.0 — inline CSS, local assets, no Tailwind dependency.
  */
 get_header();
