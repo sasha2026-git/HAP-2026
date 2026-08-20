@@ -37,8 +37,10 @@ $hero_accent   = $b('fp_hero_accent', '数字劳动力', 'Digital Labor');
 $hero_subtitle = $b('fp_hero_subtitle',
     '融合尖端科技与奢华质感，为您打造专属数字员工。',
     'Fusing cutting-edge technology with a luxurious aesthetic to craft your exclusive digital employees.');
-$hero_cta_1    = $bl('fp_hero_cta_1', home_url('/ai-employees/'), home_url('/ai-employees/'), '探索系列', 'EXPLORE SERIES');
-$hero_cta_2    = $bl('fp_hero_cta_2', home_url('/contact/'), home_url('/contact/'), '定制咨询', 'CONSULTATION');
+$hero_cta_1_url   = $b('fp_hero_cta_1_url', '/ai-employees/', '/ai-employees/');
+$hero_cta_1_title = $b('fp_hero_cta_1_title', '探索系列', 'EXPLORE SERIES');
+$hero_cta_2_url   = $b('fp_hero_cta_2_url', '/contact/', '/contact/');
+$hero_cta_2_title = $b('fp_hero_cta_2_title', '定制咨询', 'CONSULTATION');
 
 /* Intro */
 $intro_kicker = $b('fp_intro_kicker', '工匠精神与算法', 'Craftsmanship Meets Algorithm');
@@ -64,21 +66,24 @@ $products = [
         'desc'  => $b('fp_prod1_desc', '精英女性数字分身', 'Elite female digital avatar'),
         'badge' => $b('fp_prod1_badge', '限量 01/50', 'Edition 01/50'),
         'img'   => hireai_image('fp_prod1_image', $home . '/assets/img/home/product-prime.png'),
-        'url'   => $bl('fp_prod1_url', home_url('/ai-employees/'), home_url('/ai-employees/'), '', ''),
+        'url'   => hireai_field('fp_prod1_url', home_url('/ai-employees/')),
+        'btn'   => $b('fp_prod1_btn', '探索更多', 'Explore More'),
     ],
     [
         'title' => $b('fp_prod2_title', 'Aurelian Executive', 'Aurelian Executive'),
         'desc'  => $b('fp_prod2_desc', '权威与外交协议', 'Authority & diplomacy protocol'),
         'badge' => $b('fp_prod2_badge', 'Executive Series', 'Executive Series'),
         'img'   => hireai_image('fp_prod2_image', $home . '/assets/img/home/product-exec.png'),
-        'url'   => $bl('fp_prod2_url', home_url('/ai-employees/'), home_url('/ai-employees/'), '', ''),
+        'url'   => hireai_field('fp_prod2_url', home_url('/ai-employees/')),
+        'btn'   => $b('fp_prod2_btn', '探索更多', 'Explore More'),
     ],
     [
         'title' => $b('fp_prod3_title', 'Neural Sales Core', 'Neural Sales Core'),
         'desc'  => $b('fp_prod3_desc', '企业级AI优化', 'Enterprise-grade AI optimization'),
         'badge' => $b('fp_prod3_badge', 'Neural Series', 'Neural Series'),
         'img'   => hireai_image('fp_prod3_image', $home . '/assets/img/home/product-neural.png'),
-        'url'   => $bl('fp_prod3_url', home_url('/ai-employees/'), home_url('/ai-employees/'), '', ''),
+        'url'   => hireai_field('fp_prod3_url', home_url('/ai-employees/')),
+        'btn'   => $b('fp_prod3_btn', '探索更多', 'Explore More'),
     ],
 ];
 
@@ -922,14 +927,12 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
         <?php endif; ?>
         <div class="hireai-fp-hero__actions">
             <a class="hireai-fp__btn hireai-fp__btn--primary"
-               href="<?php echo esc_url($hero_cta_1['url']); ?>"
-               <?php echo !empty($hero_cta_1['target']) ? ' target="' . esc_attr($hero_cta_1['target']) . '" rel="noopener"' : ''; ?>>
-                <?php echo esc_html($hero_cta_1['title']); ?>
+               href="<?php echo esc_url($hero_cta_1_url); ?>">
+                <?php echo esc_html($hero_cta_1_title); ?>
             </a>
             <a class="hireai-fp__btn hireai-fp__btn--outline"
-               href="<?php echo esc_url($hero_cta_2['url']); ?>"
-               <?php echo !empty($hero_cta_2['target']) ? ' target="' . esc_attr($hero_cta_2['target']) . '" rel="noopener"' : ''; ?>>
-                <?php echo esc_html($hero_cta_2['title']); ?>
+               href="<?php echo esc_url($hero_cta_2_url); ?>">
+                <?php echo esc_html($hero_cta_2_title); ?>
             </a>
         </div>
     </div>
@@ -985,8 +988,8 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
                 </div>
             </div>
             <a class="hireai-fp__btn hireai-fp__btn--outline"
-               href="<?php echo esc_url($prod['url']['url'] ?? home_url('/ai-employees/')); ?>">
-                <?php echo esc_html($is_en ? 'Explore More' : '探索更多'); ?>
+               href="<?php echo esc_url($prod['url']); ?>">
+                <?php echo esc_html($prod['btn']); ?>
             </a>
         </div>
         <?php endforeach; ?>
