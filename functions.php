@@ -2,7 +2,8 @@
 
 /* -------------------------------------------------------------------------
  * 0.0 GitHub 自动更新（plugin-update-checker）
- *     发布新版本到 GitHub Release 后，WP 后台 外观→主题 会提示一键更新
+ *     push main + tag + Release上传ZIP后，WP后台外观→主题自动提示更新
+ *     style.css Version: X.Y.Z = 版本号，Release tag: vX.Y.Z，ZIP: HAP-2026-vX.Y.Z.zip
  * ---------------------------------------------------------------------- */
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
@@ -19,6 +20,7 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
     if ( defined('HIREAI_GITHUB_TOKEN') ) {
         $hireai_update_checker->setAuthentication( HIREAI_GITHUB_TOKEN );
     }
+    $hireai_update_checker->setReleaseAsset('HAP-2026-v{version}.zip');
 }
 
 /**
