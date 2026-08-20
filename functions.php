@@ -792,8 +792,10 @@ add_action('acf/init', function () {
             'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url'],
         ],
     ], [
-        [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
-        [['param' => 'front_page', 'operator' => '==', 'value' => '1']],
+        // 同 AllScented：精准匹配博客首页 / 静态首页（ACF 免费版标准 location 格式）
+        [['param' => 'page_type', 'operator' => '==', 'value' => 'front_page']],
+        [['param' => 'page', 'operator' => '==', 'value' => 'home']],
+        [['param' => 'page', 'operator' => '==', 'value' => 'front-page']],
     ]));
 
     /* ---- 2. 首页各模块（字段名与 front-page.php 读取的 fp_* 一一对应） ---- */
@@ -902,8 +904,9 @@ add_action('acf/init', function () {
         ['name' => 'fp_cta_btn_title', 'label' => 'CTA · 按钮文字', 'type' => 'text', 'zh' => '联系我们', 'en' => 'Contact Us'],
         ['name' => 'fp_cta_btn_url', 'label' => 'CTA · 按钮地址', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
     ], [
-        [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
-        [['param' => 'front_page', 'operator' => '==', 'value' => '1']],
+        [['param' => 'page_type', 'operator' => '==', 'value' => 'front_page']],
+        [['param' => 'page', 'operator' => '==', 'value' => 'home']],
+        [['param' => 'page', 'operator' => '==', 'value' => 'front-page']],
     ]));
 
     /* ---- 3. AI 数字员工列表页 ---- */
