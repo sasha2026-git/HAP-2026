@@ -1143,3 +1143,18 @@ add_action('acf/init', function () {
         [['param' => 'options_page', 'operator' => '==', 'value' => 'hireai-settings']],
     ]));
 });
+
+// ============================================================
+// 自动清除 LiteSpeed Cache（主题更新后前端同步生效）
+// ============================================================
+if (class_exists('\LiteSpeed\Purge')) {
+    // 主题版本变更时自动清除全站缓存
+    add_action('after_switch_theme', function () {
+        \LiteSpeed\Purge::purge_all('Theme switched');
+    });
+    add_action('upgrader_process_complete', function ($upgrader, $options) {
+        if (isset($options['type']) && $options['type'] === 'theme') {
+            \LiteSpeed\Purge::purge_all('Theme updated via WP updater');
+        }
+    }, 10, 2);
+}
