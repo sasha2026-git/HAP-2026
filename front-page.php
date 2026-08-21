@@ -331,9 +331,9 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 
 
 /* ── Section spacing ── */
-.hireai-fp__section + .hireai-fp__section { margin-top: 160px; }
+.hireai-fp__section + .hireai-fp__section:not(.hireai-fp-products):not(.hireai-fp-solutions) { margin-top: 160px; }
 @media (max-width: 767px) {
-    .hireai-fp__section + .hireai-fp__section { margin-top: 80px; }
+    .hireai-fp__section + .hireai-fp__section:not(.hireai-fp-products):not(.hireai-fp-solutions) { margin-top: 80px; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -469,7 +469,9 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 .hireai-fp-products {
     background: #fff;
     max-width: 1200px;
-    margin: clamp(60px, 6vw, 120px) auto 0;       /* Task B: section-gap = 120px */
+    margin-top: clamp(60px, 6vw, 120px);          /* Task B: section-gap = 120px, sole source */
+    margin-inline: auto;
+    margin-bottom: 0;
     padding: 0 80px clamp(80px, 10vw, 160px);    /* Task B: padding-top: 0 */
 }
 @media (max-width: 767px) { .hireai-fp-products { padding-inline: 24px; } }
@@ -535,9 +537,11 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     padding: 4px 16px;
     border-radius: 9999px;
     border: 1px solid rgba(0,0,0,0.06);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
+    font-family: var(--font-label-sm);
+    font-size: var(--type-label-sm-size);          /* 12px */
+    font-weight: var(--type-label-sm-weight);      /* 500 */
+    line-height: var(--type-label-sm-lh);          /* 1.2 */
+    letter-spacing: var(--type-label-sm-tracking); /* 0.05em */
     text-transform: uppercase;
     color: #000;
 }
@@ -579,7 +583,9 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     background: var(--surface);
     overflow: hidden;
     max-width: 1200px;
-    margin: clamp(60px, 6vw, 120px) auto 0;       /* Task B: section-gap = 120px */
+    margin-top: clamp(60px, 6vw, 120px);          /* Task B: section-gap = 120px, sole source */
+    margin-inline: auto;
+    margin-bottom: 0;
     padding: 0 80px clamp(80px, 10vw, 160px);    /* Task B: padding-top: 0 */
 }
 @media (max-width: 767px) { .hireai-fp-solutions { padding-inline: 24px; } }
