@@ -169,10 +169,12 @@ $fallback_faq = [
     ],
 ];
 
-/* CTA band */
-$cta_title = $b('fp_cta_title', '开启您的 AI 雇佣之旅', 'Begin Your AI Hiring Journey');
-$cta_desc  = $b('fp_cta_desc', '与我们的团队对话，打造专属您的数字员工阵容。', 'Speak with our team and craft a digital workforce made for you.');
-$cta_btn_title = $b('fp_cta_btn_title', '联系我们', 'Contact Us');
+/* CTA band (v2.2.2 — matches screenshot 07 / page-cases-insights consult section) */
+$cta_title = $b('fp_cta_title', '准备好定义您的传承了吗？', 'Ready to define your legacy?');
+$cta_desc  = $b('fp_cta_desc',
+    '加入全球领先的品牌 AI 数字员工计划。迈出第一步。',
+    "Join the world's leading brands in the new era of digital human excellence.");
+$cta_btn_title = $b('fp_cta_btn_title', '立即咨询', 'Initiate Consultation');
 $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hireai_field_lang('fp_cta_btn_url', 'en', '/contact/');
 
 ?>
@@ -616,7 +618,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     padding: clamp(80px, 10vw, 160px) 80px;
     max-width: 1200px;
     margin: clamp(80px, 10vw, 160px) auto 0;
-    border-top: 1px solid var(--border-light);
+    
 }
 @media (max-width: 767px) {
     .hireai-fp-cases { margin-top: 80px; padding-inline: 24px; }
@@ -774,12 +776,14 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
    ══════════════════════════════════════════════════════════════════════════ */
 .hireai-fp-faq {
     background: var(--surface);
-    border-top: 1px solid var(--border-light);
+    
     text-align: center;
     margin-top: clamp(80px, 10vw, 160px);
+    padding-top: 80px;
+    padding-bottom: 80px;
 }
 @media (max-width: 767px) {
-    .hireai-fp-faq { margin-top: 80px; }
+    .hireai-fp-faq { margin-top: 80px; padding-top: 56px; padding-bottom: 56px; }
 }
 .hireai-fp-faq__subtitle {
     font-family: 'Inter', sans-serif;
@@ -850,32 +854,43 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     margin-top: clamp(40px, 5vw, 64px);
 }
 
-/* ══ CTA band ══ */
+/* ══ CTA band (v2.2.2 — full-bleed black, gradient gold button, soft glow) ══ */
 .hireai-fp-cta {
+    position: relative;
     background: var(--black);
-    margin: 160px auto 0;
+    margin: clamp(80px, 10vw, 160px) 0 0;
     padding: clamp(80px, 10vw, 160px) var(--side-pad);
-    max-width: 1200px;
+    width: 100%;
+    overflow: hidden;
     text-align: center;
     color: #fff;
 }
-@media (max-width: 767px) {
-    .hireai-fp-cta { margin-top: 80px; }
+.hireai-fp-cta__glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(233, 193, 118, 0.18) 0%,
+        rgba(233, 193, 118, 0) 60%
+    );
+    pointer-events: none;
 }
 .hireai-fp-cta__inner {
+    position: relative;
     max-width: 640px;
     margin: 0 auto;
 }
 .hireai-fp-cta__title {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(30px, 4vw, 52px);
+    font-size: clamp(28px, 3.6vw, 44px);
     line-height: 1.2;
     font-weight: 600;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+    color: #fff;
 }
 .hireai-fp-cta__desc {
     font-family: 'Inter', sans-serif;
-    font-size: clamp(15px, 1.2vw, 18px);
+    font-size: clamp(14px, 1.2vw, 16px);
     line-height: 1.6;
     color: rgba(255,255,255,0.7);
     margin-bottom: 40px;
@@ -889,7 +904,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    padding: 16px 48px;
+    padding: 16px 56px;
     border-radius: 9999px;
     text-decoration: none;
     text-align: center;
@@ -900,7 +915,8 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     border: none;
 }
 .hireai-fp-cta__btn:hover {
-    box-shadow: 0 0 30px rgba(233,193,118,0.35);
+    box-shadow: 0 0 30px rgba(233,193,118,0.45);
+    transform: translateY(-1px);
 }
 </style>
 
@@ -1121,13 +1137,14 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     CTA BAND
+     CTA BAND (v2.2.2 — full-width black band with gold gradient button)
      ══════════════════════════════════════════════════════════════════════════ -->
-<section class="hireai-fp-cta hireai-fp__section">
+<section class="hireai-fp-cta" aria-label="<?php echo esc_attr($is_en ? 'Consultation' : '立即咨询'); ?>">
+    <div class="hireai-fp-cta__glow" aria-hidden="true"></div>
     <div class="hireai-fp-cta__inner">
-        <h2 class="hireai-fp-cta__title hireai-fp__burnished"><?php echo esc_html($cta_title); ?></h2>
+        <h2 class="hireai-fp-cta__title"><?php echo esc_html($cta_title); ?></h2>
         <p class="hireai-fp-cta__desc"><?php echo esc_html($cta_desc); ?></p>
-        <a class="hireai-fp__btn hireai-fp__btn--primary"
+        <a class="hireai-fp-cta__btn"
            href="<?php echo esc_url($cta_btn_url); ?>">
             <?php echo esc_html($cta_btn_title); ?>
         </a>

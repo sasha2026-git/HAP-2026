@@ -16,13 +16,6 @@
 $suffix  = hireai_lang_suffix();
 $is_en   = $suffix === '_en';
 $logo_url = hireai_image('header_logo', get_stylesheet_directory_uri() . '/assets/img/logo.png', 'option');
-$search_url = home_url('/?s=');
-$search_placeholder = $is_en ? 'Search' : '搜索';
-
-/* ACF-editable header CTA button */
-$header_cta_url   = hireai_field_lang('header_cta_url', $is_en ? 'en' : 'zh', '/contact/');
-$header_cta_label = hireai_field_lang('header_cta_label', $is_en ? 'en' : 'zh', $is_en ? 'Consultation' : '预约咨询');
-
 /* Language switcher label */
 $lang_label = $is_en ? '中 / EN' : 'EN / 中';
 ?>
@@ -55,21 +48,9 @@ $lang_label = $is_en ? '中 / EN' : 'EN / 中';
         <?php echo esc_html($is_en ? 'MY ACCOUNT' : '我的账户'); ?>
       </a>
 
-      <a class="hai-header__cta"
-         href="<?php echo esc_url($header_cta_url); ?>">
-        <?php echo esc_html($header_cta_label); ?>
-      </a>
-
       <button class="hai-header__lang" type="button" onclick="hireaiSwitchLang((localStorage.getItem('hireai_lang') || 'zh') === 'zh' ? 'en' : 'zh')">
         <?php echo esc_html($lang_label); ?>
       </button>
-
-      <button class="hai-header__search" type="button" aria-label="<?php echo esc_attr($search_placeholder); ?>" onclick="document.getElementById('hai-header-search-form').submit();">
-        <span class="material-symbols-outlined hai-header__icon" aria-hidden="true">search</span>
-      </button>
-      <form id="hai-header-search-form" class="screen-reader-text" action="<?php echo esc_url($search_url); ?>" method="get">
-        <input type="search" name="s" value="" placeholder="<?php echo esc_attr($search_placeholder); ?>">
-      </form>
 
       <button class="hai-header__menu-toggle" id="nav-toggle" type="button" aria-label="<?php echo esc_attr($is_en ? 'Toggle menu' : '切换菜单'); ?>" aria-expanded="false" aria-controls="mobile-drawer">
         <span class="material-symbols-outlined hai-header__icon" aria-hidden="true">menu</span>

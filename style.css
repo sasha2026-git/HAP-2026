@@ -3,7 +3,7 @@ Theme Name:   HireAIPeople Child
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 2.2.1
+Version: 2.2.2
 Text Domain:  hireaipeople
 */
 
@@ -502,37 +502,12 @@ h4 {
 
 /* Right actions */
 .hai-header__actions {
-  flex: 1 1 0;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 24px;
+  gap: 14px;
   min-width: 0;
-}
-
-/* CTA button in header — black bg, gold on hover */
-a.hai-header__cta {
-  display: none;
-  font-family: var(--font-label, Inter), sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--hai-on-primary, #fff);
-  background: #1a1a1a;
-  text-decoration: none;
-  padding: 10px 20px;
-  border-radius: var(--radius-full, 9999px);
-  transition: background 0.3s, color 0.3s;
-  white-space: nowrap;
-}
-@media (min-width: 768px) {
-  a.hai-header__cta { display: inline-flex; align-items: center; }
-}
-a.hai-header__cta:hover {
-  background: linear-gradient(135deg, #e9c176, #775a19);
-  color: var(--hai-on-primary, #fff);
 }
 
 /* Language pill */
@@ -555,23 +530,6 @@ a.hai-header__cta:hover {
   background: linear-gradient(135deg, #e9c176, #775a19);
   color: #fff;
 }
-
-/* Search icon */
-.hai-header__search {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--hai-primary, #000);
-  cursor: pointer;
-  padding: 0;
-  transition: opacity 0.3s;
-}
-@media (min-width: 768px) {
-  .hai-header__search { display: flex; }
-}
-.hai-header__search:hover { opacity: 0.7; }
 
 .hai-header__icon {
   font-size: 24px;
@@ -4137,13 +4095,14 @@ main,
   object-fit: contain;
 }
 
-/* My Account button in header — black bg, gold on hover */
+/* My Account button in header — transparent bg + black border (white frame), hover → gradient gold */
 .hai-header__account {
   display: inline-flex;
   align-items: center;
-  padding: 8px 16px;
-  background: #1a1a1a;
-  color: #fff;
+  padding: 8px 18px;
+  background: transparent;
+  color: #1a1a1a;
+  border: 1px solid #1a1a1a;
   border-radius: 40px;
   font-family: 'Inter', sans-serif;
   font-size: 12px;
@@ -4151,11 +4110,12 @@ main,
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   white-space: nowrap;
 }
 .hai-header__account:hover {
   background: linear-gradient(135deg, #e9c176 0%, #775a19 100%);
-  box-shadow: 0 4px 16px rgba(233, 193, 118, 0.35);
+  border-color: transparent;
   color: #fff;
+  box-shadow: 0 4px 16px rgba(233, 193, 118, 0.35);
 }
