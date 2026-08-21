@@ -4,6 +4,10 @@
  * 0.0 GitHub 自动更新（plugin-update-checker）
  *     push main + tag + Release上传ZIP后，WP后台外观→主题自动提示更新
  *     style.css Version: X.Y.Z = 版本号，Release tag: vX.Y.Z，ZIP: HAP-2026-vX.Y.Z.zip
+ *
+ * v2.2.6 改:对齐 Allscented 的 PUC 默认配置——不调 setBranch/setReleaseAsset,
+ *         让 PUC 读 GitHub Releases API(必须确保 release isDraft=false)
+ *         style.css 增加 Theme URI 字段,PUC 默认就能找到 repo
  * ---------------------------------------------------------------------- */
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
@@ -14,10 +18,7 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
         get_stylesheet_directory() . '/style.css',
         'hireaipeople'
     );
-    $hireai_update_checker->setBranch('main');
-
-    // Use GitHub Release asset ZIP instead of zipball (fix v2.2.5: zipball ships repo root, not hireaipeople/)
-    $hireai_update_checker->setReleaseAsset('HAP-2026-v{version}.zip');
+    // 不调 setBranch/setReleaseAsset,让 PUC 用默认 stable-tag 模式从 GitHub Releases API 检测
 }
 
 /**
@@ -1159,3 +1160,30 @@ if (class_exists('\LiteSpeed\Purge')) {
         }
     }, 10, 2);
 }
+
+// ============================================================
+// 主题更新后:清 transient + 刷 ACF 字段缓存(确保前后端/ACF 同步)
+// v2.2.6 改:对齐 Allscented 的"WP 后台更新=前端更新=ACF 更新=缓存更新"
+// ============================================================
+add_action('upgrader_process_complete', function ($upgrader, $options) {
+    if (!isset($options['type']) || $options['type'] !== 'theme') {
+        return;
+    }
+    // 1. 清 WP theme update transient(强制重新检测,避免显示旧版本)
+    delete_site_transient('update_themes');
+    // 2. 清 ACF 字段缓存(确保 PHP acf_add_local_field_group 的最新定义生效)
+    if (function_exists('acf_get_store')) {
+        $store = acf_get_store('fields');
+        if ($store) {
+            $store->reset();
+        }
+        $groups_store = acf_get_store('field-groups');
+        if ($groups_store) {
+            $groups_store->reset();
+        }
+    }
+    // 3. 清 OPcache(防止 PHP 文件更新但缓存还在跑旧字节码)
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+    }
+}, 11, 2);
