@@ -50,6 +50,11 @@ $lang_label = $is_en ? '中 / EN' : 'EN / 中';
 
     <!-- Right: actions -->
     <div class="hai-header__actions">
+      <a class="hai-header__account"
+         href="<?php echo esc_url(home_url('/my-account/')); ?>">
+        <?php echo esc_html($is_en ? 'MY ACCOUNT' : '我的账户'); ?>
+      </a>
+
       <a class="hai-header__cta"
          href="<?php echo esc_url($header_cta_url); ?>">
         <?php echo esc_html($header_cta_label); ?>
