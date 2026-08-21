@@ -198,6 +198,45 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     --section-pad: clamp(80px, 10vw, 160px) 80px;
     --side-pad:    80px;
     --max-w: 1440px;
+
+    /* -- Typography tokens (0819 DESIGN.md) -- */
+    --font-display-lg:    'Playfair Display', serif;
+    --font-headline-lg:   'Playfair Display', serif;
+    --font-headline-md:   'Playfair Display', serif;
+    --font-body-lg:       'Inter', sans-serif;
+    --font-body-md:       'Inter', sans-serif;
+    --font-label-md:      'Inter', sans-serif;
+    --font-label-sm:      'Inter', sans-serif;
+
+    --type-display-lg-size:      72px;
+    --type-display-lg-weight:    700;
+    --type-display-lg-lh:        1.1;
+    --type-display-lg-tracking:  -0.02em;
+    --type-headline-lg-size:     48px;
+    --type-headline-lg-weight:   600;
+    --type-headline-lg-lh:       1.2;
+    --type-headline-md-size:     32px;
+    --type-headline-md-weight:   500;
+    --type-headline-md-lh:       1.3;
+    --type-body-lg-size:         18px;
+    --type-body-lg-weight:       400;
+    --type-body-lg-lh:           1.6;
+    --type-body-md-size:         16px;
+    --type-body-md-weight:       400;
+    --type-body-md-lh:           1.6;
+    --type-label-md-size:        14px;
+    --type-label-md-weight:      600;
+    --type-label-md-lh:          1.2;
+    --type-label-md-tracking:    0.1em;
+    --type-label-sm-size:        12px;
+    --type-label-sm-weight:      500;
+    --type-label-sm-lh:          1.2;
+    --type-label-sm-tracking:    0.05em;
+
+    /* -- Spacing tokens (0819 DESIGN.md) -- */
+    --section-gap:    120px;
+    --margin-desktop: 80px;
+    --margin-mobile:  20px;
 }
 
 .hireai-fp, .hireai-fp * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -235,10 +274,11 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
+    font-family: var(--font-label-md);
+    font-size: var(--type-label-md-size);          /* 14px */
+    font-weight: var(--type-label-md-weight);      /* 600 */
+    line-height: var(--type-label-md-lh);          /* 1.2 */
+    letter-spacing: var(--type-label-md-tracking); /* 0.1em */
     text-transform: uppercase;
     padding: 16px 48px;
     border-radius: 9999px;
@@ -268,19 +308,19 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 
 /* ── Shared: section header ── */
 .hireai-fp__section-label {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    line-height: 1.2;
-    letter-spacing: 0.3em;
-    font-weight: 600;
+    font-family: var(--font-label-sm);
+    font-size: var(--type-label-sm-size);          /* 12px */
+    font-weight: var(--type-label-sm-weight);      /* 500 */
+    line-height: var(--type-label-sm-lh);          /* 1.2 */
+    letter-spacing: var(--type-label-sm-tracking); /* 0.05em */
     text-transform: uppercase;
     color: var(--gold);
 }
 .hireai-fp__section-title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(28px, 3.5vw, 44px);
-    line-height: 1.2;
-    font-weight: 700;
+    font-family: var(--font-headline-lg);
+    font-size: clamp(32px, 4.5vw, var(--type-headline-lg-size)); /* desktop 48px */
+    font-weight: var(--type-headline-lg-weight);                  /* 600 */
+    line-height: var(--type-headline-lg-lh);                      /* 1.2 */
     letter-spacing: 0;
     color: #000;
     margin-top: 16px;
@@ -334,16 +374,16 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     width: 100%;
 }
 .hireai-fp-hero__title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(32px, 5vw, 56px);
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    font-weight: 700;
+    font-family: var(--font-display-lg);
+    font-size: clamp(40px, 7vw, var(--type-display-lg-size));      /* desktop 72px, mobile 40-72 */
+    font-weight: var(--type-display-lg-weight);                   /* 700 */
+    line-height: var(--type-display-lg-lh);                       /* 1.1 */
+    letter-spacing: var(--type-display-lg-tracking);              /* -0.02em */
     color: var(--black);
     margin-bottom: 24px;
 }
 @media (max-width: 767px) {
-    .hireai-fp-hero__title { font-size: clamp(20px, 3.6vw, 27px); }
+    .hireai-fp-hero__title { font-size: clamp(28px, 5vw, 40px); }
     .hireai-fp-hero__content { padding-top: 62vh; }
 }
 .hireai-fp-hero__title em {
@@ -351,13 +391,13 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     font-weight: normal;
 }
 .hireai-fp-hero__subtitle {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(12px, 1.3vw, 16px);
-    line-height: 1.6;
+    font-family: var(--font-body-lg);
+    font-size: var(--type-body-lg-size);                          /* 18px */
+    font-weight: var(--type-body-lg-weight);                      /* 400 */
+    line-height: var(--type-body-lg-lh);                          /* 1.6 */
     color: rgba(0,0,0,0.65);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    font-weight: 300;
+    letter-spacing: 0;
+    text-transform: none;
     margin-bottom: 38px;
     max-width: 576px;
     margin-left: auto;
@@ -401,21 +441,23 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     padding: clamp(80px, 10vw, 160px) 80px clamp(40px, 5vw, 80px);
 }
 .hireai-fp-intro__title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(28px, 3.5vw, 48px);
-    line-height: 1.2;
-    font-weight: 700;
+    font-family: var(--font-headline-lg);
+    font-size: clamp(32px, 4.5vw, var(--type-headline-lg-size)); /* desktop 48px */
+    font-weight: var(--type-headline-lg-weight);                 /* 600 */
+    line-height: var(--type-headline-lg-lh);                     /* 1.2 */
     letter-spacing: 0;
     color: var(--black);
     margin-bottom: 32px;
 }
 @media (max-width: 767px) {
-    .hireai-fp-intro__title { font-size: clamp(24px, 4vw, 32px); }
+    .hireai-fp-intro__title { font-size: clamp(28px, 5vw, 40px); }
 }
 .hireai-fp-intro__desc {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(14px, 1.2vw, 18px);
-    line-height: 1.6;
+    font-family: var(--font-body-md);
+    font-size: var(--type-body-md-size);                          /* 16px */
+    font-weight: var(--type-body-md-weight);                      /* 400 */
+    line-height: var(--type-body-md-lh);                          /* 1.6 */
+    letter-spacing: 0;
     color: var(--text-secondary);
     max-width: 720px;
     margin: 0 auto;
@@ -427,8 +469,8 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 .hireai-fp-products {
     background: #fff;
     max-width: 1200px;
-    margin: clamp(40px, 5vw, 80px) auto 0;
-    padding: clamp(80px, 10vw, 160px) 80px;
+    margin: clamp(60px, 6vw, 120px) auto 0;       /* Task B: section-gap = 120px */
+    padding: 0 80px clamp(80px, 10vw, 160px);    /* Task B: padding-top: 0 */
 }
 @media (max-width: 767px) { .hireai-fp-products { padding-inline: 24px; } }
 .hireai-fp-products__header {
@@ -505,17 +547,20 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     align-items: flex-start;
 }
 .hireai-fp-product-card__name {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(22px, 2.4vw, 32px);
-    line-height: 1.3;
-    font-weight: 500;
+    font-family: var(--font-headline-md);
+    font-size: clamp(22px, 2.4vw, var(--type-headline-md-size)); /* desktop 32px */
+    font-weight: var(--type-headline-md-weight);                 /* 500 */
+    line-height: var(--type-headline-md-lh);                     /* 1.3 */
+    letter-spacing: 0;
     color: var(--black);
     margin-bottom: 8px;
 }
 .hireai-fp-product-card__desc {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(13px, 1.1vw, 15px);
-    line-height: 1.6;
+    font-family: var(--font-body-md);
+    font-size: var(--type-body-md-size);                          /* 16px */
+    font-weight: var(--type-body-md-weight);                      /* 400 */
+    line-height: var(--type-body-md-lh);                          /* 1.6 */
+    letter-spacing: 0;
     color: var(--text-secondary);
     margin-bottom: 16px;
 }
@@ -534,8 +579,8 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     background: var(--surface);
     overflow: hidden;
     max-width: 1200px;
-    margin: clamp(40px, 5vw, 80px) auto 0;
-    padding: clamp(80px, 10vw, 160px) 80px;
+    margin: clamp(60px, 6vw, 120px) auto 0;       /* Task B: section-gap = 120px */
+    padding: 0 80px clamp(80px, 10vw, 160px);    /* Task B: padding-top: 0 */
 }
 @media (max-width: 767px) { .hireai-fp-solutions { padding-inline: 24px; } }
 .hireai-fp-solutions__header {
@@ -595,17 +640,20 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     color: #fff;
 }
 .hireai-fp-sol-card__title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(18px, 1.8vw, 24px);
-    line-height: 1.3;
-    font-weight: 500;
+    font-family: var(--font-headline-md);
+    font-size: clamp(20px, 2vw, var(--type-headline-md-size));   /* desktop 32px */
+    font-weight: var(--type-headline-md-weight);                 /* 500 */
+    line-height: var(--type-headline-md-lh);                     /* 1.3 */
+    letter-spacing: 0;
     margin-bottom: 8px;
 }
 .hireai-fp-sol-card__desc {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(13px, 1.1vw, 15px);
-    line-height: 1.6;
-    opacity: 0.8;
+    font-family: var(--font-body-md);
+    font-size: var(--type-body-md-size);                          /* 16px */
+    font-weight: var(--type-body-md-weight);                      /* 400 */
+    line-height: var(--type-body-md-lh);                          /* 1.6 */
+    letter-spacing: 0;
+    opacity: 0.85;
 }
 .hireai-fp-solutions__cta {
     text-align: center;
@@ -687,10 +735,11 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     margin-bottom: 8px;
 }
 .hireai-fp-case-major__title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(22px, 2.4vw, 32px);
-    line-height: 1.3;
-    font-weight: 500;
+    font-family: var(--font-headline-md);
+    font-size: clamp(22px, 2.4vw, var(--type-headline-md-size)); /* desktop 32px */
+    font-weight: var(--type-headline-md-weight);                 /* 500 */
+    line-height: var(--type-headline-md-lh);                     /* 1.3 */
+    letter-spacing: 0;
     color: var(--black);
     margin-bottom: 16px;
     transition: color 0.3s;
@@ -699,9 +748,11 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     color: var(--gold);
 }
 .hireai-fp-case-major__desc {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(13px, 1.1vw, 15px);
-    line-height: 1.6;
+    font-family: var(--font-body-md);
+    font-size: var(--type-body-md-size);                          /* 16px */
+    font-weight: var(--type-body-md-weight);                      /* 400 */
+    line-height: var(--type-body-md-lh);                          /* 1.6 */
+    letter-spacing: 0;
     color: var(--text-secondary);
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -747,10 +798,11 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     margin-bottom: 8px;
 }
 .hireai-fp-case-side-card__title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(17px, 1.5vw, 20px);
-    line-height: 1.3;
-    font-weight: 500;
+    font-family: var(--font-headline-md);
+    font-size: clamp(18px, 1.8vw, var(--type-headline-md-size)); /* desktop 32px (side card cap) */
+    font-weight: var(--type-headline-md-weight);                 /* 500 */
+    line-height: var(--type-headline-md-lh);                     /* 1.3 */
+    letter-spacing: 0;
     color: var(--black);
     margin-bottom: 8px;
     transition: color 0.3s;
@@ -759,9 +811,11 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     color: var(--gold);
 }
 .hireai-fp-case-side-card__desc {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(13px, 1.1vw, 14px);
-    line-height: 1.6;
+    font-family: var(--font-body-md);
+    font-size: var(--type-body-md-size);                          /* 16px */
+    font-weight: var(--type-body-md-weight);                      /* 400 */
+    line-height: var(--type-body-md-lh);                          /* 1.6 */
+    letter-spacing: 0;
     color: var(--text-secondary);
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -815,10 +869,11 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     color: var(--gold);
 }
 .hireai-fp-faq-item__question {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(18px, 2.2vw, 28px);
-    line-height: 1.3;
-    font-weight: 500;
+    font-family: var(--font-headline-md);
+    font-size: clamp(20px, 2.2vw, var(--type-headline-md-size)); /* desktop 32px (FAQ cap to 28) */
+    font-weight: var(--type-headline-md-weight);                 /* 500 */
+    line-height: var(--type-headline-md-lh);                     /* 1.3 */
+    letter-spacing: 0;
     color: var(--black);
     flex: 1;
     transition: color 0.3s;
@@ -846,9 +901,11 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 }
 .hireai-fp-faq-item__answer {
     padding-bottom: 16px;
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(13px, 1.1vw, 16px);
-    line-height: 1.6;
+    font-family: var(--font-body-md);
+    font-size: var(--type-body-md-size);                          /* 16px */
+    font-weight: var(--type-body-md-weight);                      /* 400 */
+    line-height: var(--type-body-md-lh);                          /* 1.6 */
+    letter-spacing: 0;
     color: rgba(68,71,72,0.8);
 }
 .hireai-fp-faq__cta {
@@ -883,18 +940,20 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     margin: 0 auto;
 }
 .hireai-fp-cta__title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(28px, 3.5vw, 48px);
-    line-height: 1.2;
-    font-weight: 700;
+    font-family: var(--font-headline-lg);
+    font-size: clamp(32px, 4.5vw, var(--type-headline-lg-size)); /* desktop 48px */
+    font-weight: var(--type-headline-lg-weight);                 /* 600 */
+    line-height: var(--type-headline-lg-lh);                     /* 1.2 */
     letter-spacing: 0;
     margin-bottom: 16px;
     color: #fff;
 }
 .hireai-fp-cta__desc {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(14px, 1.2vw, 16px);
-    line-height: 1.6;
+    font-family: var(--font-body-md);
+    font-size: var(--type-body-md-size);                          /* 16px */
+    font-weight: var(--type-body-md-weight);                      /* 400 */
+    line-height: var(--type-body-md-lh);                          /* 1.6 */
+    letter-spacing: 0;
     color: rgba(255,255,255,0.7);
     margin-bottom: 32px;
 }
@@ -902,10 +961,11 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
+    font-family: var(--font-label-md);
+    font-size: var(--type-label-md-size);          /* 14px */
+    font-weight: var(--type-label-md-weight);      /* 600 */
+    line-height: var(--type-label-md-lh);          /* 1.2 */
+    letter-spacing: var(--type-label-md-tracking); /* 0.1em */
     text-transform: uppercase;
     padding: 16px 48px;
     border-radius: 9999px;
