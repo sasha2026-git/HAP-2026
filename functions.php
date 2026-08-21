@@ -16,7 +16,7 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
     );
     $hireai_update_checker->setBranch('main');
 
-    $hireai_update_checker->setReleaseAsset('HAP-2026-v{version}.zip');
+    // $hireai_update_checker->setReleaseAsset('HAP-2026-v{version}.zip');
 }
 
 /**
@@ -287,15 +287,26 @@ function lookbook_fallback_employees() {
 function site_image_url($name, $default = '', $post_id = false) {
     if (function_exists('get_field')) {
         $v = $post_id ? get_field($name, $post_id) : get_field($name);
-        if (is_array($v) && !empty($v['url'])) {
-            return $v['url'];
+        // return_format = array: ACF returns ['url'=>..., 'ID'=>...]
+        if (is_array($v)) {
+            if (!empty($v['url'])) return $v['url'];
+            if (!empty($v['ID'])) {
+                $url = wp_get_attachment_image_url($v['ID'], 'full');
+                if ($url) return $url;
+            }
+            if (!empty($v['id'])) {
+                $url = wp_get_attachment_image_url($v['id'], 'full');
+                if ($url) return $url;
+            }
         }
+        // return_format = url: string URL
+        if (is_string($v) && $v !== '' && filter_var($v, FILTER_VALIDATE_URL)) {
+            return $v;
+        }
+        // Old: numeric ID
         if (is_numeric($v) && intval($v) > 0) {
             $url = wp_get_attachment_image_url(intval($v), 'full');
-            return $url ? $url : $default;
-        }
-        if (is_string($v) && $v !== '') {
-            return $v;
+            return $url ?: $default;
         }
     }
     return $default;
@@ -789,11 +800,11 @@ add_action('acf/init', function () {
         ],
         [
             'name' => 'fp_hero_image', 'label' => 'Hero 背景图片', 'type' => 'image',
-            'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url'],
+            'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium'],
         ],
     ], [
         // 同 AllScented：精准匹配博客首页 / 静态首页（ACF 免费版标准 location 格式）
-        [['param' => 'page_type', 'operator' => '==', 'value' => 'front_page']],
+        [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
         [['param' => 'page', 'operator' => '==', 'value' => 'home']],
         [['param' => 'page', 'operator' => '==', 'value' => 'front-page']],
     ]));
@@ -810,6 +821,7 @@ add_action('acf/init', function () {
         ['name' => 'fp_products_title', 'label' => '数字员工 · 标题', 'type' => 'textarea', 'zh' => 'AI 数字员工', 'en' => 'AI Digital Employees', 'extra' => ['rows' => 1]],
         ['name' => 'fp_products_subtitle', 'label' => '数字员工 · 副标题', 'type' => 'textarea', 'zh' => '每一位数字员工都拥有独特的灵魂、技能与能力，随时加入您的团队。', 'en' => 'Each digital employee brings a unique soul, refined skills, and unmatched capabilities.', 'extra' => ['rows' => 2]],
         ['name' => 'fp_products_explore_label', 'label' => '数字员工 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
+        ['name' => 'fp_products_explore_url', 'label' => '数字员工 · 按钮链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
 
         ['name' => 'fp_prod1_title', 'label' => '数字员工 1 · 标题', 'type' => 'text', 'zh' => 'Aurelian Prime', 'en' => 'Aurelian Prime'],
         ['name' => 'fp_prod1_desc', 'label' => '数字员工 1 · 描述', 'type' => 'text', 'zh' => '精英女性数字分身', 'en' => 'Elite female digital avatar'],
@@ -848,6 +860,7 @@ add_action('acf/init', function () {
         ['name' => 'fp_solutions_title', 'label' => '解决方案 · 标题', 'type' => 'textarea', 'zh' => 'AI 解决方案', 'en' => 'AI Solutions', 'extra' => ['rows' => 1]],
         ['name' => 'fp_solutions_subtitle', 'label' => '解决方案 · 副标题', 'type' => 'textarea', 'zh' => '面向多个行业的量身定制智能方案。', 'en' => 'Bespoke intelligent solutions across industries.', 'extra' => ['rows' => 2]],
         ['name' => 'fp_solutions_explore_label', 'label' => '解决方案 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
+        ['name' => 'fp_solutions_explore_url', 'label' => '解决方案 · 按钮链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
 
         ['name' => 'fp_sol1_title', 'label' => '方案 1 · 标题', 'type' => 'text', 'zh' => '金融与财富管理', 'en' => 'Finance & Wealth Management'],
         ['name' => 'fp_sol1_desc', 'label' => '方案 1 · 描述', 'type' => 'textarea', 'zh' => '智能顾问与客户关系维护的数字化重塑。', 'en' => 'Digital reshaping of intelligent advisors and client relationship management.', 'extra' => ['rows' => 3]],
@@ -873,6 +886,7 @@ add_action('acf/init', function () {
         ['name' => 'fp_cases_title', 'label' => '案例 · 标题', 'type' => 'textarea', 'zh' => '案例 & 洞察', 'en' => 'Cases & Insights', 'extra' => ['rows' => 1]],
         ['name' => 'fp_cases_subtitle', 'label' => '案例 · 副标题', 'type' => 'textarea', 'zh' => '见证数字员工如何改变企业的运营方式。', 'en' => 'See how digital employees transform operations.', 'extra' => ['rows' => 2]],
         ['name' => 'fp_cases_explore_label', 'label' => '案例 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
+        ['name' => 'fp_cases_explore_url', 'label' => '案例 · 按钮链接', 'type' => 'text', 'zh' => '/cases-insights/', 'en' => '/cases-insights/'],
 
         ['name' => 'fp_case_major_label', 'label' => '主案例 · 标签', 'type' => 'text', 'zh' => '案例研究', 'en' => 'CASE STUDY'],
         ['name' => 'fp_case_major_title', 'label' => '主案例 · 标题', 'type' => 'textarea', 'zh' => 'Aurelian Prime 在私人银行的应用', 'en' => 'Aurelian Prime in Private Banking', 'extra' => ['rows' => 2]],
@@ -892,6 +906,7 @@ add_action('acf/init', function () {
         ['name' => 'fp_faq_kicker', 'label' => 'FAQ · 眉题', 'type' => 'text', 'zh' => '常见问题', 'en' => 'FAQ'],
         ['name' => 'fp_faq_title', 'label' => 'FAQ · 标题', 'type' => 'textarea', 'zh' => '解答关于数字员工的疑虑，开启智能新纪元。', 'en' => 'Answers to your questions about digital employees.', 'extra' => ['rows' => 2]],
         ['name' => 'fp_faq_explore_label', 'label' => 'FAQ · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
+        ['name' => 'fp_faq_explore_url', 'label' => 'FAQ · 按钮链接', 'type' => 'text', 'zh' => '/faq/', 'en' => '/faq/'],
         ['name' => 'fp_faq1_q', 'label' => 'FAQ 1 · 问题', 'type' => 'text', 'zh' => '定制一位数字员工需要多长时间？', 'en' => 'How long does it take to customize a digital employee?'],
         ['name' => 'fp_faq1_a', 'label' => 'FAQ 1 · 回答', 'type' => 'textarea', 'zh' => '这取决于定制的复杂程度。基础模型微调通常需要2-4周，而完全定制化可能需要8-12周。', 'en' => 'This depends on the complexity of the customization. Basic model fine-tuning typically takes 2-4 weeks, while full customization may require 8-12 weeks.', 'extra' => ['rows' => 4]],
         ['name' => 'fp_faq2_q', 'label' => 'FAQ 2 · 问题', 'type' => 'text', 'zh' => '数字员工的知识库可以实时更新吗？', 'en' => "Can a digital employee's knowledge base be updated in real-time?"],
@@ -904,7 +919,7 @@ add_action('acf/init', function () {
         ['name' => 'fp_cta_btn_title', 'label' => 'CTA · 按钮文字', 'type' => 'text', 'zh' => '联系我们', 'en' => 'Contact Us'],
         ['name' => 'fp_cta_btn_url', 'label' => 'CTA · 按钮地址', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
     ], [
-        [['param' => 'page_type', 'operator' => '==', 'value' => 'front_page']],
+        [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
         [['param' => 'page', 'operator' => '==', 'value' => 'home']],
         [['param' => 'page', 'operator' => '==', 'value' => 'front-page']],
     ]));
@@ -1118,6 +1133,8 @@ add_action('acf/init', function () {
     acf_add_local_field_group($hireai_make_group('group_site_options', '站点设置 — 页脚', [
         ['name' => 'header_logo', 'label' => '页眉 Logo', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
         ['name' => 'footer_logo', 'label' => '页脚 Logo', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
+        ['name' => 'header_cta_label', 'label' => '页眉CTA按钮文字', 'type' => 'text', 'zh' => '预约咨询', 'en' => 'Consultation'],
+        ['name' => 'header_cta_url', 'label' => '页眉CTA按钮链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
         ['name' => 'header_consult_label', 'label' => '页眉咨询按钮文字', 'type' => 'text', 'zh' => '预约咨询', 'en' => 'Consultation'],
         ['name' => 'footer_copyright', 'label' => '版权信息', 'type' => 'text', 'zh' => '© 2026 聘AI（Hire AI People）。保留所有权利。', 'en' => '© 2026 Hire AI People. All rights reserved.'],
         ['name' => 'footer_slogan', 'label' => '品牌 Slogan', 'type' => 'text', 'zh' => '雇佣智慧 · 臻于艺术', 'en' => 'Hire Intelligence, Artfully Employed.'],

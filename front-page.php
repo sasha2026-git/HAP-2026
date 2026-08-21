@@ -58,7 +58,7 @@ $products_section_sub    = $b('fp_products_subtitle',
     '每一位数字员工都拥有独特的灵魂、技能与能力，随时加入您的团队。',
     'Each digital employee brings a unique soul, refined skills, and unmatched capabilities.');
 $products_explore_label  = $b('fp_products_explore_label', '探索更多', 'Explore More');
-$products_explore_url    = home_url('/ai-employees/');
+$products_explore_url    = hireai_field_lang('fp_products_explore_url', $is_en ? 'en' : 'zh', '/ai-employees/');
 
 $products = [
     [
@@ -92,7 +92,7 @@ $solutions_kicker = $b('fp_solutions_kicker', '行业赋能', 'Industry Empowerm
 $solutions_title  = $b('fp_solutions_title', 'AI 解决方案', 'AI Solutions');
 $solutions_sub    = $b('fp_solutions_subtitle', '面向多个行业的量身定制智能方案。', 'Bespoke intelligent solutions across industries.');
 $solutions_explore_label = $b('fp_solutions_explore_label', '探索更多', 'Explore More');
-$solutions_explore_url   = home_url('/ai-solutions/');
+$solutions_explore_url   = hireai_field_lang('fp_solutions_explore_url', $is_en ? 'en' : 'zh', '/ai-solutions/');
 
 $solutions = [
     [
@@ -124,7 +124,7 @@ $cases_kicker = $b('fp_cases_kicker', '前沿视野', 'Frontier Vision');
 $cases_title  = $b('fp_cases_title', '案例 & 洞察', 'Cases & Insights');
 $cases_sub    = $b('fp_cases_subtitle', '见证数字员工如何改变企业的运营方式。', 'See how digital employees transform operations.');
 $cases_explore_label = $b('fp_cases_explore_label', '探索更多', 'Explore More');
-$cases_explore_url   = home_url('/cases-insights/');
+$cases_explore_url   = hireai_field_lang('fp_cases_explore_url', $is_en ? 'en' : 'zh', '/cases-insights/');
 
 $major_case = [
     'label' => $b('fp_case_major_label', '案例研究', 'CASE STUDY'),
@@ -152,7 +152,7 @@ $side_cases = [
 $faq_kicker = $b('fp_faq_kicker', '常见问题', 'FAQ');
 $faq_title  = $b('fp_faq_title', '解答关于数字员工的疑虑，开启智能新纪元。', 'Answers to your questions about digital employees.');
 $faq_explore_label = $b('fp_faq_explore_label', '探索更多', 'Explore More');
-$faq_explore_url   = home_url('/faq/');
+$faq_explore_url   = hireai_field_lang('fp_faq_explore_url', $is_en ? 'en' : 'zh', '/faq/');
 
 $fallback_faq = [
     [
@@ -193,7 +193,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     --text-secondary: #444748;
     --border-light:   rgba(196,199,199,0.3);
     --border-gold:    rgba(119,90,25,0.3);
-    --section-pad: 120px 80px;
+    --section-pad: clamp(80px, 10vw, 160px) 80px;
     --side-pad:    80px;
     --max-w: 1440px;
 }
@@ -210,7 +210,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 .hireai-fp a  { text-decoration: none; color: inherit; }
 
 @media (max-width: 767px) {
-    .hireai-fp { --section-pad: 80px 20px; --side-pad: 20px; }
+    .hireai-fp { --section-pad: 60px 20px; --side-pad: 20px; }
 }
 
 /* ── Shared: burnished gold text ── */
@@ -332,7 +332,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 }
 .hireai-fp-hero__title {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(24px, 3.4vw, 38px);
+    font-size: clamp(32px, 5vw, 56px);
     line-height: 1.1;
     letter-spacing: -0.02em;
     font-weight: 700;
@@ -349,7 +349,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 }
 .hireai-fp-hero__subtitle {
     font-family: 'Inter', sans-serif;
-    font-size: clamp(10px, 1.1vw, 13px);
+    font-size: clamp(12px, 1.3vw, 16px);
     line-height: 1.6;
     color: rgba(0,0,0,0.65);
     letter-spacing: 0.05em;
@@ -395,6 +395,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     text-align: center;
     max-width: var(--max-w);
     margin: 0 auto;
+    padding: clamp(80px, 10vw, 160px) 80px clamp(40px, 5vw, 80px);
 }
 .hireai-fp-intro__title {
     font-family: 'Playfair Display', serif;
@@ -423,15 +424,15 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     background: #fff;
     max-width: 1200px;
     margin: 0 auto;
-    padding-inline: 80px;
+    padding: clamp(80px, 10vw, 160px) 80px;
 }
 @media (max-width: 767px) { .hireai-fp-products { padding-inline: 24px; } }
 .hireai-fp-products__header {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-bottom: 80px;
-    padding-bottom: 48px;
+    margin-bottom: clamp(48px, 6vw, 80px);
+    padding-bottom: clamp(32px, 4vw, 48px);
     border-bottom: 1px solid var(--border-light);
 }
 @media (max-width: 767px) {
@@ -530,12 +531,12 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     overflow: hidden;
     max-width: 1200px;
     margin: 0 auto;
-    padding-inline: 80px;
+    padding: clamp(80px, 10vw, 160px) 80px;
 }
 @media (max-width: 767px) { .hireai-fp-solutions { padding-inline: 24px; } }
 .hireai-fp-solutions__header {
     max-width: 640px;
-    margin-bottom: 64px;
+    margin-bottom: clamp(48px, 6vw, 80px);
 }
 .hireai-fp-solutions__grid {
     display: grid;
@@ -604,7 +605,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 }
 .hireai-fp-solutions__cta {
     text-align: center;
-    margin-top: 32px;
+    margin-top: clamp(40px, 5vw, 64px);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -612,11 +613,10 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
    ══════════════════════════════════════════════════════════════════════════ */
 .hireai-fp-cases {
     background: var(--surface);
-    padding: var(--section-pad);
+    padding: clamp(80px, 10vw, 160px) 80px;
     max-width: 1200px;
-    margin: 160px auto 0;
+    margin: clamp(80px, 10vw, 160px) auto 0;
     border-top: 1px solid var(--border-light);
-    padding-inline: 80px;
 }
 @media (max-width: 767px) {
     .hireai-fp-cases { margin-top: 80px; padding-inline: 24px; }
@@ -625,8 +625,8 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     display: flex;
     flex-direction: column;
     gap: 32px;
-    margin-bottom: 64px;
-    padding-bottom: 48px;
+    margin-bottom: clamp(48px, 6vw, 80px);
+    padding-bottom: clamp(32px, 4vw, 48px);
     border-bottom: 1px solid var(--border-light);
 }
 @media (min-width: 768px) {
@@ -766,7 +766,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 }
 .hireai-fp-cases__cta {
     text-align: center;
-    margin-top: 48px;
+    margin-top: clamp(40px, 5vw, 64px);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -776,7 +776,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     background: var(--surface);
     border-top: 1px solid var(--border-light);
     text-align: center;
-    margin-top: 160px;
+    margin-top: clamp(80px, 10vw, 160px);
 }
 @media (max-width: 767px) {
     .hireai-fp-faq { margin-top: 80px; }
@@ -790,7 +790,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 }
 .hireai-fp-faq__list {
     max-width: 44.8rem;
-    margin: 160px auto 0;
+    margin: clamp(48px, 6vw, 80px) auto 0;
     text-align: left;
 }
 .hireai-fp-faq-item {
@@ -847,7 +847,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 }
 .hireai-fp-faq__cta {
     text-align: center;
-    margin-top: 48px;
+    margin-top: clamp(40px, 5vw, 64px);
 }
 
 /* ══ CTA band ══ */
@@ -1119,5 +1119,19 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     </div>
 </section>
 
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     CTA BAND
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="hireai-fp-cta hireai-fp__section">
+    <div class="hireai-fp-cta__inner">
+        <h2 class="hireai-fp-cta__title hireai-fp__burnished"><?php echo esc_html($cta_title); ?></h2>
+        <p class="hireai-fp-cta__desc"><?php echo esc_html($cta_desc); ?></p>
+        <a class="hireai-fp__btn hireai-fp__btn--primary"
+           href="<?php echo esc_url($cta_btn_url); ?>">
+            <?php echo esc_html($cta_btn_title); ?>
+        </a>
+    </div>
+</section>
 
 <?php get_footer(); ?>
