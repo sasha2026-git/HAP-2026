@@ -280,7 +280,8 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     font-family: 'Playfair Display', serif;
     font-size: clamp(28px, 3.5vw, 44px);
     line-height: 1.2;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0;
     color: #000;
     margin-top: 16px;
 }
@@ -403,7 +404,8 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     font-family: 'Playfair Display', serif;
     font-size: clamp(28px, 3.5vw, 48px);
     line-height: 1.2;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0;
     color: var(--black);
     margin-bottom: 32px;
 }
@@ -425,7 +427,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 .hireai-fp-products {
     background: #fff;
     max-width: 1200px;
-    margin: 0 auto;
+    margin: clamp(40px, 5vw, 80px) auto 0;
     padding: clamp(80px, 10vw, 160px) 80px;
 }
 @media (max-width: 767px) { .hireai-fp-products { padding-inline: 24px; } }
@@ -532,7 +534,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     background: var(--surface);
     overflow: hidden;
     max-width: 1200px;
-    margin: 0 auto;
+    margin: clamp(40px, 5vw, 80px) auto 0;
     padding: clamp(80px, 10vw, 160px) 80px;
 }
 @media (max-width: 767px) { .hireai-fp-solutions { padding-inline: 24px; } }
@@ -858,8 +860,8 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 .hireai-fp-cta {
     position: relative;
     background: var(--black);
-    margin: clamp(80px, 10vw, 160px) 0 0;
-    padding: clamp(80px, 10vw, 160px) var(--side-pad);
+    margin: 80px 0 0;
+    padding: 80px 24px;
     width: 100%;
     overflow: hidden;
     text-align: center;
@@ -867,12 +869,12 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 }
 .hireai-fp-cta__glow {
     position: absolute;
-    inset: 0;
-    background: radial-gradient(
-        ellipse at center,
-        rgba(233, 193, 118, 0.18) 0%,
-        rgba(233, 193, 118, 0) 60%
-    );
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(119,90,25,0.2), transparent 70%);
     pointer-events: none;
 }
 .hireai-fp-cta__inner {
@@ -882,10 +884,11 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 }
 .hireai-fp-cta__title {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(28px, 3.6vw, 44px);
+    font-size: clamp(28px, 3.5vw, 48px);
     line-height: 1.2;
-    font-weight: 600;
-    margin-bottom: 20px;
+    font-weight: 700;
+    letter-spacing: 0;
+    margin-bottom: 16px;
     color: #fff;
 }
 .hireai-fp-cta__desc {
@@ -893,7 +896,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     font-size: clamp(14px, 1.2vw, 16px);
     line-height: 1.6;
     color: rgba(255,255,255,0.7);
-    margin-bottom: 40px;
+    margin-bottom: 32px;
 }
 .hireai-fp-cta__btn {
     display: inline-flex;
@@ -904,7 +907,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    padding: 16px 56px;
+    padding: 16px 48px;
     border-radius: 9999px;
     text-decoration: none;
     text-align: center;
