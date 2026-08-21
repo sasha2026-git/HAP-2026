@@ -776,10 +776,11 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     background: var(--surface);
     border-top: 1px solid var(--border-light);
     text-align: center;
-    margin-top: 160px;
+    margin-top: clamp(80px, 10vw, 200px);
+    padding-top: clamp(60px, 8vw, 120px);
 }
 @media (max-width: 767px) {
-    .hireai-fp-faq { margin-top: 80px; }
+    .hireai-fp-faq { margin-top: 80px; padding-top: 60px; }
 }
 .hireai-fp-faq__subtitle {
     font-family: 'Inter', sans-serif;
@@ -790,7 +791,7 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 }
 .hireai-fp-faq__list {
     max-width: 44.8rem;
-    margin: 160px auto 0;
+    margin: 48px auto 0;
     text-align: left;
 }
 .hireai-fp-faq-item {
@@ -901,6 +902,65 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
 }
 .hireai-fp-cta__btn:hover {
     box-shadow: 0 0 30px rgba(233,193,118,0.35);
+}
+
+/* ══ Consult band (from Cases & Insights page) ══ */
+.hireai-fp-consult {
+    background: var(--dark);
+    position: relative;
+    overflow: hidden;
+    padding: clamp(80px, 10vw, 120px) var(--side-pad);
+    text-align: center;
+    margin-top: clamp(80px, 10vw, 200px);
+}
+.hireai-fp-consult__glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(119,90,25,.2), transparent 70%);
+    pointer-events: none;
+}
+.hireai-fp-consult h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 3.5vw, 48px);
+    color: #fff;
+    margin: 0 0 16px;
+    position: relative;
+}
+.hireai-fp-consult p {
+    font-size: clamp(14px, 1.2vw, 16px);
+    line-height: 1.6;
+    color: rgba(255,255,255,.7);
+    margin: 0 0 32px;
+    position: relative;
+}
+.hireai-fp-consult__btn {
+    display: inline-block;
+    padding: 16px 48px;
+    background: linear-gradient(135deg, #775a19, #e9c176);
+    color: #fff;
+    border: none;
+    border-radius: 9999px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all .3s;
+    position: relative;
+    text-decoration: none;
+}
+.hireai-fp-consult__btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(119,90,25,.4);
+}
+@media (max-width: 767px) {
+    .hireai-fp-consult { padding: 60px 24px; }
+    .hireai-fp-consult__btn { width: 100%; text-align: center; }
 }
 </style>
 
@@ -1119,5 +1179,14 @@ $cta_btn_url   = hireai_field_lang('fp_cta_btn_url', 'zh', '/contact/') ?: hirea
     </div>
 </section>
 
+<!-- ══════════════════════════════════════════════════════════════════════════
+     CONSULT BAND (from Cases & Insights page)
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="hireai-fp-consult">
+    <div class="hireai-fp-consult__glow"></div>
+    <h2><span class="zh">准备好定义您的传承了吗？</span><span class="en" style="display:none">Ready to define your legacy?</span></h2>
+    <p><span class="zh">加入全球领先的品牌 AI 数字员工计划。迈出第一步。</span><span class="en" style="display:none">Join the world's leading brands in the new era of digital human excellence.</span></p>
+    <a class="hireai-fp-consult__btn" href="<?php echo esc_url(home_url('/contact/')); ?>"><span class="zh">立即咨询</span><span class="en" style="display:none">Initiate Consultation</span></a>
+</section>
 
 <?php get_footer(); ?>

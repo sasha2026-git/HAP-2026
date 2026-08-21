@@ -50,13 +50,6 @@ $search_placeholder = $suffix === '_en' ? 'Search' : '搜索';
         EN / 中
       </button>
 
-      <button class="hai-header__search" type="button" aria-label="<?php echo esc_attr($search_placeholder); ?>" onclick="document.getElementById('hai-header-search-form').submit();">
-        <span class="material-symbols-outlined hai-header__icon" aria-hidden="true">search</span>
-      </button>
-      <form id="hai-header-search-form" class="screen-reader-text" action="<?php echo esc_url($search_url); ?>" method="get">
-        <input type="search" name="s" value="" placeholder="<?php echo esc_attr($search_placeholder); ?>">
-      </form>
-
       <button class="hai-header__menu-toggle" id="nav-toggle" type="button" aria-label="<?php echo esc_attr($suffix === '_en' ? 'Toggle menu' : '切换菜单'); ?>" aria-expanded="false" aria-controls="mobile-drawer">
         <span class="material-symbols-outlined hai-header__icon" aria-hidden="true">menu</span>
       </button>
