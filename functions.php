@@ -16,7 +16,8 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
     );
     $hireai_update_checker->setBranch('main');
 
-    // $hireai_update_checker->setReleaseAsset('HAP-2026-v{version}.zip');
+    // Use GitHub Release asset ZIP instead of zipball (fix v2.2.5: zipball ships repo root, not hireaipeople/)
+    $hireai_update_checker->setReleaseAsset('HAP-2026-v{version}.zip');
 }
 
 /**
