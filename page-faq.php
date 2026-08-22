@@ -1,12 +1,11 @@
-<?php if (!defined('ABSPATH')) exit;
+<?php
 /**
- * Template Name: 聘AI - 常见问题（Atelier）
+ * Template Name: 聘AI - FAQ
  *
- * Stitch-matched v4.0.0 — 全栈重写
- *
+ * Stitch-matched v3.0.1 — 完全重写（修复 v3.0.0 文件头未识别问题）
  *   1. Hero        — 居中眉题 + 金色渐变大字 + 斜体引言
- *   2. Hero Banner — 全宽圆角大图（带文字替代）
- *   3. FAQ         — 左侧分组导航 + 右侧手风琴（玻璃拟态卡）
+ *   2. Hero Banner — 全宽圆角大图
+ *   3. FAQ body    — 左侧分组导航 + 右侧手风琴（玻璃拟态卡）
  *   4. CTA         — "Ready to Redefine Humanity?" 斜体 banner
  *
  * 数据源：
@@ -14,8 +13,15 @@
  *   - FAQ 问答：ACF repeater faq_items_zh / faq_items_en（field_faq_row_*）
  *     当 repeater 为空时自动回退到 category=faq 的 Posts 数据（兼容旧内容）。
  *
- * @version 4.0.0
+ * 修复记录（v3.0.0 → v3.0.1）：
+ *   v3.0.0 把 ABSPATH 守卫放在 Template Name 注释之前；这在部分 WP 版本下会让
+ *   WP_File_Header::get_data 拿不到 Template Name，从而后台看不到模板。
+ *   v3.0.1 把 Template Name 注释放回第一个 PHP 块的最前面，ABSPATH 守卫移至第二块。
+ *
+ * @version 3.0.1
  */
+
+if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 get_header();
 
