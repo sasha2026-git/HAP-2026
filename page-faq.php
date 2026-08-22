@@ -1,105 +1,581 @@
 <?php if (!defined('ABSPATH')) exit;
 /**
- * Template Name: 聘AI - 常见问题
- * 参考 aether_ai_light_luxe_3：居中检索 + 分类 + 手风琴；空库时默认问答可见。
+ * Template Name: 聘AI - 常见问题（Atelier）
+ *
+ * Stitch-matched v4.0.0 — 全栈重写
+ *
+ *   1. Hero        — 居中眉题 + 金色渐变大字 + 斜体引言
+ *   2. Hero Banner — 全宽圆角大图（带文字替代）
+ *   3. FAQ         — 左侧分组导航 + 右侧手风琴（玻璃拟态卡）
+ *   4. CTA         — "Ready to Redefine Humanity?" 斜体 banner
+ *
+ * 数据源：
+ *   - Hero / 分组标签 / CTA：ACF group_page_faq（hireai_field 自动按语言取 _zh/_en）
+ *   - FAQ 问答：ACF repeater faq_items_zh / faq_items_en（field_faq_row_*）
+ *     当 repeater 为空时自动回退到 category=faq 的 Posts 数据（兼容旧内容）。
+ *
+ * @version 4.0.0
  */
+
 get_header();
 
-$suffix = hireai_lang_suffix();
-$is_en  = $suffix === '_en';
+$suffix  = function_exists('hireai_lang_suffix') ? hireai_lang_suffix() : '';
+$is_en   = ($suffix === '_en');
+$page_id = get_the_ID();
+
+/* --------------------------------------------------------------------
+ * 1. PAGE FIELDS  (Hero + 分组标签 + CTA)
+ * -------------------------------------------------------------------- */
+$kicker   = hireai_field('header_kicker',
+    $is_en ? 'THE ATELIER' : 'THE ATELIER', $page_id);
+$title    = hireai_field('header_title',
+    $is_en ? 'Frequently Asked' : '常见问题', $page_id);
+$subtitle = hireai_field('header_subtitle',
+    $is_en
+        ? 'Discover detailed insights into our partnership models, financial structures, and security protocols.'
+        : '深入了解我们的合作模式、财务结构与安全协议。',
+    $page_id);
+$hero_caption = hireai_field('header_hero_caption',
+    $is_en ? 'Our Atelier' : '我们的数字工坊', $page_id);
+
+$search_placeholder = hireai_field('search_placeholder',
+    $is_en ? 'Search questions…' : '输入关键词检索…', $page_id);
+$empty_text         = hireai_field('empty_text',
+    $is_en ? 'No matching questions found. Try a different keyword.' : '未找到匹配的问题，请尝试其他关键词。',
+    $page_id);
 
 $groups = [
-    'partnership' => ['label' => hireai_field('faq_group_1_label', $is_en ? 'Partnership' : '合作方式')],
-    'finance' => ['label' => hireai_field('faq_group_2_label', $is_en ? 'Finance' : '财务')],
-    'privacy-security' => ['label' => hireai_field('faq_group_3_label', $is_en ? 'Privacy & Security' : '隐私和安全')],
-    'other' => ['label' => hireai_field('faq_group_4_label', $is_en ? 'Other' : '其他')],
-];
-
-$fallback = [
     'partnership' => [
-        ['title' => ['zh' => '数字员工如何与我的团队协作？', 'en' => 'How do digital employees work with my team?'], 'answer' => ['zh' => '他们以专属工作台、内容交付与数据报表的方式参与项目，并可由您随时调整任务边界。', 'en' => 'They join through dedicated workspaces, content delivery, and reporting, with boundaries you can adjust at any time.']],
-        ['title' => ['zh' => '上线周期需要多久？', 'en' => 'What is the onboarding timeline?'], 'answer' => ['zh' => '标准周期为 4 至 8 周，具体取决于数据结构与定制深度。', 'en' => 'The standard integration period ranges from 4 to 8 weeks, depending on complexity and customization.']],
+        'key'   => 'partnership',
+        'label' => hireai_field('faq_group_1_label', $is_en ? 'Partnership' : '合作方式', $page_id),
     ],
     'finance' => [
-        ['title' => ['zh' => '如何收费？', 'en' => 'How is pricing structured?'], 'answer' => ['zh' => '按方案与使用周期定制，首页展示的价格为入门档；我们会根据团队规模与场景给出明确报价。', 'en' => 'Pricing is tailored by scope and engagement. Homepage prices are entry-level; we provide a clear quote based on team size and use case.']],
+        'key'   => 'finance',
+        'label' => hireai_field('faq_group_2_label', $is_en ? 'Finance' : '财务', $page_id),
     ],
     'privacy-security' => [
-        ['title' => ['zh' => '数据与隐私如何保障？', 'en' => 'How is data privacy protected?'], 'answer' => ['zh' => '客户数据仅在合同约定的范围内用于交付，不用于训练其他客户模型。', 'en' => 'Client data is used only for the agreed engagement and is never used to train other clients’ models.']],
+        'key'   => 'privacy-security',
+        'label' => hireai_field('faq_group_3_label', $is_en ? 'Privacy & Security' : '隐私和安全', $page_id),
     ],
     'other' => [
-        ['title' => ['zh' => '我可以先试用一个数字员工吗？', 'en' => 'Can I try a digital employee first?'], 'answer' => ['zh' => '可以。我们会为合适场景提供限时试点，明确交付物与评估标准。', 'en' => 'Yes. For suitable scenarios we offer a time-boxed pilot with clear deliverables and evaluation criteria.']],
+        'key'   => 'other',
+        'label' => hireai_field('faq_group_4_label', $is_en ? 'Other' : '其他', $page_id),
     ],
 ];
 
-$localize = function ($item, $key) use ($is_en) {
-    $value = isset($item[$key]) ? $item[$key] : '';
-    if (is_array($value)) {
-        return isset($value[$is_en ? 'en' : 'zh']) ? $value[$is_en ? 'en' : 'zh'] : '';
-    }
-    return $value;
-};
+$cta_kicker     = hireai_field('cta_kicker',     $is_en ? 'STILL CURIOUS?' : '仍有疑问？', $page_id);
+$cta_title      = hireai_field('cta_title',      $is_en ? 'Ready to Redefine Humanity?' : '准备好重新定义人性了吗？', $page_id);
+$cta_sub        = hireai_field('cta_sub',        $is_en ? "Join the exclusive echelon of leaders leveraging Aurelian AI's bespoke ecosystem." : '加入运用 Aurelian AI 专属生态的领袖精英之列。', $page_id);
+$cta_btn_label  = hireai_field('cta_btn_label',  $is_en ? 'Start The Journey' : '开启旅程', $page_id);
+$cta_btn_url    = hireai_field('cta_btn_url',    '/contact/', $page_id);
+$cta_link_label = hireai_field('cta_link_label', $is_en ? 'Download Brand Book' : '下载品牌手册', $page_id);
+$cta_link_url   = hireai_field('cta_link_url',   '/case-insights/', $page_id);
 
-$faq_query = new WP_Query(['post_type' => 'post', 'posts_per_page' => 20, 'category_name' => 'faq', 'no_found_rows' => true]);
-$faq_posts = [];
-if ($faq_query->have_posts()) {
-    while ($faq_query->have_posts()) {
-        $faq_query->the_post();
-        $group = function_exists('get_field') ? get_field('faq_group') : '';
-        $faq_posts[$group][] = ['q' => get_the_title(), 'a' => wp_strip_all_tags(get_the_content()), 'link' => get_permalink()];
-    }
-    wp_reset_postdata();
+/* --------------------------------------------------------------------
+ * 2. HERO IMAGE（ACF image 字段；未上传时回退到内置占位图）
+ * -------------------------------------------------------------------- */
+$hero_image = hireai_image('header_hero_image', '', $page_id);
+if (!$hero_image) {
+    $hero_image = get_stylesheet_directory_uri() . '/assets/img/defaults/hero-home.jpg';
 }
-$has_posts = !empty($faq_posts);
+
+/* --------------------------------------------------------------------
+ * 3. FAQ 问答 — 优先 ACF Repeater；为空时回退到 category=faq 的 Posts
+ * -------------------------------------------------------------------- */
+$faq_by_group = [];
+$has_repeater = false;
+
+if (function_exists('have_rows') && function_exists('get_field')) {
+    $repeater_name = $is_en ? 'faq_items_en' : 'faq_items_zh';
+    if (have_rows($repeater_name)) {
+        $has_repeater = true;
+        while (have_rows($repeater_name)) {
+            the_row();
+            $gkey = (string) get_sub_field('faq_row_group');
+            if ($gkey === '') {
+                $gkey = 'other';
+            }
+            if (!isset($faq_by_group[$gkey])) {
+                $faq_by_group[$gkey] = [];
+            }
+            $faq_by_group[$gkey][] = [
+                'q' => trim((string) get_sub_field('faq_row_question')),
+                'a' => trim((string) get_sub_field('faq_row_answer')),
+            ];
+        }
+    }
+}
+
+// Posts fallback
+if (!$has_repeater) {
+    $faq_query = new WP_Query([
+        'post_type'      => 'post',
+        'posts_per_page' => 60,
+        'category_name'  => 'faq',
+        'no_found_rows'  => true,
+        'orderby'        => 'menu_order date',
+        'order'          => 'ASC',
+    ]);
+    if ($faq_query->have_posts()) {
+        while ($faq_query->have_posts()) {
+            $faq_query->the_post();
+            $gkey = function_exists('get_field') ? (string) get_field('faq_group') : '';
+            if ($gkey === '') {
+                $gkey = 'other';
+            }
+            if (!isset($faq_by_group[$gkey])) {
+                $faq_by_group[$gkey] = [];
+            }
+            $faq_by_group[$gkey][] = [
+                'q' => get_the_title(),
+                'a' => wp_strip_all_tags(get_the_content()),
+            ];
+        }
+        wp_reset_postdata();
+    }
+}
+
+// 兜底：完全无内容时，4 个分组各显示一条预设问答
+if (empty($faq_by_group)) {
+    $fallback = [
+        'partnership' => [[
+            'q' => $is_en ? 'How long does it take to deploy a digital employee?' : '上线一个数字员工需要多长时间？',
+            'a' => $is_en
+                ? 'Standard rollout takes 4–8 weeks depending on data readiness and customization depth.'
+                : '标准上线周期为 4 至 8 周，具体取决于数据结构与定制深度。',
+        ]],
+        'finance' => [[
+            'q' => $is_en ? 'How is your pricing structured?' : '如何收费？',
+            'a' => $is_en
+                ? 'Pricing is tailored by scope and engagement; we provide a clear quote based on team size and use case.'
+                : '按方案与使用周期定制。我们会根据团队规模与场景给出明确报价。',
+        ]],
+        'privacy-security' => [[
+            'q' => $is_en ? 'How is data privacy protected?' : '数据与隐私如何保障？',
+            'a' => $is_en
+                ? 'Client data is only used for the agreed engagement and is never used to train other clients’ models.'
+                : '客户数据仅在合同约定的范围内用于交付，不用于训练其他客户模型。',
+        ]],
+        'other' => [[
+            'q' => $is_en ? 'Can I try a digital employee first?' : '我可以先试用一个数字员工吗？',
+            'a' => $is_en
+                ? 'Yes. For suitable scenarios we offer a time-boxed pilot with clear deliverables and evaluation criteria.'
+                : '可以。我们会为合适场景提供限时试点，明确交付物与评估标准。',
+        ]],
+    ];
+    foreach ($fallback as $gkey => $items) {
+        if (!isset($faq_by_group[$gkey])) {
+            $faq_by_group[$gkey] = $items;
+        }
+    }
+}
+
+/* 默认激活分组：取第一组有数据的 key */
+$active_group = '';
+foreach (array_keys($groups) as $gk) {
+    if (!empty($faq_by_group[$gk])) {
+        $active_group = $gk;
+        break;
+    }
+}
+if ($active_group === '') {
+    $active_group = 'partnership';
+}
+
+/* --------------------------------------------------------------------
+ * 4. RENDER
+ * -------------------------------------------------------------------- */
 ?>
-<header class="page-hero page-hero--center">
-	<span class="label page-hero__kicker"><?php echo esc_html(hireai_field('header_kicker', $is_en ? 'FAQ' : '常见问题')); ?></span>
-	<h1 class="display-lg page-hero__title"><?php echo esc_html(hireai_field('header_title', $is_en ? 'Clarity Amidst Complexity' : '清晰以对')); ?></h1>
-	<p class="body-lg page-hero__subtitle"><?php echo esc_html(hireai_field('header_subtitle', $is_en ? 'Find answers to common questions regarding our AI employee ecosystem.' : '在复杂中寻求清晰——关于我们 AI 数字员工生态的常见问题解答。')); ?></p>
-	<div class="faq-search-wrap">
-		<div class="faq-search">
-			<?php echo hireai_svg('search', 18); ?>
-			<input id="faq-search-input" type="search" placeholder="<?php echo esc_attr(hireai_field('search_placeholder', $is_en ? 'Search questions…' : '输入关键词检索…')); ?>">
-		</div>
-	</div>
-</header>
+<!-- ════════════════════════════════════════════════════════════════
+     Page-specific styles (gold-gradient hero title + sidebar + glassy accordion)
+     ════════════════════════════════════════════════════════════════ -->
+<style id="hireai-faq-page-css">
+/* Gold leaf gradient text — 用于 Hero 大字 */
+.hireai-faq-hero__title {
+    background: linear-gradient(135deg, #e9c176 0%, #775a19 55%, #e9c176 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    display: inline-block;
+}
 
-<section class="section" style="padding-top:0;">
-	<div class="container">
-		<div class="faq-categories" role="group" aria-label="<?php echo esc_attr($is_en ? 'FAQ categories' : 'FAQ 分类'); ?>">
-			<?php $first = true; foreach ($groups as $slug => $group) : ?>
-				<button class="faq-category<?php echo $first ? ' is-active' : ''; ?>" type="button" data-faq-category="<?php echo esc_attr($slug); ?>" aria-selected="<?php echo $first ? 'true' : 'false'; ?>"><?php echo esc_html($group['label']); ?></button>
-				<?php $first = false; endforeach; ?>
-		</div>
+/* Hero layout spacing */
+.hireai-faq-hero {
+    padding-block: clamp(64px, 8vw, 120px) clamp(40px, 5vw, 72px);
+    text-align: center;
+}
+.hireai-faq-hero__kicker {
+    display: inline-block;
+    margin-bottom: 24px;
+    color: #775a19;
+}
+.hireai-faq-hero__title {
+    margin-bottom: 28px;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+}
+.hireai-faq-hero__subtitle {
+    max-width: 640px;
+    margin-inline: auto;
+    color: var(--on-surface-variant, #444748);
+    font-style: italic;
+}
 
-		<div class="faq-panel">
-			<?php foreach ($groups as $slug => $group) : ?>
-				<div data-faq-group data-faq-category-group="<?php echo esc_attr($slug); ?>"<?php echo $slug !== 'partnership' ? ' hidden' : ''; ?>>
-					<?php
-					$items = !empty($faq_posts[$slug]) ? $faq_posts[$slug] : $fallback[$slug];
-					foreach ($items as $item) :
-						if (isset($item['q'], $item['a'])) {
-							$question = $item['q'];
-							$answer = $item['a'];
-						} else {
-							$question = $localize($item, 'title');
-							$answer = $localize($item, 'answer');
-						}
-						?>
-						<article class="faq-item">
-							<button class="faq-item__toggle" type="button" aria-expanded="false">
-								<span class="faq-item__q"><span class="faq-item__q-text"><?php echo esc_html($question); ?></span></span>
-								<span class="faq-item__icon" aria-hidden="true"><?php echo hireai_svg('plus', 22); ?></span>
-							</button>
-							<div class="faq-item__a">
-								<div class="faq-item__a-inner"><p><span class="faq-item__a-text"><?php echo esc_html($answer); ?></span></p></div>
-							</div>
-						</article>
-					<?php endforeach; ?>
-				</div>
-			<?php endforeach; ?>
-			<p class="faq-empty" data-faq-empty hidden><?php echo esc_html(hireai_field('empty_text', $is_en ? 'No matching questions found. Try a different keyword.' : '未找到匹配的问题，请尝试其他关键词。')); ?></p>
-		</div>
-	</div>
-</section>
+/* Hero banner image */
+.hireai-faq-banner {
+    margin-block: clamp(24px, 4vw, 56px);
+}
+.hireai-faq-banner img {
+    display: block;
+    width: 100%;
+    height: clamp(280px, 42vw, 520px);
+    object-fit: cover;
+    border-radius: clamp(16px, 1.5vw, 24px);
+    box-shadow: 0 24px 60px rgba(26, 28, 28, 0.08);
+}
 
-<?php get_footer(); ?>
+/* FAQ body grid: sidebar + accordion */
+.hireai-faq-body {
+    padding-block: clamp(40px, 6vw, 88px);
+}
+.hireai-faq-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(32px, 5vw, 56px);
+}
+@media (min-width: 900px) {
+    .hireai-faq-grid {
+        grid-template-columns: 220px 1fr;
+        gap: clamp(48px, 5vw, 80px);
+    }
+}
+
+/* Sidebar — sticky vertical category nav */
+.hireai-faq-sidebar {
+    position: relative;
+    border-left: 1px solid rgba(196, 199, 199, 0.4);
+    padding-left: 24px;
+}
+@media (min-width: 900px) {
+    .hireai-faq-sidebar {
+        position: sticky;
+        top: 120px;
+        align-self: start;
+    }
+}
+.hireai-faq-sidebar__list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.hireai-faq-sidebar__btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 6px 0;
+    background: none;
+    border: 0;
+    border-left: 2px solid transparent;
+    margin-left: -25px;
+    padding-left: 24px;
+    font-family: var(--font-label, 'Inter', sans-serif);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--on-surface-variant, #444748);
+    cursor: pointer;
+    transition: color 0.25s ease, border-color 0.25s ease;
+}
+.hireai-faq-sidebar__btn:hover { color: #1a1c1c; }
+.hireai-faq-sidebar__btn.is-active {
+    color: #775a19;
+    border-left-color: #775a19;
+    font-weight: 700;
+}
+
+/* Sidebar fallback on mobile: horizontal scroll */
+@media (max-width: 899px) {
+    .hireai-faq-sidebar {
+        border-left: 0;
+        padding-left: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .hireai-faq-sidebar__list {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 12px;
+        border-bottom: 1px solid rgba(196, 199, 199, 0.4);
+        padding-bottom: 12px;
+    }
+    .hireai-faq-sidebar__btn {
+        margin-left: 0;
+        padding: 8px 14px;
+        border: 1px solid rgba(196, 199, 199, 0.5);
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+    .hireai-faq-sidebar__btn.is-active {
+        background: rgba(119, 90, 25, 0.06);
+        border-color: #775a19;
+        border-left-color: #775a19; /* keep visual consistency */
+    }
+}
+
+/* Accordion panel — glassy card */
+.hireai-faq-panel {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 2vw, 24px);
+}
+
+/* Each FAQ item — glassmorphism */
+.hireai-faq-item {
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(196, 199, 199, 0.35);
+    border-radius: 16px;
+    padding: clamp(20px, 3vw, 32px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.hireai-faq-item:hover {
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+    border-color: rgba(119, 90, 25, 0.25);
+}
+.hireai-faq-item__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    width: 100%;
+    background: none;
+    border: 0;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+}
+.hireai-faq-item__q {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+    font-size: clamp(18px, 2.2vw, 22px);
+    font-weight: 500;
+    line-height: 1.35;
+    color: #1a1c1c;
+    overflow-wrap: anywhere;
+}
+.hireai-faq-item__toggle:hover .hireai-faq-item__q { color: #775a19; }
+.hireai-faq-item__icon {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #775a19;
+    transition: transform 0.3s ease;
+}
+.hireai-faq-item.is-open .hireai-faq-item__icon { transform: rotate(180deg); }
+
+.hireai-faq-item__a {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.35s ease-out, opacity 0.3s ease-out, margin-top 0.3s ease-out, padding-top 0.3s ease-out;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0 solid rgba(196, 199, 199, 0);
+    color: var(--on-surface-variant, #444748);
+    font-size: 16px;
+    line-height: 1.7;
+}
+.hireai-faq-item.is-open .hireai-faq-item__a {
+    max-height: 720px;
+    opacity: 1;
+    margin-top: clamp(16px, 2vw, 24px);
+    padding-top: clamp(16px, 2vw, 24px);
+    border-top: 1px solid rgba(196, 199, 199, 0.4);
+}
+
+.hireai-faq-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--on-surface-variant, #444748);
+}
+</style>
+
+<main id="content" class="hireai-faq-page">
+
+  <!-- ═══════════ 1. HERO ═══════════ -->
+  <section class="hireai-faq-hero" aria-labelledby="hireai-faq-hero-title">
+    <div class="container">
+      <span class="label-caps hireai-faq-hero__kicker"><?php echo esc_html($kicker); ?></span>
+      <h1 id="hireai-faq-hero-title"
+          class="display-lg hireai-faq-hero__title">
+        <?php echo esc_html($title); ?>
+      </h1>
+      <p class="body-lg hireai-faq-hero__subtitle"><?php echo esc_html($subtitle); ?></p>
+    </div>
+  </section>
+
+  <!-- ═══════════ 2. HERO BANNER IMAGE ═══════════ -->
+  <section class="container hireai-faq-banner" aria-hidden="true">
+    <img src="<?php echo esc_url($hero_image); ?>" alt="<?php echo esc_attr($hero_caption); ?>" loading="lazy">
+  </section>
+
+  <!-- ═══════════ 3. FAQ BODY (Sidebar + Accordion) ═══════════ -->
+  <section class="hireai-faq-body" aria-labelledby="hireai-faq-body-title">
+    <h2 id="hireai-faq-body-title" class="screen-reader-text">
+      <?php echo esc_html($is_en ? 'Browse frequently asked questions' : '浏览常见问题'); ?>
+    </h2>
+    <div class="container hireai-faq-grid">
+
+      <!-- Sidebar: group navigation -->
+      <aside class="hireai-faq-sidebar" aria-label="<?php echo esc_attr($is_en ? 'FAQ categories' : 'FAQ 分类导航'); ?>">
+        <ul class="hireai-faq-sidebar__list" role="tablist">
+          <?php foreach ($groups as $gkey => $g) :
+              $is_active = ($gkey === $active_group);
+              $has_items = !empty($faq_by_group[$gkey]);
+          ?>
+            <li role="presentation">
+              <button type="button"
+                      class="hireai-faq-sidebar__btn<?php echo $is_active ? ' is-active' : ''; ?>"
+                      role="tab"
+                      aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>"
+                      aria-controls="hireai-faq-panel-<?php echo esc_attr($gkey); ?>"
+                      data-faq-group="<?php echo esc_attr($gkey); ?>"
+                      <?php echo $has_items ? '' : 'aria-disabled="true"'; ?>>
+                <?php echo esc_html($g['label']); ?>
+              </button>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </aside>
+
+      <!-- Accordion panels -->
+      <div class="hireai-faq-panel-wrap">
+        <?php foreach ($groups as $gkey => $g) :
+            $items = isset($faq_by_group[$gkey]) ? $faq_by_group[$gkey] : [];
+            $is_active = ($gkey === $active_group);
+        ?>
+          <div class="hireai-faq-panel<?php echo $is_active ? '' : ' is-hidden'; ?>"
+               id="hireai-faq-panel-<?php echo esc_attr($gkey); ?>"
+               role="tabpanel"
+               data-faq-group="<?php echo esc_attr($gkey); ?>"
+               <?php echo $is_active ? '' : 'hidden'; ?>>
+            <?php if (empty($items)) : ?>
+              <p class="hireai-faq-empty"><?php echo esc_html($empty_text); ?></p>
+            <?php else : ?>
+              <?php foreach ($items as $idx => $item) :
+                  $qid = 'faq-' . $gkey . '-' . $idx;
+              ?>
+                <div class="hireai-faq-item" data-faq-item>
+                  <button type="button"
+                          class="hireai-faq-item__toggle"
+                          aria-expanded="false"
+                          aria-controls="<?php echo esc_attr($qid); ?>">
+                    <h3 class="hireai-faq-item__q"><?php echo esc_html($item['q']); ?></h3>
+                    <span class="hireai-faq-item__icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                           stroke="currentColor" stroke-width="1.6"
+                           stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                    </span>
+                  </button>
+                  <div class="hireai-faq-item__a" id="<?php echo esc_attr($qid); ?>" role="region">
+                    <div class="hireai-faq-item__a-inner">
+                      <?php echo nl2br(esc_html($item['a'])); ?>
+                    </div>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+        <?php endforeach; ?>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════ 4. CTA BANNER ═══════════ -->
+  <section class="lb-cta" aria-labelledby="hireai-faq-cta-title">
+    <div class="lb-cta__inner">
+      <?php if ($cta_kicker) : ?>
+        <span class="label-caps hireai-faq-cta__kicker" style="display:block;color:#775a19;margin-bottom:18px;">
+          <?php echo esc_html($cta_kicker); ?>
+        </span>
+      <?php endif; ?>
+      <h2 id="hireai-faq-cta-title" class="lb-cta__heading"><?php echo esc_html($cta_title); ?></h2>
+      <p class="lb-cta__sub"><?php echo esc_html($cta_sub); ?></p>
+      <div class="lb-cta__actions">
+        <a class="lb-btn lb-btn--primary" href="<?php echo esc_url(home_url($cta_btn_url)); ?>">
+          <?php echo esc_html($cta_btn_label); ?>
+        </a>
+        <a class="lb-btn lb-btn--ghost" href="<?php echo esc_url(home_url($cta_link_url)); ?>">
+          <?php echo esc_html($cta_link_label); ?>
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════ JS: Sidebar tab switch + Accordion expand ═══════════ -->
+<script>
+(function () {
+    'use strict';
+
+    /* --- Sidebar tab switching --- */
+    var sidebarBtns = document.querySelectorAll('.hireai-faq-sidebar__btn');
+    var panels      = document.querySelectorAll('.hireai-faq-panel');
+
+    sidebarBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var gkey = btn.getAttribute('data-faq-group');
+            if (!gkey) return;
+            if (btn.getAttribute('aria-disabled') === 'true') return;
+
+            sidebarBtns.forEach(function (b) {
+                b.classList.remove('is-active');
+                b.setAttribute('aria-selected', 'false');
+            });
+            btn.classList.add('is-active');
+            btn.setAttribute('aria-selected', 'true');
+
+            panels.forEach(function (p) {
+                if (p.getAttribute('data-faq-group') === gkey) {
+                    p.classList.remove('is-hidden');
+                    p.removeAttribute('hidden');
+                } else {
+                    p.classList.add('is-hidden');
+                    p.setAttribute('hidden', '');
+                }
+            });
+        });
+    });
+
+    /* --- Accordion expand / collapse --- */
+    document.querySelectorAll('.hireai-faq-item__toggle').forEach(function (toggle) {
+        toggle.addEventListener('click', function () {
+            var item = toggle.closest('.hireai-faq-item');
+            if (!item) return;
+            var open = item.classList.toggle('is-open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+    });
+})();
+</script>
+
+<?php
+get_footer();

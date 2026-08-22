@@ -936,20 +936,141 @@ add_action('acf/init', function () {
         ['name' => 'lookbook_cta_btn', 'label' => 'CTA 主按钮', 'type' => 'text', 'zh' => '开启旅程', 'en' => 'Start The Journey'],
         ['name' => 'lookbook_cta_link', 'label' => 'CTA 文字链接', 'type' => 'text', 'zh' => '下载品牌手册', 'en' => 'Download Brand Book'],
         ['name' => 'lookbook_cta_url', 'label' => 'CTA 链接地址', 'type' => 'text', 'zh' => '/case-insights/', 'en' => '/case-insights/'],
+        ['name' => 'lookbook_hero_note', 'label' => 'Hero 注脚', 'type' => 'text', 'zh' => '——  在职数字员工 · 精英岗位', 'en' => '— Curated roles, on call'],
+        ['name' => 'lookbook_process_note', 'label' => '服务流程 · 注脚', 'type' => 'textarea', 'zh' => '平均 4–6 周即可交付；全程由资深管家陪跑。', 'en' => 'Average delivery in 4–6 weeks, with a dedicated concierge throughout.', 'extra' => ['rows' => 2]],
+
+        /* ── 场景筛选 section ── */
+        ['name' => 'lookbook_filter_kicker', 'label' => '筛选区 · 眉题', 'type' => 'text', 'zh' => '分类浏览', 'en' => 'BROWSE BY CRAFT'],
+        ['name' => 'lookbook_filter_title', 'label' => '筛选区 · 标题', 'type' => 'textarea', 'zh' => '按角色与场景，发现属于你的数字员工。', 'en' => 'Discover your digital employee by role and craft.', 'extra' => ['rows' => 2]],
+        ['name' => 'lookbook_filter_all', 'label' => '筛选区 · 「全部」标签', 'type' => 'text', 'zh' => '全部', 'en' => 'All'],
+
+        /* ── 服务流程 section ── */
+        ['name' => 'lookbook_process_kicker', 'label' => '服务流程 · 眉题', 'type' => 'text', 'zh' => '服务流程', 'en' => 'OUR PROCESS'],
+        ['name' => 'lookbook_process_title', 'label' => '服务流程 · 标题', 'type' => 'textarea', 'zh' => '从了解到上线，四步即可拥有专属数字员工。', 'en' => 'Four steps from discovery to deployment.', 'extra' => ['rows' => 2]],
+        ['name' => 'lookbook_process_step1_title', 'label' => '流程 1 · 标题', 'type' => 'text', 'zh' => '需求洞察', 'en' => 'Discovery'],
+        ['name' => 'lookbook_process_step1_desc', 'label' => '流程 1 · 描述', 'type' => 'textarea', 'zh' => '我们的顾问与您一起梳理业务场景与核心指标。', 'en' => 'Our consultants map your business context and KPIs.', 'extra' => ['rows' => 2]],
+        ['name' => 'lookbook_process_step2_title', 'label' => '流程 2 · 标题', 'type' => 'text', 'zh' => '方案设计', 'en' => 'Curation'],
+        ['name' => 'lookbook_process_step2_desc', 'label' => '流程 2 · 描述', 'type' => 'textarea', 'zh' => '从精品模板库中挑选角色底座，并融入品牌基因。', 'en' => 'Pick an archetype from our atelier and weave in your brand DNA.', 'extra' => ['rows' => 2]],
+        ['name' => 'lookbook_process_step3_title', 'label' => '流程 3 · 标题', 'type' => 'text', 'zh' => '训练调优', 'en' => 'Calibration'],
+        ['name' => 'lookbook_process_step3_desc', 'label' => '流程 3 · 描述', 'type' => 'textarea', 'zh' => '以专属语料微调模型，确保语调与判断契合业务。', 'en' => 'We fine-tune the model on your proprietary corpus to match tone and judgement.', 'extra' => ['rows' => 2]],
+        ['name' => 'lookbook_process_step4_title', 'label' => '流程 4 · 标题', 'type' => 'text', 'zh' => '上线陪跑', 'en' => 'Co-pilot'],
+        ['name' => 'lookbook_process_step4_desc', 'label' => '流程 4 · 描述', 'type' => 'textarea', 'zh' => '交付上线后由专属管家持续陪跑，按月复盘迭代。', 'en' => 'After deployment, your dedicated concierge reviews and iterates monthly.', 'extra' => ['rows' => 2]],
     ], [
         [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-employees.php']],
     ]));
 
+    /* ---- 3b. 数字员工 — Repeater（每行可编辑） ---- */
+    acf_add_local_field_group([
+        'key'    => 'group_page_ai_employees_rows',
+        'title'  => 'AI 数字员工页 · 员工行（Repeater）',
+        'fields' => [
+            [
+                'key' => 'field_lookbook_employees_tab_zh',
+                'label' => '中文内容（每行）',
+                'type' => 'tab',
+            ],
+            [
+                'key'   => 'field_lookbook_employees',
+                'label' => '员工行（最多 12 行）',
+                'name'  => 'lookbook_employees',
+                'type'  => 'repeater',
+                'instructions' => '每行对应一个数字员工展示卡（与 fallback 数据互补，缺少时自动用兜底 5 行）。',
+                'layout' => 'row',
+                'max'    => 12,
+                'button_label' => '添加一行',
+                'sub_fields' => [
+                    ['key' => 'field_emp_row_kicker_zh',    'label' => '眉题（中文）',  'name' => 'emp_row_kicker',    'type' => 'text'],
+                    ['key' => 'field_emp_row_title_zh',     'label' => '标题（中文）',  'name' => 'emp_row_title',     'type' => 'text'],
+                    ['key' => 'field_emp_row_desc_zh',      'label' => '描述（中文）',  'name' => 'emp_row_desc',      'type' => 'textarea', 'rows' => 3],
+                    ['key' => 'field_emp_row_button_zh',    'label' => '按钮（中文）',  'name' => 'emp_row_button',    'type' => 'text'],
+                    ['key' => 'field_emp_row_image',        'label' => '展示图',         'name' => 'emp_row_image',     'type' => 'image', 'return_format' => 'url'],
+                    ['key' => 'field_emp_row_url',          'label' => '链接地址',       'name' => 'emp_row_url',       'type' => 'text'],
+                ],
+            ],
+            [
+                'key' => 'field_lookbook_employees_tab_en',
+                'label' => 'English Content (per row)',
+                'type' => 'tab',
+            ],
+            [
+                'key'   => 'field_lookbook_employees_en',
+                'label' => 'Employee Rows (Repeater, EN)',
+                'name'  => 'lookbook_employees_en',
+                'type'  => 'repeater',
+                'instructions' => 'Mirror of the Chinese repeater; rows should align 1:1 with the 中文 repeater above.',
+                'layout' => 'row',
+                'max'    => 12,
+                'button_label' => 'Add Row',
+                'sub_fields' => [
+                    ['key' => 'field_emp_row_kicker_en',    'label' => 'Kicker (EN)',    'name' => 'emp_row_kicker',    'type' => 'text'],
+                    ['key' => 'field_emp_row_title_en',     'label' => 'Title (EN)',     'name' => 'emp_row_title',     'type' => 'text'],
+                    ['key' => 'field_emp_row_desc_en',      'label' => 'Description (EN)','name' => 'emp_row_desc',      'type' => 'textarea', 'rows' => 3],
+                    ['key' => 'field_emp_row_button_en',    'label' => 'Button (EN)',    'name' => 'emp_row_button',    'type' => 'text'],
+                    ['key' => 'field_emp_row_url_en',       'label' => 'Link URL',       'name' => 'emp_row_url',       'type' => 'text'],
+                ],
+            ],
+        ],
+        'location' => [
+            [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-employees.php']],
+        ],
+    ]);
+
     /* ---- 4. AI 解决方案页 ---- */
     acf_add_local_field_group($hireai_make_group('group_page_ai_solutions', 'AI 解决方案页', [
-        ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => 'AI 解决方案', 'en' => 'AI SOLUTIONS'],
-        ['name' => 'header_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '臻选智能方案', 'en' => 'Curated Intelligence', 'extra' => ['rows' => 1]],
-        ['name' => 'header_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '按场景筛选——营销、电商、设计、公关，总有一款适合您的业务。', 'en' => 'Filter by scenario—marketing, e-commerce, design, PR—there is a solution for every business.', 'extra' => ['rows' => 2]],
+        ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => 'BESPOKE SOLUTIONS', 'en' => 'BESPOKE SOLUTIONS'],
+        ['name' => 'header_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => 'AI方案商城', 'en' => 'AI Solutions Marketplace', 'extra' => ['rows' => 1]],
+        ['name' => 'header_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '雇佣顶尖数字智脑，赋能企业未来，探索专为高净值品牌与前瞻企业打造的专属AI解决方案。', 'en' => 'Hire elite digital minds to empower your business. Discover bespoke AI solutions tailored for premium brands and forward-looking enterprises.', 'extra' => ['rows' => 2]],
+        ['name' => 'hero_cta_primary_text', 'label' => 'Hero · 主 CTA 文字', 'type' => 'text', 'zh' => '定制方案', 'en' => 'Custom Plan'],
+        ['name' => 'hero_cta_primary_link', 'label' => 'Hero · 主 CTA 链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
+        ['name' => 'hero_cta_secondary_text', 'label' => 'Hero · 次 CTA 文字', 'type' => 'text', 'zh' => '查看案例', 'en' => 'View Cases'],
+        ['name' => 'hero_cta_secondary_link', 'label' => 'Hero · 次 CTA 链接', 'type' => 'text', 'zh' => '/category/cases/', 'en' => '/category/cases/'],
         ['name' => 'card_cta_text', 'label' => '卡片按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
         ['name' => 'empty_text', 'label' => '筛选空状态文案', 'type' => 'text', 'zh' => '该分类下暂无解决方案', 'en' => 'No solutions in this category yet.'],
+        /* —— 邀约礼遇区块字段 —— */
+        ['name' => 'invite_kicker', 'label' => '邀约礼遇 · 眉题', 'type' => 'text', 'zh' => '邀约礼遇', 'en' => 'INVITE & EARN'],
+        ['name' => 'invite_title', 'label' => '邀约礼遇 · 标题', 'type' => 'textarea', 'zh' => '邀约礼遇 / Invite & Earn', 'en' => 'Invite & Earn', 'extra' => ['rows' => 1]],
+        ['name' => 'invite_subtitle', 'label' => '邀约礼遇 · 副标题', 'type' => 'textarea', 'zh' => '分享您的专属邀请码，与友共赏 AI 数字人卓越体验。', 'en' => 'Share your exclusive invite code with peers to enjoy the Aurelian AI experience together.', 'extra' => ['rows' => 2]],
+        ['name' => 'invite_code', 'label' => '邀约礼遇 · 推荐码', 'type' => 'text', 'zh' => 'hireaipeople.com/invite/VIP001', 'en' => 'hireaipeople.com/invite/VIP001'],
+        ['name' => 'invite_copy_text', 'label' => '邀约礼遇 · 复制按钮文字', 'type' => 'text', 'zh' => '复制链接', 'en' => 'Copy Link'],
+        ['name' => 'invite_reward_amount', 'label' => '邀约礼遇 · 奖励金额', 'type' => 'text', 'zh' => '￥500', 'en' => '¥500'],
+        ['name' => 'invite_reward_label', 'label' => '邀约礼遇 · 奖励描述', 'type' => 'textarea', 'zh' => '双方均可获得 ￥500 定制额度奖励，用于您的下一次 AI 服务升级。', 'en' => 'Both you and your invitee earn a ¥500 bespoke credit toward your next AI service upgrade.', 'extra' => ['rows' => 2]],
+        ['name' => 'invite_steps_label', 'label' => '邀约礼遇 · 步骤区块标签', 'type' => 'text', 'zh' => '如何运作', 'en' => 'How It Works'],
+        /* —— 筛选 / 大 CTA 收尾 —— */
+        ['name' => 'filter_tab_scene_label', 'label' => '筛选 · 按场景标签', 'type' => 'text', 'zh' => '按场景分类', 'en' => 'By Scenario'],
+        ['name' => 'filter_tab_employee_label', 'label' => '筛选 · 按数字员工标签', 'type' => 'text', 'zh' => '按数字员工分类', 'en' => 'By Digital Employee'],
+        ['name' => 'final_cta_kicker', 'label' => '收尾 CTA · 眉题', 'type' => 'text', 'zh' => 'NEXT STEP', 'en' => 'NEXT STEP'],
+        ['name' => 'final_cta_title', 'label' => '收尾 CTA · 标题', 'type' => 'textarea', 'zh' => '准备好为您的品牌升级了吗？', 'en' => 'Ready to Elevate Your Brand?', 'extra' => ['rows' => 1]],
+        ['name' => 'final_cta_subtitle', 'label' => '收尾 CTA · 副标题', 'type' => 'textarea', 'zh' => '告诉我们您的雄心，我们将围绕它设计一套专属 AI 解决方案。', 'en' => 'Tell us your ambitions and we will design a bespoke AI plan around them.', 'extra' => ['rows' => 2]],
+        ['name' => 'final_cta_primary_text', 'label' => '收尾 CTA · 主按钮文字', 'type' => 'text', 'zh' => '开启对话', 'en' => 'Start the Conversation'],
+        ['name' => 'final_cta_secondary_text', 'label' => '收尾 CTA · 次按钮文字', 'type' => 'text', 'zh' => '浏览案例', 'en' => 'Browse Cases'],
     ], [
         [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-solutions.php']],
     ]));
+
+    /* 邀约礼遇 — 推荐步骤 repeater（中文/英文各一行） */
+    acf_add_local_field_group([
+        'key'    => 'group_solutions_invite_steps',
+        'title'  => 'AI 解决方案 — 邀约礼遇 · 推荐步骤',
+        'fields' => [
+            [
+                'key' => 'field_solutions_invite_steps',
+                'label' => '推荐步骤',
+                'name'  => 'solutions_invite_steps',
+                'type'  => 'repeater',
+                'instructions' => '每行一步：步骤序号（01/02/03...）+ 中英文描述。',
+                'layout' => 'row',
+                'button_label' => '添加步骤',
+                'sub_fields' => [
+                    ['key' => 'field_invite_step_no',   'label' => '步骤编号', 'name' => 'step_no',  'type' => 'text'],
+                    ['key' => 'field_invite_step_zh',   'label' => '描述（中文）', 'name' => 'step_zh', 'type' => 'text'],
+                    ['key' => 'field_invite_step_en',   'label' => 'Description (EN)', 'name' => 'step_en', 'type' => 'text'],
+                ],
+            ],
+        ],
+        'location' => [
+            [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-solutions.php']],
+        ],
+    ]);
 
     /* 筛选配置（单一 repeater，行内含中英文标签 + 场景 slug） */
     acf_add_local_field_group([
@@ -1024,18 +1145,117 @@ add_action('acf/init', function () {
 
     /* ---- 6. FAQ 页 ---- */
     acf_add_local_field_group($hireai_make_group('group_page_faq', '常见问题页', [
-        ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '常见问题', 'en' => 'FAQ'],
-        ['name' => 'header_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '清晰以对', 'en' => 'Clarity Amidst Complexity', 'extra' => ['rows' => 1]],
-        ['name' => 'header_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '在复杂中寻求清晰——关于我们 AI 数字员工生态的常见问题解答。', 'en' => 'Find answers to common questions regarding our AI employee ecosystem.', 'extra' => ['rows' => 2]],
+        ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => 'THE ATELIER', 'en' => 'THE ATELIER'],
+        ['name' => 'header_title', 'label' => '页眉标题（金色渐变大字）', 'type' => 'textarea', 'zh' => '常见问题', 'en' => 'Frequently Asked', 'extra' => ['rows' => 1]],
+        ['name' => 'header_subtitle', 'label' => '页眉副标题（斜体）', 'type' => 'textarea', 'zh' => '深入了解我们的合作模式、财务结构与安全协议。', 'en' => 'Discover detailed insights into our partnership models, financial structures, and security protocols.', 'extra' => ['rows' => 2]],
+        ['name' => 'header_hero_image', 'label' => 'Hero 横幅图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'header_hero_caption', 'label' => 'Hero 图替代文字', 'type' => 'text', 'zh' => '我们的数字工坊', 'en' => 'Our Atelier'],
         ['name' => 'search_placeholder', 'label' => '检索框占位符', 'type' => 'text', 'zh' => '输入关键词检索…', 'en' => 'Search questions…'],
         ['name' => 'empty_text', 'label' => '无结果文案', 'type' => 'textarea', 'zh' => '未找到匹配的问题，请尝试其他关键词。', 'en' => 'No matching questions found. Try a different keyword.', 'extra' => ['rows' => 2]],
         ['name' => 'faq_group_1_label', 'label' => '分组1 · 合作方式', 'type' => 'text', 'zh' => '合作方式', 'en' => 'Partnership'],
         ['name' => 'faq_group_2_label', 'label' => '分组2 · 财务', 'type' => 'text', 'zh' => '财务', 'en' => 'Finance'],
         ['name' => 'faq_group_3_label', 'label' => '分组3 · 隐私和安全', 'type' => 'text', 'zh' => '隐私和安全', 'en' => 'Privacy & Security'],
         ['name' => 'faq_group_4_label', 'label' => '分组4 · 其他', 'type' => 'text', 'zh' => '其他', 'en' => 'Other'],
+        ['name' => 'cta_kicker', 'label' => 'CTA · 眉题（小标签）', 'type' => 'text', 'zh' => '仍有疑问？', 'en' => 'STILL CURIOUS?'],
+        ['name' => 'cta_title', 'label' => 'CTA · 标题（斜体大字）', 'type' => 'textarea', 'zh' => '准备好重新定义人性了吗？', 'en' => 'Ready to Redefine Humanity?', 'extra' => ['rows' => 1]],
+        ['name' => 'cta_sub', 'label' => 'CTA · 副标题', 'type' => 'textarea', 'zh' => '加入运用 Aurelian AI 专属生态的领袖精英之列。', 'en' => "Join the exclusive echelon of leaders leveraging Aurelian AI's bespoke ecosystem.", 'extra' => ['rows' => 2]],
+        ['name' => 'cta_btn_label', 'label' => 'CTA · 主按钮文字', 'type' => 'text', 'zh' => '开启旅程', 'en' => 'Start The Journey'],
+        ['name' => 'cta_btn_url', 'label' => 'CTA · 主按钮链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
+        ['name' => 'cta_link_label', 'label' => 'CTA · 副按钮文字', 'type' => 'text', 'zh' => '下载品牌手册', 'en' => 'Download Brand Book'],
+        ['name' => 'cta_link_url', 'label' => 'CTA · 副按钮链接', 'type' => 'text', 'zh' => '/case-insights/', 'en' => '/case-insights/'],
     ], [
         [['param' => 'page_template', 'operator' => '==', 'value' => 'page-faq.php']],
     ]));
+
+    /* ---- 6b. 常见问题页 · 问答 Repeater（页面级，zh + en 两套平行） ---- */
+    acf_add_local_field_group([
+        'key'    => 'group_page_faq_items',
+        'title'  => '常见问题页 · 问答列表（Repeater）',
+        'fields' => [
+            [
+                'key'   => 'field_faq_items_zh',
+                'label' => '中文问答（每行：分组 + 问题 + 答案）',
+                'name'  => 'faq_items_zh',
+                'type'  => 'repeater',
+                'instructions' => '在后台增删中文 FAQ 条目；分组 key 必须与 4 个 faq_group_*_label 对应（partnership / finance / privacy-security / other）。',
+                'layout'       => 'row',
+                'max'          => 60,
+                'button_label' => '➕ 添加一条问答（中文）',
+                'sub_fields'   => [
+                    [
+                        'key'      => 'field_faq_row_group_zh',
+                        'label'    => '所属分组',
+                        'name'     => 'faq_row_group',
+                        'type'     => 'select',
+                        'choices'  => [
+                            'partnership'      => '合作方式',
+                            'finance'          => '财务',
+                            'privacy-security' => '隐私和安全',
+                            'other'            => '其他',
+                        ],
+                        'default_value' => 'partnership',
+                    ],
+                    [
+                        'key'   => 'field_faq_row_q_zh',
+                        'label' => '问题',
+                        'name'  => 'faq_row_question',
+                        'type'  => 'text',
+                    ],
+                    [
+                        'key'   => 'field_faq_row_a_zh',
+                        'label' => '答案',
+                        'name'  => 'faq_row_answer',
+                        'type'  => 'textarea',
+                        'rows'  => 4,
+                        'new_lines' => 'br',
+                    ],
+                ],
+            ],
+            [
+                'key'   => 'field_faq_items_en',
+                'label' => 'English Q&A (rows: group + question + answer)',
+                'name'  => 'faq_items_en',
+                'type'  => 'repeater',
+                'instructions' => 'Mirror of the Chinese repeater; rows should align 1:1 with 中文 above (or be a stand-alone set when ZH repeater is empty).',
+                'layout'       => 'row',
+                'max'          => 60,
+                'button_label' => '➕ Add Q&A (EN)',
+                'sub_fields'   => [
+                    [
+                        'key'      => 'field_faq_row_group_en',
+                        'label'    => 'Group',
+                        'name'     => 'faq_row_group',
+                        'type'     => 'select',
+                        'choices'  => [
+                            'partnership'      => 'Partnership',
+                            'finance'          => 'Finance',
+                            'privacy-security' => 'Privacy & Security',
+                            'other'            => 'Other',
+                        ],
+                        'default_value' => 'partnership',
+                    ],
+                    [
+                        'key'   => 'field_faq_row_q_en',
+                        'label' => 'Question',
+                        'name'  => 'faq_row_question',
+                        'type'  => 'text',
+                    ],
+                    [
+                        'key'   => 'field_faq_row_a_en',
+                        'label' => 'Answer',
+                        'name'  => 'faq_row_answer',
+                        'type'  => 'textarea',
+                        'rows'  => 4,
+                        'new_lines' => 'br',
+                    ],
+                ],
+            ],
+        ],
+        'location' => [
+            [['param' => 'page_template', 'operator' => '==', 'value' => 'page-faq.php']],
+        ],
+        'menu_order' => 5,
+    ]);
 
     /* ---- 7. 联系页 ---- */
     acf_add_local_field_group($hireai_make_group('group_page_contact', '联系页', [

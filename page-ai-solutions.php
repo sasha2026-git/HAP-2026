@@ -1,652 +1,835 @@
-<?php if (!defined('ABSPATH')) exit;
+<?php
 /**
- * Template Name: 聘AI - AI Solutions Collection
- *
- * Aurelian luxury system: gold #775a19 / #e9c176, Playfair Display + Inter.
- * Dior / Bvlgari审美 — 极简留白、大衬线标题、金色点缀、无红色。
- * WooCommerce 产品自动拉取 + 分类筛选 + 分页。
- * 无商品时展示双语 fallback 方案。
+ * Template Name: 聘AI - AI 方案商城（Marketplace v3）
+ * 说明：方案商城模板。Hero + 行业筛选 chips + 9 张方案卡片 + 分页 + 邀约礼遇 Invite & Earn 区块。
+ *       字段均从 ACF（group_page_ai_solutions / group_solutions_filters / group_solutions_invite_steps）读取。
+ * 版本：3.0.0
  */
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 get_header();
 
-$suffix = hireai_lang_suffix();
-$is_en  = $suffix === '_en';
-$paged  = max(1, get_query_var('paged'));
-$cta_text = hireai_field('card_cta_text', $is_en ? 'Discover' : '探索');
+$suffix = function_exists( 'hireai_lang_suffix' ) ? hireai_lang_suffix() : '';
+$is_en  = ( '_en' === $suffix );
+$page_id = get_the_ID();
 
-/* ── 筛选器 ── */
-$filters = [];
-if (function_exists('get_field')) {
-    $filters_raw = get_field('solutions_filters');
-    if (is_array($filters_raw)) {
-        foreach ($filters_raw as $row) {
-            if (!is_array($row)) continue;
-            $label = $is_en ? (isset($row['filter_label_en']) ? $row['filter_label_en'] : '') : (isset($row['filter_label_zh']) ? $row['filter_label_zh'] : '');
-            $slug  = isset($row['filter_slug']) ? $row['filter_slug'] : '';
-            if ($slug !== '' && $label !== '') $filters[] = ['label' => $label, 'slug' => $slug];
-        }
+/* ====== 文案（页面 ACF 可编辑，缺省 = 设计稿文案） ====== */
+$hero_kicker       = hireai_field( 'header_kicker', $is_en ? 'BESPOKE SOLUTIONS' : 'BESPOKE SOLUTIONS', $page_id );
+$hero_title        = hireai_field( 'header_title', $is_en ? 'AI Solutions Marketplace' : 'AI方案商城', $page_id );
+$hero_subtitle     = hireai_field( 'header_subtitle', $is_en ? 'Hire elite digital minds to empower your business.' : '雇佣顶尖数字智脑，赋能企业未来。', $page_id );
+$hero_cta_primary  = hireai_field( 'hero_cta_primary_text', $is_en ? 'Custom Plan' : '定制方案', $page_id );
+$hero_cta_primary_link  = hireai_field( 'hero_cta_primary_link', $is_en ? '/contact/' : '/contact/', $page_id );
+$hero_cta_secondary    = hireai_field( 'hero_cta_secondary_text', $is_en ? 'View Cases' : '查看案例', $page_id );
+$hero_cta_secondary_link = hireai_field( 'hero_cta_secondary_link', $is_en ? '/category/cases/' : '/category/cases/', $page_id );
+
+$card_cta_text     = hireai_field( 'card_cta_text', $is_en ? 'Explore More' : '探索更多', $page_id );
+$empty_text        = hireai_field( 'empty_text', $is_en ? 'No solutions in this category yet.' : '该分类下暂无解决方案', $page_id );
+
+/* ====== 邀约礼遇 Invite & Earn ====== */
+$invite_kicker        = hireai_field( 'invite_kicker', $is_en ? 'INVITE & EARN' : '邀约礼遇', $page_id );
+$invite_title         = hireai_field( 'invite_title', $is_en ? 'Invite & Earn' : '邀约礼遇 / Invite & Earn', $page_id );
+$invite_subtitle      = hireai_field( 'invite_subtitle', $is_en ? 'Share your exclusive invite code with peers to enjoy the Aurelian AI experience together.' : '分享您的专属邀请码，与友共赏 AI 数字人卓越体验。', $page_id );
+$invite_code          = hireai_field( 'invite_code', $is_en ? 'hireaipeople.com/invite/VIP001' : 'hireaipeople.com/invite/VIP001', $page_id );
+$invite_copy_text     = hireai_field( 'invite_copy_text', $is_en ? 'Copy Link' : '复制链接', $page_id );
+$invite_reward_amount = hireai_field( 'invite_reward_amount', $is_en ? '¥500' : '￥500', $page_id );
+$invite_reward_label  = hireai_field( 'invite_reward_label', $is_en ? 'Both you and your invitee earn a ¥500 bespoke credit toward your next AI service upgrade.' : '双方均可获得 ￥500 定制额度奖励，用于您的下一次 AI 服务升级。', $page_id );
+$invite_steps_label   = hireai_field( 'invite_steps_label', $is_en ? 'How It Works' : '如何运作', $page_id );
+
+/* ====== 筛选 tab 标签 ====== */
+$tab_scene_text       = hireai_field( 'filter_tab_scene_label', $is_en ? 'By Scenario' : '按场景分类', $page_id );
+$tab_employee_text    = hireai_field( 'filter_tab_employee_label', $is_en ? 'By Digital Employee' : '按数字员工分类', $page_id );
+
+/* ====== 收尾 CTA ====== */
+$final_kicker         = hireai_field( 'final_cta_kicker', $is_en ? 'NEXT STEP' : 'NEXT STEP', $page_id );
+$final_title          = hireai_field( 'final_cta_title', $is_en ? 'Ready to Elevate Your Brand?' : '准备好为您的品牌升级了吗？', $page_id );
+$final_subtitle       = hireai_field( 'final_cta_subtitle', $is_en ? 'Tell us your ambitions and we will design a bespoke AI plan around them.' : '告诉我们您的雄心，我们将围绕它设计一套专属 AI 解决方案。', $page_id );
+$final_cta_primary    = hireai_field( 'final_cta_primary_text', $is_en ? 'Start the Conversation' : '开启对话', $page_id );
+$final_cta_secondary  = hireai_field( 'final_cta_secondary_text', $is_en ? 'Browse Cases' : '浏览案例', $page_id );
+
+/* ====== 推荐步骤（repeater，兜底 3 步） ====== */
+$invite_steps_fallback = array(
+    array( 'step_no' => '01', 'step_zh' => '分享您的专属推荐链接。', 'step_en' => 'Share your exclusive referral link.' ),
+    array( 'step_no' => '02', 'step_zh' => '好友加入并完成首笔订阅。', 'step_en' => 'Your friend signs up and completes their first subscription.' ),
+    array( 'step_no' => '03', 'step_zh' => '双方均可获得 ' . ( $is_en ? '¥500' : '￥500' ) . ' 定制额度奖励。', 'step_en' => 'Both you and your invitee earn a ¥500 bespoke credit toward your next AI service upgrade.' ),
+);
+$invite_steps = $invite_steps_fallback;
+if ( function_exists( 'have_rows' ) && have_rows( 'solutions_invite_steps', $page_id ) ) {
+    $tmp = array();
+    while ( have_rows( 'solutions_invite_steps', $page_id ) ) {
+        the_row();
+        $tmp[] = array(
+            'step_no' => get_sub_field( 'step_no' ),
+            'step_zh' => get_sub_field( 'step_zh' ),
+            'step_en' => get_sub_field( 'step_en' ),
+        );
     }
-}
-if (empty($filters)) {
-    $filters = $is_en
-        ? [['label'=>'Marketing','slug'=>'marketing'],['label'=>'E-commerce','slug'=>'ecommerce'],['label'=>'Design','slug'=>'design'],['label'=>'Public Relations','slug'=>'pr']]
-        : [['label'=>'营销','slug'=>'marketing'],['label'=>'电商','slug'=>'ecommerce'],['label'=>'设计','slug'=>'design'],['label'=>'公关','slug'=>'pr']];
+    if ( ! empty( $tmp ) ) { $invite_steps = $tmp; }
 }
 
-/* ── Fallback 方案数据 ── */
-$fallback = [
-    ['title'=>['zh'=>'全域营销智囊','en'=>'Omnichannel Marketing Intelligence'],'tag'=>['zh'=>'营销','en'=>'MARKETING'],'operative'=>['zh'=>'执行智能体：ARIA-01','en'=>'OPERATIVE: ARIA-01'],'excerpt'=>['zh'=>'覆盖内容、投放与数据复盘的全链路营销智能体。','en'=>'A full-funnel marketing agent for content, media, and performance review.'],'price'=>['zh'=>'¥4,800 / 月起','en'=>'From ¥4,800/mo'],'retainer'=>['zh'=>'起步档','en'=>'Starting'],'cats'=>'marketing','image'=>'solution-1.jpg'],
-    ['title'=>['zh'=>'电商转化引擎','en'=>'Commerce Conversion Engine'],'tag'=>['zh'=>'电商','en'=>'E-COMMERCE'],'operative'=>['zh'=>'执行智能体：QUANTUM-C','en'=>'OPERATIVE: QUANTUM-C'],'excerpt'=>['zh'=>'从选品、定价到客服，让增长从洞察到成交顺畅闭环。','en'=>'Connects selection, pricing, and service into a seamless growth loop.'],'price'=>['zh'=>'¥6,800 / 月起','en'=>'From ¥6,800/mo'],'retainer'=>['zh'=>'项目基准','en'=>'Base'],'cats'=>'ecommerce','image'=>'solution-2.jpg'],
-    ['title'=>['zh'=>'奢品内容工坊','en'=>'Luxury Content Atelier'],'tag'=>['zh'=>'设计','en'=>'DESIGN'],'operative'=>['zh'=>'执行智能体：AURA-7','en'=>'OPERATIVE: AURA-7'],'excerpt'=>['zh'=>'为高净值品牌打造有艺术质感、有销售力的内容体系。','en'=>'Crafts artful, conversion-ready content systems for high-net-worth brands.'],'price'=>['zh'=>'¥8,800 / 月起','en'=>'From ¥8,800/mo'],'retainer'=>['zh'=>'按概念','en'=>'Per Concept'],'cats'=>'design','image'=>'solution-3.jpg'],
-    ['title'=>['zh'=>'危机公关文案','en'=>'Crisis PR Copywriting'],'tag'=>['zh'=>'公关','en'=>'PR'],'operative'=>['zh'=>'执行智能体：ELARA-9','en'=>'OPERATIVE: ELARA-9'],'excerpt'=>['zh'=>'以毫秒级校准话术处理突发舆情，保护品牌叙事与市场信任。','en'=>'Calibrated messaging protocols to mitigate brand exposure and steer public narrative.'],'price'=>['zh'=>'¥15,000 / 月起','en'=>'From ¥15,000/mo'],'retainer'=>['zh'=>'年度授权','en'=>'Annual'],'cats'=>'pr','image'=>'solution-4.jpg'],
-];
+/* ====== 筛选 chips（repeater，兜底 7 个场景） ====== */
+$filters_fallback = array(
+    array( 'label_zh' => '全国统一者', 'label_en' => 'Apex Strategist', 'slug' => 'apex' ),
+    array( 'label_zh' => '总裁高效', 'label_en' => 'Executive', 'slug' => 'executive' ),
+    array( 'label_zh' => '营销推广', 'label_en' => 'Marketing', 'slug' => 'marketing' ),
+    array( 'label_zh' => '电子商务', 'label_en' => 'E-Commerce', 'slug' => 'ecommerce' ),
+    array( 'label_zh' => '创意设计', 'label_en' => 'Design', 'slug' => 'design' ),
+    array( 'label_zh' => '高效服务', 'label_en' => 'Hospitality', 'slug' => 'hospitality' ),
+    array( 'label_zh' => '企业管理', 'label_en' => 'Enterprise', 'slug' => 'enterprise' ),
+);
+$filters = $filters_fallback;
+if ( function_exists( 'have_rows' ) && have_rows( 'solutions_filters', $page_id ) ) {
+    $tmp = array();
+    while ( have_rows( 'solutions_filters', $page_id ) ) {
+        the_row();
+        $tmp[] = array(
+            'label_zh' => get_sub_field( 'filter_label_zh' ),
+            'label_en' => get_sub_field( 'filter_label_en' ),
+            'slug'     => get_sub_field( 'filter_slug' ),
+        );
+    }
+    if ( ! empty( $tmp ) ) { $filters = $tmp; }
+}
 
-$localize = function ($item, $key) use ($is_en) {
-    $v = isset($item[$key]) ? $item[$key] : '';
-    return is_array($v) ? ($v[$is_en ? 'en' : 'zh'] ?? '') : $v;
-};
+/* ====== 方案卡片（兜底 9 张） ====== */
+$cards = array(
+    array(
+        'kicker_zh' => '公关危机', 'kicker_en' => 'Crisis Counsel',
+        'title_zh'  => '公关审惨预警', 'title_en' => 'Crisis Forecast',
+        'desc_zh'   => 'AI驱动您的全球网络神经全天候守护品牌声誉，提供24×7全天候的舆情风暴预警机制。',
+        'desc_en'   => 'AI-driven global network nerve provides 24/7 brand reputation monitoring and crisis early-warning.',
+        'price'     => '¥3000 起', 'image' => 'home/solution-finance.png',
+        'is_cta'    => false, 'link' => '/contact/',
+    ),
+    array(
+        'kicker_zh' => '整合营销', 'kicker_en' => 'Marketing',
+        'title_zh'  => 'IP联名及营销整合', 'title_en' => 'IP Co-Marketing',
+        'desc_zh'   => '利用数字孪生与跨界算法，精准匹配全球顶级IP，打造现象级的跨界营销链路。',
+        'desc_en'   => 'Digital twin + cross-boundary algorithms precisely match global premium IP for blockbuster collaborations.',
+        'price'     => '¥8000 起', 'image' => 'home/solution-retail.png',
+        'is_cta'    => false, 'link' => '/contact/',
+    ),
+    array(
+        'kicker_zh' => '电商视觉', 'kicker_en' => 'E-Commerce',
+        'title_zh'  => '电商主图及套图设计', 'title_en' => 'E-Commerce Hero Visuals',
+        'desc_zh'   => '生成式AI打造高级感产品的高级视觉矩阵，提升奢品与高定类目的转化率。',
+        'desc_en'   => 'Generative AI crafts premium product visual matrices to lift conversions in luxury and bespoke categories.',
+        'price'     => '¥1500 起', 'image' => 'defaults/solution-1.jpg',
+        'is_cta'    => false, 'link' => '/contact/',
+    ),
+    array(
+        'kicker_zh' => '创意设计', 'kicker_en' => 'Creative',
+        'title_zh'  => 'AI艺术图片设计', 'title_en' => 'AI Art Imagery',
+        'desc_zh'   => '突破物理边界的视觉艺术创造，专为顶级展会、画册及数字资产量身定制。',
+        'desc_en'   => 'Boundary-defying visual art, bespoke for premium exhibitions, lookbooks, and digital assets.',
+        'price'     => '¥3000 起', 'image' => 'defaults/solution-2.jpg',
+        'is_cta'    => false, 'link' => '/contact/',
+    ),
+    array(
+        'kicker_zh' => '酒店服务', 'kicker_en' => 'Hospitality',
+        'title_zh'  => '鸡尾酒单设计师', 'title_en' => 'Cocktail Menu Designer',
+        'desc_zh'   => '结合风味算法与视觉美学，为高端酒吧与私人酒会设计独具匠心的酒单体验。',
+        'desc_en'   => 'Pairing flavor algorithms with visual artistry, crafting signature menus for premium bars and private events.',
+        'price'     => '¥1200 起', 'image' => 'defaults/solution-3.jpg',
+        'is_cta'    => false, 'link' => '/contact/',
+    ),
+    array(
+        'kicker_zh' => '数据洞察', 'kicker_en' => 'Data Insight',
+        'title_zh'  => '高定客户数据洞察', 'title_en' => 'Bespoke Client Insight',
+        'desc_zh'   => '深度挖掘VIP客户偏好，构建多维立体画像，实现千人千面的精准营销与尊享服务。',
+        'desc_en'   => 'Mine VIP preferences and build multidimensional personas for one-to-one marketing and concierge service.',
+        'price'     => '¥5000 起', 'image' => 'defaults/solution-4.jpg',
+        'is_cta'    => false, 'link' => '/contact/',
+    ),
+    array(
+        'kicker_zh' => '金融风控', 'kicker_en' => 'Finance',
+        'title_zh'  => '智能投顾助理', 'title_en' => 'Smart Advisor',
+        'desc_zh'   => '结合宏观经济指标与市场情绪，提供个性化的资产配置建议与风险预警。',
+        'desc_en'   => 'Macro indicators and market sentiment fused—personalized asset allocation with proactive risk alerts.',
+        'price'     => '¥12000 起', 'image' => 'defaults/solution-1.jpg',
+        'is_cta'    => false, 'link' => '/contact/',
+    ),
+    array(
+        'kicker_zh' => '空间美学', 'kicker_en' => 'Spatial',
+        'title_zh'  => '奢华空间漫游生成', 'title_en' => 'Luxury Spatial Walkthrough',
+        'desc_zh'   => '分钟级生成超写实的高端商业空间与私宅内部漫游视频，革新设计提案体验。',
+        'desc_en'   => 'Photorealistic premium commercial and private residence walkthroughs in minutes—reinventing design proposals.',
+        'price'     => '¥8000 起', 'image' => 'defaults/solution-2.jpg',
+        'is_cta'    => false, 'link' => '/contact/',
+    ),
+    array(
+        'kicker_zh' => '企业服务', 'kicker_en' => 'Enterprise',
+        'title_zh'  => '个性化定制服务', 'title_en' => 'Personalized Bespoke',
+        'desc_zh'   => '全方位企业级AI咨询与定制数字员工方案，为高净值企业级客群提供专属服务。',
+        'desc_en'   => 'Full-spectrum enterprise AI consulting and bespoke digital employees—signature service for HNW enterprises.',
+        'price'     => '', 'image' => 'defaults/solution-3.jpg',
+        'is_cta'    => true, 'link' => '/contact/',
+    ),
+);
 
-/* ── WooCommerce 查询 ── */
-$has_woo  = class_exists('WooCommerce');
-$per_page = defined('HIREAI_SOLUTIONS_PER_PAGE') ? HIREAI_SOLUTIONS_PER_PAGE : 12;
-$query    = $has_woo ? new WP_Query([
-    'post_type'      => 'product',
-    'posts_per_page' => $per_page,
-    'paged'          => $paged,
-]) : false;
-
-$total_products = $has_woo ? wp_count_posts('product')->publish : 0;
 ?>
-
-<!-- ════════════════════════════════════════════════════════
-     LUXURY AI SOLUTIONS COLLECTION — Aurelian Gold System
-     ════════════════════════════════════════════════════════ -->
 <style>
-/* ── Aurelian Palette (matches front-page.php) ── */
-:root {
-    --sol-black:     #1a1a1a;
-    --sol-dark:      #2c2c2c;
-    --sol-mid:       #6b6b6b;
-    --sol-mid-soft:  #9a9a9a;
-    --sol-light:     #f5f3ef;
-    --sol-cream:     #faf9f7;
-    --sol-white:     #ffffff;
-    --sol-gold:      #775a19;
-    --sol-gold-l:    #e9c176;
-    --sol-gold-d:    #5a4310;
-    --sol-border:    #e8e5df;
-    --sol-border-l:  #f0ede8;
-    --sol-shadow:    rgba(119,90,25,0.08);
-    --sol-shadow-h:  rgba(119,90,25,0.18);
-    --sol-font-display: 'Playfair Display', 'Georgia', serif;
-    --sol-font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* ── Reset scoped ── */
-.sol-solutions *, .sol-solutions *::before, .sol-solutions *::after { box-sizing: border-box; margin: 0; padding: 0; }
-.sol-solutions {
-    font-family: var(--sol-font-body);
-    color: var(--sol-black);
-    background: var(--sol-cream);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* ── Hero ── */
-.sol-hero {
-    position: relative;
+/* ============== 页面专有样式（仅本模板生效） ============== */
+.sols-page-hero {
+    padding-top: clamp(120px, 14vh, 180px);
+    padding-bottom: clamp(40px, 6vw, 80px);
     text-align: center;
-    padding: 112px 24px 72px;
-    background: var(--sol-white);
-    border-bottom: 1px solid var(--sol-border);
-    overflow: hidden;
+    position: relative;
 }
-/* Subtle radial texture for futuristic depth */
-.sol-hero::before {
+.sols-page-hero::after {
     content: '';
-    position: absolute;
-    inset: 0;
-    background:
-        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(119,90,25,0.04) 0%, transparent 70%),
-        radial-gradient(circle at 80% 80%, rgba(233,193,118,0.03) 0%, transparent 40%);
-    pointer-events: none;
+    display: block;
+    width: 1px;
+    height: 56px;
+    margin: 32px auto 0;
+    background: linear-gradient(to bottom, transparent, var(--gold-leaf, #d4af37), transparent);
 }
-.sol-hero__divider {
-    width: 56px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--sol-gold), transparent);
-    margin: 0 auto 28px;
-}
-.sol-hero__kicker {
+.sols-page-hero__kicker {
     display: inline-block;
-    font-family: var(--sol-font-body);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.4em;
-    text-transform: uppercase;
-    color: var(--sol-gold);
-    margin-bottom: 20px;
-    position: relative;
-}
-.sol-hero__title {
-    font-family: var(--sol-font-display);
-    font-size: clamp(34px, 5vw, 60px);
-    font-weight: 400;
-    line-height: 1.1;
-    color: var(--sol-black);
-    margin: 0 0 18px;
-    letter-spacing: -0.01em;
-    position: relative;
-}
-.sol-hero__sub {
-    font-size: 16px;
-    line-height: 1.75;
-    color: var(--sol-mid);
-    max-width: 520px;
-    margin: 0 auto;
-    position: relative;
-}
-.sol-hero__count {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 28px;
+    margin-bottom: 18px;
+    color: var(--gold-leaf, #d4af37);
+    font-family: var(--font-label, 'Inter', sans-serif);
     font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
+    font-weight: 600;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: var(--sol-mid-soft);
-    position: relative;
 }
-.sol-hero__count strong {
-    font-family: var(--sol-font-display);
-    font-size: 18px;
-    color: var(--sol-gold);
-    font-weight: 500;
+.sols-page-hero__title {
+    margin: 0 auto 24px;
+    max-width: 920px;
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-weight: 700;
+    font-size: clamp(40px, 6vw, 72px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    background: linear-gradient(to right, #775a19, #e9c176, #775a19);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+.sols-page-hero__subtitle {
+    max-width: 720px;
+    margin: 0 auto;
+    color: var(--on-surface-variant, #444748);
+    font-style: italic;
+    font-size: clamp(16px, 1.6vw, 18px);
+    line-height: 1.6;
+}
+.sols-page-hero__actions {
+    margin-top: 40px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
 }
 
-/* ── Filter Bar ── */
-.sol-filters {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    padding: 40px 24px 0;
-    max-width: 900px;
+/* 筛选区 */
+.sols-filter {
+    padding: 0 20px clamp(32px, 5vw, 56px);
+    max-width: 1440px;
     margin: 0 auto;
 }
-.sol-filter-btn {
-    font-family: var(--sol-font-body);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    padding: 10px 28px;
-    border: 1px solid var(--sol-border);
-    border-radius: 0;
-    background: transparent;
-    color: var(--sol-mid);
-    cursor: pointer;
-    transition: all 0.35s cubic-bezier(0.23,1,0.32,1);
-    position: relative;
-    overflow: hidden;
+.sols-filter__tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0;
 }
-.sol-filter-btn::after {
+.sols-filter__tab {
+    padding: 14px 32px;
+    background: var(--surface-container-low, #f4f3f3);
+    border: 1px solid var(--outline-variant, #e2e2e2);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    color: var(--on-surface-variant, #747878);
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: 16px;
+    cursor: pointer;
+    margin-right: 4px;
+    transition: all .3s ease;
+}
+.sols-filter__tab.is-active {
+    background: var(--surface, #faf9f9);
+    color: var(--primary, #1a1c1c);
+    border-color: rgba(119, 90, 25, .4);
+    font-weight: 600;
+    position: relative;
+}
+.sols-filter__tab.is-active::before {
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 0;
-    height: 1px;
-    background: var(--sol-gold);
-    transition: all 0.35s cubic-bezier(0.23,1,0.32,1);
-    transform: translateX(-50%);
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #775a19, #e9c176);
+    border-radius: 8px 8px 0 0;
 }
-.sol-filter-btn:hover {
-    border-color: var(--sol-gold-l);
-    color: var(--sol-gold);
+.sols-filter__panel {
+    background: var(--surface, #faf9f9);
+    border: 1px solid rgba(119, 90, 25, .35);
+    border-radius: 0 8px 8px 8px;
+    padding: 28px clamp(20px, 3vw, 40px);
+    margin-top: -1px;
 }
-.sol-filter-btn:hover::after {
-    width: 60%;
+.sols-filter__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
 }
-.sol-filter-btn.is-active {
-    background: var(--sol-black);
-    border-color: var(--sol-black);
-    color: var(--sol-white);
+.sols-filter__chip {
+    padding: 8px 22px;
+    border: 1px solid var(--outline-variant, #e2e2e2);
+    border-radius: 999px;
+    color: var(--on-surface-variant, #444748);
+    background: transparent;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .3s ease;
+    font-family: var(--font-label, 'Inter', sans-serif);
 }
-.sol-filter-btn.is-active::after {
-    display: none;
+.sols-filter__chip:hover,
+.sols-filter__chip.is-active {
+    border-color: var(--gold-leaf, #775a19);
+    color: var(--gold-leaf, #775a19);
+    background: rgba(119, 90, 25, .05);
 }
 
-/* ── Product Grid ── */
-.sol-grid-wrap {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 48px 32px 96px;
-}
-.sol-grid {
+/* 卡片网格 */
+.sols-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(1, 1fr);
     gap: 28px;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 20px clamp(48px, 6vw, 80px);
 }
-
-/* ── Product Card ── */
-.sol-card {
-    background: var(--sol-white);
-    border: 1px solid var(--sol-border-l);
+@media (min-width: 720px) {
+    .sols-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1080px) {
+    .sols-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.sols-card {
+    background: rgba(249, 248, 243, .7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(119, 90, 25, .2);
+    border-radius: 12px;
     overflow: hidden;
-    transition:
-        transform 0.5s cubic-bezier(0.23,1,0.32,1),
-        box-shadow 0.5s cubic-bezier(0.23,1,0.32,1),
-        border-color 0.4s ease;
-    position: relative;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 10px 40px -10px rgba(119, 90, 25, .04);
+    transition: all .4s ease;
 }
-.sol-card:hover {
-    transform: translateY(-8px);
-    box-shadow:
-        0 24px 64px -12px rgba(0,0,0,0.06),
-        0 0 0 1px var(--sol-gold-l);
-    border-color: var(--sol-gold-l);
+.sols-card:hover {
+    border-color: rgba(119, 90, 25, .5);
+    box-shadow: 0 18px 50px -10px rgba(119, 90, 25, .12);
+    transform: translateY(-2px);
 }
-
-.sol-card__media {
+.sols-card__media {
     position: relative;
-    display: block;
-    aspect-ratio: 4/5;
+    aspect-ratio: 4/3;
     overflow: hidden;
-    background: var(--sol-light);
+    background: var(--surface-container, #eeeeee);
+    display: block;
 }
-.sol-card__media img {
-    width: 100%;
-    height: 100%;
+.sols-card__media img {
+    width: 100%; height: 100%;
     object-fit: cover;
-    transition: transform 0.7s cubic-bezier(0.23,1,0.32,1);
+    transition: transform .8s ease;
+    display: block;
 }
-.sol-card:hover .sol-card__media img {
+.sols-card:hover .sols-card__media img {
     transform: scale(1.06);
 }
-/* Subtle gradient overlay on image */
-.sol-card__media::after {
+.sols-card__media::after {
     content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 40%;
-    background: linear-gradient(to top, rgba(0,0,0,0.08), transparent);
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,.5), transparent);
     pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.4s;
 }
-.sol-card:hover .sol-card__media::after {
-    opacity: 1;
-}
-
-.sol-card__badge {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    padding: 6px 16px;
-    background: var(--sol-white);
-    color: var(--sol-black);
-    z-index: 1;
-    transition: all 0.3s ease;
-}
-.sol-card:hover .sol-card__badge {
-    background: var(--sol-gold);
-    color: var(--sol-white);
-}
-.sol-card__badge--sale {
-    background: var(--sol-gold);
-    color: var(--sol-white);
-}
-
-.sol-card__body {
-    padding: 24px 24px 28px;
+.sols-card__body {
+    padding: 28px;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
-    flex: 1;
 }
-.sol-card__operative {
-    font-size: 10px;
+.sols-card__kicker {
+    color: var(--gold-leaf, #775a19);
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.22em;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    color: var(--sol-gold);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+    font-family: var(--font-label, 'Inter', sans-serif);
 }
-.sol-card__title {
-    font-family: var(--sol-font-display);
-    font-size: 21px;
-    font-weight: 400;
-    line-height: 1.3;
-    margin: 0 0 10px;
-}
-.sol-card__title a {
-    color: var(--sol-black);
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-.sol-card__title a:hover {
-    color: var(--sol-gold);
-}
-.sol-card__excerpt {
-    font-size: 13.5px;
-    line-height: 1.7;
-    color: var(--sol-mid);
-    margin: 0 0 20px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    flex: 1;
-}
-
-.sol-card__footer {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding-top: 18px;
-    border-top: 1px solid var(--sol-border-l);
-}
-.sol-card__retainer-label {
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--sol-mid-soft);
-    display: block;
-    margin-bottom: 4px;
-}
-.sol-card__price {
-    font-family: var(--sol-font-display);
-    font-size: 18px;
-    color: var(--sol-black);
+.sols-card__title {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: clamp(22px, 2vw, 28px);
     font-weight: 500;
+    margin: 0 0 14px;
+    color: var(--primary, #1a1c1c);
 }
-
-.sol-card__arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border: 1px solid var(--sol-border);
-    color: var(--sol-black);
-    text-decoration: none;
-    transition: all 0.35s cubic-bezier(0.23,1,0.32,1);
-    flex-shrink: 0;
-}
-.sol-card__arrow:hover {
-    background: var(--sol-gold);
-    border-color: var(--sol-gold);
-    color: var(--sol-white);
-}
-.sol-card__arrow svg {
-    transition: transform 0.3s ease;
-}
-.sol-card__arrow:hover svg {
-    transform: translateX(3px);
-}
-
-/* ── Empty State ── */
-.sol-empty {
-    text-align: center;
-    padding: 80px 24px;
-    color: var(--sol-mid);
+.sols-card__desc {
+    color: var(--on-surface-variant, #444748);
+    line-height: 1.6;
     font-size: 15px;
-    display: none;
-    grid-column: 1 / -1;
+    flex: 1 1 auto;
+    margin: 0 0 24px;
 }
-.sol-empty.is-visible { display: block; }
-
-/* ── Pagination ── */
-.sol-pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-    margin-top: 56px;
+.sols-card__foot {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(196, 199, 199, .4);
 }
-.sol-pagination a,
-.sol-pagination span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 44px;
-    height: 44px;
-    padding: 0 16px;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-decoration: none;
-    border: 1px solid var(--sol-border);
-    color: var(--sol-mid);
-    background: var(--sol-white);
-    transition: all 0.3s ease;
+.sols-card__price {
+    color: var(--gold-leaf, #b58a2b);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: .08em;
 }
-.sol-pagination a:hover {
-    border-color: var(--sol-gold);
-    color: var(--sol-gold);
-    box-shadow: 0 2px 12px var(--sol-shadow);
-}
-.sol-pagination .current {
-    background: var(--sol-gold);
-    border-color: var(--sol-gold);
-    color: var(--sol-white);
-    box-shadow: 0 4px 16px rgba(119,90,25,0.2);
-}
-.sol-pagination .dots {
-    border: none;
+.sols-card__cta {
+    display: inline-flex; align-items: center; gap: 8px;
     background: transparent;
-    color: var(--sol-mid-soft);
-    min-width: auto;
+    border: none;
+    padding: 0;
+    color: var(--primary, #1a1c1c);
+    font-family: var(--font-label, 'Inter', sans-serif);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: gap .3s ease, color .3s ease;
+    text-decoration: none;
+}
+.sols-card:hover .sols-card__cta {
+    color: var(--gold-leaf, #775a19);
+    gap: 12px;
+}
+.sols-card__cta svg { width: 14px; height: 14px; }
+.sols-card--cta-highlight {
+    border-color: var(--gold-leaf, #775a19);
+    box-shadow: 0 10px 40px -10px rgba(119, 90, 25, .18);
+}
+
+/* 分页 */
+.sols-pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px;
+    padding: 16px 20px clamp(80px, 8vw, 120px);
+}
+.sols-pagination__btn {
+    width: 40px; height: 40px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--outline-variant, #e2e2e2);
+    border-radius: 50%;
+    color: var(--on-surface-variant, #444748);
+    background: transparent;
+    cursor: pointer;
+    transition: all .3s ease;
+    font-family: var(--font-label, 'Inter', sans-serif);
+    font-size: 13px;
+}
+.sols-pagination__btn:hover,
+.sols-pagination__btn.is-active {
+    border-color: var(--gold-leaf, #775a19);
+    color: var(--gold-leaf, #775a19);
+    background: rgba(119, 90, 25, .05);
+}
+.sols-pagination__ellipsis {
+    color: var(--on-surface-variant, #444748);
     padding: 0 6px;
 }
 
-/* ── Fallback CTA Link ── */
-.sol-cta-wrap {
-    text-align: center;
-    margin-top: 56px;
+/* ============== 邀约礼遇 Invite & Earn ============== */
+.sols-invite {
+    background: var(--surface-container-low, #f4f3f3);
+    border-top: 1px solid rgba(196, 199, 199, .3);
+    padding: clamp(60px, 8vw, 100px) 20px;
 }
-.sol-cta {
+.sols-invite__inner {
+    max-width: 1080px;
+    margin: 0 auto;
+}
+.sols-invite__head {
+    text-align: center;
+    margin-bottom: 48px;
+}
+.sols-invite__kicker {
     display: inline-block;
-    font-family: var(--sol-font-body);
+    margin-bottom: 14px;
+    color: var(--gold-leaf, #775a19);
+    font-family: var(--font-label, 'Inter', sans-serif);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+}
+.sols-invite__title {
+    margin: 0 0 14px;
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 600;
+    background: linear-gradient(to right, #775a19, #e9c176, #775a19);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+.sols-invite__subtitle {
+    color: var(--on-surface-variant, #444748);
+    font-style: italic;
+    font-size: clamp(15px, 1.6vw, 18px);
+    line-height: 1.6;
+    max-width: 640px;
+    margin: 0 auto;
+}
+.sols-invite__card {
+    background: rgba(249, 248, 243, .7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(119, 90, 25, .3);
+    border-radius: 16px;
+    padding: clamp(28px, 4vw, 48px);
+    box-shadow: 0 18px 60px -20px rgba(119, 90, 25, .12);
+}
+.sols-invite__row {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 36px;
+}
+@media (min-width: 720px) {
+    .sols-invite__row { flex-direction: row; }
+}
+.sols-invite__code-wrap {
+    flex: 1 1 auto;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--surface-container-lowest, #fff);
+    border: 1px solid rgba(119, 90, 25, .35);
+    border-radius: 10px;
+    padding: 16px 22px;
+    font-family: var(--font-mono, 'Inter', monospace);
+    font-size: 15px;
+    color: var(--on-surface, #1a1c1c);
+    overflow: hidden;
+}
+.sols-invite__code-wrap code {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    background: transparent;
+    word-break: break-all;
+}
+.sols-invite__copy {
+    flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 16px 32px;
+    border: 1px solid rgba(119, 90, 25, .4);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--primary, #1a1c1c);
+    font-family: var(--font-label, 'Inter', sans-serif);
     font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.1em;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    padding: 16px 48px;
-    border: 1px solid var(--sol-gold);
-    color: var(--sol-gold);
-    text-decoration: none;
-    background: transparent;
-    transition: all 0.35s cubic-bezier(0.23,1,0.32,1);
+    cursor: pointer;
+    transition: all .3s ease;
 }
-.sol-cta:hover {
-    background: var(--sol-gold);
-    color: var(--sol-white);
-    box-shadow: 0 8px 32px rgba(119,90,25,0.2);
+.sols-invite__copy:hover {
+    border-color: var(--gold-leaf, #775a19);
+    box-shadow: inset 0 0 12px rgba(119, 90, 25, .12), 0 0 18px rgba(119, 90, 25, .18);
+    color: var(--gold-leaf, #775a19);
+}
+.sols-invite__copy svg { width: 16px; height: 16px; }
+.sols-invite__steps {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+.sols-invite__step {
+    display: flex;
+    gap: 22px;
+    align-items: flex-start;
+}
+.sols-invite__step-no {
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: 32px;
+    line-height: 1;
+    color: var(--gold-leaf, #775a19);
+    opacity: .55;
+    flex: 0 0 auto;
+    min-width: 56px;
+}
+.sols-invite__step-text {
+    margin: 0;
+    padding-top: 6px;
+    color: var(--on-surface-variant, #444748);
+    font-size: 15px;
+    line-height: 1.7;
+}
+.sols-invite__reward {
+    color: var(--gold-leaf, #775a19);
+    font-weight: 700;
+    font-style: normal;
 }
 
-/* ── Responsive ── */
-@media (max-width: 768px) {
-    .sol-hero { padding: 72px 20px 48px; }
-    .sol-hero__title { font-size: 28px; }
-    .sol-hero__sub { font-size: 15px; }
-    .sol-grid { grid-template-columns: 1fr; gap: 20px; }
-    .sol-grid-wrap { padding: 32px 16px 64px; }
-    .sol-filters { padding: 28px 16px 0; gap: 4px; }
-    .sol-filter-btn { padding: 8px 18px; font-size: 10px; }
-    .sol-pagination { gap: 4px; }
-    .sol-pagination a,
-    .sol-pagination span { min-width: 38px; height: 38px; padding: 0 12px; font-size: 12px; }
+/* ============== 大 CTA 收尾 ============== */
+.sols-cta {
+    padding: clamp(80px, 10vw, 140px) 20px;
+    text-align: center;
+    background: var(--surface, #faf9f9);
+    border-top: 1px solid rgba(196, 199, 199, .3);
 }
-@media (min-width: 769px) and (max-width: 1024px) {
-    .sol-grid { grid-template-columns: repeat(2, 1fr); }
+.sols-cta__inner {
+    max-width: 720px;
+    margin: 0 auto;
+}
+.sols-cta__title {
+    margin: 0 0 18px;
+    font-family: var(--font-serif, 'Playfair Display', serif);
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 600;
+    background: linear-gradient(to right, #775a19, #e9c176, #775a19);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+.sols-cta__sub {
+    margin: 0 0 32px;
+    color: var(--on-surface-variant, #444748);
+    font-size: clamp(15px, 1.5vw, 17px);
+    line-height: 1.7;
+}
+.sols-cta__actions {
+    display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
 }
 </style>
 
-<!-- ════════════════════════════════════════════════════════
-     HTML
-     ════════════════════════════════════════════════════════ -->
-<div class="sol-solutions">
+<main class="sols-main">
 
-    <!-- Hero -->
-    <section class="sol-hero">
-        <div class="sol-hero__divider"></div>
-        <span class="sol-hero__kicker"><?php echo esc_html(hireai_field('header_kicker', $is_en ? 'AI SOLUTIONS' : 'AI 解决方案')); ?></span>
-        <h1 class="sol-hero__title"><?php echo esc_html(hireai_field('header_title', $is_en ? 'Curated AI Solutions.' : '臻选智能方案。')); ?></h1>
-        <p class="sol-hero__sub"><?php echo esc_html(hireai_field('header_subtitle', $is_en ? 'Each solution is a specialized AI operative — engineered for precision, designed for elegance.' : '每一个方案，都是一位专精的 AI 智能体——为精准而生，以优雅呈现。')); ?></p>
-        <?php if ($total_products > 0) : ?>
-        <div class="sol-hero__count">
-            <span><?php echo esc_html($is_en ? 'Collection' : '共计'); ?></span>
-            <strong><?php echo esc_html($total_products); ?></strong>
-            <span><?php echo esc_html($is_en ? 'solutions' : '个方案'); ?></span>
+    <!-- ============== Hero ============== -->
+    <header class="sols-page-hero">
+        <span class="sols-page-hero__kicker"><?php echo esc_html( $hero_kicker ); ?></span>
+        <h1 class="sols-page-hero__title"><?php echo esc_html( $hero_title ); ?></h1>
+        <p class="sols-page-hero__subtitle"><?php echo esc_html( $hero_subtitle ); ?></p>
+        <div class="sols-page-hero__actions">
+            <a class="btn btn-solid" href="<?php echo esc_url( $hero_cta_primary_link ); ?>">
+                <?php echo esc_html( $hero_cta_primary ); ?>
+                <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'arrow', 14 ) : ''; ?>
+            </a>
+            <a class="btn btn-outline" href="<?php echo esc_url( $hero_cta_secondary_link ); ?>">
+                <?php echo esc_html( $hero_cta_secondary ); ?>
+            </a>
         </div>
-        <?php endif; ?>
-    </section>
+    </header>
 
-    <!-- Filters -->
-    <nav class="sol-filters" role="group" aria-label="<?php echo esc_attr($is_en ? 'Filter solutions' : '筛选解决方案'); ?>">
-        <button class="sol-filter-btn is-active" type="button" data-filter=""><?php echo esc_html($is_en ? 'All' : '全部'); ?></button>
-        <?php foreach ($filters as $f) : ?>
-            <button class="sol-filter-btn" type="button" data-filter="<?php echo esc_attr($f['slug']); ?>"><?php echo esc_html($f['label']); ?></button>
-        <?php endforeach; ?>
-    </nav>
-
-    <!-- Grid -->
-    <div class="sol-grid-wrap">
-        <?php if ($query && $query->have_posts()) : ?>
-            <div class="sol-grid" id="sol-solution-grid">
-                <?php while ($query->have_posts()) : $query->the_post(); ?>
-                    <?php
-                    global $product;
-                    if (!$product || !$product->is_visible()) continue;
-                    $pid       = $product->get_id();
-                    $cat_slugs = wp_get_post_terms($pid, 'product_cat', ['fields' => 'slugs']);
-                    $cat_names = wp_get_post_terms($pid, 'product_cat', ['fields' => 'names']);
-                    $cat_label = (!is_wp_error($cat_names) && !empty($cat_names)) ? $cat_names[0] : '';
-                    $cats_attr = (!is_wp_error($cat_slugs)) ? implode(' ', $cat_slugs) : '';
-                    $operative = hireai_field('product_operative', $is_en ? 'OPERATIVE: HIREAI' : '执行智能体：聘AI', $pid);
-                    $retainer  = hireai_field('product_retainer_label', $is_en ? 'Starting' : '起步档', $pid);
-                    $img_url   = has_post_thumbnail() ? get_the_post_thumbnail_url($pid, 'large') : '';
-                    ?>
-                    <article class="sol-card" data-cats="<?php echo esc_attr($cats_attr); ?>">
-                        <a class="sol-card__media" href="<?php echo esc_url(get_permalink()); ?>" tabindex="-1" aria-hidden="true">
-                            <?php if ($img_url) : ?>
-                                <img src="<?php echo esc_url($img_url); ?>" alt="<?php echo esc_attr(get_the_title()); ?>" loading="lazy">
-                            <?php endif; ?>
-                            <?php if ($product->is_on_sale()) : ?>
-                                <span class="sol-card__badge sol-card__badge--sale"><?php echo esc_html($is_en ? 'Offer' : '特惠'); ?></span>
-                            <?php elseif ($cat_label !== '') : ?>
-                                <span class="sol-card__badge"><?php echo esc_html($cat_label); ?></span>
-                            <?php endif; ?>
-                        </a>
-                        <div class="sol-card__body">
-                            <div class="sol-card__operative"><?php echo esc_html($operative); ?></div>
-                            <h3 class="sol-card__title"><a href="<?php echo esc_url(get_permalink()); ?>"><?php the_title(); ?></a></h3>
-                            <?php
-                            $short_desc = $product->get_short_description();
-                            if ($short_desc !== '') : ?>
-                                <p class="sol-card__excerpt"><?php echo esc_html(wp_strip_all_tags($short_desc)); ?></p>
-                            <?php endif; ?>
-                            <div class="sol-card__footer">
-                                <div>
-                                    <span class="sol-card__retainer-label"><?php echo esc_html($retainer); ?></span>
-                                    <strong class="sol-card__price"><?php echo wp_kses_post($product->get_price_html()); ?></strong>
-                                </div>
-                                <a class="sol-card__arrow" href="<?php echo esc_url(get_permalink()); ?>" aria-label="<?php echo esc_attr($cta_text); ?>">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                                </a>
-                            </div>
-                        </div>
-                    </article>
-                <?php endwhile; wp_reset_postdata(); ?>
-            </div>
-
-            <p class="sol-empty" data-sol-empty><?php echo esc_html($is_en ? 'No solutions match this filter.' : '该分类下暂无方案。'); ?></p>
-
-            <?php if ($query->max_num_pages > 1) : ?>
-                <nav class="sol-pagination" aria-label="<?php echo esc_attr($is_en ? 'Solutions pagination' : '方案分页'); ?>">
-                    <?php
-                    echo paginate_links([
-                        'total'     => $query->max_num_pages,
-                        'current'   => $paged,
-                        'prev_text' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
-                        'next_text' => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>',
-                        'type'      => 'list',
-                        'before_page_number' => '<span>',
-                        'after_page_number'  => '</span>',
-                    ]);
-                    ?>
-                </nav>
-            <?php endif; ?>
-
-        <?php else : ?>
-            <!-- Fallback: no WooCommerce or no products -->
-            <div class="sol-grid" id="sol-solution-grid">
-                <?php foreach ($fallback as $item) : ?>
-                    <article class="sol-card" data-cats="<?php echo esc_attr($localize($item, 'cats')); ?>">
-                        <a class="sol-card__media" href="<?php echo esc_url(home_url('/ai-solutions/')); ?>" tabindex="-1" aria-hidden="true">
-                            <?php
-                            $img = hireai_default_image($localize($item, 'image'));
-                            if ($img) : ?>
-                                <img src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($localize($item, 'title')); ?>" loading="lazy">
-                            <?php endif; ?>
-                            <span class="sol-card__badge"><?php echo esc_html($localize($item, 'tag')); ?></span>
-                        </a>
-                        <div class="sol-card__body">
-                            <div class="sol-card__operative"><?php echo esc_html($localize($item, 'operative')); ?></div>
-                            <h3 class="sol-card__title"><a href="<?php echo esc_url(home_url('/ai-solutions/')); ?>"><?php echo esc_html($localize($item, 'title')); ?></a></h3>
-                            <p class="sol-card__excerpt"><?php echo esc_html($localize($item, 'excerpt')); ?></p>
-                            <div class="sol-card__footer">
-                                <div>
-                                    <span class="sol-card__retainer-label"><?php echo esc_html($localize($item, 'retainer')); ?></span>
-                                    <strong class="sol-card__price"><?php echo esc_html($localize($item, 'price')); ?></strong>
-                                </div>
-                                <a class="sol-card__arrow" href="<?php echo esc_url(home_url('/ai-solutions/')); ?>" aria-label="<?php echo esc_attr($cta_text); ?>">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                                </a>
-                            </div>
-                        </div>
-                    </article>
+    <!-- ============== 筛选 ============== -->
+    <section class="sols-filter" aria-label="<?php echo esc_attr( $is_en ? 'Solution filters' : '方案筛选' ); ?>">
+        <div class="sols-filter__tabs" role="tablist">
+            <button class="sols-filter__tab is-active" type="button" role="tab" aria-selected="true" data-tab="scene">
+                <?php echo esc_html( $tab_scene_text ); ?>
+            </button>
+            <button class="sols-filter__tab" type="button" role="tab" aria-selected="false" data-tab="employee">
+                <?php echo esc_html( $tab_employee_text ); ?>
+            </button>
+        </div>
+        <div class="sols-filter__panel">
+            <div class="sols-filter__chips" role="group">
+                <?php foreach ( $filters as $idx => $f ) :
+                    $label    = $is_en ? $f['label_en'] : $f['label_zh'];
+                    $slug     = isset( $f['slug'] ) ? $f['slug'] : '';
+                    $is_first = ( 0 === $idx );
+                ?>
+                    <button class="sols-filter__chip<?php echo $is_first ? ' is-active' : ''; ?>" type="button" data-slug="<?php echo esc_attr( $slug ); ?>">
+                        <?php echo esc_html( $label ); ?>
+                    </button>
                 <?php endforeach; ?>
             </div>
-        <?php endif; ?>
+        </div>
+    </section>
+
+    <!-- ============== 方案卡片网格 ============== -->
+    <section class="sols-grid-wrap" aria-label="<?php echo esc_attr( $is_en ? 'Solution cards' : '方案列表' ); ?>">
+        <div class="sols-grid">
+            <?php foreach ( $cards as $i => $c ) :
+                $kicker = $is_en ? $c['kicker_en'] : $c['kicker_zh'];
+                $title  = $is_en ? $c['title_en']  : $c['title_zh'];
+                $desc   = $is_en ? $c['desc_en']   : $c['desc_zh'];
+                $img    = isset( $c['image'] ) ? $c['image'] : 'defaults/solution-1.jpg';
+                $price  = isset( $c['price'] ) ? $c['price'] : '';
+                $link   = isset( $c['link'] )  ? $c['link']  : '/contact/';
+                $is_cta = ! empty( $c['is_cta'] );
+                $cta_label = $is_cta ? ( $is_en ? 'Contact Us' : '联络助理' ) : $card_cta_text;
+                $img_url = function_exists( 'hireai_default_image' ) ? hireai_default_image( $img ) : '';
+                if ( ! $img_url ) { $img_url = get_stylesheet_directory_uri() . '/assets/img/' . $img; }
+            ?>
+                <article class="sols-card<?php echo $is_cta ? ' sols-card--cta-highlight' : ''; ?>">
+                    <a class="sols-card__media" href="<?php echo esc_url( $link ); ?>" aria-label="<?php echo esc_attr( $title ); ?>">
+                        <img loading="lazy" src="<?php echo esc_url( $img_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
+                    </a>
+                    <div class="sols-card__body">
+                        <span class="sols-card__kicker"><?php echo esc_html( $kicker ); ?></span>
+                        <h3 class="sols-card__title"><?php echo esc_html( $title ); ?></h3>
+                        <p class="sols-card__desc"><?php echo esc_html( $desc ); ?></p>
+                        <div class="sols-card__foot">
+                            <?php if ( $price ) : ?>
+                                <span class="sols-card__price"><?php echo esc_html( $price ); ?></span>
+                            <?php else : ?>
+                                <span></span>
+                            <?php endif; ?>
+                            <a class="sols-card__cta" href="<?php echo esc_url( $link ); ?>">
+                                <?php echo esc_html( $cta_label ); ?>
+                                <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'arrow', 14 ) : ''; ?>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- ============== 分页 ============== -->
+        <nav class="sols-pagination" aria-label="<?php echo esc_attr( $is_en ? 'Pagination' : '分页' ); ?>">
+            <button class="sols-pagination__btn" type="button" aria-label="<?php echo esc_attr( $is_en ? 'Previous' : '上一页' ); ?>">
+                <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'chevron-left', 14 ) : '&lsaquo;'; ?>
+            </button>
+            <button class="sols-pagination__btn is-active" type="button">1</button>
+            <button class="sols-pagination__btn" type="button">2</button>
+            <button class="sols-pagination__btn" type="button">3</button>
+            <span class="sols-pagination__ellipsis">&hellip;</span>
+            <button class="sols-pagination__btn" type="button">8</button>
+            <button class="sols-pagination__btn" type="button" aria-label="<?php echo esc_attr( $is_en ? 'Next' : '下一页' ); ?>">
+                <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'chevron-right', 14 ) : '&rsaquo;'; ?>
+            </button>
+        </nav>
+    </section>
+
+</main>
+
+<!-- ============== 邀约礼遇 Invite & Earn ============== -->
+<section class="sols-invite" id="invite-earn" aria-label="<?php echo esc_attr( $invite_kicker ); ?>">
+    <div class="sols-invite__inner">
+        <header class="sols-invite__head">
+            <span class="sols-invite__kicker"><?php echo esc_html( $invite_kicker ); ?></span>
+            <h2 class="sols-invite__title"><?php echo esc_html( $invite_title ); ?></h2>
+            <p class="sols-invite__subtitle"><?php echo esc_html( $invite_subtitle ); ?></p>
+        </header>
+
+        <div class="sols-invite__card">
+            <div class="sols-invite__row">
+                <div class="sols-invite__code-wrap">
+                    <code id="sols-invite-code"><?php echo esc_html( $invite_code ); ?></code>
+                </div>
+                <button class="sols-invite__copy" type="button" data-copy-target="sols-invite-code" data-copied="<?php echo esc_attr( $is_en ? 'Copied' : '已复制' ); ?>">
+                    <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'copy', 14 ) : ''; ?>
+                    <span><?php echo esc_html( $invite_copy_text ); ?></span>
+                </button>
+            </div>
+
+            <ol class="sols-invite__steps" aria-label="<?php echo esc_attr( $invite_steps_label ); ?>">
+                <?php foreach ( $invite_steps as $step ) :
+                    $step_no   = isset( $step['step_no'] ) ? $step['step_no'] : '';
+                    $step_text = $is_en ? ( isset( $step['step_en'] ) ? $step['step_en'] : '' ) : ( isset( $step['step_zh'] ) ? $step['step_zh'] : '' );
+                    $highlight = (string) $invite_reward_amount;
+                    $rendered  = str_replace(
+                        $highlight,
+                        '<span class="sols-invite__reward">' . esc_html( $highlight ) . '</span>',
+                        esc_html( $step_text )
+                    );
+                ?>
+                    <li class="sols-invite__step">
+                        <span class="sols-invite__step-no"><?php echo esc_html( $step_no ); ?></span>
+                        <p class="sols-invite__step-text"><?php echo $rendered; /* already escaped; reward span is trusted */ ?></p>
+                    </li>
+                <?php endforeach; ?>
+            </ol>
+        </div>
     </div>
+</section>
 
-</div><!-- .sol-solutions -->
+<!-- ============== 大 CTA 收尾 ============== -->
+<section class="sols-cta" aria-label="<?php echo esc_attr( $final_kicker ); ?>">
+    <div class="sols-cta__inner">
+        <span class="sols-invite__kicker" style="margin-bottom:14px;"><?php echo esc_html( $final_kicker ); ?></span>
+        <h2 class="sols-cta__title"><?php echo esc_html( $final_title ); ?></h2>
+        <p class="sols-cta__sub"><?php echo esc_html( $final_subtitle ); ?></p>
+        <div class="sols-cta__actions">
+            <a class="btn btn-solid" href="<?php echo esc_url( home_url( '/contact/' ) ); ?>">
+                <?php echo esc_html( $final_cta_primary ); ?>
+                <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'arrow', 14 ) : ''; ?>
+            </a>
+            <a class="btn btn-outline" href="<?php echo esc_url( home_url( '/category/cases/' ) ); ?>">
+                <?php echo esc_html( $final_cta_secondary ); ?>
+            </a>
+        </div>
+    </div>
+</section>
 
-<!-- ════════════════════════════════════════════════════════
-     JS: Filter + Empty State
-     ════════════════════════════════════════════════════════ -->
 <script>
+/* 邀约礼遇 — 复制推荐码 / 筛选 / 分页交互 */
 (function(){
-    var btns  = document.querySelectorAll('.sol-filter-btn');
-    var cards = document.querySelectorAll('#sol-solution-grid .sol-card');
-    var empty = document.querySelector('[data-sol-empty]');
-
-    function filterCards(slug) {
-        var visible = 0;
-        cards.forEach(function(c) {
-            var match = slug === '' || (c.getAttribute('data-cats') || '').indexOf(slug) !== -1;
-            c.style.display = match ? '' : 'none';
-            if (match) visible++;
+    var btn = document.querySelector('.sols-invite__copy');
+    if (btn) {
+        btn.addEventListener('click', function(){
+            var targetId = btn.getAttribute('data-copy-target');
+            var codeEl = document.getElementById(targetId);
+            if (!codeEl) return;
+            var text = codeEl.textContent || '';
+            var done = function(){
+                var labelEl = btn.querySelector('span');
+                if (labelEl) {
+                    var orig = labelEl.textContent;
+                    labelEl.textContent = btn.getAttribute('data-copied') || 'Copied';
+                    setTimeout(function(){ labelEl.textContent = orig; }, 1800);
+                }
+            };
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(done).catch(function(){
+                    var ta = document.createElement('textarea');
+                    ta.value = text; document.body.appendChild(ta);
+                    ta.select(); document.execCommand('copy'); ta.remove();
+                    done();
+                });
+            } else {
+                var ta = document.createElement('textarea');
+                ta.value = text; document.body.appendChild(ta);
+                ta.select(); document.execCommand('copy'); ta.remove();
+                done();
+            }
         });
-        if (empty) empty.classList.toggle('is-visible', visible === 0);
     }
 
-    btns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            btns.forEach(function(b){ b.classList.remove('is-active'); });
-            btn.classList.add('is-active');
-            filterCards(btn.getAttribute('data-filter'));
+    var chips = document.querySelectorAll('.sols-filter__chip');
+    chips.forEach(function(chip){
+        chip.addEventListener('click', function(){
+            chips.forEach(function(c){ c.classList.remove('is-active'); });
+            chip.classList.add('is-active');
+        });
+    });
+
+    var tabs = document.querySelectorAll('.sols-filter__tab');
+    tabs.forEach(function(tab){
+        tab.addEventListener('click', function(){
+            tabs.forEach(function(t){ t.classList.remove('is-active'); t.setAttribute('aria-selected','false'); });
+            tab.classList.add('is-active');
+            tab.setAttribute('aria-selected','true');
+        });
+    });
+
+    var pageBtns = document.querySelectorAll('.sols-pagination__btn');
+    pageBtns.forEach(function(b){
+        b.addEventListener('click', function(){
+            if (b.textContent.trim() === '') return;
+            pageBtns.forEach(function(x){ x.classList.remove('is-active'); });
+            b.classList.add('is-active');
         });
     });
 })();
