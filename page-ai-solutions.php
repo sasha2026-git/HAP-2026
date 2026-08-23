@@ -167,14 +167,23 @@ $cards = array(
 );
 
 /* ====== v3.0.4 hotfix: WC 集成防御 + 保留 fallback ====== */
-/* 原来 v3.0.3: wc_get_product($pid) 可能返回 false → 触发 fatal error；
+/* v3.0.8 (Bug E): 增强 product_cat 探测 + fallback 到「全商品」
+ *   之前 v3.0.7 完全不限定 product_cat → 6 个商品应该都拉到，但截图显示部分不可见
+ *   根因猜测：catalog_visibility 或 stock_status 过滤过严
+ *   修复：
+ *     1. hireai_find_product_category_id() 探测 product_cat（限 category 优先）
+ *     2. fallback：探测失败时不传 tax_query product_cat，让所有 publish product 都返回
+ *     3. admin notice：拉到 0 个时提示
+ *
+ * 原来 v3.0.3: wc_get_product($pid) 可能返回 false → 触发 fatal error；
    同时 hireai_field('product_operative') 若字段返回数组会导致卡片 kicker 显示 "Array"。
-   现包裹 try/catch + is_object 检查；只要 WC 任意一步出错就跳过整个覆盖、保留 $cards 兜底。 */
+   现包裹 try/catch + is_object 检查；只要 WC 任意一步出错就跳过整个覆盖、保留 $cards 兜底。
+ */
 $wc_products = [];
 if (post_type_exists('product') && function_exists('wc_get_product')) {
     try {
         $paged = max(1, get_query_var('sols_paged') ?: (isset($_GET['sols_page']) ? (int)$_GET['sols_page'] : 1));
-        $wc_q = new WP_Query([
+        $wc_q_args = [
             'post_type'      => 'product',
             'post_status'    => 'publish',
             'posts_per_page' => 9,
@@ -189,10 +198,40 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
                 'terms'    => ['exclude-from-catalog', 'exclude-from-search'],
                 'operator' => 'NOT IN',
             ]],
-        ]);
-        /* v3.0.7 debug: 记录拉到几个 product */
+        ];
+        /* v3.0.8 (Bug E): 探测 product_cat term_id → 探测成功时限定 category（避免拉无关 product）
+         *   探测失败时不传 category filter，让所有 publish product 都返回 */
+        $prod_cat_id = function_exists('hireai_find_product_category_id')
+            ? hireai_find_product_category_id([
+                'solution', 'solutions', 'product', 'products', 'ai-solution', 'ai-solutions',
+                'shop', 'store', '商城',
+                '解决方案', '商品', 'AI解决方案', '产品', '服务', '解决方案商城',
+                '公关', '电商', '零售', '金融', '医疗', '娱乐',
+            ])
+            : 0;
+        if ($prod_cat_id) {
+            // product_cat 是 WC 自定义 taxonomy，不是 WP 'category'
+            $wc_q_args['tax_query'][] = [
+                'taxonomy' => 'product_cat',
+                'field'    => 'term_id',
+                'terms'    => [$prod_cat_id],
+                'operator' => 'IN',
+            ];
+            // 多 tax_query 时需要 relation
+            if (count($wc_q_args['tax_query']) > 1) {
+                $wc_q_args['tax_query']['relation'] = 'AND';
+            }
+        }
+        $wc_q = new WP_Query($wc_q_args);
+        /* v3.0.8 debug: 记录实际 category + 拉到的 product 数 */
         if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
-            error_log('[hireai v3.0.7] wc_query: found=' . (int) $wc_q->found_posts . ', max_pages=' . (int) $wc_q->max_num_pages);
+            error_log('[hireai v3.0.8] wc_query: prod_cat_id=' . $prod_cat_id . ', found=' . (int) $wc_q->found_posts . ', max_pages=' . (int) $wc_q->max_num_pages);
+        }
+        /* v3.0.8 (Bug E) admin notice: 拉到 0 个 publish product 时提醒 */
+        if (!$wc_q->have_posts() && current_user_can('manage_options')) {
+            add_action('admin_notices', function () use ($prod_cat_id) {
+                echo '<div class="notice notice-warning"><p>聘AI: AI 解决方案商城没有显示任何 WC 商品。可能原因：1) 商品 catalog_visibility=hidden; 2) product_cat 探测 ID=' . (int) $prod_cat_id . ' 不匹配; 3) WC 未启用。请到 WC → 产品 检查。</p></div>';
+            });
         }
         if ($wc_q->have_posts()) {
             while ($wc_q->have_posts()) {
@@ -298,9 +337,11 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
 .sols-page-hero__subtitle {
     max-width: 720px;
     margin: 0 auto;
-    color: var(--on-surface-variant, #444748);
-    font-style: italic;
-    font-size: clamp(16px, 1.6vw, 18px);
+    /* v3.0.8 (Bug C): 移除 italic + 用 on-surface 颜色 + 16px（DESIGN.md body-md） */
+    font-family: var(--font-body-en, 'Inter'), sans-serif;
+    font-size: 16px;
+    font-style: normal !important;
+    color: var(--on-surface, #1a1c1c);
     line-height: 1.6;
 }
 .sols-page-hero__actions {
@@ -569,9 +610,11 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
     color: transparent;
 }
 .sols-invite__subtitle {
-    color: var(--on-surface-variant, #444748);
-    font-style: italic;
-    font-size: clamp(15px, 1.6vw, 18px);
+    /* v3.0.8 (Bug C): 移除 italic + 改 on-surface 颜色 + 16px */
+    font-family: var(--font-body-en, 'Inter'), sans-serif;
+    color: var(--on-surface, #1a1c1c);
+    font-style: normal !important;
+    font-size: 16px;
     line-height: 1.6;
     max-width: 640px;
     margin: 0 auto;

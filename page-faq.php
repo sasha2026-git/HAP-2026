@@ -294,8 +294,12 @@ if ($active_group === '') {
 .hireai-faq-hero__subtitle {
     max-width: 640px;
     margin-inline: auto;
-    color: var(--on-surface-variant, #444748);
-    font-style: italic;
+    /* v3.0.8 (Bug C): 移除 italic + 用 on-surface 颜色 + 16px */
+    font-family: var(--font-body-en, 'Inter'), sans-serif;
+    font-size: 16px;
+    font-style: normal !important;
+    color: var(--on-surface, #1a1c1c);
+    line-height: 1.6;
 }
 
 /* Hero banner image */

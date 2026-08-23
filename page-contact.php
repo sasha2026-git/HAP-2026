@@ -116,7 +116,7 @@ $form_action = esc_url(admin_url('admin-post.php'));
 .hireai-c-title__zh{display:inline-block;background:linear-gradient(135deg,#b8862e 0%,#e9c176 45%,#b8862e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700;}
 .hireai-c-title__sep{display:inline-block;margin:0 .35em;color:var(--hp-secondary);opacity:.55;font-weight:300;}
 .hireai-c-title__en{display:inline-block;background:linear-gradient(135deg,#b8862e 0%,#e9c176 45%,#b8862e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-style:italic;font-weight:500;}
-.hireai-c-subtitle{margin:28px auto 0;max-width:680px;font-family:var(--hp-font-serif);font-style:italic;font-size:clamp(15px,1.4vw,18px);line-height:1.65;color:var(--hp-on-surface-var);}
+.hireai-c-subtitle{margin:28px auto 0;max-width:680px;font-family:var(--font-body-en,'Inter'),sans-serif;font-size:16px;font-style:normal !important;line-height:1.65;color:var(--on-surface,#1a1c1c);}
 
 /* ===== Decorative banner ===== */
 .hireai-c-banner{padding:0 clamp(20px,5vw,80px);background:var(--hp-surface,#faf9f9);}

@@ -183,9 +183,17 @@ $final_ghost   = $is_en ? 'Download Brand Book' : '下载品牌手册';
 $final_url     = $is_en ? '/contact/' : '/contact/';
 $final_ghost_url = $is_en ? '/contact/' : '/contact/';
 
-/* v3.0.7: 智能探测 category — 多 slug + 中文名 fallback + cat=ID（更可靠） */
+/* v3.0.8 (Bug D): 增强候选 slug + 中文名 fallback（v3.0.7 仅 6 个候选不足）
+ *   v3.0.7 candidate: ['cases', 'case', 'casestudy', 'case-studies', '案例', '案例研究']
+ *   v3.0.8 增加: 'case-showcase', 'case-collection', 'work', 'works', 'project',
+ *                'projects', 'portfolio', '案例展示', '案例集', '我们的案例', '项目案例'
+ */
 $cases_cat_id = function_exists('hireai_find_category_id')
-    ? hireai_find_category_id(['cases', 'case', 'casestudy', 'case-studies', '案例', '案例研究'])
+    ? hireai_find_category_id([
+        'cases', 'case', 'casestudy', 'case-studies', 'case-showcase', 'case-collection',
+        'work', 'works', 'project', 'projects', 'portfolio',
+        '案例', '案例研究', '案例展示', '案例集', '我们的案例', '项目案例',
+    ])
     : 0;
 if (!$cases_cat_id && current_user_can('manage_options')) {
     add_action('admin_notices', function () {
@@ -203,7 +211,21 @@ $cases_q = [
 if ($cases_cat_id) {
     $cases_q['cat'] = $cases_cat_id;
 } else {
-    $cases_q['tax_query'] = [['taxonomy' => 'category', 'field' => 'slug', 'terms' => ['cases', 'case'], 'operator' => 'IN']];
+    /* v3.0.8 (Bug D): fallback — 用「非 insights 的所有 category」中 count>0 的第一个
+     *   让 Sasha 即使没建 cases category 也能看到案例（前提是 insights 探测成功） */
+    if (function_exists('hireai_fallback_post_category_id') && $insights_cat_id) {
+        $fallback_cat = hireai_fallback_post_category_id($insights_cat_id);
+        if ($fallback_cat) {
+            $cases_q['cat'] = $fallback_cat;
+            if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
+                error_log('[hireai v3.0.8] cases_fallback cat_id=' . $fallback_cat);
+            }
+        } else {
+            $cases_q['tax_query'] = [['taxonomy' => 'category', 'field' => 'slug', 'terms' => ['cases', 'case'], 'operator' => 'IN']];
+        }
+    } else {
+        $cases_q['tax_query'] = [['taxonomy' => 'category', 'field' => 'slug', 'terms' => ['cases', 'case'], 'operator' => 'IN']];
+    }
 }
 $wp_cases = get_posts($cases_q);
 if (!empty($wp_cases)) {
@@ -232,8 +254,12 @@ if (!empty($wp_cases)) {
     }
 }
 
+/* v3.0.8 (Bug D): insights 同样增强候选 slug */
 $insights_cat_id = function_exists('hireai_find_category_id')
-    ? hireai_find_category_id(['insights', 'insight', 'industry-insights', 'blog', '洞察', '观点', '行业洞察'])
+    ? hireai_find_category_id([
+        'insights', 'insight', 'industry-insights', 'blog', 'news', 'article', 'articles',
+        '洞察', '观点', '行业洞察', '我们的洞察',
+    ])
     : 0;
 $insights_q = [
     'post_type'      => 'post',
@@ -321,9 +347,12 @@ if (!empty($wp_insights)) {
 .ci-section__sub {
     margin: 0;
     max-width: 640px;
-    font-family: var(--font-body, 'Montserrat', 'Inter', sans-serif), sans-serif;
-    font-size: clamp(15px, 1.5vw, 17px);
-    color: var(--on-surface-variant, #444748);
+    /* v3.0.8 (Bug C): 用 --font-body-en (English body 规范字体) 而非 fallback Inter；
+       移除 italic + 改 on-surface 颜色；确保 16px */
+    font-family: var(--font-body-en, 'Inter'), sans-serif;
+    font-size: 16px;
+    font-style: normal !important;
+    color: var(--on-surface, #1a1c1c);
     line-height: 1.6;
 }
 .ci-section__rule {

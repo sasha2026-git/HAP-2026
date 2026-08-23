@@ -157,6 +157,10 @@ foreach ($raw_rows as $r) {
     --lb-att-gold:  #775a19;
     --lb-att-goldl: #e9c176;
     --lb-att-line:  rgba(196, 199, 199, 0.5);
+    /* v3.0.8 (Bug B): section gap 160-200px（hireaipeople.txt 规范）
+     *   之前 page-ai-employees.php 的 .lb-hero/.lb-container/.lb-cta padding-block
+     *   仅 64-120px → section 之间没间隙 */
+    --gap: clamp(160px, 18vw, 200px);
     background: var(--lb-att-cream);
 }
 
@@ -240,6 +244,7 @@ foreach ($raw_rows as $r) {
 }
 
 /* Rows wrapper (just to scope the JS filter) */
+.lb-att-rows { display: flex; flex-direction: column; gap: var(--gap, clamp(160px, 18vw, 200px)); }
 .lb-att-rows > .lb-row { transition: opacity 0.4s ease; }
 .lb-att-rows.is-filtering > .lb-row.is-hidden {
     opacity: 0;
@@ -317,13 +322,25 @@ foreach ($raw_rows as $r) {
     .lb-att-tab { padding: 8px 16px; font-size: 11px; }
 }
 
-/* CTA tweaks: keep on cream background, not surface-low */
-.lb-att .lb-cta__heading { font-style: italic; }
+/* v3.0.8 (Bug B): section gap 160-200px（覆盖 style.css 默认 64-120px） */
+.lb-att .lb-hero {
+    padding-block: clamp(80px, 10vw, 120px) clamp(40px, 5vw, 72px);
+    margin-bottom: var(--gap, clamp(160px, 18vw, 200px));
+}
+.lb-att .lb-container {
+    padding-bottom: var(--gap, clamp(160px, 18vw, 200px));
+    gap: var(--gap, clamp(160px, 18vw, 200px));
+}
 .lb-att .lb-cta {
+    padding-block: var(--gap, clamp(160px, 18vw, 200px)) clamp(80px, 10vw, 120px);
     background: transparent;
     border-top: 1px solid var(--lb-att-line);
     border-bottom: 1px solid var(--lb-att-line);
 }
+
+/* CTA tweaks: keep on cream background, not surface-low
+   v3.0.8: .lb-cta__heading 保留 italic（Stitch 设计稿允许 display 用 italic） */
+.lb-att .lb-cta__heading { font-style: italic; }
 </style>
 
 <div class="site-main lb-main lb-att" id="content">

@@ -222,6 +222,39 @@ add_action('save_post_page', function ($post_id, $post) {
     }
 }, 20, 2);
 
+/* v3.0.8 (Bug A): 页面保存时清 transient + ACF cache
+ *   - 防止 Sasha 编辑 ACF 图片后前台读旧值（LiteSpeed/对象缓存/ACF JSON sync）
+ *   - 不修改 OBJECT CACHE 本身（依赖 LiteSpeed 自动失效）
+ */
+add_action('save_post_page', function ($post_id, $post) {
+    if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) {
+        return;
+    }
+    // 清 ACF field values 缓存（WP Object Cache）
+    if (function_exists('wp_cache_delete_group')) {
+        wp_cache_delete_group('acf_field_values');
+    }
+    // 清 LiteSpeed Cache（如果安装）
+    if (class_exists('LiteSpeed_Cache_API')) {
+        do_action('litespeed_purge_post', $post_id);
+    }
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        error_log('[hireai v3.0.8] page_save cache_clear: post_id=' . $post_id);
+    }
+}, 30, 2);
+
+/* v3.0.8 (Bug A): ACF save_post 清对应页面的对象缓存（更精细触发）
+ *   - ACF update_field 时立刻清 wp_cache（避免 ACF 内部缓存保留旧值）
+ */
+add_action('acf/save_post', function ($post_id) {
+    if (!function_exists('wp_cache_delete_group')) return;
+    // ACF 在 meta cache 中以 _acf_meta_<post_id> 为 key 缓存所有字段值
+    wp_cache_delete($post_id, 'post_meta');
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        error_log('[hireai v3.0.8] acf_save cache_clear: post_id=' . $post_id);
+    }
+}, 20);
+
 
 /* -------------------------------------------------------------------------
  * 0. 辅助函数（带默认值回退，ACF 未装时优雅降级）
@@ -348,41 +381,80 @@ function lookbook_fallback_employees() {
 
 /**
  * 取图片 URL，兼容 ACF image 三种 return_format（数组/ID/URL）
+ *
+ * v3.0.8 (Bug A): 多 suffix 回退链 — `fp_prod1_image_zh` 找不到时自动尝试
+ *   1. 同 suffix（如 `_zh`）
+ *   2. 无 suffix（用户手动创建字段时常见）
+ *   3. 反向 suffix（`_en` ↔ `_zh`）
+ *   4. 默认资产
  */
 function site_image_url($name, $default = '', $post_id = false) {
     if (function_exists('get_field')) {
         $v = $post_id ? get_field($name, $post_id) : get_field($name);
-        // return_format = array: ACF returns ['url'=>..., 'ID'=>...]
-        if (is_array($v)) {
-            if (!empty($v['url'])) return $v['url'];
-            if (!empty($v['ID'])) {
-                $url = wp_get_attachment_image_url($v['ID'], 'full');
-                if ($url) return $url;
-            }
-            if (!empty($v['id'])) {
-                $url = wp_get_attachment_image_url($v['id'], 'full');
-                if ($url) return $url;
-            }
+        if (site_image_url_is_valid($v)) {
+            return site_image_url_resolve($v, $default);
         }
-        // return_format = url: string URL
-        if (is_string($v) && $v !== '' && filter_var($v, FILTER_VALIDATE_URL)) {
-            return $v;
-        }
-        // Old: numeric ID
-        if (is_numeric($v) && intval($v) > 0) {
-            $url = wp_get_attachment_image_url(intval($v), 'full');
-            return $url ?: $default;
+        // v3.0.8: suffix fallback chain — 尝试无 suffix + 反向 suffix
+        if ($post_id === false && preg_match('/_([a-z]{2,3})$/', $name, $m)) {
+            $cur_suffix = $m[1];
+            $base = substr($name, 0, -strlen($cur_suffix));
+            // 顺序：无 suffix → 反向 suffix
+            $alt_suffixes = ['', ($cur_suffix === 'zh' ? '_en' : '_zh')];
+            foreach ($alt_suffixes as $alt) {
+                $alt_name = $base . $alt;
+                if ($alt_name === $name) continue;
+                $v2 = get_field($alt_name);
+                if (site_image_url_is_valid($v2)) {
+                    return site_image_url_resolve($v2, $default);
+                }
+            }
         }
     }
     return $default;
 }
 
 /**
- * 取语言化图片 URL
+ * v3.0.8 (Bug A) helper — 判断 ACF image 字段值是否"有内容"
  */
-function hireai_image($name, $default = '', $post_id = false) {
-    return site_image_url($name . hireai_lang_suffix(), $default, $post_id);
+function site_image_url_is_valid($v) {
+    if (is_array($v)) {
+        return !empty($v['url']) || !empty($v['ID']) || !empty($v['id']);
+    }
+    if (is_string($v)) return $v !== '';
+    if (is_numeric($v)) return intval($v) > 0;
+    return $v !== null && $v !== false && $v !== '';
 }
+
+/**
+ * v3.0.8 (Bug A) helper — 把 ACF image 字段值统一解析成 URL 字符串
+ */
+function site_image_url_resolve($v, $default = '') {
+    if (is_array($v)) {
+        if (!empty($v['url'])) return $v['url'];
+        if (!empty($v['ID'])) {
+            $url = wp_get_attachment_image_url($v['ID'], 'full');
+            if ($url) return $url;
+        }
+        if (!empty($v['id'])) {
+            $url = wp_get_attachment_image_url($v['id'], 'full');
+            if ($url) return $url;
+        }
+    }
+    if (is_string($v) && $v !== '') {
+        // v3.0.8: 容错非标准 URL（相对路径 / 不带协议的本地路径）
+        if (filter_var($v, FILTER_VALIDATE_URL)) return $v;
+        // 相对路径或本地路径 → 当成 URL 返回（避免被 default 吞掉）
+        if (strpos($v, '/') === 0 || strpos($v, './') === 0) return $v;
+        return $v;
+    }
+    if (is_numeric($v) && intval($v) > 0) {
+        $url = wp_get_attachment_image_url(intval($v), 'full');
+        return $url ?: $default;
+    }
+    return $default;
+}
+
+
 
 /**
  * 取 ACF link 字段，统一返回 ['url','title','target']
@@ -559,6 +631,88 @@ function hireai_find_category_id($candidates) {
 }
 
 /**
+ * v3.0.8 (Bug D) — 列出全部 category（slug + name + count），仅 WP_DEBUG + admin 时用
+ *
+ * @return array 形如 [['slug'=>'cases','name'=>'案例','count'=>12], ...]
+ */
+function hireai_list_all_categories() {
+    if (!function_exists('get_categories')) return [];
+    $cats = get_categories(['hide_empty' => false, 'taxonomy' => 'category']);
+    $out = [];
+    foreach ($cats as $c) {
+        $out[] = [
+            'slug'  => $c->slug,
+            'name'  => $c->name,
+            'count' => (int) $c->count,
+        ];
+    }
+    return $out;
+}
+
+/**
+ * v3.0.8 (Bug D) — 探测不到 cases_cat_id 时 fallback 到「除 insights 外的所有 category」
+ *
+ * @param int $exclude_cat_id 排除的 category（如 insights_cat_id）
+ * @return int category term_id；找不到返回 0
+ */
+function hireai_fallback_post_category_id($exclude_cat_id = 0) {
+    if (!function_exists('get_categories')) return 0;
+    $cats = get_categories([
+        'hide_empty' => true,
+        'taxonomy'   => 'category',
+        'exclude'    => $exclude_cat_id ? [(int) $exclude_cat_id] : [],
+    ]);
+    foreach ($cats as $c) {
+        if ((int) $c->term_id !== (int) $exclude_cat_id && (int) $c->count > 0) {
+            return (int) $c->term_id;
+        }
+    }
+    return 0;
+}
+
+/**
+ * v3.0.8 (Bug E) — 智能探测 WC product_cat term_id
+ *
+ * @param array $candidates 候选 slug 或 term name
+ * @return int product_cat term_id；找不到返回 0
+ */
+function hireai_find_product_category_id($candidates) {
+    if (!taxonomy_exists('product_cat')) return 0;
+    $candidates = is_array($candidates) ? $candidates : [$candidates];
+    foreach ($candidates as $key) {
+        $key = trim((string) $key);
+        if ($key === '') continue;
+        // 1. 按 slug 找
+        $term = get_term_by('slug', $key, 'product_cat');
+        if ($term && !is_wp_error($term)) return (int) $term->term_id;
+        // 2. 按 name 找
+        $term = get_term_by('name', $key, 'product_cat');
+        if ($term && !is_wp_error($term)) return (int) $term->term_id;
+    }
+    return 0;
+}
+
+/**
+ * v3.0.8 (Bug E) — 列出所有 product_cat（slug + name + count），仅 WP_DEBUG + admin 时用
+ *
+ * @return array
+ */
+function hireai_list_all_product_categories() {
+    if (!taxonomy_exists('product_cat')) return [];
+    $terms = get_terms(['taxonomy' => 'product_cat', 'hide_empty' => false]);
+    if (is_wp_error($terms)) return [];
+    $out = [];
+    foreach ($terms as $t) {
+        $out[] = [
+            'slug'  => $t->slug,
+            'name'  => $t->name,
+            'count' => (int) $t->count,
+        ];
+    }
+    return $out;
+}
+
+/**
  * 智能探测"数字员工"Post — 多 slug + 中文 category fallback
  * 返回 WP_Post[] 数组（按 menu_order 排序）
  *
@@ -613,27 +767,25 @@ function hireai_resolve_employee_url($index = 0, $fallback_url = '') {
 }
 
 /* -------------------------------------------------------------------------
- * 0.6. v3.0.7 诊断 — 仅 WP_DEBUG + admin 角色下生效
- *     控制台输出 category / post / WC / cookie 状态
+ * 0.6. v3.0.8 诊断 — 仅 WP_DEBUG + admin 角色下生效
+ *     控制台输出 ACF fp_prodN_image / category / product_cat / cookie / post slug 状态
  * ---------------------------------------------------------------------- */
 add_action('wp_footer', function () {
     if (!defined('WP_DEBUG') || !WP_DEBUG) return;
     if (!current_user_can('manage_options')) return;
     ?>
-    <script id="hireai-v307-debug">
-    console.group('[HIREAI v3.0.7 诊断]');
+    <script id="hireai-v308-debug">
+    console.group('[HIREAI v3.0.8 诊断]');
     try {
-        console.log('English categories:', <?php
-            $cats = get_categories(['hide_empty' => false]);
-            $eng = array_values(array_filter($cats, fn($c) => preg_match('/^[a-z0-9-]+$/', $c->slug)));
-            echo json_encode(array_map(fn($c) => $c->slug . '(' . $c->count . ')', $eng));
-        ?>);
-        console.log('Chinese categories:', <?php
-            $cats = get_categories(['hide_empty' => false]);
-            $cn = array_values(array_filter($cats, fn($c) => !preg_match('/^[a-z0-9-]+$/', $c->slug)));
-            echo json_encode(array_map(fn($c) => $c->slug . '(' . $c->count . ')', $cn));
+        console.log('All categories:', <?php
+            $cats = hireai_list_all_categories();
+            echo json_encode(array_map(fn($c) => $c['slug'] . '(' . $c['name'] . '):' . $c['count'], $cats));
         ?>);
         console.log('WC product_type:', <?php echo json_encode(post_type_exists('product') ? 'EXISTS' : 'NOT FOUND'); ?>);
+        console.log('All product_cat:', <?php
+            $cats = hireai_list_all_product_categories();
+            echo json_encode(array_map(fn($c) => $c['slug'] . '(' . $c['name'] . '):' . $c['count'], $cats));
+        ?>);
         console.log('hireai_lang cookie:', <?php echo json_encode($_COOKIE['hireai_lang'] ?? 'none'); ?>);
         console.log('Posts (CN slug 比例):', <?php
             $all = get_posts(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 50, 'fields' => 'ids']);
@@ -644,10 +796,28 @@ add_action('wp_footer', function () {
             }
             echo json_encode($cn . '/' . count($all));
         ?>);
-        // v3.0.7: cases / ai-employee category 探测结果
-        console.log('cases_cat_id:', <?php echo json_encode(hireai_find_category_id(['cases', 'case', 'casestudy', '案例'])); ?>);
-        console.log('insights_cat_id:', <?php echo json_encode(hireai_find_category_id(['insights', 'insight', '洞察', '观点'])); ?>);
-        console.log('ai_employee_cat_id:', <?php echo json_encode(hireai_find_category_id(['ai-employee', 'ai-employees', 'digital-employees', 'employee', 'employees', 'AI数字员工', '数字员工'])); ?>);
+        // v3.0.8 (Bug A): ACF fp_prodN_image_zh 实际值（确认字段名 + return_format）
+        console.log('fp_prod1_image_zh:', <?php
+            $v = function_exists('get_field') ? get_field('fp_prod1_image_zh') : '';
+            echo json_encode(is_array($v) ? ('array:' . json_encode($v)) : (string) $v);
+        ?>);
+        console.log('fp_prod1_image (no suffix):', <?php
+            $v = function_exists('get_field') ? get_field('fp_prod1_image') : '';
+            echo json_encode(is_array($v) ? ('array:' . json_encode($v)) : (string) $v);
+        ?>);
+        console.log('fp_prod2_image_zh:', <?php
+            $v = function_exists('get_field') ? get_field('fp_prod2_image_zh') : '';
+            echo json_encode(is_array($v) ? ('array:' . json_encode($v)) : (string) $v);
+        ?>);
+        console.log('fp_prod3_image_zh:', <?php
+            $v = function_exists('get_field') ? get_field('fp_prod3_image_zh') : '';
+            echo json_encode(is_array($v) ? ('array:' . json_encode($v)) : (string) $v);
+        ?>);
+        // v3.0.8: cases / ai-employee category 探测结果（增强 candidate 列表）
+        console.log('cases_cat_id:', <?php echo json_encode(hireai_find_category_id(['cases','case','casestudy','case-studies','case-showcase','case-collection','work','works','project','projects','portfolio','案例','案例研究','案例展示','案例集','我们的案例','项目案例'])); ?>);
+        console.log('insights_cat_id:', <?php echo json_encode(hireai_find_category_id(['insights','insight','industry-insights','blog','news','article','articles','洞察','观点','行业洞察','我们的洞察'])); ?>);
+        console.log('ai_employee_cat_id:', <?php echo json_encode(hireai_find_category_id(['ai-employee','ai-employees','digital-employees','employee','employees','AI数字员工','数字员工'])); ?>);
+        console.log('product_cat_id:', <?php echo json_encode(hireai_find_product_category_id(['solution','solutions','product','products','ai-solution','ai-solutions','shop','store','解决方案','商品','AI解决方案','产品','服务','解决方案商城','公关','电商','零售','金融','医疗','娱乐'])); ?>);
     } catch (e) {
         console.error('diag error:', e);
     }
@@ -655,6 +825,7 @@ add_action('wp_footer', function () {
     </script>
     <?php
 });
+
 
 /* -------------------------------------------------------------------------
  * 1. 资源加载：父主题 + 子主题样式（自托管字体）+ 脚本
