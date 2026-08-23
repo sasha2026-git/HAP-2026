@@ -457,6 +457,14 @@ function site_image_url_resolve($v, $default = '') {
 
 
 /**
+ * v3.0.8 hotfix — 兼容层：v3.0.8 commit 不小心删了 hireai_image()，导致 Fatal error。
+ * 加回原函数（与 v3.0.7 完全一致），保持所有调用点工作。
+ */
+function hireai_image($name, $default = '', $post_id = false) {
+    return site_image_url($name . hireai_lang_suffix(), $default, $post_id);
+}
+
+/**
  * 取 ACF link 字段，统一返回 ['url','title','target']
  */
 function site_link($name, $default_url = '#', $default_title = '', $post_id = false) {
