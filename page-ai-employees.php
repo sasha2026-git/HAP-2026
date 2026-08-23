@@ -185,12 +185,13 @@ foreach ($raw_rows as $r) {
     margin: 0 auto clamp(28px, 4vw, 48px);
     max-width: 720px;
 }
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.3em (way too wide); font uses Montserrat */
 .lb-att-head__kicker {
     display: block;
-    font-family: var(--font-label, 'Inter'), sans-serif;
+    font-family: var(--font-label, 'Montserrat', 'Inter'), sans-serif;
     font-size: var(--fs-label, 12px);
     font-weight: 600;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--lb-att-gold);
     margin-bottom: 16px;
@@ -213,11 +214,12 @@ foreach ($raw_rows as $r) {
     margin: 0 auto clamp(40px, 6vw, 64px);
     max-width: 980px;
 }
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.14em; font uses Montserrat */
 .lb-att-tab {
-    font-family: var(--font-label, 'Inter'), sans-serif;
+    font-family: var(--font-label, 'Montserrat', 'Inter'), sans-serif;
     font-size: var(--fs-label, 12px);
     font-weight: 500;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 10px 22px;
     border: 1px solid var(--lb-att-line);
@@ -261,11 +263,12 @@ foreach ($raw_rows as $r) {
     gap: 24px;
     counter-reset: lb-step;
 }
+/* v3.0.6: border-radius 4px (hireaipeople.txt 卡片圆角 0或4px) — was 12px */
 .lb-att-step {
     position: relative;
     padding: 56px 28px 32px;
     border: 1px solid var(--lb-att-line);
-    border-radius: 12px;
+    border-radius: 4px;
     background: rgba(255,255,255,0.7);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
@@ -287,7 +290,8 @@ foreach ($raw_rows as $r) {
     font-family: var(--font-serif, 'Playfair Display'), Georgia, serif;
     font-size: 14px;
     font-weight: 600;
-    letter-spacing: 0.18em;
+    /* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.18em */
+    letter-spacing: 0.1em;
 }
 .lb-att-step__title {
     font-family: var(--font-serif, 'Playfair Display'), Georgia, serif;

@@ -236,7 +236,7 @@ $logo_url = get_theme_mod('header_logo', get_stylesheet_directory_uri() . '/asse
 .emp-prime { color: var(--hai-text, #1a1410); font-family: var(--hai-font-body, 'Inter', sans-serif); }
 .emp-prime__hero, .emp-prime__cap, .emp-prime__cases, .emp-prime__price, .emp-prime__cta { padding: 80px 24px; }
 .emp-prime__hero-inner, .emp-prime__cap-inner, .emp-prime__cases-inner, .emp-prime__price-inner, .emp-prime__cta-inner { max-width: 1180px; margin: 0 auto; }
-.emp-prime__kicker { font-family: var(--hai-font-display, 'Playfair Display', serif); font-style: italic; color: #775a19; letter-spacing: 0.12em; font-size: 13px; margin: 0 0 12px; text-transform: uppercase; }
+.emp-prime__kicker { font-family: var(--hai-font-display, 'Playfair Display', serif); font-style: italic; color: #775a19; letter-spacing: 0.1em; font-size: 13px; margin: 0 0 12px; text-transform: uppercase; }
 .emp-prime__section-head { margin-bottom: 40px; }
 .emp-prime__section-title { font-family: var(--hai-font-display, serif); font-size: clamp(28px, 4vw, 44px); font-weight: 600; margin: 0; line-height: 1.2; color: #1a1410; }
 
@@ -254,7 +254,7 @@ $logo_url = get_theme_mod('header_logo', get_stylesheet_directory_uri() . '/asse
 .emp-prime__hero-media { position: relative; }
 .emp-prime__hero-image { width: 100%; height: auto; aspect-ratio: 4/5; object-fit: cover; border-radius: 8px; box-shadow: 0 30px 80px rgba(26,20,16,0.18); }
 .emp-prime__hero-placeholder { aspect-ratio: 4/5; background: rgba(26,20,16,0.08); border: 1px dashed rgba(26,20,16,0.18); border-radius: 8px; }
-.emp-prime__seal { position: absolute; right: 18px; bottom: 18px; background: rgba(255,255,255,0.95); padding: 6px 12px; font-size: 11px; letter-spacing: 0.2em; color: #775a19; border: 1px solid rgba(119,90,25,0.35); border-radius: 999px; }
+.emp-prime__seal { position: absolute; right: 18px; bottom: 18px; background: rgba(255,255,255,0.95); padding: 6px 12px; font-size: 11px; letter-spacing: 0.1em; color: #775a19; border: 1px solid rgba(119,90,25,0.35); border-radius: 999px; }
 
 .emp-prime__cap { background: #fff; }
 .emp-prime__cap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px; }
@@ -287,7 +287,7 @@ $logo_url = get_theme_mod('header_logo', get_stylesheet_directory_uri() . '/asse
 .emp-prime__price .emp-prime__section-title { color: #fbf7ef; }
 .emp-prime__price .emp-prime__kicker { color: #e9c176; }
 .emp-prime__price-card { max-width: 560px; margin: 0 auto; padding: 48px 40px; background: rgba(255,255,255,0.04); border: 1px solid rgba(233,193,118,0.25); border-radius: 12px; text-align: center; }
-.emp-prime__price-retainer { font-family: var(--hai-font-display, serif); font-style: italic; color: #e9c176; letter-spacing: 0.18em; font-size: 12px; text-transform: uppercase; margin: 0 0 12px; }
+.emp-prime__price-retainer { font-family: var(--hai-font-display, serif); font-style: italic; color: #e9c176; letter-spacing: 0.1em; font-size: 12px; text-transform: uppercase; margin: 0 0 12px; }
 .emp-prime__price-amount { font-family: var(--hai-font-display, serif); font-size: 48px; font-weight: 600; margin: 0 0 32px; color: #fbf7ef; }
 .emp-prime__price-list { list-style: none; padding: 0; margin: 0 0 32px; text-align: left; }
 .emp-prime__price-list li { padding: 12px 0; border-top: 1px solid rgba(233,193,118,0.18); font-size: 15px; color: rgba(251,247,239,0.85); }

@@ -265,7 +265,7 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
     font-family: var(--font-label, 'Inter', sans-serif);
     font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
 }
 .sols-page-hero__title {
@@ -349,6 +349,7 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
     flex-wrap: wrap;
     gap: 12px;
 }
+/* v3.0.6: font uses Montserrat (English body spec) */
 .sols-filter__chip {
     padding: 8px 22px;
     border: 1px solid var(--outline-variant, #e2e2e2);
@@ -358,7 +359,7 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
     font-size: 14px;
     cursor: pointer;
     transition: all .3s ease;
-    font-family: var(--font-label, 'Inter', sans-serif);
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
 }
 .sols-filter__chip:hover,
 .sols-filter__chip.is-active {
@@ -382,12 +383,13 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
 @media (min-width: 1080px) {
     .sols-grid { grid-template-columns: repeat(3, 1fr); }
 }
+/* v3.0.6: border-radius 4px (hireaipeople.txt 卡片圆角 0或4px) — was 12px */
 .sols-card {
     background: rgba(249, 248, 243, .7);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(119, 90, 25, .2);
-    border-radius: 12px;
+    border-radius: 4px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -427,14 +429,15 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
     display: flex;
     flex-direction: column;
 }
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing); font uses Montserrat */
 .sols-card__kicker {
     color: var(--gold-leaf, #775a19);
     font-size: 12px;
     font-weight: 600;
-    letter-spacing: .12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     margin-bottom: 10px;
-    font-family: var(--font-label, 'Inter', sans-serif);
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
 }
 .sols-card__title {
     font-family: var(--font-serif, 'Playfair Display', serif);
@@ -462,16 +465,17 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
     font-size: 14px;
     letter-spacing: .08em;
 }
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing); font uses Montserrat */
 .sols-card__cta {
     display: inline-flex; align-items: center; gap: 8px;
     background: transparent;
     border: none;
     padding: 0;
     color: var(--primary, #1a1c1c);
-    font-family: var(--font-label, 'Inter', sans-serif);
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
     font-size: 13px;
     font-weight: 600;
-    letter-spacing: .12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     cursor: pointer;
     transition: gap .3s ease, color .3s ease;
@@ -537,7 +541,7 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
     font-family: var(--font-label, 'Inter', sans-serif);
     font-size: 12px;
     font-weight: 600;
-    letter-spacing: .3em;
+    letter-spacing: .1em;
     text-transform: uppercase;
 }
 .sols-invite__title {
@@ -609,7 +613,7 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
     font-family: var(--font-label, 'Inter', sans-serif);
     font-size: 13px;
     font-weight: 600;
-    letter-spacing: .12em;
+    letter-spacing: .1em;
     text-transform: uppercase;
     cursor: pointer;
     transition: all .3s ease;

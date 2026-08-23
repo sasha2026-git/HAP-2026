@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.0.5
+Version: 3.0.6
 Text Domain:  hireaipeople
 */
 
@@ -35,6 +35,25 @@ Text Domain:  hireaipeople
   font-weight: 100 900;
   font-display: swap;
 }
+/* v3.0.6: Montserrat — English body/label per hireaipeople.txt (Montserrat not Inter) */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('assets/fonts/Montserrat-VariableFont_wght.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+/* v3.0.6: Montserrat Italic — for English italic emphasis */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('assets/fonts/Montserrat-Italic-VariableFont_wght.woff2') format('woff2');
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+}
+/* NOTE: Montserrat .woff2 must be added to assets/fonts/ when network available.
+   Until then, --font-body-en will fall back to Inter (no visual change). */
+
 @font-face {
   font-family: 'Manrope';
   src: url('assets/fonts/Manrope-Variable.woff2') format('woff2');
@@ -111,6 +130,8 @@ Text Domain:  hireaipeople
   --primary: #735c00;
   --on-primary: #ffffff;
   --primary-container: #d4af37;
+  /* v3.0.6: DESIGN.md secondary-fixed-dim token (Burnished Gold dim variant) */
+  --secondary-fixed-dim: #e9c176;
   --on-primary-container: #554300;
   --inverse-primary: #e9c349;
   --gold-leaf: #d4af37;
@@ -122,16 +143,18 @@ Text Domain:  hireaipeople
 
   /* Typography */
   --font-serif: 'Playfair Display', 'Noto Serif SC', 'Noto Serif CJK SC', 'Songti SC', 'SimSun', serif;
-  --font-body: 'Inter', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-label: 'Inter', 'Noto Sans SC', sans-serif;
+  /* v3.0.6: per hireaipeople.txt — English body prefers Montserrat; Chinese falls back to Noto Sans SC */
+  --font-body: 'Montserrat', 'Inter', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-label: 'Montserrat', 'Inter', 'Noto Sans SC', sans-serif;
 
   --fs-display: clamp(40px, 5.5vw, 72px);
   --fs-h1: clamp(32px, 4vw, 56px);
   --fs-h2: clamp(24px, 3vw, 42px);
   --fs-h3: clamp(20px, 1.8vw, 24px);
   --fs-h4: clamp(17px, 1.6vw, 20px);
-  --fs-body-lg: 16px;
-  --fs-body: 15px;
+  /* v3.0.6: align body sizes to DESIGN.md typography tokens */
+  --fs-body-lg: 18px;             /* body-lg: Inter/Montserrat 18 / 400 / 1.6 */
+  --fs-body: 16px;                /* body-md: Inter/Montserrat 16 / 400 / 1.6 */
   --fs-label: 12px;
   --fs-label-mono: clamp(13px, 1vw, 14px);
   --fs-button: 14px;
@@ -141,18 +164,29 @@ Text Domain:  hireaipeople
   /* v3.0.5-fontsize: Design_System 对齐（font + fs 语言专属 + ls） */
   --font-display-en: 'Playfair Display', Georgia, serif;
   --font-display-zh: 'Noto Serif SC', 'Songti SC', serif;
-  --font-body-en: 'Inter', -apple-system, sans-serif;
+  /* v3.0.6: switch English body/label to Montserrat per hireaipeople.txt */
+  --font-body-en: 'Montserrat', 'Inter', -apple-system, sans-serif;
   --font-body-zh: 'Noto Sans SC', -apple-system, sans-serif;
+  --font-label-en: 'Montserrat', 'Inter', sans-serif;
+  --font-label-zh: 'Noto Sans SC', sans-serif;
   --fs-display-en: clamp(40px, 5.5vw, 72px);
   --fs-display-zh: clamp(36px, 5vw, 60px);
   --fs-h1-zh: clamp(28px, 3.5vw, 42px);
   --fs-h2-zh: clamp(24px, 2.8vw, 38px);
-  --ls-button: 0.2em;
+  /* v3.0.6: 中文 H3 卡片标题（hireaipeople.txt 中文 H3: 22-26px Noto Serif SC） */
+  --fs-h3-zh: clamp(20px, 2.2vw, 26px);
+  /* v3.0.6: DESIGN.md headline-lg-mobile: Playfair Display 32px / 600 / 1.2 */
+  --fs-display-mobile: clamp(24px, 6vw, 32px);
+  /* v3.0.6: DESIGN.md label-md letterSpacing: 0.1em (was 0.2em, too wide) */
+  --ls-button: 0.1em;
+  /* v3.0.6: DESIGN.md label-md letterSpacing — explicit alias for clarity */
+  --ls-label: 0.1em;
 
   --lh-display: 1.15;
   --lh-heading: 1.2;
   --lh-heading-md: 1.3;
-  --lh-body: 1.8;
+  /* v3.0.6: align body line-height to DESIGN.md (body-lg/md: 1.6, was 1.8 too airy) */
+  --lh-body: 1.6;
 
   /* Shape */
   --radius-sm: 0.125rem;
@@ -322,13 +356,22 @@ button {
   background: var(--surface-container-lowest);
 }
 
+/* v3.0.6: 中文 H1 60-64px (hireaipeople.txt 中文 H1) — 在中文环境下用更大显示字号；letter-spacing 收紧到 -0.02em */
 .display-lg {
-  font-family: var(--font-serif);
+  font-family: var(--font-display-en, var(--font-serif));
   font-size: var(--fs-display);
   font-weight: 600;
   line-height: 1.1;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.02em;
   text-wrap: balance;
+}
+
+/* v3.0.6: DESIGN.md headline-lg-mobile 32px — 中文环境用紧凑 H1 */
+html[lang^="zh"] .display-lg,
+html[lang^="zh"] .display,
+html[lang^="zh"] h1,
+html[lang^="zh"] .h1 {
+  font-size: clamp(32px, 5vw, 64px);
 }
 
 .headline-lg,
@@ -377,22 +420,24 @@ h4 {
   line-height: var(--lh-body);
 }
 
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.12em */
 .label,
 .label-caps {
   font-family: var(--font-label);
   font-size: var(--fs-label);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.12em */
 .label-mono {
   font-family: var(--font-label);
   font-size: var(--fs-label-mono);
   font-weight: 400;
   line-height: 1.4;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -524,12 +569,13 @@ h4 {
 }
 
 /* Language pill — 白底黑框黑字 */
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.08em */
 .hai-header__lang {
-  font-family: var(--font-label, Inter), sans-serif;
+  font-family: var(--font-label, 'Montserrat', 'Inter'), sans-serif;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 8px 16px;
   border: 1px solid #1a1a1a;
@@ -647,6 +693,7 @@ h4 {
 /* ==========================================================================
    5. Buttons / links
    ========================================================================== */
+/* v3.0.6: 主按钮高度 56px (hireaipeople.txt) — letter-spacing 0.1em (label-md spec) */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -654,10 +701,11 @@ h4 {
   gap: 10px;
   border-radius: var(--radius-default);
   padding: 16px 32px;
+  min-height: 56px;
   font-family: var(--font-label);
   font-size: var(--fs-button);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   line-height: 1;
   text-transform: uppercase;
   white-space: nowrap;
@@ -698,6 +746,7 @@ h4 {
   border-bottom-color: var(--primary);
 }
 
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) */
 .text-link {
   display: inline-flex;
   align-items: center;
@@ -707,7 +756,7 @@ h4 {
   font-family: var(--font-label);
   font-size: var(--fs-button);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--primary);
 }
@@ -909,7 +958,7 @@ h4 {
   font-size: var(--fs-label-mono);
   color: var(--gold-leaf);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -1145,7 +1194,7 @@ h4 {
   font-size: var(--fs-label-mono);
   color: var(--gold-leaf);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -1226,7 +1275,7 @@ h4 {
   font-family: var(--font-label);
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--on-surface-variant);
   transition: color var(--transition), border-color var(--transition);
@@ -1393,7 +1442,7 @@ mark {
   font-family: var(--font-label);
   font-size: var(--fs-label-mono);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--gold-leaf);
 }
@@ -1422,7 +1471,7 @@ mark {
   font-family: var(--font-label);
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--on-surface-variant);
 }
@@ -1446,7 +1495,7 @@ mark {
   font-family: var(--font-label);
   font-size: var(--fs-button);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--on-surface-variant);
   transition: color var(--transition), border-color var(--transition);
@@ -1516,7 +1565,7 @@ mark {
   font-family: var(--font-label);
   font-size: var(--fs-label);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--on-primary-container);
 }
@@ -1538,7 +1587,7 @@ mark {
   font-family: var(--font-label);
   font-size: var(--fs-label-mono);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--on-surface-variant);
 }
@@ -1565,7 +1614,7 @@ mark {
   gap: 6px;
   font-family: var(--font-label);
   font-size: var(--fs-label);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--on-surface-variant);
 }
@@ -1700,7 +1749,7 @@ mark {
   font-family: var(--font-label);
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--on-surface-variant);
   pointer-events: none;
@@ -1883,7 +1932,7 @@ mark {
   font-family: var(--font-label);
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-charcoal);
 }
@@ -2013,7 +2062,7 @@ mark {
   font-family: var(--font-label);
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -2077,7 +2126,7 @@ mark {
   font-family: var(--font-label);
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--primary);
 }
@@ -2108,7 +2157,7 @@ mark {
   margin-top: 20px;
   font-family: var(--font-label);
   font-size: var(--fs-label);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--on-surface-variant);
 }
@@ -2733,7 +2782,7 @@ button[aria-label*="menu" i][aria-expanded] {
   font-family: 'Inter', sans-serif;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--lb-secondary);
   margin-bottom: 24px;
@@ -2795,11 +2844,12 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 
 /* 图片装饰边框 */
+/* v3.0.6: border-radius 4px (hireaipeople.txt 图片圆角 0或4px) — was 8px */
 .lb-row__border {
   position: absolute;
   inset: 0;
   border: 1px solid rgba(119, 90, 25, 0.2);
-  border-radius: 8px;
+  border-radius: 4px;
   transform: translate(16px, 16px);
   z-index: 0;
   pointer-events: none;
@@ -2832,13 +2882,14 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 
 /* 图片 */
+/* v3.0.6: border-radius 4px (hireaipeople.txt 图片圆角 0或4px) — was 8px */
 .lb-row__image {
   position: relative;
   z-index: 1;
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 4px;
   filter: grayscale(30%);
   box-shadow: 0 25px 50px rgba(26, 28, 28, 0.15);
   transition: filter 0.7s ease, transform 0.7s var(--lb-ease), box-shadow 0.7s ease;
@@ -2850,12 +2901,13 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 
 /* 文字内容 */
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing); font uses Montserrat (English body spec) */
 .lb-row__kicker {
   display: block;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-label, 'Montserrat', 'Inter'), sans-serif;
   font-size: var(--fs-label);
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--lb-secondary-dim);
   margin-bottom: 16px;
@@ -2868,27 +2920,29 @@ button[aria-label*="menu" i][aria-expanded] {
   color: var(--lb-on-surface);
   margin-bottom: 24px;
 }
+/* v3.0.6: line-height 1.6 (DESIGN.md body lineHeight); font uses Montserrat (English body spec) */
 .lb-row__desc {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body, 'Montserrat', 'Inter'), sans-serif;
   font-size: var(--fs-body);
   font-weight: 400;
-  line-height: 1.7;
+  line-height: 1.6;
   color: var(--lb-on-surface-variant);
   margin-bottom: 32px;
 }
 
 /* ---------- 按钮 ---------- */
+/* v3.0.6: hireaipeople.txt 主按钮高度 56px（原 48px → 56px）；letter-spacing 0.1em（label-md spec） */
 .lb-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
+  min-height: 56px;
   padding: 16px 40px;
   border-radius: 999px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-label, 'Montserrat', 'Inter'), sans-serif;
   font-size: var(--fs-button);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   text-decoration: none;
   transition: all 0.3s ease;
@@ -2911,13 +2965,14 @@ button[aria-label*="menu" i][aria-expanded] {
 .lb-btn--outline:hover {
   background: rgba(119, 90, 25, 0.05);
 }
+/* v3.0.6: letter-spacing 0.1em */
 .lb-btn--ghost {
   background: none;
   border: none;
   color: var(--lb-secondary);
   padding: 16px 8px;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .lb-btn--ghost:hover {
@@ -3159,7 +3214,7 @@ main,
   font-family: var(--hp-font-body);
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hp-secondary);
 }
@@ -3169,7 +3224,7 @@ main,
   font-family: var(--hp-font-body);
   font-size: var(--fs-label);
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hp-on-surface-var);
 }
@@ -3187,17 +3242,18 @@ main,
 }
 
 /* ---------- 按钮 ---------- */
+/* v3.0.6: hireaipeople.txt 主按钮高度 56px（原 48px → 56px）；letter-spacing 0.1em（label-md spec） */
 .hp-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
+  min-height: 56px;
   padding: 16px 48px;
   border-radius: 999px;
-  font-family: var(--hp-font-body);
+  font-family: var(--hp-font-body, var(--font-label, 'Montserrat', 'Inter')), sans-serif;
   font-size: var(--fs-button);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
@@ -3230,14 +3286,15 @@ main,
 }
 
 /* ---------- 文字链接箭头 ---------- */
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) */
 .hp-link-arrow {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  font-family: var(--hp-font-body);
+  font-family: var(--hp-font-body, var(--font-label, 'Montserrat', 'Inter')), sans-serif;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hp-on-surface);
   text-decoration: none;
@@ -3325,7 +3382,7 @@ main,
   font-family: var(--hp-font-body);
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hp-secondary);
   margin-bottom: 24px;
@@ -3468,7 +3525,7 @@ main,
   font-family: var(--hp-font-body);
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hp-secondary);
   margin-bottom: 48px;
@@ -3819,11 +3876,12 @@ main,
   object-fit: contain;
 }
 
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) */
 .hp-contact__qr-label {
-  font-family: var(--hp-font-body);
+  font-family: var(--hp-font-body, var(--font-label, 'Montserrat', 'Inter')), sans-serif;
   font-size: var(--fs-label);
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hp-secondary);
   margin: 0 0 4px;
@@ -3838,10 +3896,11 @@ main,
 }
 
 /* 表单 */
+/* v3.0.6: border-radius 4px (hireaipeople.txt 卡片圆角 0或4px) — was 12px */
 .hp-contact__form-wrap {
   background: rgba(244, 243, 243, 0.5);
   padding: 40px;
-  border-radius: 12px;
+  border-radius: 4px;
 }
 
 .hp-contact__form {
@@ -3868,11 +3927,12 @@ main,
   gap: 12px;
 }
 
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) */
 .hp-form-label {
-  font-family: var(--hp-font-body);
+  font-family: var(--hp-font-body, var(--font-label, 'Montserrat', 'Inter')), sans-serif;
   font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(68, 71, 72, 0.7);
 }
@@ -4016,7 +4076,7 @@ main,
 .hp-link-arrow {
   font-size: var(--fs-label);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
 }
 
 .label-mono,
@@ -4024,7 +4084,7 @@ main,
 .product-card__operative {
   font-size: var(--fs-label-mono);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
 }
 
 .btn,
@@ -4039,7 +4099,7 @@ main,
 .woocommerce button.button,
 .woocommerce input.button {
   font-size: var(--fs-button);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -4047,7 +4107,7 @@ main,
 .lang-btn,
 .lb-pagination a {
   font-size: var(--fs-nav);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
 }
 
 /* New header/footer typography — overrides above where needed */
@@ -4090,6 +4150,7 @@ main,
 }
 
 /* My Account button in header — 白底黑框黑字 */
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.08em; font uses Montserrat */
 .hai-header__account {
   display: inline-flex;
   align-items: center;
@@ -4098,10 +4159,10 @@ main,
   color: #1a1a1a;
   border: 1px solid #1a1a1a;
   border-radius: 40px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-label, 'Montserrat', 'Inter'), sans-serif;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   text-decoration: none;
   transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;

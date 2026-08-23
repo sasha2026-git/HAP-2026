@@ -287,11 +287,12 @@ if (!empty($wp_insights)) {
     align-items: center;
     gap: 14px;
 }
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.3em (too wide); font uses Montserrat */
 .ci-section__kicker {
-    font-family: var(--font-label, 'Inter', sans-serif);
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
     font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--gold-leaf, #775a19);
 }
@@ -303,10 +304,11 @@ if (!empty($wp_insights)) {
     color: var(--primary, #1a1c1c);
     margin: 0;
 }
+/* v3.0.6: font uses Montserrat (English body spec) */
 .ci-section__sub {
     margin: 0;
     max-width: 640px;
-    font-family: var(--font-body, 'Inter', sans-serif);
+    font-family: var(--font-body, 'Montserrat', 'Inter', sans-serif), sans-serif;
     font-size: clamp(15px, 1.5vw, 17px);
     color: var(--on-surface-variant, #444748);
     line-height: 1.6;
@@ -371,11 +373,12 @@ if (!empty($wp_insights)) {
     gap: 8px;
     padding: 0 4px;
 }
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.2em; font uses Montserrat */
 .ci-case__kicker {
-    font-family: var(--font-label, 'Inter', sans-serif);
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
     font-size: 10px;
     font-weight: 600;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--gold-leaf, #775a19);
 }
@@ -389,10 +392,11 @@ if (!empty($wp_insights)) {
     transition: color 0.3s ease;
 }
 .ci-case:hover .ci-case__title { color: var(--gold-leaf, #775a19); }
+/* v3.0.6: font uses Montserrat (English body spec); font-size 16px (DESIGN.md body-md) */
 .ci-case__desc {
     margin: 0;
-    font-family: var(--font-body, 'Inter', sans-serif);
-    font-size: 15px;
+    font-family: var(--font-body, 'Montserrat', 'Inter', sans-serif), sans-serif;
+    font-size: var(--fs-body, 16px);
     line-height: 1.6;
     color: var(--on-surface-variant, #444748);
     display: -webkit-box;
@@ -428,12 +432,13 @@ if (!empty($wp_insights)) {
     box-shadow: 0 0 18px rgba(119, 90, 25, 0.18);
 }
 .ci-pagination__btn svg { width: 14px; height: 14px; }
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing); font uses Montserrat */
 .ci-pagination__count {
-    font-family: var(--font-label, 'Inter', sans-serif);
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
     font-size: 13px;
     font-weight: 600;
     color: var(--primary, #1a1c1c);
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
 }
 
 /* ---------- 洞察 3 列卡片 ---------- */
@@ -489,12 +494,13 @@ if (!empty($wp_insights)) {
     gap: 10px;
     padding: 0 4px;
 }
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing); font uses Montserrat */
 .ci-insight__date {
-    font-family: var(--font-label, 'Inter', sans-serif);
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
     font-size: 11px;
     font-weight: 600;
     color: var(--on-surface-variant, #444748);
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
 }
 .ci-insight__title {
@@ -508,15 +514,16 @@ if (!empty($wp_insights)) {
 }
 .ci-insight:hover .ci-insight__title { color: var(--gold-leaf, #775a19); }
 
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing); font uses Montserrat */
 .ci-insight__cta {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     margin-top: 8px;
-    font-family: var(--font-label, 'Inter', sans-serif);
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
     font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--primary, #1a1c1c);
     text-decoration: none;

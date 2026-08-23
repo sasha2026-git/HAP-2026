@@ -257,11 +257,13 @@ $t = [
 }
 
 /* ── 通用：按钮 pill（label-md 严格对齐 DESIGN.md） ─────────────── */
+/* v3.0.6: min-height 56px (hireaipeople.txt 主按钮); font uses Montserrat (English body spec) */
 .hireai-fp__btn{
     display:inline-flex;align-items:center;justify-content:center;
     gap:8px;cursor:pointer;text-align:center;white-space:nowrap;
     font-family:var(--f-label);font-size:var(--sz-lm);font-weight:600;
     line-height:1.2;letter-spacing:.1em;text-transform:uppercase;
+    min-height:56px;
     padding:var(--btn-pad-y) var(--btn-pad-x);
     border-radius:9999px;border:1px solid transparent;
     transition:all .3s ease;
@@ -326,7 +328,8 @@ $t = [
 .hireai-fp-product__media:hover{border-color:var(--gold-light);}
 .hireai-fp-product__img{width:100%;height:100%;object-fit:cover;transition:transform .7s ease-out;}
 .hireai-fp-product:hover .hireai-fp-product__img{transform:scale(1.05);}
-.hireai-fp-product__badge{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.80);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:6px 14px;border-radius:9999px;border:1px solid rgba(0,0,0,.06);font-family:var(--f-label);font-size:11px;font-weight:700;line-height:1.2;letter-spacing:.18em;text-transform:uppercase;color:#000;white-space:nowrap;}
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.18em */
+.hireai-fp-product__badge{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.80);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:6px 14px;border-radius:9999px;border:1px solid rgba(0,0,0,.06);font-family:var(--f-label);font-size:11px;font-weight:700;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;color:#000;white-space:nowrap;}
 .hireai-fp-product__name{font-family:var(--f-headline);font-size:var(--sz-h3);font-weight:500;line-height:1.3;color:#000;margin:0 0 8px;}
 .hireai-fp-product__desc{font-family:var(--f-body);font-size:var(--sz-bm);line-height:1.6;color:var(--ink-muted);margin:0 0 20px;}
 .hireai-fp-product__btn{width:100%;margin-top:auto;}
@@ -352,7 +355,8 @@ $t = [
 .hireai-fp-sol__placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#e8e8e8;color:rgba(119,90,25,.45);}
 .hireai-fp-sol__placeholder svg{width:64px;height:64px;}
 .hireai-fp-sol__overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:32px;color:#fff;background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.20) 40%,rgba(0,0,0,.85) 100%);}
-.hireai-fp-sol__tag{display:inline-block;font-family:var(--f-label);font-size:11px;font-weight:700;line-height:1.2;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-bottom:10px;}
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.2em */
+.hireai-fp-sol__tag{display:inline-block;font-family:var(--f-label);font-size:11px;font-weight:700;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-bottom:10px;}
 .hireai-fp-sol__title{font-family:var(--f-headline);font-size:clamp(20px,1.8vw,26px);font-weight:500;line-height:1.3;color:#fff;margin:0 0 8px;}
 .hireai-fp-sol__desc{font-family:var(--f-body);font-size:14px;line-height:1.6;color:rgba(255,255,255,.85);margin:0;max-width:36ch;}
 .hireai-fp-solutions__cta{text-align:center;}
@@ -381,7 +385,8 @@ $t = [
 .hireai-fp-case-major__img{width:100%;height:100%;object-fit:cover;transition:transform .7s ease-out;}
 .hireai-fp-case-major:hover .hireai-fp-case-major__img{transform:scale(1.05);}
 .hireai-fp-case-major__body{padding:0 4px;}
-.hireai-fp-case-major__tag{display:inline-block;font-family:var(--f-label);font-size:11px;font-weight:700;line-height:1.2;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.2em */
+.hireai-fp-case-major__tag{display:inline-block;font-family:var(--f-label);font-size:11px;font-weight:700;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
 .hireai-fp-case-major__title{font-family:var(--f-headline);font-size:clamp(20px,2vw,var(--sz-h3));font-weight:500;line-height:1.3;color:#000;margin:0 0 12px;transition:color .3s;}
 .hireai-fp-case-major:hover .hireai-fp-case-major__title{color:var(--gold);}
 .hireai-fp-case-major__desc{font-family:var(--f-body);font-size:var(--sz-bm);line-height:1.6;color:var(--ink-muted);margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
@@ -393,7 +398,8 @@ $t = [
 .hireai-fp-case-side__media{aspect-ratio:16/9;overflow:hidden;border:1px solid var(--line);margin-bottom:16px;background:#eee;}
 .hireai-fp-case-side__img{width:100%;height:100%;object-fit:cover;transition:transform .7s ease-out;}
 .hireai-fp-case-side:hover .hireai-fp-case-side__img{transform:scale(1.05);}
-.hireai-fp-case-side__tag{display:inline-block;font-family:var(--f-label);font-size:11px;font-weight:700;line-height:1.2;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.2em */
+.hireai-fp-case-side__tag{display:inline-block;font-family:var(--f-label);font-size:11px;font-weight:700;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
 .hireai-fp-case-side__title{font-family:var(--f-headline);font-size:clamp(17px,1.6vw,21px);font-weight:500;line-height:1.3;color:#000;margin:0 0 8px;transition:color .3s;}
 .hireai-fp-case-side:hover .hireai-fp-case-side__title{color:var(--gold);}
 .hireai-fp-case-side__desc{font-family:var(--f-body);font-size:14px;line-height:1.6;color:var(--ink-muted);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
@@ -426,7 +432,8 @@ $t = [
 .hireai-fp-cta{position:relative;background:#000;color:#fff;padding:clamp(80px,10vw,140px) var(--side);text-align:center;overflow:hidden;}
 .hireai-fp-cta__glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:clamp(400px,60vw,720px);aspect-ratio:1/1;background:radial-gradient(circle,rgba(119,90,25,.30),transparent 65%);pointer-events:none;}
 .hireai-fp-cta__inner{position:relative;max-width:760px;margin:0 auto;}
-.hireai-fp-cta__kicker{display:inline-block;font-family:var(--f-label);font-size:var(--sz-ls);font-weight:500;line-height:1.2;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-light);margin-bottom:20px;}
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.3em (way too wide) */
+.hireai-fp-cta__kicker{display:inline-block;font-family:var(--f-label);font-size:var(--sz-ls);font-weight:500;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-light);margin-bottom:20px;}
 .hireai-fp-cta__title{font-family:var(--f-headline);font-size:var(--sz-h1);font-weight:600;line-height:1.2;color:#fff;margin:0 0 20px;}
 .hireai-fp-cta__desc{font-family:var(--f-body);font-size:var(--sz-bl);line-height:1.7;color:rgba(255,255,255,.7);margin:0 auto 40px;max-width:640px;}
 .hireai-fp-cta__actions{display:inline-flex;flex-wrap:wrap;justify-content:center;gap:16px;}

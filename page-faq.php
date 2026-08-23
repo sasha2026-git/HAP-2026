@@ -302,12 +302,13 @@ if ($active_group === '') {
 .hireai-faq-banner {
     margin-block: clamp(24px, 4vw, 56px);
 }
+/* v3.0.6: border-radius 4px (hireaipeople.txt 图片圆角 0或4px) — was clamp(16px,1.5vw,24px) */
 .hireai-faq-banner img {
     display: block;
     width: 100%;
     height: clamp(280px, 42vw, 520px);
     object-fit: cover;
-    border-radius: clamp(16px, 1.5vw, 24px);
+    border-radius: 4px;
     box-shadow: 0 24px 60px rgba(26, 28, 28, 0.08);
 }
 
@@ -348,6 +349,7 @@ if ($active_group === '') {
     padding: 0;
     list-style: none;
 }
+/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.18em; font uses Montserrat */
 .hireai-faq-sidebar__btn {
     display: block;
     width: 100%;
@@ -358,10 +360,10 @@ if ($active_group === '') {
     border-left: 2px solid transparent;
     margin-left: -25px;
     padding-left: 24px;
-    font-family: var(--font-label, 'Inter', sans-serif);
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
     font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--on-surface-variant, #444748);
     cursor: pointer;
@@ -411,12 +413,13 @@ if ($active_group === '') {
 }
 
 /* Each FAQ item — glassmorphism */
+/* v3.0.6: border-radius 4px (hireaipeople.txt 卡片圆角 0或4px) — was 16px */
 .hireai-faq-item {
     background: rgba(255, 255, 255, 0.78);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(196, 199, 199, 0.35);
-    border-radius: 16px;
+    border-radius: 4px;
     padding: clamp(20px, 3vw, 32px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
     transition: box-shadow 0.3s ease, border-color 0.3s ease;
