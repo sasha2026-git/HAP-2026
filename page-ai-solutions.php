@@ -166,51 +166,78 @@ $cards = array(
     ),
 );
 
-/* ====== v3.0.3 WC 集成：用 WP_Query 拉真实商品，覆盖 fallback ====== */
+/* ====== v3.0.4 hotfix: WC 集成防御 + 保留 fallback ====== */
+/* 原来 v3.0.3: wc_get_product($pid) 可能返回 false → 触发 fatal error；
+   同时 hireai_field('product_operative') 若字段返回数组会导致卡片 kicker 显示 "Array"。
+   现包裹 try/catch + is_object 检查；只要 WC 任意一步出错就跳过整个覆盖、保留 $cards 兜底。 */
 $wc_products = [];
-if (post_type_exists('product')) {
-    $paged = max(1, get_query_var('sols_paged') ?: (isset($_GET['sols_page']) ? (int)$_GET['sols_page'] : 1));
-    $wc_q = new WP_Query([
-        'post_type'      => 'product',
-        'post_status'    => 'publish',
-        'posts_per_page' => 9,
-        'paged'          => $paged,
-        'orderby'        => 'date',
-        'order'          => 'DESC',
-        'no_found_rows'  => false,
-    ]);
-    if ($wc_q->have_posts()) {
-        while ($wc_q->have_posts()) {
-            $wc_q->the_post();
-            $pid = get_the_ID();
-            $wc_products[] = [
-                'id'       => $pid,
-                'title'    => get_the_title(),
-                'excerpt'  => get_the_excerpt() ?: wp_trim_words(strip_tags(get_the_content()), 24, '…'),
-                'image'    => get_the_post_thumbnail_url($pid, 'medium'),
-                'price'    => function_exists('wc_get_product') ? wc_format_price_range(wc_get_product($pid)) : '',
-                'stock'    => function_exists('wc_get_product') ? wc_get_product($pid)->get_stock_status() : 'instock',
-                'permalink'=> get_permalink($pid),
-                'kicker'   => function_exists('hireai_field') ? hireai_field('product_operative', '', $pid) : '',
-                'retainer' => function_exists('hireai_field') ? hireai_field('product_retainer_label', '', $pid) : '',
-            ];
-        }
-        wp_reset_postdata();
-        if (!empty($wc_products)) {
-            $cards_total = (int)$wc_q->max_num_pages;
-            // 把静态 $cards 替换为真实商品
-            $cards = array_map(function($p) {
-                return [
-                    'kicker_zh' => $p['kicker'], 'kicker_en' => $p['kicker'],
-                    'title_zh'  => $p['title'],  'title_en'  => $p['title'],
-                    'desc_zh'   => $p['excerpt'], 'desc_en'  => $p['excerpt'],
-                    'price'     => $p['price'],
-                    'image'     => $p['image'] ?: 'defaults/solution-1.jpg',
-                    'is_cta'    => false,
-                    'link'      => $p['permalink'],
+if (post_type_exists('product') && function_exists('wc_get_product')) {
+    try {
+        $paged = max(1, get_query_var('sols_paged') ?: (isset($_GET['sols_page']) ? (int)$_GET['sols_page'] : 1));
+        $wc_q = new WP_Query([
+            'post_type'      => 'product',
+            'post_status'    => 'publish',
+            'posts_per_page' => 9,
+            'paged'          => $paged,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'no_found_rows'  => false,
+        ]);
+        if ($wc_q->have_posts()) {
+            while ($wc_q->have_posts()) {
+                $wc_q->the_post();
+                $pid = get_the_ID();
+                $wc_obj = wc_get_product($pid);
+                $price_html = '';
+                $stock      = 'instock';
+                if (is_object($wc_obj)) {
+                    if (function_exists('wc_format_price_range')) {
+                        $price_html = wc_format_price_range($wc_obj);
+                    } elseif (method_exists($wc_obj, 'get_price_html')) {
+                        $price_html = $wc_obj->get_price_html();
+                    }
+                    if (method_exists($wc_obj, 'get_stock_status')) {
+                        $stock = (string) $wc_obj->get_stock_status();
+                    }
+                }
+                // kicker / retainer 强制转字符串，避免 ACF 返回数组时泄漏 "Array"
+                $kicker_raw   = function_exists('hireai_field') ? hireai_field('product_operative', '', $pid) : '';
+                $retainer_raw = function_exists('hireai_field') ? hireai_field('product_retainer_label', '', $pid) : '';
+                $kicker_str   = is_array($kicker_raw)   ? '' : (string) $kicker_raw;
+                $retainer_str = is_array($retainer_raw) ? '' : (string) $retainer_raw;
+                $wc_products[] = [
+                    'id'       => $pid,
+                    'title'    => get_the_title(),
+                    'excerpt'  => get_the_excerpt() ?: wp_trim_words(strip_tags(get_the_content()), 24, '…'),
+                    'image'    => get_the_post_thumbnail_url($pid, 'medium'),
+                    'price'    => $price_html,
+                    'stock'    => $stock,
+                    'permalink'=> get_permalink($pid),
+                    'kicker'   => $kicker_str,
+                    'retainer' => $retainer_str,
                 ];
-            }, $wc_products);
+            }
+            wp_reset_postdata();
+            if (!empty($wc_products)) {
+                $cards_total = (int) $wc_q->max_num_pages;
+                // 把静态 $cards 替换为真实商品；用 is_string 兜底，防止残留数组
+                $cards = array_map(function ($p) {
+                    $kz = isset($p['kicker']) && !is_array($p['kicker']) ? (string) $p['kicker'] : '';
+                    return [
+                        'kicker_zh' => $kz, 'kicker_en' => $kz,
+                        'title_zh'  => (string) $p['title'], 'title_en'  => (string) $p['title'],
+                        'desc_zh'   => (string) $p['excerpt'], 'desc_en' => (string) $p['excerpt'],
+                        'price'     => isset($p['price']) ? (string) $p['price'] : '',
+                        'image'     => !empty($p['image']) ? $p['image'] : 'defaults/solution-1.jpg',
+                        'is_cta'    => false,
+                        'link'      => (string) $p['permalink'],
+                    ];
+                }, $wc_products);
+            }
         }
+    } catch (Throwable $e) {
+        // WC 任意一步抛异常 → 静默回退到静态 $cards 兜底
+        $wc_products = [];
     }
 }
 

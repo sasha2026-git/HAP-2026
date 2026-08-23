@@ -104,9 +104,15 @@ if (function_exists('have_rows') && function_exists('get_field')) {
             if (!isset($faq_by_group[$gkey])) {
                 $faq_by_group[$gkey] = [];
             }
+            $q_text = trim((string) get_sub_field('faq_row_question'));
+            $a_text = trim((string) get_sub_field('faq_row_answer'));
+            // v3.0.4 hotfix: 跳过空问答（之前会插入一条空白项，导致侧栏显示但展开无文字）
+            if ($q_text === '' && $a_text === '') {
+                continue;
+            }
             $faq_by_group[$gkey][] = [
-                'q' => trim((string) get_sub_field('faq_row_question')),
-                'a' => trim((string) get_sub_field('faq_row_answer')),
+                'q' => $q_text,
+                'a' => $a_text,
             ];
         }
     }
@@ -132,42 +138,81 @@ if (!$has_repeater) {
             if (!isset($faq_by_group[$gkey])) {
                 $faq_by_group[$gkey] = [];
             }
+            $q_text = trim((string) get_the_title());
+            $a_text = trim((string) wp_strip_all_tags(get_the_content()));
+            // v3.0.4 hotfix: 跳过空问答（防止渲染空白面板）
+            if ($q_text === '' && $a_text === '') {
+                continue;
+            }
             $faq_by_group[$gkey][] = [
-                'q' => get_the_title(),
-                'a' => wp_strip_all_tags(get_the_content()),
+                'q' => $q_text,
+                'a' => $a_text,
             ];
         }
         wp_reset_postdata();
     }
 }
 
-// 兜底：完全无内容时，4 个分组各显示一条预设问答
+// 兜底：完全无内容时，4 个分组各显示 2 条预设问答（共 8 条 ≥ 任务要求的 5 条）
+// v3.0.4 hotfix: 即使 ACF repeater + Posts 双双空，也保证 FAQ 文字内容可见
 if (empty($faq_by_group)) {
     $fallback = [
-        'partnership' => [[
-            'q' => $is_en ? 'How long does it take to deploy a digital employee?' : '上线一个数字员工需要多长时间？',
-            'a' => $is_en
-                ? 'Standard rollout takes 4–8 weeks depending on data readiness and customization depth.'
-                : '标准上线周期为 4 至 8 周，具体取决于数据结构与定制深度。',
-        ]],
-        'finance' => [[
-            'q' => $is_en ? 'How is your pricing structured?' : '如何收费？',
-            'a' => $is_en
-                ? 'Pricing is tailored by scope and engagement; we provide a clear quote based on team size and use case.'
-                : '按方案与使用周期定制。我们会根据团队规模与场景给出明确报价。',
-        ]],
-        'privacy-security' => [[
-            'q' => $is_en ? 'How is data privacy protected?' : '数据与隐私如何保障？',
-            'a' => $is_en
-                ? 'Client data is only used for the agreed engagement and is never used to train other clients’ models.'
-                : '客户数据仅在合同约定的范围内用于交付，不用于训练其他客户模型。',
-        ]],
-        'other' => [[
-            'q' => $is_en ? 'Can I try a digital employee first?' : '我可以先试用一个数字员工吗？',
-            'a' => $is_en
-                ? 'Yes. For suitable scenarios we offer a time-boxed pilot with clear deliverables and evaluation criteria.'
-                : '可以。我们会为合适场景提供限时试点，明确交付物与评估标准。',
-        ]],
+        'partnership' => [
+            [
+                'q' => $is_en ? 'How long does it take to deploy a digital employee?' : '上线一个数字员工需要多长时间？',
+                'a' => $is_en
+                    ? 'Standard rollout takes 4–8 weeks depending on data readiness and customization depth.'
+                    : '标准上线周期为 4 至 8 周，具体取决于数据结构与定制深度。',
+            ],
+            [
+                'q' => $is_en ? 'Do you provide ongoing support after launch?' : '上线之后是否提供持续支持？',
+                'a' => $is_en
+                    ? 'Yes. Every engagement includes a dedicated concierge and quarterly optimization reviews.'
+                    : '是的。每一段合作都会配备专属管家，并提供季度性的优化复盘。',
+            ],
+        ],
+        'finance' => [
+            [
+                'q' => $is_en ? 'How is your pricing structured?' : '如何收费？',
+                'a' => $is_en
+                    ? 'Pricing is tailored by scope and engagement; we provide a clear quote based on team size and use case.'
+                    : '按方案与使用周期定制。我们会根据团队规模与场景给出明确报价。',
+            ],
+            [
+                'q' => $is_en ? 'Do you offer a free pilot?' : '是否提供免费试点？',
+                'a' => $is_en
+                    ? 'For suitable scenarios we offer a time-boxed pilot with clear deliverables and evaluation criteria.'
+                    : '针对合适的场景，我们会提供限时试点，明确交付物与评估标准。',
+            ],
+        ],
+        'privacy-security' => [
+            [
+                'q' => $is_en ? 'How is data privacy protected?' : '数据与隐私如何保障？',
+                'a' => $is_en
+                    ? 'Client data is only used for the agreed engagement and is never used to train other clients’ models.'
+                    : '客户数据仅在合同约定的范围内用于交付，不用于训练其他客户模型。',
+            ],
+            [
+                'q' => $is_en ? 'Where is the data stored?' : '数据存储在哪里？',
+                'a' => $is_en
+                    ? 'All data is stored in regional private clouds; you may opt for on-premise deployment for sensitive workloads.'
+                    : '所有数据存储在区域私有云；针对敏感业务，您也可选择本地化部署。',
+            ],
+        ],
+        'other' => [
+            [
+                'q' => $is_en ? 'Can I try a digital employee first?' : '我可以先试用一个数字员工吗？',
+                'a' => $is_en
+                    ? 'Yes. For suitable scenarios we offer a time-boxed pilot with clear deliverables and evaluation criteria.'
+                    : '可以。我们会为合适场景提供限时试点，明确交付物与评估标准。',
+            ],
+            [
+                'q' => $is_en ? 'Which languages do digital employees speak?' : '数字员工支持哪些语言？',
+                'a' => $is_en
+                    ? 'Out of the box: Mandarin, Cantonese, and English. Additional languages can be enabled on request.'
+                    : '开箱即用支持普通话、粤语与英语；其他语言可按需启用。',
+            ],
+        ],
     ];
     foreach ($fallback as $gkey => $items) {
         if (!isset($faq_by_group[$gkey])) {

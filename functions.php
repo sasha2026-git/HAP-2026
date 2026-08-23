@@ -248,7 +248,17 @@ function hireai_lang_suffix() {
 function site_field($name, $default = '', $post_id = false) {
     if (function_exists('get_field')) {
         $v = $post_id ? get_field($name, $post_id) : get_field($name);
-        if ($v !== null && $v !== '' && $v !== false && !(is_array($v) && empty($v))) {
+        // v3.0.4 hotfix: 防御 ACF 把 text 字段错配成 link/image/repeater 时返回数组
+        // ——返回数组会导致 esc_html() 输出 "Array" 或触发 PHP Warning。
+        if (is_array($v)) {
+            // 若是 ACF link 风格数组（['title'=>...,'url'=>...,'target'=>...]) 且 title 非空，提取 title
+            if (isset($v['title']) && is_string($v['title']) && $v['title'] !== '') {
+                return $v['title'];
+            }
+            // 否则一律回退到默认值（避免 "Array" 泄漏到前端）
+            return $default;
+        }
+        if ($v !== null && $v !== '' && $v !== false) {
             return $v;
         }
     }
