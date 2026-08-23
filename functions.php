@@ -47,6 +47,7 @@ function hireai_ensure_default_pages() {
     $main_pages = [
         'home'           => ['title' => '首页', 'template' => 'front-page.php'],
         'ai-employees'   => ['title' => 'AI数字员工', 'template' => 'page-ai-employees.php'],
+        'employee'       => ['title' => '数字员工目录', 'template' => 'page-employee-detail.php'],
         'ai-solutions'   => ['title' => 'AI解决方案', 'template' => 'page-ai-solutions.php'],
         'cases-insights' => ['title' => '案例&洞察', 'template' => 'page-cases-insights.php'],
         'faq'            => ['title' => '常见问题', 'template' => 'page-faq.php'],
@@ -178,6 +179,49 @@ function hireai_ensure_default_pages_once() {
 
 add_action('after_switch_theme', 'hireai_ensure_default_pages');
 add_action('admin_init', 'hireai_ensure_default_pages_once');
+
+/* -------------------------------------------------------------------------
+ * 0.1 数字员工详情页重写规则：/employee/<slug>/ -> 单页 + 模板 page-employee-detail.php
+ *      兼容 Aurelian Prime 风格，每个数字员工是独立 WP 子页面，slug = employee-<name>
+ * ---------------------------------------------------------------------- */
+add_action('init', function () {
+    add_rewrite_rule(
+        '^employee/([^/]+)/?$',
+        'index.php?pagename=employee&hireai_emp_slug=$matches[1]',
+        'top'
+    );
+}, 20);
+
+add_filter('query_vars', function ($vars) {
+    $vars[] = 'hireai_emp_slug';
+    return $vars;
+});
+
+add_action('pre_get_posts', function ($q) {
+    if (!is_admin() && $q->is_main_query() && $q->get('pagename') === 'employee' && ($slug = $q->get('hireai_emp_slug'))) {
+        // 让页头/页脚用 page-employee-detail 模板（父页面）
+        $q->set('pagename', 'employee');
+        // 不修改主查询：靠模板层面 get_page_by_path() 取具体员工
+    }
+});
+
+/* -------------------------------------------------------------------------
+ * 0.2 自动把每个 employee-* 页面也映射到 /employee/<slug>/
+ *      在页面保存时清 rewrite cache，使新规则立即生效
+ * ---------------------------------------------------------------------- */
+add_action('save_post_page', function ($post_id, $post) {
+    if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) {
+        return;
+    }
+    if ($post->post_status !== 'publish') {
+        return;
+    }
+    // 仅当 slug 以 employee- 开头才重建 rewrite 缓存
+    if (strpos($post->post_name, 'employee-') === 0) {
+        flush_rewrite_rules(false);
+    }
+}, 20, 2);
+
 
 /* -------------------------------------------------------------------------
  * 0. 辅助函数（带默认值回退，ACF 未装时优雅降级）
@@ -1304,6 +1348,7 @@ add_action('acf/init', function () {
         ['name' => 'employee_link_title', 'label' => '按钮/图片链接文字', 'type' => 'text',
          'zh' => '', 'en' => '',
         ],
+        ['name' => 'employee_price', 'label' => '起步价', 'type' => 'text', 'zh' => '￥60,000 /月起', 'en' => '¥ 60,000 / mo'],
     ], [
         [['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:ai-employee']],
     ]));
@@ -1410,3 +1455,45 @@ add_action('upgrader_process_complete', function ($upgrader, $options) {
         opcache_reset();
     }
 }, 11, 2);
+
+/* -------------------------------------------------------------------------
+ * 11. v3.0.3 — 商品 / 文章 保存时清缓存,确保前后端同步
+ *      - WC 商品价格/库存/图片 -> 同步
+ *      - WP 文章 (cases/insights/employee) -> 同步
+ * ---------------------------------------------------------------------- */
+add_action('save_post_product', function ($post_id, $post) {
+    if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) return;
+    if ($post->post_status !== 'publish') return;
+    // 1. transient
+    delete_site_transient('update_themes');
+    delete_transient('hireai_solutions_products');
+    // 2. ACF 字段缓存
+    if (function_exists('acf_get_store')) {
+        $s = acf_get_store('fields');         if ($s) { $s->reset(); }
+        $g = acf_get_store('field-groups');   if ($g) { $g->reset(); }
+    }
+    // 3. 全文缓存对象（WP Rocket / W3 Total Cache / LiteSpeed 通用钩子）
+    if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
+    if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai product saved'); }
+    // 4. OPcache
+    if (function_exists('opcache_reset')) { opcache_reset(); }
+}, 20, 2);
+
+add_action('save_post', function ($post_id, $post) {
+    if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) return;
+    if ($post->post_status !== 'publish') return;
+    if ($post->post_type !== 'post') return;
+    // 仅清当文章位于 case/insight/ai-employee 时
+    $cats = wp_get_post_terms($post_id, 'category', ['fields' => 'slugs']);
+    if (array_intersect((array)$cats, ['cases', 'insights', 'ai-employee', 'case', 'insight'])) {
+        delete_site_transient('update_themes');
+        delete_transient('hireai_cases_insights_posts');
+        if (function_exists('acf_get_store')) {
+            $s = acf_get_store('fields');         if ($s) { $s->reset(); }
+            $g = acf_get_store('field-groups');   if ($g) { $g->reset(); }
+        }
+        if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
+        if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai post saved'); }
+        if (function_exists('opcache_reset')) { opcache_reset(); }
+    }
+}, 20, 2);

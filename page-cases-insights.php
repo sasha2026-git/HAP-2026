@@ -183,6 +183,74 @@ $final_ghost   = $is_en ? 'Download Brand Book' : '下载品牌手册';
 $final_url     = $is_en ? '/contact/' : '/contact/';
 $final_ghost_url = $is_en ? '/contact/' : '/contact/';
 
+/* ====== v3.0.3 — Cases & Insights <-> 文章系统打通 ====== */
+$wp_cases = get_posts([
+    'post_type'      => 'post',
+    'post_status'    => 'publish',
+    'numberposts'    => 6,
+    'tax_query'      => [[
+        'taxonomy' => 'category',
+        'field'    => 'slug',
+        'terms'    => ['cases', 'case'],
+        'operator' => 'IN',
+    ]],
+    'orderby' => 'date',
+    'order'   => 'DESC',
+]);
+if (!empty($wp_cases)) {
+    $cases = [];
+    $chunks = array_chunk($wp_cases, 4);
+    $i = 0;
+    foreach ($chunks as $ci => $chunk) {
+        $is_wide = (0 === $ci % 2);
+        foreach ($chunk as $idx => $case) {
+            $cats = get_the_category($case->ID);
+            $cat_name = !empty($cats) ? $cats[0]->name : '';
+            $cases[] = [
+                'span'      => ($is_wide && 0 === $idx) ? 12 : 6,
+                'aspect'    => ($is_wide && 0 === $idx) ? '21 / 9' : '4 / 5',
+                'kicker_zh' => $cat_name,
+                'kicker_en' => $cat_name,
+                'title_zh'  => get_the_title($case->ID),
+                'title_en'  => get_the_title($case->ID),
+                'desc_zh'   => wp_strip_all_tags($case->post_excerpt ?: wp_trim_words(strip_tags($case->post_content), 30, '…')),
+                'desc_en'   => wp_strip_all_tags($case->post_excerpt ?: wp_trim_words(strip_tags($case->post_content), 30, '…')),
+                'image'     => get_the_post_thumbnail_url($case->ID, 'large') ?: ($case_defaults[$i % count($case_defaults)] ?? $case_defaults[0]),
+                'link'      => get_permalink($case->ID),
+            ];
+            $i++;
+        }
+    }
+}
+
+$wp_insights = get_posts([
+    'post_type'      => 'post',
+    'post_status'    => 'publish',
+    'numberposts'    => 3,
+    'tax_query'      => [[
+        'taxonomy' => 'category',
+        'field'    => 'slug',
+        'terms'    => ['insights', 'insight'],
+        'operator' => 'IN',
+    ]],
+    'orderby' => 'date',
+    'order'   => 'DESC',
+]);
+if (!empty($wp_insights)) {
+    $insights = [];
+    foreach ($wp_insights as $idx => $ins) {
+        $ts = strtotime($ins->post_date);
+        $insights[] = [
+            'date_zh' => date('Y年n月j日', $ts),
+            'date_en' => date('F j, Y', $ts),
+            'title_zh'=> get_the_title($ins->ID),
+            'title_en'=> get_the_title($ins->ID),
+            'image'   => get_the_post_thumbnail_url($ins->ID, 'medium') ?: ($case_defaults[$idx % count($case_defaults)] ?? $case_defaults[0]),
+            'link'    => get_permalink($ins->ID),
+        ];
+    }
+}
+
 ?>
 <style>
 /* =====================================================================
@@ -520,11 +588,13 @@ $final_ghost_url = $is_en ? '/contact/' : '/contact/';
                 $desc      = $is_en ? $case['desc_en']   : $case['desc_zh'];
                 $span      = (int) $case['span'];
                 $aspect    = $case['aspect'];
+                $case_link = isset($case['link']) ? $case['link'] : '#';
                 ?>
-                <article class="ci-case ci-reveal"
-                         data-span="<?php echo esc_attr($span); ?>"
-                         data-aspect="<?php echo esc_attr($aspect); ?>"
-                         aria-label="<?php echo esc_attr($title); ?>">
+                <a class="ci-case ci-reveal"
+                   href="<?php echo esc_url($case_link); ?>"
+                   data-span="<?php echo esc_attr($span); ?>"
+                   data-aspect="<?php echo esc_attr($aspect); ?>"
+                   aria-label="<?php echo esc_attr($title); ?>">
                     <div class="ci-case__media">
                         <img src="<?php echo esc_url($img_url); ?>"
                              alt="<?php echo esc_attr($title); ?>"
@@ -591,7 +661,7 @@ $final_ghost_url = $is_en ? '/contact/' : '/contact/';
                     <div class="ci-insight__body">
                         <span class="ci-insight__date"><?php echo esc_html($date); ?></span>
                         <h3 class="ci-insight__title"><?php echo esc_html($title); ?></h3>
-                        <a class="ci-insight__cta" href="<?php echo esc_url($insights_cta_url); ?>">
+                        <a class="ci-insight__cta" href="<?php echo esc_url(isset($insight['link']) ? $insight['link'] : $insights_cta_url); ?>">
                             <span><?php echo esc_html($card_cta_text); ?></span>
                             <?php echo hireai_svg('east', 12, 'ci-insight__cta-icon'); ?>
                         </a>

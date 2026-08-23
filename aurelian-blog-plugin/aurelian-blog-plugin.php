@@ -631,13 +631,13 @@ function ahai_blog_shared_assets() {
   if(!document.getElementById('ahai-gf')){
     var l=document.createElement('link');l.id='ahai-gf';
     l.rel='stylesheet';
-    l.href='https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap';
+    // Google Fonts CDN removed - typography fallback uses system fonts (ui-serif, ui-sans-serif)
     document.head.appendChild(l);
   }
   if(!document.getElementById('ahai-ms')){
     var l2=document.createElement('link');l2.id='ahai-ms';
     l2.rel='stylesheet';
-    l2.href='https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap';
+    // Material Symbols CDN removed (v3.0.3) - icons now inline
     document.head.appendChild(l2);
   }
 })();
@@ -658,10 +658,7 @@ function ahai_blog_shared_assets() {
 #aurelian-blog a.border-secondary:hover { background-color: rgba(119,90,25,0.05) !important; }
 
 /* ── Material Symbols Base ── */
-#aurelian-blog .material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-  vertical-align: middle;
-}
+.aurelian-blog-icon { display:inline-flex; vertical-align:middle; }
 
 /* ── Glass Card (v2 DESIGN.md spec) ── */
 #aurelian-blog .glass-card {
@@ -969,7 +966,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                         <div class="editorial-line" style="width:100%;" aria-hidden="true"></div>
                         <div style="margin-top:24px;display:flex;align-items:center;gap:8px;font-family:Inter;font-size: var(--fs-label, 14px);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#1a1c1c;">
                             <?php esc_html_e('Read Case Study', 'aurelian-blog'); ?>
-                            <span class="material-symbols-outlined" style="font-size: var(--fs-body-lg, 16px);" aria-hidden="true">arrow_forward</span>
+                            <span class="aurelian-blog-icon" style="font-size: var(--fs-body-lg, 16px);" aria-hidden="true">arrow_forward</span>
                         </div>
                     </div>
                 </a>
@@ -983,7 +980,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                     onmouseover="this.style.backgroundColor='#000';this.style.color='#fff';this.style.borderColor='#000';"
                     onmouseout="this.style.backgroundColor='transparent';this.style.color='#444748';this.style.borderColor='#c4c7c7';"
                     aria-label="<?php echo esc_attr__('Previous case studies', 'aurelian-blog'); ?>">
-                <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+                <span class="aurelian-blog-icon" aria-hidden="true">chevron_left</span>
             </button>
             <div style="display:flex;align-items:center;gap:12px;" aria-hidden="true">
                 <span class="pagination-dot active"></span>
@@ -994,7 +991,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                     onmouseover="this.style.backgroundColor='#000';this.style.color='#fff';this.style.borderColor='#000';"
                     onmouseout="this.style.backgroundColor='transparent';this.style.color='#444748';this.style.borderColor='#c4c7c7';"
                     aria-label="<?php echo esc_attr__('Next case studies', 'aurelian-blog'); ?>">
-                <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+                <span class="aurelian-blog-icon" aria-hidden="true">chevron_right</span>
             </button>
         </div>
     </section>
@@ -1080,7 +1077,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                         onmouseover="this.style.backgroundColor='#000';this.style.color='#fff';this.style.borderColor='#000';"
                         onmouseout="this.style.backgroundColor='transparent';this.style.color='#444748';this.style.borderColor='#c4c7c7';"
                         aria-label="<?php echo esc_attr__('Previous articles', 'aurelian-blog'); ?>">
-                    <span class="material-symbols-outlined" aria-hidden="true">west</span>
+                    <span class="aurelian-blog-icon" aria-hidden="true">west</span>
                 </button>
                 <div style="display:flex;gap:24px;font-family:Inter;font-size: var(--fs-body, 14px);font-weight:600;letter-spacing:0.1em;">
                     <span style="color:#775a19;border-bottom:2px solid #775a19;padding-bottom:4px;">01</span>
@@ -1091,7 +1088,7 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                         onmouseover="this.style.backgroundColor='#000';this.style.color='#fff';this.style.borderColor='#000';"
                         onmouseout="this.style.backgroundColor='transparent';this.style.color='#444748';this.style.borderColor='#c4c7c7';"
                         aria-label="<?php echo esc_attr__('Next articles', 'aurelian-blog'); ?>">
-                    <span class="material-symbols-outlined" aria-hidden="true">east</span>
+                    <span class="aurelian-blog-icon" aria-hidden="true">east</span>
                 </button>
             </div>
         </div>
@@ -1197,17 +1194,17 @@ $section_title_size  = get_field('ahai_blog_section_title_size')  ? (int) get_fi
                     <a href="#" aria-label="<?php echo esc_attr__('Public page', 'aurelian-blog'); ?>"
                        style="color:#444748;font-size: var(--fs-h3, 20px);transition:color 0.3s;"
                        onmouseover="this.style.color='#775a19';" onmouseout="this.style.color='#444748';">
-                        <span class="material-symbols-outlined" aria-hidden="true">public</span>
+                        <span class="aurelian-blog-icon" aria-hidden="true">public</span>
                     </a>
                     <a href="#" aria-label="<?php echo esc_attr__('Chat with us', 'aurelian-blog'); ?>"
                        style="color:#444748;font-size: var(--fs-h3, 20px);transition:color 0.3s;"
                        onmouseover="this.style.color='#775a19';" onmouseout="this.style.color='#444748';">
-                        <span class="material-symbols-outlined" aria-hidden="true">chat</span>
+                        <span class="aurelian-blog-icon" aria-hidden="true">chat</span>
                     </a>
                     <a href="#" aria-label="<?php echo esc_attr__('Email us', 'aurelian-blog'); ?>"
                        style="color:#444748;font-size: var(--fs-h3, 20px);transition:color 0.3s;"
                        onmouseover="this.style.color='#775a19';" onmouseout="this.style.color='#444748';">
-                        <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+                        <span class="aurelian-blog-icon" aria-hidden="true">mail</span>
                     </a>
                 </div>
             </div>

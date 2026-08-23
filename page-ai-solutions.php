@@ -166,6 +166,54 @@ $cards = array(
     ),
 );
 
+/* ====== v3.0.3 WC 集成：用 WP_Query 拉真实商品，覆盖 fallback ====== */
+$wc_products = [];
+if (post_type_exists('product')) {
+    $paged = max(1, get_query_var('sols_paged') ?: (isset($_GET['sols_page']) ? (int)$_GET['sols_page'] : 1));
+    $wc_q = new WP_Query([
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'posts_per_page' => 9,
+        'paged'          => $paged,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'no_found_rows'  => false,
+    ]);
+    if ($wc_q->have_posts()) {
+        while ($wc_q->have_posts()) {
+            $wc_q->the_post();
+            $pid = get_the_ID();
+            $wc_products[] = [
+                'id'       => $pid,
+                'title'    => get_the_title(),
+                'excerpt'  => get_the_excerpt() ?: wp_trim_words(strip_tags(get_the_content()), 24, '…'),
+                'image'    => get_the_post_thumbnail_url($pid, 'medium'),
+                'price'    => function_exists('wc_get_product') ? wc_format_price_range(wc_get_product($pid)) : '',
+                'stock'    => function_exists('wc_get_product') ? wc_get_product($pid)->get_stock_status() : 'instock',
+                'permalink'=> get_permalink($pid),
+                'kicker'   => function_exists('hireai_field') ? hireai_field('product_operative', '', $pid) : '',
+                'retainer' => function_exists('hireai_field') ? hireai_field('product_retainer_label', '', $pid) : '',
+            ];
+        }
+        wp_reset_postdata();
+        if (!empty($wc_products)) {
+            $cards_total = (int)$wc_q->max_num_pages;
+            // 把静态 $cards 替换为真实商品
+            $cards = array_map(function($p) {
+                return [
+                    'kicker_zh' => $p['kicker'], 'kicker_en' => $p['kicker'],
+                    'title_zh'  => $p['title'],  'title_en'  => $p['title'],
+                    'desc_zh'   => $p['excerpt'], 'desc_en'  => $p['excerpt'],
+                    'price'     => $p['price'],
+                    'image'     => $p['image'] ?: 'defaults/solution-1.jpg',
+                    'is_cta'    => false,
+                    'link'      => $p['permalink'],
+                ];
+            }, $wc_products);
+        }
+    }
+}
+
 ?>
 <style>
 /* ============== 页面专有样式（仅本模板生效） ============== */

@@ -15,8 +15,16 @@ $kicker  = lookbook_field( 'lookbook_kicker', $kicker ? $kicker : ( $is_zh ? '�
 $btn     = lookbook_field( 'lookbook_button_text', $is_zh ? '了解详情' : 'Learn More' );
 $style   = get_field( 'lookbook_button_style' ); if ( empty( $style ) ) { $style = 'auto'; }
 if ( 'auto' === $style ) { $style = ( 0 === $index % 2 ) ? 'outline' : 'primary'; }
-$link    = get_field( 'lookbook_link' );
-if ( is_array( $link ) && ! empty( $link['url'] ) ) { $url = $link['url']; } elseif ( is_string( $link ) && $link ) { $url = $link; } else { $url = get_permalink(); }
+// hireai_link() 自动追加 _zh/_en 后缀 — 中文/英文按钮可指向不同 URL
+$link_arr = function_exists( 'hireai_link' ) ? hireai_link( 'lookbook_link', '', $is_zh ? '了解详情' : 'Learn More' ) : null;
+if ( ! empty( $link_arr['url'] ) ) {
+    $url = $link_arr['url'];
+} elseif ( get_the_ID() ) {
+    // 数字员工卡片默认跳转：/employee/<post_name>/ (Aurelian Prime 详情页)
+    $url = home_url( '/employee/' . get_post_field( 'post_name', get_the_ID() ) . '/' );
+} else {
+    $url = get_permalink();
+}
 $img = get_the_post_thumbnail_url( get_the_ID(), 'large' );
 if ( ! $img ) { $img = lookbook_img( 'service-' . min( $index, 5 ) . '.png' ); }
 $title = get_the_title();
