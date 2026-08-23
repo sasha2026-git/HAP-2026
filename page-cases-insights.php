@@ -183,20 +183,29 @@ $final_ghost   = $is_en ? 'Download Brand Book' : '下载品牌手册';
 $final_url     = $is_en ? '/contact/' : '/contact/';
 $final_ghost_url = $is_en ? '/contact/' : '/contact/';
 
-/* ====== v3.0.3 — Cases & Insights <-> 文章系统打通 ====== */
-$wp_cases = get_posts([
+/* v3.0.7: 智能探测 category — 多 slug + 中文名 fallback + cat=ID（更可靠） */
+$cases_cat_id = function_exists('hireai_find_category_id')
+    ? hireai_find_category_id(['cases', 'case', 'casestudy', 'case-studies', '案例', '案例研究'])
+    : 0;
+if (!$cases_cat_id && current_user_can('manage_options')) {
+    add_action('admin_notices', function () {
+        echo '<div class="notice notice-warning"><p>聘AI: 未找到 案例/案例研究 category。请到 文章 → 分类目录 创建 slug=cases 的分类。</p></div>';
+    });
+}
+$cases_q = [
     'post_type'      => 'post',
     'post_status'    => 'publish',
     'numberposts'    => 6,
-    'tax_query'      => [[
-        'taxonomy' => 'category',
-        'field'    => 'slug',
-        'terms'    => ['cases', 'case'],
-        'operator' => 'IN',
-    ]],
-    'orderby' => 'date',
-    'order'   => 'DESC',
-]);
+    'orderby'        => 'date',
+    'order'          => 'DESC',
+    'no_found_rows'  => true,
+];
+if ($cases_cat_id) {
+    $cases_q['cat'] = $cases_cat_id;
+} else {
+    $cases_q['tax_query'] = [['taxonomy' => 'category', 'field' => 'slug', 'terms' => ['cases', 'case'], 'operator' => 'IN']];
+}
+$wp_cases = get_posts($cases_q);
 if (!empty($wp_cases)) {
     $cases = [];
     $chunks = array_chunk($wp_cases, 4);
@@ -223,19 +232,23 @@ if (!empty($wp_cases)) {
     }
 }
 
-$wp_insights = get_posts([
+$insights_cat_id = function_exists('hireai_find_category_id')
+    ? hireai_find_category_id(['insights', 'insight', 'industry-insights', 'blog', '洞察', '观点', '行业洞察'])
+    : 0;
+$insights_q = [
     'post_type'      => 'post',
     'post_status'    => 'publish',
     'numberposts'    => 3,
-    'tax_query'      => [[
-        'taxonomy' => 'category',
-        'field'    => 'slug',
-        'terms'    => ['insights', 'insight'],
-        'operator' => 'IN',
-    ]],
-    'orderby' => 'date',
-    'order'   => 'DESC',
-]);
+    'orderby'        => 'date',
+    'order'          => 'DESC',
+    'no_found_rows'  => true,
+];
+if ($insights_cat_id) {
+    $insights_q['cat'] = $insights_cat_id;
+} else {
+    $insights_q['tax_query'] = [['taxonomy' => 'category', 'field' => 'slug', 'terms' => ['insights', 'insight'], 'operator' => 'IN']];
+}
+$wp_insights = get_posts($insights_q);
 if (!empty($wp_insights)) {
     $insights = [];
     foreach ($wp_insights as $idx => $ins) {

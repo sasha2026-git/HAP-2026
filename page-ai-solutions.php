@@ -182,7 +182,18 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
             'orderby'        => 'date',
             'order'          => 'DESC',
             'no_found_rows'  => false,
+            /* v3.0.7: 排除 catalog-visibility=hidden/excluded 的商品（即使 WC 11.0.1 已装，也可能没显示） */
+            'tax_query'      => [[
+                'taxonomy' => 'product_visibility',
+                'field'    => 'name',
+                'terms'    => ['exclude-from-catalog', 'exclude-from-search'],
+                'operator' => 'NOT IN',
+            ]],
         ]);
+        /* v3.0.7 debug: 记录拉到几个 product */
+        if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
+            error_log('[hireai v3.0.7] wc_query: found=' . (int) $wc_q->found_posts . ', max_pages=' . (int) $wc_q->max_num_pages);
+        }
         if ($wc_q->have_posts()) {
             while ($wc_q->have_posts()) {
                 $wc_q->the_post();
@@ -197,7 +208,9 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
                         $price_html = $wc_obj->get_price_html();
                     }
                     if (method_exists($wc_obj, 'get_stock_status')) {
-                        $stock = (string) $wc_obj->get_stock_status();
+                        /* v3.0.7: get_stock_status() 可能返回 false（商品无库存管理）→ 统一回落 'instock' 避免显示问题 */
+                        $ss = $wc_obj->get_stock_status();
+                        $stock = ($ss === false || $ss === '' || $ss === null) ? 'instock' : (string) $ss;
                     }
                 }
                 // kicker / retainer 强制转字符串，避免 ACF 返回数组时泄漏 "Array"

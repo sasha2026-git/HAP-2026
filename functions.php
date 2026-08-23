@@ -531,6 +531,132 @@ function hireai_contact_page_id() {
 }
 
 /* -------------------------------------------------------------------------
+ * 0.5. v3.0.7 数据集成修复：智能 slug 探测（WP_DEBUG + 中文 slug 友好）
+ * ---------------------------------------------------------------------- */
+
+/**
+ * 智能探测 category ID — 多 slug + 中文名 fallback
+ * 用于：cases / insights / ai-employee 这类可能只有中文 slug 的分类
+ *
+ * @param array $candidates 候选 slug 或 category 名（如 ['cases', 'case', '案例']）
+ * @return int category term_id；找不到返回 0
+ */
+function hireai_find_category_id($candidates) {
+    $candidates = is_array($candidates) ? $candidates : [$candidates];
+    foreach ($candidates as $key) {
+        $key = trim((string) $key);
+        if ($key === '') continue;
+        // 先按 slug 找
+        $term = get_category_by_slug($key);
+        if ($term && !is_wp_error($term)) {
+            return (int) $term->term_id;
+        }
+        // slug 找不到 → 按中文名 / 显示名找（get_cat_ID 支持 name）
+        $cid = get_cat_ID($key);
+        if ($cid) return (int) $cid;
+    }
+    return 0;
+}
+
+/**
+ * 智能探测"数字员工"Post — 多 slug + 中文 category fallback
+ * 返回 WP_Post[] 数组（按 menu_order 排序）
+ *
+ * @param int $limit 拉取数量
+ * @return array WP_Post 列表（可能为空数组）
+ */
+function hireai_resolve_employees($limit = 6) {
+    // 候选：英文 slug + 中文 category 名（覆盖 v3.0.6 仅 ai-employee 失败场景）
+    $cat_id = hireai_find_category_id([
+        'ai-employee', 'ai-employees', 'digital-employees',
+        'employee', 'employees', 'AI数字员工', '数字员工',
+    ]);
+    $query_args = [
+        'post_type'      => 'post',
+        'post_status'    => 'publish',
+        'posts_per_page' => max(1, (int) $limit),
+        'orderby'        => 'menu_order date',
+        'order'          => 'ASC',
+        'no_found_rows'  => true,
+    ];
+    if ($cat_id > 0) {
+        $query_args['cat'] = $cat_id;
+    } else {
+        // 兜底：拿最近 post（避免返回空）
+        $query_args['category_name'] = 'ai-employee';
+    }
+    $posts = get_posts($query_args);
+
+    if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
+        error_log('[hireai v3.0.7] emp_search: cat_id=' . $cat_id . ', limit=' . $limit . ', found=' . count($posts));
+    }
+    return is_array($posts) ? $posts : [];
+}
+
+/**
+ * 单个数字员工的强 URL — 用 get_permalink 让 WP 自动处理中文 slug 编码
+ *
+ * @param int $index 第 N 个员工（0-based）
+ * @param string $fallback_url 找不到时的兜底 URL（默认 /ai-employees/ 列表页）
+ * @return string permalink 或 fallback
+ */
+function hireai_resolve_employee_url($index = 0, $fallback_url = '') {
+    $employees = hireai_resolve_employees(max(6, (int) $index + 1));
+    if (isset($employees[$index]) && $employees[$index] instanceof WP_Post) {
+        $url = get_permalink($employees[$index]->ID);
+        if ($url) return $url;
+    }
+    if ($fallback_url === '') {
+        $fallback_url = home_url('/ai-employees/');
+    }
+    return $fallback_url;
+}
+
+/* -------------------------------------------------------------------------
+ * 0.6. v3.0.7 诊断 — 仅 WP_DEBUG + admin 角色下生效
+ *     控制台输出 category / post / WC / cookie 状态
+ * ---------------------------------------------------------------------- */
+add_action('wp_footer', function () {
+    if (!defined('WP_DEBUG') || !WP_DEBUG) return;
+    if (!current_user_can('manage_options')) return;
+    ?>
+    <script id="hireai-v307-debug">
+    console.group('[HIREAI v3.0.7 诊断]');
+    try {
+        console.log('English categories:', <?php
+            $cats = get_categories(['hide_empty' => false]);
+            $eng = array_values(array_filter($cats, fn($c) => preg_match('/^[a-z0-9-]+$/', $c->slug)));
+            echo json_encode(array_map(fn($c) => $c->slug . '(' . $c->count . ')', $eng));
+        ?>);
+        console.log('Chinese categories:', <?php
+            $cats = get_categories(['hide_empty' => false]);
+            $cn = array_values(array_filter($cats, fn($c) => !preg_match('/^[a-z0-9-]+$/', $c->slug)));
+            echo json_encode(array_map(fn($c) => $c->slug . '(' . $c->count . ')', $cn));
+        ?>);
+        console.log('WC product_type:', <?php echo json_encode(post_type_exists('product') ? 'EXISTS' : 'NOT FOUND'); ?>);
+        console.log('hireai_lang cookie:', <?php echo json_encode($_COOKIE['hireai_lang'] ?? 'none'); ?>);
+        console.log('Posts (CN slug 比例):', <?php
+            $all = get_posts(['post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 50, 'fields' => 'ids']);
+            $cn = 0;
+            foreach ($all as $pid) {
+                $p = get_post($pid);
+                if ($p && !preg_match('/^[a-z0-9-]+$/', $p->post_name)) $cn++;
+            }
+            echo json_encode($cn . '/' . count($all));
+        ?>);
+        // v3.0.7: cases / ai-employee category 探测结果
+        console.log('cases_cat_id:', <?php echo json_encode(hireai_find_category_id(['cases', 'case', 'casestudy', '案例'])); ?>);
+        console.log('insights_cat_id:', <?php echo json_encode(hireai_find_category_id(['insights', 'insight', '洞察', '观点'])); ?>);
+        console.log('ai_employee_cat_id:', <?php echo json_encode(hireai_find_category_id(['ai-employee', 'ai-employees', 'digital-employees', 'employee', 'employees', 'AI数字员工', '数字员工'])); ?>);
+    } catch (e) {
+        console.error('diag error:', e);
+    }
+    console.groupEnd();
+    </script>
+    <?php
+});
+
+/* -------------------------------------------------------------------------
  * 1. 资源加载：父主题 + 子主题样式（自托管字体）+ 脚本
  * ---------------------------------------------------------------------- */
 

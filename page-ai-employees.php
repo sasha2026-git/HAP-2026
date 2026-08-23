@@ -102,8 +102,12 @@ if (function_exists('have_rows')) {
                 $row['button'] = $is_en ? 'Learn More' : '了解详情';
             }
             if ($row['url'] === '') {
-                /* v3.0.5: 优先用 ai-employee post 的 slug（/employee/<slug>/），仅当没 post 时才退回 /contact/ */
-                $row['url'] = home_url('/contact/');
+                /* v3.0.7: helper 自动探测 — 找不到 post 时落回 /ai-employees/ 列表页（不是 /contact/，因为太重） */
+                static $emp_idx_v307 = 0;
+                $row['url'] = function_exists('hireai_resolve_employee_url')
+                    ? hireai_resolve_employee_url($emp_idx_v307, home_url('/ai-employees/'))
+                    : home_url('/ai-employees/');
+                $emp_idx_v307++;
             }
             $raw_rows[] = $row;
         }
@@ -114,21 +118,16 @@ if (empty($raw_rows) && function_exists('lookbook_fallback_employees')) {
     $raw_rows = lookbook_fallback_employees();
 }
 
-/* v3.0.5 hotfix: 把 fallback 数据里的空 URL 替换为 /employee/<slug>/ */
-$ai_emp_lookup = get_posts([
-    'post_type'      => 'post',
-    'post_status'    => 'publish',
-    'posts_per_page' => 50,
-    'category_name'  => 'ai-employee',
-    'orderby'        => 'menu_order date',
-    'order'          => 'ASC',
-    'no_found_rows'  => true,
-]);
+/* v3.0.7: 智能探测 — get_permalink() 让 WP 处理中文 slug 编码；fallback /ai-employees/ 而非 /contact/ */
+$ai_emp_lookup = function_exists('hireai_resolve_employees') ? hireai_resolve_employees(50) : [];
 $emp_index = 0;
 foreach ($raw_rows as &$row_ref) {
     if (!isset($row_ref['url']) || $row_ref['url'] === '' || $row_ref['url'] === home_url('/contact/') || $row_ref['url'] === '/contact/') {
         if (isset($ai_emp_lookup[$emp_index]) && $ai_emp_lookup[$emp_index] instanceof WP_Post) {
-            $row_ref['url'] = home_url('/employee/' . $ai_emp_lookup[$emp_index]->post_name . '/');
+            $perm = get_permalink($ai_emp_lookup[$emp_index]->ID);
+            if ($perm) {
+                $row_ref['url'] = $perm;
+            }
         }
     }
     $emp_index++;

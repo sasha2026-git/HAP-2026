@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.0.6
+Version: 3.0.7
 Text Domain:  hireaipeople
 */
 
@@ -144,8 +144,9 @@ Text Domain:  hireaipeople
   /* Typography */
   --font-serif: 'Playfair Display', 'Noto Serif SC', 'Noto Serif CJK SC', 'Songti SC', 'SimSun', serif;
   /* v3.0.6: per hireaipeople.txt — English body prefers Montserrat; Chinese falls back to Noto Sans SC */
-  --font-body: 'Montserrat', 'Inter', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-label: 'Montserrat', 'Inter', 'Noto Sans SC', sans-serif;
+  /* v3.0.7: 主 --font-body/--font-label 移除 Montserrat (woff2 未下载) — 避免系统字体错位 */
+  --font-body: 'Inter', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-label: 'Inter', 'Noto Sans SC', 'PingFang SC', sans-serif;
 
   --fs-display: clamp(40px, 5.5vw, 72px);
   --fs-h1: clamp(32px, 4vw, 56px);
@@ -165,10 +166,13 @@ Text Domain:  hireaipeople
   --font-display-en: 'Playfair Display', Georgia, serif;
   --font-display-zh: 'Noto Serif SC', 'Songti SC', serif;
   /* v3.0.6: switch English body/label to Montserrat per hireaipeople.txt */
-  --font-body-en: 'Montserrat', 'Inter', -apple-system, sans-serif;
-  --font-body-zh: 'Noto Sans SC', -apple-system, sans-serif;
-  --font-label-en: 'Montserrat', 'Inter', sans-serif;
-  --font-label-zh: 'Noto Sans SC', sans-serif;
+  /* v3.0.7: Montserrat woff2 仍未下载 → 从 fallback 链移除，避免中文/英文回退到系统字体错位；@font-face 声明保留，等 Sasha 下载后激活 */
+  --font-body-en: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* v3.0.7: 完整中文 fallback 链（避免中文回退到系统字体错位） */
+  --font-body-zh: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
+  /* v3.0.7: label 同步移除 Montserrat (woff2 未下载) */
+  --font-label-en: 'Inter', -apple-system, sans-serif;
+  --font-label-zh: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --fs-display-en: clamp(40px, 5.5vw, 72px);
   --fs-display-zh: clamp(36px, 5vw, 60px);
   --fs-h1-zh: clamp(28px, 3.5vw, 42px);
@@ -187,6 +191,9 @@ Text Domain:  hireaipeople
   --lh-heading-md: 1.3;
   /* v3.0.6: align body line-height to DESIGN.md (body-lg/md: 1.6, was 1.8 too airy) */
   --lh-body: 1.6;
+  /* v3.0.7: 行高按语言区分 (中文 1.7, 英文 1.6) */
+  --lh-body-en: 1.6;
+  --lh-body-zh: 1.7;
 
   /* Shape */
   --radius-sm: 0.125rem;
@@ -4202,4 +4209,23 @@ html[lang^="zh"] h2, html[lang="zh-CN"] h2 {
 }
 html[lang^="zh"] body {
   font-family: var(--font-body-zh);
+  /* v3.0.7: 中文行高更舒展（DESIGN.md 中文 body lh 1.7） */
+  line-height: var(--lh-body-zh);
+}
+/* v3.0.7: 英文 body 字体 + 行高显式控制（避免中英切换"字体奇怪"） */
+html[lang="en"] body {
+  font-family: var(--font-body-en);
+  line-height: var(--lh-body-en);
+}
+/* v3.0.7: 英文 display 字体 */
+html[lang="en"] .headline-lg,
+html[lang="en"] h1,
+html[lang="en"] .page-title {
+  font-family: var(--font-display-en);
+}
+/* v3.0.7: 英文 label 字体 */
+html[lang="en"] .label,
+html[lang="en"] .label-md,
+html[lang="en"] .label-sm {
+  font-family: var(--font-label-en);
 }

@@ -55,19 +55,13 @@ $prod_section_sub    = hireai_field_lang('fp_products_subtitle', $lang, $is_en ?
 $prod_explore_label  = hireai_field_lang('fp_products_explore_label', $lang, $is_en ? 'Explore More' : '探索更多');
 $prod_explore_url    = hireai_field('fp_products_explore_url', home_url('/ai-employees/'));
 
-/* v3.0.5: 优先用 /employee/<slug>/ 而非 ACF fp_prodN_url（修复 Sasha 反馈：按钮跳转 /contact/ 而非详情页） */
-$ai_employee_posts = get_posts([
-    'post_type'      => 'post',
-    'post_status'    => 'publish',
-    'posts_per_page' => 3,
-    'category_name'  => 'ai-employee',
-    'orderby'        => 'menu_order date',
-    'order'          => 'ASC',
-    'no_found_rows'  => true,
-]);
+/* v3.0.7: 智能探测 (多 slug + 中文 category) — 避免 v3.0.6 仅 'ai-employee' 失败导致跳 /contact/ */
+$ai_employee_posts = function_exists('hireai_resolve_employees') ? hireai_resolve_employees(3) : [];
 $ai_employee_slugs = [];
 foreach ($ai_employee_posts as $emp_post) {
-    $ai_employee_slugs[] = $emp_post->post_name;
+    if ($emp_post instanceof WP_Post) {
+        $ai_employee_slugs[] = $emp_post->post_name;
+    }
 }
 
 $products = [];
@@ -80,12 +74,13 @@ foreach ([1, 2, 3] as $i) {
     $img_map = [1 => 'product-prime', 2 => 'product-exec', 3 => 'product-neural'];
     $d = $dflt[$i];
 
-    /* 默认 URL：优先用 AI employee post 的 slug（/employee/<slug>/），兜底 ACF / /ai-employees/ */
-    $emp_slug = isset($ai_employee_slugs[$i - 1]) ? trim((string) $ai_employee_slugs[$i - 1]) : '';
-    if ($emp_slug !== '') {
-        $product_url = home_url('/employee/' . $emp_slug . '/');
-    } else {
-        $product_url = hireai_field("fp_prod{$i}_url", home_url('/ai-employees/'));
+    /* v3.0.7: 用 hireai_resolve_employee_url() — get_permalink() 让 WP 处理中文 slug 编码
+       fallback 链：post → /ai-employees/ 列表页（不再 /contact/，因为 contact 太重） */
+    $product_url = function_exists('hireai_resolve_employee_url')
+        ? hireai_resolve_employee_url($i - 1, hireai_field("fp_prod{$i}_url", home_url('/ai-employees/')))
+        : home_url('/ai-employees/');
+    if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
+        error_log('[hireai v3.0.7] fp_prod' . $i . '_url: ' . $product_url);
     }
 
     $products[] = [
