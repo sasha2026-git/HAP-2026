@@ -102,15 +102,38 @@ if (function_exists('have_rows')) {
                 $row['button'] = $is_en ? 'Learn More' : '了解详情';
             }
             if ($row['url'] === '') {
+                /* v3.0.5: 优先用 ai-employee post 的 slug（/employee/<slug>/），仅当没 post 时才退回 /contact/ */
                 $row['url'] = home_url('/contact/');
             }
             $raw_rows[] = $row;
         }
     }
 }
+/* v3.0.5: 把 fallback 行也注入 slug — 这样 admin 没填 ACF 时仍可跳详情页 */
 if (empty($raw_rows) && function_exists('lookbook_fallback_employees')) {
     $raw_rows = lookbook_fallback_employees();
 }
+
+/* v3.0.5 hotfix: 把 fallback 数据里的空 URL 替换为 /employee/<slug>/ */
+$ai_emp_lookup = get_posts([
+    'post_type'      => 'post',
+    'post_status'    => 'publish',
+    'posts_per_page' => 50,
+    'category_name'  => 'ai-employee',
+    'orderby'        => 'menu_order date',
+    'order'          => 'ASC',
+    'no_found_rows'  => true,
+]);
+$emp_index = 0;
+foreach ($raw_rows as &$row_ref) {
+    if (!isset($row_ref['url']) || $row_ref['url'] === '' || $row_ref['url'] === home_url('/contact/') || $row_ref['url'] === '/contact/') {
+        if (isset($ai_emp_lookup[$emp_index]) && $ai_emp_lookup[$emp_index] instanceof WP_Post) {
+            $row_ref['url'] = home_url('/employee/' . $ai_emp_lookup[$emp_index]->post_name . '/');
+        }
+    }
+    $emp_index++;
+}
+unset($row_ref);
 
 /* --------------------------------------------------------------------
  * 3. FILTER TABS — derive unique categories from the rows

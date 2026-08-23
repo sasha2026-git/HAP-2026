@@ -60,11 +60,17 @@
 		});
 	});
 
-	/* 4. FAQ search + category filter */
+	/* 4. FAQ search + category filter
+	 * v3.0.5 hotfix: 限定到包含真实 .faq-item 的容器，避免误伤 page-faq.php 的 [data-faq-group]
+	 * （page-faq.php 用 .hireai-faq-item 而非 .faq-item，由它自己的内联 JS 处理） */
 	var faqSearch = document.getElementById('faq-search-input');
 	var faqCategoryButtons = Array.prototype.slice.call(document.querySelectorAll('.faq-category'));
 	var faqItems = Array.prototype.slice.call(document.querySelectorAll('.faq-item'));
-	var faqGroups = Array.prototype.slice.call(document.querySelectorAll('[data-faq-group]'));
+	var faqGroups = faqItems.length
+		? Array.prototype.slice.call(document.querySelectorAll('[data-faq-group]')).filter(function (g) {
+				return g.querySelector('.faq-item') !== null;
+			})
+		: [];
 	var faqEmpty = document.querySelector('[data-faq-empty]');
 	var activeFaqCategory = '';
 
@@ -161,7 +167,8 @@
 		});
 	});
 
-	if (faqItems.length || faqGroups.length) applyFaqSearch();
+	/* v3.0.5: 只有真有 .faq-item 才跑搜索/过滤（修复 page-faq.php 中间区被全局逻辑隐藏的问题） */
+	if (faqItems.length) applyFaqSearch();
 
 	/* 5. Solutions filter */
 	var chips = Array.prototype.slice.call(document.querySelectorAll('.solution-filter-bar .solution-filter'));
@@ -206,32 +213,71 @@
 	}
 })();
 
-/* 7. Global language switch (header CN/EN buttons) */
+/* 7. Global language switch (header CN/EN buttons)
+ * v3.0.5 hotfix: 修复点击 EN 看不到英文版（Bug 4）
+ * 根因：之前的 JS 只改 localStorage + 显隐 .zh/.en 元素，但页面 HTML 里根本没有
+ *       这两个 class（已验证 0 个匹配），且 hireai_lang_suffix() 只读 Polylang，
+ *       所以服务端永远返回 _zh。
+ * 修复：JS 切语言时写 cookie + 刷新页面；PHP hireai_lang_suffix() 优先读 cookie。 */
 (function () {
 	'use strict';
 
-	function applyLang(lang) {
+	var COOKIE_NAME = 'hireai_lang';
+	var COOKIE_DAYS = 365;
+
+	function setCookie(name, value, days) {
+		var expires = '';
+		if (days) {
+			var d = new Date();
+			d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+			expires = '; expires=' + d.toUTCString();
+		}
+		document.cookie = name + '=' + (value || '') + expires + '; path=/; SameSite=Lax';
+	}
+
+	function getCookie(name) {
+		var nameEQ = name + '=';
+		var ca = document.cookie.split(';');
+		for (var i = 0; i < ca.length; i++) {
+			var c = ca[i].trim();
+			if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+		}
+		return null;
+	}
+
+	function applyClientLang(lang) {
+		/* legacy: 兼容老页面里仍存在的 .zh / .en 包裹 */
 		document.querySelectorAll('.zh').forEach(function (el) {
 			el.style.display = lang === 'zh' ? '' : 'none';
 		});
 		document.querySelectorAll('.en').forEach(function (el) {
 			el.style.display = lang === 'en' ? '' : 'none';
 		});
-		document.querySelectorAll('.lang-btn').forEach(function (btn) {
-			btn.classList.remove('on');
+		/* header 上的 .hai-header__lang 按钮高亮（不论当前是 zh 还是 en） */
+		document.querySelectorAll('.hai-header__lang, .lang-btn').forEach(function (btn) {
+			btn.classList.toggle('is-en', lang === 'en');
+			btn.classList.toggle('is-zh', lang === 'zh');
 		});
-		var active = document.querySelector('.lang-btn[onclick*="' + lang + '"]');
-		if (active) active.classList.add('on');
 	}
 
+	/* 主入口：被 header.php 里的 onclick 调用。切语言 + 写 cookie + 刷新页面 */
 	window.hireaiSwitchLang = function (lang) {
-		applyLang(lang);
+		lang = (lang === 'en') ? 'en' : 'zh';
 		try { localStorage.setItem('hireai_lang', lang); } catch (e) {}
+		setCookie(COOKIE_NAME, lang, COOKIE_DAYS);
+		applyClientLang(lang);
+		/* 关键刷新：让服务端 hireai_lang_suffix() 读取新 cookie 返回正确后缀 */
+		window.location.reload();
 	};
 
 	document.addEventListener('DOMContentLoaded', function () {
-		var saved;
-		try { saved = localStorage.getItem('hireai_lang'); } catch (e) {}
-		applyLang(saved === 'en' ? 'en' : 'zh');
+		/* 优先 cookie（与服务端 hireai_lang_suffix 同源），fallback 到 localStorage */
+		var saved = getCookie(COOKIE_NAME);
+		if (!saved) {
+			try { saved = localStorage.getItem('hireai_lang'); } catch (e) {}
+			/* 若 localStorage 里有但 cookie 没写，同步一次（确保后续刷新一致） */
+			if (saved) setCookie(COOKIE_NAME, saved, COOKIE_DAYS);
+		}
+		applyClientLang(saved === 'en' ? 'en' : 'zh');
 	});
 })();

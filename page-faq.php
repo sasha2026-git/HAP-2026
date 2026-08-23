@@ -170,6 +170,13 @@ if (empty($faq_by_group)) {
                     ? 'Yes. Every engagement includes a dedicated concierge and quarterly optimization reviews.'
                     : '是的。每一段合作都会配备专属管家，并提供季度性的优化复盘。',
             ],
+            [
+                /* v3.0.5: 每组补到 3 条（共 12 条 ≥ brief 要求的 8 条） */
+                'q' => $is_en ? 'Can the digital employee integrate with our existing tools?' : '数字员工能与我们现有的工具集成吗？',
+                'a' => $is_en
+                    ? 'Yes. We support standard APIs and connectors for CRM, ERP, and ticketing systems; bespoke integration is also available.'
+                    : '可以。我们支持 CRM、ERP、工单等标准 API 与连接器，也支持定制化集成。',
+            ],
         ],
         'finance' => [
             [
@@ -183,6 +190,12 @@ if (empty($faq_by_group)) {
                 'a' => $is_en
                     ? 'For suitable scenarios we offer a time-boxed pilot with clear deliverables and evaluation criteria.'
                     : '针对合适的场景，我们会提供限时试点，明确交付物与评估标准。',
+            ],
+            [
+                'q' => $is_en ? 'Are there long-term contracts?' : '需要长期合同吗？',
+                'a' => $is_en
+                    ? 'No. We offer monthly subscriptions with no long-term lock-in; enterprise plans can be customized to your roadmap.'
+                    : '不需要。我们提供按月订阅，不强制长期锁定；企业方案可按您的路线图定制。',
             ],
         ],
         'privacy-security' => [
@@ -198,6 +211,12 @@ if (empty($faq_by_group)) {
                     ? 'All data is stored in regional private clouds; you may opt for on-premise deployment for sensitive workloads.'
                     : '所有数据存储在区域私有云；针对敏感业务，您也可选择本地化部署。',
             ],
+            [
+                'q' => $is_en ? 'Who owns the model trained on our data?' : '用我们数据训练的模型归谁所有？',
+                'a' => $is_en
+                    ? 'You do. The bespoke model and its derivative assets belong to your organization under our standard engagement terms.'
+                    : '归您所有。按标准合作条款，专属模型及其衍生资产归贵公司所有。',
+            ],
         ],
         'other' => [
             [
@@ -211,6 +230,12 @@ if (empty($faq_by_group)) {
                 'a' => $is_en
                     ? 'Out of the box: Mandarin, Cantonese, and English. Additional languages can be enabled on request.'
                     : '开箱即用支持普通话、粤语与英语；其他语言可按需启用。',
+            ],
+            [
+                'q' => $is_en ? 'How do we get started?' : '如何开始合作？',
+                'a' => $is_en
+                    ? 'Book a 30-minute consultation. We assess your goals, scope a pilot, and propose a tailored engagement plan within a week.'
+                    : '预约 30 分钟咨询。我们会评估您的目标，框定试点方案，并在 1 周内提供专属合作计划。',
             ],
         ],
     ];

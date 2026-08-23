@@ -55,6 +55,21 @@ $prod_section_sub    = hireai_field_lang('fp_products_subtitle', $lang, $is_en ?
 $prod_explore_label  = hireai_field_lang('fp_products_explore_label', $lang, $is_en ? 'Explore More' : '探索更多');
 $prod_explore_url    = hireai_field('fp_products_explore_url', home_url('/ai-employees/'));
 
+/* v3.0.5: 优先用 /employee/<slug>/ 而非 ACF fp_prodN_url（修复 Sasha 反馈：按钮跳转 /contact/ 而非详情页） */
+$ai_employee_posts = get_posts([
+    'post_type'      => 'post',
+    'post_status'    => 'publish',
+    'posts_per_page' => 3,
+    'category_name'  => 'ai-employee',
+    'orderby'        => 'menu_order date',
+    'order'          => 'ASC',
+    'no_found_rows'  => true,
+]);
+$ai_employee_slugs = [];
+foreach ($ai_employee_posts as $emp_post) {
+    $ai_employee_slugs[] = $emp_post->post_name;
+}
+
 $products = [];
 foreach ([1, 2, 3] as $i) {
     $dflt = [
@@ -64,12 +79,21 @@ foreach ([1, 2, 3] as $i) {
     ];
     $img_map = [1 => 'product-prime', 2 => 'product-exec', 3 => 'product-neural'];
     $d = $dflt[$i];
+
+    /* 默认 URL：优先用 AI employee post 的 slug（/employee/<slug>/），兜底 ACF / /ai-employees/ */
+    $emp_slug = isset($ai_employee_slugs[$i - 1]) ? trim((string) $ai_employee_slugs[$i - 1]) : '';
+    if ($emp_slug !== '') {
+        $product_url = home_url('/employee/' . $emp_slug . '/');
+    } else {
+        $product_url = hireai_field("fp_prod{$i}_url", home_url('/ai-employees/'));
+    }
+
     $products[] = [
         'title' => hireai_field_lang("fp_prod{$i}_title", $lang, $d['title']),
         'desc'  => hireai_field_lang("fp_prod{$i}_desc",  $lang, $d['desc']),
         'badge' => hireai_field_lang("fp_prod{$i}_badge", $lang, $d['badge']),
         'img'   => hireai_image("fp_prod{$i}_image", $home . '/assets/img/home/' . $img_map[$i] . '.png'),
-        'url'   => hireai_field("fp_prod{$i}_url", home_url('/ai-employees/')),
+        'url'   => $product_url,
         'btn'   => hireai_field_lang("fp_prod{$i}_btn", $lang, $is_en ? 'Explore More' : '探索更多'),
     ];
 }
@@ -177,7 +201,7 @@ $t = [
 .hireai-fp{box-sizing:border-box;margin:0;padding:0;background:var(--surface,#faf9f9);color:#1a1c1c;font-family:'Inter','Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;overflow-x:hidden;}
 .hireai-fp *,.hireai-fp *::before,.hireai-fp *::after{box-sizing:border-box;}
 .hireai-fp img{display:block;max-width:100%;height:auto;}
-.hireai-fp a{text-decoration:none;color:inherit;}
+.hireai-fp a:not([class*="hireai-fp__btn"]):not(.hireai-fp-products__explore){text-decoration:none;color:inherit;}
 .hireai-fp button{font-family:inherit;cursor:pointer;border:0;background:none;}
 
 /* ── Tokens（严格对齐 DESIGN.md） ─────────────────────────────────── */
@@ -242,14 +266,14 @@ $t = [
     border-radius:9999px;border:1px solid transparent;
     transition:all .3s ease;
 }
-.hireai-fp__btn--primary{background:#000;color:#fff;border-color:#000;}
-.hireai-fp__btn--primary:hover{box-shadow:0 0 24px rgba(119,90,25,.45);}
-.hireai-fp__btn--outline{background:rgba(255,255,255,.55);color:var(--gold);border:1px solid var(--gold-line);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
-.hireai-fp__btn--outline:hover{background:rgba(119,90,25,.08);}
-.hireai-fp__btn--ghost{background:transparent;color:#1a1c1c;border:1px solid #1a1c1c;}
-.hireai-fp__btn--ghost:hover{background:#1a1c1c;color:#fff;}
-.hireai-fp__btn--gold{background:linear-gradient(135deg,#e9c176 0%,#775a19 100%);color:#fff;border-color:transparent;}
-.hireai-fp__btn--gold:hover{box-shadow:0 0 32px rgba(233,193,118,.45);transform:translateY(-1px);}
+.hireai-fp__btn.hireai-fp__btn--primary, .hireai-fp__btn--primary.hireai-fp__btn--primary{background:#000;color:#fff!important;border-color:#000;}
+.hireai-fp__btn.hireai-fp__btn--primary:hover, .hireai-fp__btn--primary.hireai-fp__btn--primary:hover{box-shadow:0 0 24px rgba(119,90,25,.45);}
+.hireai-fp__btn.hireai-fp__btn--outline, .hireai-fp__btn--outline.hireai-fp__btn--outline{background:rgba(255,255,255,.7);color:#775a19!important;border:1px solid rgba(119,90,25,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.hireai-fp__btn.hireai-fp__btn--outline:hover, .hireai-fp__btn--outline.hireai-fp__btn--outline:hover{background:rgba(119,90,25,.12);}
+.hireai-fp__btn.hireai-fp__btn--ghost, .hireai-fp__btn--ghost.hireai-fp__btn--ghost{background:transparent;color:#1a1c1c!important;border:1px solid #1a1c1c;}
+.hireai-fp__btn.hireai-fp__btn--ghost:hover, .hireai-fp__btn--ghost.hireai-fp__btn--ghost:hover{background:#1a1c1c;color:#fff;}
+.hireai-fp__btn.hireai-fp__btn--gold, .hireai-fp__btn--gold.hireai-fp__btn--gold{background:linear-gradient(135deg,#e9c176 0%,#775a19 100%);color:#fff!important;border-color:transparent;}
+.hireai-fp__btn.hireai-fp__btn--gold:hover, .hireai-fp__btn--gold.hireai-fp__btn--gold:hover{box-shadow:0 0 32px rgba(233,193,118,.45);transform:translateY(-1px);}
 
 /* ═══════════════════════════════════════════════════════════════════════
    1) HERO  ── Stitch code.html Hero (满屏 / 背景图 / 双按钮 / 滚动指示)

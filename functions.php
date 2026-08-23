@@ -231,6 +231,15 @@ add_action('save_post_page', function ($post_id, $post) {
  * 当前语言后缀（双语方案 B）：无 Polylang 时默认 zh
  */
 function hireai_lang_suffix() {
+    /* v3.0.5 hotfix: 优先读 hireai_lang cookie（JS hireaiSwitchLang 切换后写 cookie + 刷新页面），
+     * 只有 cookie 没设置时才回退到 Polylang。这样点 EN 后刷新，服务端正确返回 _en。 */
+    $cookie_lang = isset($_COOKIE['hireai_lang']) ? trim((string) $_COOKIE['hireai_lang']) : '';
+    if ($cookie_lang === 'en') {
+        return '_en';
+    }
+    if ($cookie_lang === 'zh') {
+        return '_zh';
+    }
     if (function_exists('pll_current_language') && pll_current_language() === 'en') {
         return '_en';
     }
