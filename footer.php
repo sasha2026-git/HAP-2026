@@ -47,9 +47,9 @@ $copyright = hireai_field('footer_copyright', $suffix === '_en' ? '© 2026 Hire 
 
     <!-- Social icons row with top/bottom borders -->
     <div class="hai-footer__social">
-      <a class="hai-footer__social-link" href="#" aria-label="Public"><span class="material-symbols-outlined hai-footer__social-icon" aria-hidden="true">public</span></a>
-      <a class="hai-footer__social-link" href="#" aria-label="Diamond"><span class="material-symbols-outlined hai-footer__social-icon" aria-hidden="true">diamond</span></a>
-      <a class="hai-footer__social-link" href="#" aria-label="Token"><span class="material-symbols-outlined hai-footer__social-icon" aria-hidden="true">token</span></a>
+      <a class="hai-footer__social-link" href="#" aria-label="Public"><?php echo hireai_svg("public", 18, "hai-footer__social-icon"); ?></a>
+      <a class="hai-footer__social-link" href="#" aria-label="Diamond"><?php echo hireai_svg("diamond", 18, "hai-footer__social-icon"); ?></a>
+      <a class="hai-footer__social-link" href="#" aria-label="Token"><?php echo hireai_svg("token", 18, "hai-footer__social-icon"); ?></a>
     </div>
 
     <!-- Copyright -->

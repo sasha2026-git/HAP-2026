@@ -53,7 +53,7 @@ $lang_label = $is_en ? '中 / EN' : 'EN / 中';
       </button>
 
       <button class="hai-header__menu-toggle" id="nav-toggle" type="button" aria-label="<?php echo esc_attr($is_en ? 'Toggle menu' : '切换菜单'); ?>" aria-expanded="false" aria-controls="mobile-drawer">
-        <span class="material-symbols-outlined hai-header__icon" aria-hidden="true">menu</span>
+        <?php echo hireai_svg("menu", 24, "hai-header__icon"); ?>
       </button>
     </div>
   </div>
@@ -68,7 +68,7 @@ $lang_label = $is_en ? '中 / EN' : 'EN / 中';
       <img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People">
     </a>
     <button class="mobile-drawer__close" type="button" data-drawer-close aria-label="<?php echo esc_attr($is_en ? 'Close menu' : '关闭菜单'); ?>">
-      <span class="material-symbols-outlined hai-header__icon" aria-hidden="true">close</span>
+      <?php echo hireai_svg("close", 24, "hai-header__icon"); ?>
     </button>
   </div>
   <nav class="mobile-drawer__nav" aria-label="<?php echo esc_attr($is_en ? 'Mobile navigation' : '移动端导航'); ?>">

@@ -433,6 +433,15 @@ function hireai_svg($name = 'arrow', $size = 16, $class = 'hireai-icon') {
         'shield' => '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
         'bolt'   => '<path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/>',
         'image'  => '<rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 15l-5-5-9 9"/>',
+        'public' => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/>',
+        'diamond'=> '<path d="M6 3h12l3 6-9 12L3 9z"/><path d="M6 3l3 6M18 3l-3 6M3 9h18"/>',
+        'token'  => '<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>',
+        'sparkle'=> '<path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M19 14l.7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7z"/>',
+        'arrow-forward' => '<path d="M5 12h14M13 6l6 6-6 6"/>',
+        'content-copy' => '<rect x="8" y="8" width="12" height="12" rx="1"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/>',
+        'shield-star' => '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M12 8l1.2 2.4L15.5 11l-2.3.6L12 14l-1.2-2.4L8.5 11l2.3-.6z"/>',
+        'star'   => '<path d="M12 2l2.5 6.5L21 9l-5 4.5L17.5 21 12 17.5 6.5 21 8 13.5 3 9l6.5-.5z"/>',
+        'gem'    => '<path d="M6 3h12l3 6-9 12L3 9z"/>',
     ];
 
     $paths = isset($icons[$name]) ? $icons[$name] : $icons['arrow'];
@@ -481,13 +490,7 @@ add_action('wp_enqueue_scripts', function () use ($ver) {
         $ver('/style.css')
     );
 
-    // Material Symbols（页眉/页脚 search、menu、social 图标），与首页/博客插件同一来源。
-    wp_enqueue_style(
-        'hireaipeople-material-symbols',
-        'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap',
-        [],
-        null
-    );
+    // 移除 Material Symbols CDN（v3.0.2）：所有图标改用 inline SVG（hireai_svg()），避免外网依赖 + 隐私追踪风险。
 
     // 首页专用样式
     if (is_front_page()) {
