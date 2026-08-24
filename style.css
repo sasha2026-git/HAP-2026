@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.0.9
+Version: 3.1.0
 Text Domain:  hireaipeople
 */
 
@@ -577,6 +577,7 @@ h4 {
 
 /* Language pill — 白底黑框黑字 */
 /* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.08em */
+/* v3.1.0 (Bug 4): 浅金色背景 + 金色细描边，与「我的账户」黑字协调但带品牌色 */
 .hai-header__lang {
   font-family: var(--font-label, 'Montserrat', 'Inter'), sans-serif;
   font-size: 12px;
@@ -585,10 +586,10 @@ h4 {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 8px 16px;
-  border: 1px solid #1a1a1a;
+  border: 1px solid rgba(115, 92, 0, 0.3);
   border-radius: var(--radius-full, 9999px);
-  background: #ffffff;
-  color: #1a1a1a;
+  background: rgba(115, 92, 0, 0.05);
+  color: #1a1c1c;
   cursor: pointer;
   transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
@@ -614,7 +615,20 @@ h4 {
   cursor: pointer;
   padding: 0;
 }
-/* Mobile menu toggle stays visible on all breakpoints (incl. PC) */
+/* v3.1.0 (Bug 5): PC (>=1024px) 隐藏汉堡菜单 — 仅移动端展示 */
+@media (min-width: 1024px) {
+  .hai-header__menu-toggle,
+  .mobile-drawer,
+  .hai-drawer-overlay {
+    display: none !important;
+  }
+}
+/* 移动端 (<1024px) 始终显示汉堡菜单 */
+@media (max-width: 1023px) {
+  .hai-header__menu-toggle {
+    display: flex;
+  }
+}
 
 /* Mobile drawer overlay */
 .hai-drawer-overlay {

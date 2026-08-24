@@ -95,77 +95,91 @@ $case_defaults = [
     'defaults/case-6.jpg',
 ];
 
+/* v3.0.9 (Block 1): 静态 fallback 卡片补齐 link 字段
+ *   v3.0.8 之前 href='#' 是真占位；现在 fallback 也指向 cases 归档页 / 列表页，
+ *   不再是 'href=#' 死链。
+ *   2x2 错落布局 (横-竖-竖-横) 完全保留 (hireaipeople.txt §2.1 规范)。 */
+$cases_archive_url = $cases_cta_url !== '' ? $cases_cta_url : home_url('/cases-insights/');
 $cases = [
     [
-        'span'    => 12,
-        'aspect'  => '21 / 9',
+        'span'      => 12,
+        'aspect'    => '21 / 9',
         'kicker_zh' => 'Brand Protection',
         'kicker_en' => 'Brand Protection',
         'title_zh'  => '公关审计与品牌重塑',
         'title_en'  => 'Crisis Counsel & Brand Reinvention',
         'desc_zh'   => '专业AI驱动的公关洞察与品牌保护，通过实时监测与情感分析，精准守护品牌声誉并在全球市场中重新定义叙事。',
         'desc_en'   => 'AI-driven reputation and crisis counsel: real-time monitoring and sentiment analysis protecting your brand narrative across global markets.',
-        'image'  => $case_defaults[0],
+        'image'     => $case_defaults[0],
+        'link'      => $cases_archive_url,
     ],
     [
-        'span'    => 6,
-        'aspect'  => '4 / 5',
+        'span'      => 6,
+        'aspect'    => '4 / 5',
         'kicker_zh' => 'Strategic Alliances',
         'kicker_en' => 'Strategic Alliances',
         'title_zh'  => '跨界超级IP协作',
         'title_en'  => 'Bespoke IP Collaborations',
         'desc_zh'   => '跨界赋能，连接全球顶尖艺术IP，打造具有收藏价值的数字孪生艺术品与品牌资产。',
         'desc_en'   => 'Connecting heritage and digital — co-authoring collectable digital twins and brand assets with the world\u2019s most coveted IPs.',
-        'image'  => $case_defaults[1],
+        'image'     => $case_defaults[1],
+        'link'      => $cases_archive_url,
     ],
     [
-        'span'    => 6,
-        'aspect'  => '4 / 5',
+        'span'      => 6,
+        'aspect'    => '4 / 5',
         'kicker_zh' => 'Digital Retail',
         'kicker_en' => 'Digital Retail',
         'title_zh'  => '奢品电商视觉体系',
         'title_en'  => 'Luxury E-Commerce Visuals',
         'desc_zh'   => '全场景AI电商视觉解决方案，全方位提升转化率与品牌格调。',
         'desc_en'   => 'End-to-end AI visual systems for luxury commerce — elevating both conversion and brand gravitas.',
-        'image'  => $case_defaults[2],
+        'image'     => $case_defaults[2],
+        'link'      => $cases_archive_url,
     ],
     [
-        'span'    => 12,
-        'aspect'  => '21 / 9',
+        'span'      => 12,
+        'aspect'    => '21 / 9',
         'kicker_zh' => 'Visual Masterpieces',
         'kicker_en' => 'Visual Masterpieces',
         'title_zh'  => 'AI 艺术先锋影像',
         'title_en'  => 'AI Fine-Art Imageworks',
         'desc_zh'   => '重新定义视觉美学，开启数字感官盛宴，引领高端艺术审美新趋势。',
         'desc_en'   => 'Re-defining the visual canon — opening digital sensorial feasts that lead luxury aesthetic trends.',
-        'image'  => $case_defaults[3],
+        'image'     => $case_defaults[3],
+        'link'      => $cases_archive_url,
     ],
 ];
 
 /* --------------------------------------------------------------------
  * 3. Insight cards (hard-coded fallback, mirrors Stitch design)
  * -------------------------------------------------------------------- */
+/* v3.0.9 (Block 1): insights fallback 也补齐 link — 指向 insights 归档页 */
+$insights_archive_url = $insights_cta_url !== '' ? $insights_cta_url : home_url('/cases-insights/');
 $insights = [
     [
         'date_zh' => '2024年10月15日',
         'date_en' => 'October 15, 2024',
         'title_zh' => '生成式AI如何重塑高端美妆行业的数字化未来',
         'title_en' => 'How generative AI rewires the digital future of luxury beauty',
-        'image'  => $case_defaults[4],
+        'image'    => $case_defaults[4],
+        'link'     => $insights_archive_url,
     ],
     [
         'date_zh' => '2024年9月28日',
         'date_en' => 'September 28, 2024',
         'title_zh' => '解析数字人代言：奢华品牌的新世代公关策略',
         'title_en' => 'Decoding digital-human endorsement: the next-gen PR play for luxury houses',
-        'image'  => $case_defaults[5],
+        'image'    => $case_defaults[5],
+        'link'     => $insights_archive_url,
     ],
     [
         'date_zh' => '2024年9月10日',
         'date_en' => 'September 10, 2024',
         'title_zh' => '超越物理极限：用AI构建旗舰级沉浸式电商空间',
         'title_en' => 'Beyond physical limits: AI-built flagship immersive commerce spaces',
-        'image'  => $case_defaults[0],
+        'image'    => $case_defaults[0],
+        'link'     => $insights_archive_url,
     ],
 ];
 
@@ -182,6 +196,17 @@ $final_primary = $is_en ? 'Start The Journey' : '开启旅程';
 $final_ghost   = $is_en ? 'Download Brand Book' : '下载品牌手册';
 $final_url     = $is_en ? '/contact/' : '/contact/';
 $final_ghost_url = $is_en ? '/contact/' : '/contact/';
+
+/* v3.0.9 (Block 1): 先探测 insights_cat_id — 后面 cases fallback 要用到它
+ *   v3.0.8 ordering bug: line 217 引用了 $insights_cat_id，但 line 258 才定义。
+ *   PHP 短路 + undefined var in boolean = null = falsy，恰好不会崩，
+ *   但语义依赖 undefined var 是脆弱的。现在把 insights 探测提前。 */
+$insights_cat_id = function_exists('hireai_find_category_id')
+    ? hireai_find_category_id([
+        'insights', 'insight', 'industry-insights', 'blog', 'news', 'article', 'articles',
+        '洞察', '观点', '行业洞察', '我们的洞察',
+    ])
+    : 0;
 
 /* v3.0.8 (Bug D): 增强候选 slug + 中文名 fallback（v3.0.7 仅 6 个候选不足）
  *   v3.0.7 candidate: ['cases', 'case', 'casestudy', 'case-studies', '案例', '案例研究']
@@ -254,13 +279,7 @@ if (!empty($wp_cases)) {
     }
 }
 
-/* v3.0.8 (Bug D): insights 同样增强候选 slug */
-$insights_cat_id = function_exists('hireai_find_category_id')
-    ? hireai_find_category_id([
-        'insights', 'insight', 'industry-insights', 'blog', 'news', 'article', 'articles',
-        '洞察', '观点', '行业洞察', '我们的洞察',
-    ])
-    : 0;
+/* v3.0.9 (Block 1): $insights_cat_id 已在前面探测；这里直接进入 WP_Query */
 $insights_q = [
     'post_type'      => 'post',
     'post_status'    => 'publish',
@@ -598,6 +617,34 @@ if (!empty($wp_insights)) {
     opacity: 1;
     transform: translateY(0);
 }
+
+/* v3.0.9 (Block 1): empty-state for cases / insights when WP_Query returns nothing */
+.ci-empty {
+    text-align: center;
+    padding: clamp(48px, 8vw, 96px) 24px;
+    border: 1px dashed rgba(196, 199, 199, 0.6);
+    border-radius: var(--radius-lg, 0.75rem);
+    background: rgba(250, 249, 249, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.ci-empty__title {
+    font-family: var(--font-serif, 'Playfair Display'), serif;
+    font-size: clamp(20px, 2.4vw, 28px);
+    font-weight: 500;
+    color: var(--on-surface, #1a1c1c);
+    margin: 0;
+}
+.ci-empty__sub {
+    font-family: var(--font-body, 'Inter'), sans-serif;
+    font-size: var(--fs-body, 16px);
+    line-height: 1.6;
+    color: var(--on-surface-variant, #444748);
+    margin: 0;
+    max-width: 520px;
+}
 </style>
 
 <div class="lb-main">
@@ -629,6 +676,18 @@ if (!empty($wp_insights)) {
             <div class="ci-section__rule" aria-hidden="true"></div>
         </header>
 
+        <?php if (empty($cases)) : ?>
+            <div class="ci-empty" role="status">
+                <p class="ci-empty__title"><?php echo esc_html($is_en ? 'No cases yet' : '暂无案例'); ?></p>
+                <p class="ci-empty__sub"><?php echo esc_html($is_en
+                    ? 'Please create some Case posts in WordPress admin → Posts.'
+                    : '请在 WordPress 后台 → 文章 中创建案例文章。'); ?></p>
+                <a class="lb-btn lb-btn--outline" href="<?php echo esc_url($cases_archive_url); ?>">
+                    <?php echo esc_html($is_en ? 'Browse all cases' : '查看全部案例'); ?>
+                    <?php echo hireai_svg('east', 14, 'lb-btn__icon'); ?>
+                </a>
+            </div>
+        <?php else : ?>
         <div class="ci-cases-grid">
             <?php foreach ($cases as $case) :
                 $img_url   = hireai_default_image($case['image']);
@@ -637,7 +696,10 @@ if (!empty($wp_insights)) {
                 $desc      = $is_en ? $case['desc_en']   : $case['desc_zh'];
                 $span      = (int) $case['span'];
                 $aspect    = $case['aspect'];
-                $case_link = isset($case['link']) ? $case['link'] : '#';
+                /* v3.0.9 (Block 1): fallback 用 cases_archive_url，不再 'href=#' */
+                $case_link = isset($case['link']) && $case['link'] !== '' && $case['link'] !== '#'
+                    ? $case['link']
+                    : $cases_archive_url;
                 ?>
                 <a class="ci-case ci-reveal"
                    href="<?php echo esc_url($case_link); ?>"
@@ -654,9 +716,10 @@ if (!empty($wp_insights)) {
                         <h3 class="ci-case__title"><?php echo esc_html($title); ?></h3>
                         <p class="ci-case__desc"><?php echo esc_html($desc); ?></p>
                     </div>
-                </article>
+                </a>
             <?php endforeach; ?>
         </div>
+        <?php endif; ?>
 
         <div class="ci-pagination" role="group" aria-label="<?php echo esc_attr($is_en ? 'Case pagination' : '案例分页'); ?>">
             <button type="button" class="ci-pagination__btn" aria-label="<?php echo esc_attr($is_en ? 'Previous' : '上一页'); ?>" disabled>
@@ -692,6 +755,18 @@ if (!empty($wp_insights)) {
             <div class="ci-section__rule" aria-hidden="true"></div>
         </header>
 
+        <?php if (empty($insights)) : ?>
+            <div class="ci-empty" role="status">
+                <p class="ci-empty__title"><?php echo esc_html($is_en ? 'No insights yet' : '暂无洞察'); ?></p>
+                <p class="ci-empty__sub"><?php echo esc_html($is_en
+                    ? 'Please create some Insight posts in WordPress admin → Posts.'
+                    : '请在 WordPress 后台 → 文章 中创建洞察文章。'); ?></p>
+                <a class="lb-btn lb-btn--outline" href="<?php echo esc_url($insights_archive_url); ?>">
+                    <?php echo esc_html($is_en ? 'Browse all insights' : '查看全部洞察'); ?>
+                    <?php echo hireai_svg('east', 14, 'lb-btn__icon'); ?>
+                </a>
+            </div>
+        <?php else : ?>
         <div class="ci-insights-grid">
             <?php foreach ($insights as $insight) :
                 $img_url  = hireai_default_image($insight['image']);
@@ -699,6 +774,10 @@ if (!empty($wp_insights)) {
                 $date     = $is_en ? $insight['date_en']  : $insight['date_zh'];
                 $delay_ms = isset($insight['_delay']) ? (int) $insight['_delay'] : 0;
                 $style_attr = $delay_ms > 0 ? ' style="transition-delay:' . esc_attr($delay_ms) . 'ms;"' : '';
+                /* v3.0.9 (Block 1): fallback 用 insights_archive_url，不再 'href=#' */
+                $insight_link = isset($insight['link']) && $insight['link'] !== '' && $insight['link'] !== '#'
+                    ? $insight['link']
+                    : $insights_archive_url;
                 ?>
                 <article class="ci-insight ci-reveal"<?php echo $style_attr; ?>
                          aria-label="<?php echo esc_attr($title); ?>">
@@ -710,7 +789,7 @@ if (!empty($wp_insights)) {
                     <div class="ci-insight__body">
                         <span class="ci-insight__date"><?php echo esc_html($date); ?></span>
                         <h3 class="ci-insight__title"><?php echo esc_html($title); ?></h3>
-                        <a class="ci-insight__cta" href="<?php echo esc_url(isset($insight['link']) ? $insight['link'] : $insights_cta_url); ?>">
+                        <a class="ci-insight__cta" href="<?php echo esc_url($insight_link); ?>">
                             <span><?php echo esc_html($card_cta_text); ?></span>
                             <?php echo hireai_svg('east', 12, 'ci-insight__cta-icon'); ?>
                         </a>
@@ -718,6 +797,7 @@ if (!empty($wp_insights)) {
                 </article>
             <?php endforeach; ?>
         </div>
+        <?php endif; ?>
 
         <div class="ci-pagination" role="group" aria-label="<?php echo esc_attr($is_en ? 'Insight pagination' : '洞察分页'); ?>">
             <button type="button" class="ci-pagination__btn" aria-label="<?php echo esc_attr($is_en ? 'Previous' : '上一页'); ?>" disabled>
