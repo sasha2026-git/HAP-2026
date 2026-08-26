@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.2.0
+Version: 3.3.0
 Text Domain:  hireaipeople
 */
 
@@ -35,40 +35,9 @@ Text Domain:  hireaipeople
   font-weight: 100 900;
   font-display: swap;
 }
-/* v3.0.6: Montserrat — English body/label per hireaipeople.txt (Montserrat not Inter) */
-@font-face {
-  font-family: 'Montserrat';
-  src: url('assets/fonts/Montserrat-VariableFont_wght.woff2') format('woff2');
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-}
-/* v3.0.6: Montserrat Italic — for English italic emphasis */
-@font-face {
-  font-family: 'Montserrat';
-  src: url('assets/fonts/Montserrat-Italic-VariableFont_wght.woff2') format('woff2');
-  font-style: italic;
-  font-weight: 100 900;
-  font-display: swap;
-}
-/* NOTE: Montserrat .woff2 must be added to assets/fonts/ when network available.
-   Until then, --font-body-en will fall back to Inter (no visual change). */
-
-@font-face {
-  font-family: 'Manrope';
-  src: url('assets/fonts/Manrope-Variable.woff2') format('woff2');
-  font-style: normal;
-  font-weight: 200 800;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Hanken Grotesk';
-  src: url('assets/fonts/HankenGrotesk-Variable.woff2') format('woff2');
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-}
+/* v3.3.0: Removed dead @font-face for Montserrat/Manrope/Hanken Grotesk
+   (spec §1 only uses Playfair Display + Inter for English).
+   --font-body-en / --font-label-en fallback to Inter cleanly. */
 
 @font-face {
   font-family: 'Noto Serif SC';
@@ -157,6 +126,8 @@ Text Domain:  hireaipeople
   --fs-body-lg: 18px;             /* body-lg: Inter/Montserrat 18 / 400 / 1.6 */
   --fs-body: 16px;                /* body-md: Inter/Montserrat 16 / 400 / 1.6 */
   --fs-label: 12px;
+  /* v3.3.0: spec §2 label-md = 14px Inter 600 (DESIGN.md label-md token) */
+  --fs-label-md: 14px;
   --fs-label-mono: clamp(13px, 1vw, 14px);
   --fs-button: 14px;
   --fs-nav: 12px;
@@ -166,11 +137,12 @@ Text Domain:  hireaipeople
   --font-display-en: 'Playfair Display', Georgia, serif;
   --font-display-zh: 'Noto Serif SC', 'Songti SC', serif;
   /* v3.0.6: switch English body/label to Montserrat per hireaipeople.txt */
-  /* v3.0.7: Montserrat woff2 仍未下载 → 从 fallback 链移除，避免中文/英文回退到系统字体错位；@font-face 声明保留，等 Sasha 下载后激活 */
+  /* v3.3.0: spec §1 — English uses Playfair Display + Inter only; Montserrat废弃
+     (was: Montserrat fallback @font-face removed; --font-body-en = Inter directly) */
   --font-body-en: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   /* v3.0.7: 完整中文 fallback 链（避免中文回退到系统字体错位） */
   --font-body-zh: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', -apple-system, sans-serif;
-  /* v3.0.7: label 同步移除 Montserrat (woff2 未下载) */
+  /* v3.3.0: spec §1 — label 也用 Inter only (Montserrat废弃) */
   --font-label-en: 'Inter', -apple-system, sans-serif;
   --font-label-zh: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --fs-display-en: clamp(40px, 5.5vw, 72px);
@@ -367,7 +339,7 @@ button {
 .display-lg {
   font-family: var(--font-display-en, var(--font-serif));
   font-size: var(--fs-display);
-  font-weight: 600;
+  font-weight: 700; /* v3.3.0: spec §2 display-lg weight=700 (was 600) */
   line-height: 1.1;
   letter-spacing: -0.02em;
   text-wrap: balance;
@@ -423,7 +395,7 @@ h4 {
 
 .body-lg {
   font-size: var(--fs-body-lg);
-  font-weight: 300;
+  font-weight: 400; /* v3.3.0: spec §2 body-lg weight=400 (was 300, was light) */
   line-height: var(--lh-body);
   letter-spacing: 0.01em;
 }
@@ -441,6 +413,16 @@ h4 {
   font-size: var(--fs-label);
   font-weight: 600;
   line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* v3.3.0: spec §2 label-md = 14px Inter 600 uppercase 0.1em — apply globally */
+.label-md {
+  font-family: var(--font-label);
+  font-size: var(--fs-label-md);
+  font-weight: 600;
+  line-height: 1.2;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -4240,14 +4222,33 @@ html[lang="en"] body {
   line-height: var(--lh-body-en);
 }
 /* v3.0.7: 英文 display 字体 */
+/* v3.3.0: spec §2 headline-lg = 48px Playfair 600 (en only); zh keeps --fs-h1=56px/500 */
 html[lang="en"] .headline-lg,
 html[lang="en"] h1,
 html[lang="en"] .page-title {
   font-family: var(--font-display-en);
+  font-size: clamp(32px, 4vw, 48px); /* headline-lg desktop 48px */
+  font-weight: 600; /* spec §2 headline-lg weight=600 */
+  line-height: 1.2;
+}
+/* v3.3.0: spec §2 headline-lg-mobile = 32px @ ≤768px (en only) */
+@media (max-width: 768px) {
+  html[lang="en"] .headline-lg {
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
 }
 /* v3.0.7: 英文 label 字体 */
 html[lang="en"] .label,
 html[lang="en"] .label-md,
 html[lang="en"] .label-sm {
   font-family: var(--font-label-en);
+}
+/* v3.3.0: spec §2 headline-md = 32px Playfair 500 (en only); zh keeps --fs-h2 */
+html[lang="en"] .headline-md,
+html[lang="en"] h2 {
+  font-size: clamp(28px, 3vw, 32px);
+  font-weight: 500;
+  line-height: 1.3;
 }
