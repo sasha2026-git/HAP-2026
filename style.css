@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.3.0
+Version: 3.4.0
 Text Domain:  hireaipeople
 */
 
@@ -4251,4 +4251,48 @@ html[lang="en"] h2 {
   font-size: clamp(28px, 3vw, 32px);
   font-weight: 500;
   line-height: 1.3;
+}
+
+/* ==========================================================================
+ * v3.4.0: AI 数字员工页分页（AllScented 风格，金色活动态 #775a19）
+ *   - 每页 5 个，超界自动加页
+ *   - URL: ?emp_page=N（保留其他 query 参数）
+ *   - 视觉与 nav 风格一致：label-md (14px / Inter / 600 / 0.05em)
+ * ========================================================================== */
+.lb-att-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 48px;
+}
+
+.lb-att-pagination__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(115, 92, 0, 0.2);
+  border-radius: 4px;
+  font-family: var(--font-label);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--ink, #1a1c1c);
+  background: transparent;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.lb-att-pagination__btn:hover {
+  border-color: rgba(115, 92, 0, 0.5);
+  background: rgba(115, 92, 0, 0.05);
+  text-decoration: none;
+}
+
+.lb-att-pagination__btn.is-active {
+  background: #775a19;
+  border-color: #775a19;
+  color: #fff;
 }
