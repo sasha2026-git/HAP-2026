@@ -218,7 +218,7 @@ $t = [
     --sz-h2:clamp(28px,3.5vw,42px);         /* mid         600 1.2 */
     --sz-h3:clamp(20px,2vw,32px);           /* headline-md 500 1.3 */
     --sz-bl:18px; --sz-bm:16px;             /* body-lg / body-md  400 1.6 */
-    --sz-lm:14px; --sz-ls:12px;             /* label-md (600 .1em) / label-sm (500 .05em) */
+    --sz-lm:14px; --sz-ls:12px;             /* label-md (600 .1em) / label-sm (500 .05em); v3.3.0 sz-lm stays = label-md spec §2 */
     /* Spacing tokens（严格对齐 DESIGN.md） */
     --gap:clamp(60px,8vw,120px);            /* section-gap */
     --gutter:24px;
@@ -284,6 +284,8 @@ $t = [
 .hireai-fp-hero__title{font-family:var(--f-display);font-size:var(--sz-d);font-weight:700;line-height:1.1;letter-spacing:-.02em;color:#000;margin:0 0 24px;}
 .hireai-fp-hero__title-line{display:block;}
 .hireai-fp-hero__subtitle{font-family:var(--f-body);font-size:var(--sz-bl);font-weight:400;line-height:1.6;color:rgba(26,28,28,.80);margin:0 auto 36px;max-width:680px;}
+/* v3.3.0: spec §4 Hero 副标题 = body-lg italic (en only); zh keeps upright */
+html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 .hireai-fp-hero__actions{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;}
 .hireai-fp-hero__scroll{position:absolute;left:50%;bottom:32px;transform:translateX(-50%);z-index:3;color:rgba(0,0,0,.45);display:inline-flex;animation:hireai-fp-bounce 2.2s ease-in-out infinite;}
 .hireai-fp-hero__scroll svg{width:36px;height:36px;}
