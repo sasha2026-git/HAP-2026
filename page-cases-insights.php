@@ -1,25 +1,21 @@
 <?php
 /**
- * Template Name: 聘AI - 案例 & 洞察（Atelier v3）
+ * Template Name: 聘AI - 案例 & 洞察（杂志版 v2.2.6 排版）
  *
  * Aurelian luxury system: gold #775a19 / #e9c176, Playfair Display + Inter.
  *
- * Structure (from Stitch design 案例洞察/code.html):
+ * Structure (杂志版 v2.2.6 排版):
  *   1. Hero (centered, gold-leaf accent, italic tagline)
- *   2. 案例 studies grid (12-col stagger: wide / tall-tall / wide)
- *   3. 洞察 / Insights 3-column cards (4:3 image, date, title, read-more)
- *   4. Bottom CTA banner ("Ready to Redefine Humanity?")
+ *   2. 案例 studies grid (12-col stagger: 8 / 4 / 6 / 6)
+ *   3. 洞察 / Insights 3-column cards (4:5 image, category, title, read-more)
+ *   4. Bottom dark CTA banner ("Ready to define your legacy?")
  *
  * Data sources:
  *   - Hero / sections / cards: ACF group_page_cases_insights
- *     (hero_kicker, hero_title, hero_subtitle,
- *      cases_kicker, cases_title, cases_subtitle, cases_cta_url, cases_cta_title,
- *      insights_kicker, insights_title, insights_subtitle, insights_cta_url, insights_cta_title,
- *      card_cta_text)
- *   - Case items & insight items: hard-coded fallback data (no ACF repeater
- *     registered in functions.php), so the design copy is preserved verbatim.
+ *   - Case items (4 张): get_posts(['cat' => cases_id], 4) 动态拉取
+ *   - Insight items (3 张): get_posts(['cat' => insights_id], 3) 动态拉取
  *
- * @version 3.0.0
+ * @version 3.5.0 杂志版回退
  */
 if (!defined('ABSPATH')) {
     exit;
@@ -33,28 +29,29 @@ $page_id = get_the_ID();
 
 /* --------------------------------------------------------------------
  * 1. ACF text fields (single, language-aware via hireai_field)
+ *    中英两套 fallback 与 v2.2.6 静态文案语义一致
  * -------------------------------------------------------------------- */
 $hero_kicker       = hireai_field('hero_kicker',
-    $is_en ? 'CASES & INSIGHTS' : '案例与洞察', $page_id);
+    $is_en ? 'THE ATELIER OF INTELLIGENCE' : '智慧工坊', $page_id);
 
 $hero_title        = hireai_field('hero_title',
-    $is_en ? 'Cases & Insights' : '案例与洞察', $page_id);
+    $is_en ? 'Crafting Digital <em>Humanity</em>' : '打造数字 <em>人文</em>', $page_id);
 
 $hero_subtitle     = hireai_field('hero_subtitle',
     $is_en
-        ? '"AI-led process, Human-delivered results."'
-        : '「AI 主导流程，匠心交付成果。」', $page_id);
+        ? 'Where technical precision meets heritage aesthetic.'
+        : '技术精度与传承美学的交汇之处。', $page_id);
 
 $cases_kicker      = hireai_field('cases_kicker',
     $is_en ? 'CASES' : '案例', $page_id);
 
 $cases_title       = hireai_field('cases_title',
-    $is_en ? 'Selected Cases' : '精选案例', $page_id);
+    $is_en ? 'Collaborative Excellence' : '卓越案例', $page_id);
 
 $cases_subtitle    = hireai_field('cases_subtitle',
     $is_en
-        ? 'How real clients grow with digital employees.'
-        : '真实客户如何借助数字员工实现增长。', $page_id);
+        ? 'Where technical precision meets heritage aesthetic.'
+        : '技术精度与传承美学的交汇之处。', $page_id);
 
 $cases_cta_url     = hireai_field('cases_cta_url',
     $is_en ? '/category/cases/' : '/category/cases/', $page_id);
@@ -63,15 +60,15 @@ $cases_cta_title   = hireai_field('cases_cta_title',
     $is_en ? 'All Cases' : '查看全部案例', $page_id);
 
 $insights_kicker   = hireai_field('insights_kicker',
-    $is_en ? 'INSIGHTS' : '洞察', $page_id);
+    $is_en ? 'INDUSTRY INSIGHTS & THOUGHT LEADERSHIP' : '行业洞察与思想领导力', $page_id);
 
 $insights_title    = hireai_field('insights_title',
-    $is_en ? 'Frontier Insights' : '前沿洞察', $page_id);
+    $is_en ? 'The Intelligence Journal' : '前沿洞察', $page_id);
 
 $insights_subtitle = hireai_field('insights_subtitle',
     $is_en
-        ? 'Deep thinking on AI and the digital workforce.'
-        : '关于 AI 行业与数字员工的深度思考。', $page_id);
+        ? 'INDUSTRY INSIGHTS & THOUGHT LEADERSHIP'
+        : '行业洞察与思想领导力', $page_id);
 
 $insights_cta_url  = hireai_field('insights_cta_url',
     $is_en ? '/category/insights/' : '/category/insights/', $page_id);
@@ -83,136 +80,11 @@ $card_cta_text     = hireai_field('card_cta_text',
     $is_en ? 'Read More' : '阅读全文', $page_id);
 
 /* --------------------------------------------------------------------
- * 2. Case-study cards (hard-coded fallback, mirrors Stitch design)
- *    Fields available per card: kicker, title, desc, image
+ * 2. 案例 cards (4 张) — 动态 get_posts(cases) 拉取最新 4 篇
+ *    HTML 排版完全照搬 v2.2.6 杂志版（case-1/2/3/4 + 12-col grid）
  * -------------------------------------------------------------------- */
-$case_defaults = [
-    'defaults/case-1.jpg',
-    'defaults/case-2.jpg',
-    'defaults/case-3.jpg',
-    'defaults/case-4.jpg',
-    'defaults/case-5.jpg',
-    'defaults/case-6.jpg',
-];
 
-/* v3.0.9 (Block 1): 静态 fallback 卡片补齐 link 字段
- *   v3.0.8 之前 href='#' 是真占位；现在 fallback 也指向 cases 归档页 / 列表页，
- *   不再是 'href=#' 死链。
- *   2x2 错落布局 (横-竖-竖-横) 完全保留 (hireaipeople.txt §2.1 规范)。 */
-$cases_archive_url = $cases_cta_url !== '' ? $cases_cta_url : home_url('/cases-insights/');
-$cases = [
-    [
-        'span'      => 12,
-        'aspect'    => '21 / 9',
-        'kicker_zh' => 'Brand Protection',
-        'kicker_en' => 'Brand Protection',
-        'title_zh'  => '公关审计与品牌重塑',
-        'title_en'  => 'Crisis Counsel & Brand Reinvention',
-        'desc_zh'   => '专业AI驱动的公关洞察与品牌保护，通过实时监测与情感分析，精准守护品牌声誉并在全球市场中重新定义叙事。',
-        'desc_en'   => 'AI-driven reputation and crisis counsel: real-time monitoring and sentiment analysis protecting your brand narrative across global markets.',
-        'image'     => $case_defaults[0],
-        'link'      => $cases_archive_url,
-    ],
-    [
-        'span'      => 6,
-        'aspect'    => '4 / 5',
-        'kicker_zh' => 'Strategic Alliances',
-        'kicker_en' => 'Strategic Alliances',
-        'title_zh'  => '跨界超级IP协作',
-        'title_en'  => 'Bespoke IP Collaborations',
-        'desc_zh'   => '跨界赋能，连接全球顶尖艺术IP，打造具有收藏价值的数字孪生艺术品与品牌资产。',
-        'desc_en'   => 'Connecting heritage and digital — co-authoring collectable digital twins and brand assets with the world\u2019s most coveted IPs.',
-        'image'     => $case_defaults[1],
-        'link'      => $cases_archive_url,
-    ],
-    [
-        'span'      => 6,
-        'aspect'    => '4 / 5',
-        'kicker_zh' => 'Digital Retail',
-        'kicker_en' => 'Digital Retail',
-        'title_zh'  => '奢品电商视觉体系',
-        'title_en'  => 'Luxury E-Commerce Visuals',
-        'desc_zh'   => '全场景AI电商视觉解决方案，全方位提升转化率与品牌格调。',
-        'desc_en'   => 'End-to-end AI visual systems for luxury commerce — elevating both conversion and brand gravitas.',
-        'image'     => $case_defaults[2],
-        'link'      => $cases_archive_url,
-    ],
-    [
-        'span'      => 12,
-        'aspect'    => '21 / 9',
-        'kicker_zh' => 'Visual Masterpieces',
-        'kicker_en' => 'Visual Masterpieces',
-        'title_zh'  => 'AI 艺术先锋影像',
-        'title_en'  => 'AI Fine-Art Imageworks',
-        'desc_zh'   => '重新定义视觉美学，开启数字感官盛宴，引领高端艺术审美新趋势。',
-        'desc_en'   => 'Re-defining the visual canon — opening digital sensorial feasts that lead luxury aesthetic trends.',
-        'image'     => $case_defaults[3],
-        'link'      => $cases_archive_url,
-    ],
-];
-
-/* --------------------------------------------------------------------
- * 3. Insight cards (hard-coded fallback, mirrors Stitch design)
- * -------------------------------------------------------------------- */
-/* v3.0.9 (Block 1): insights fallback 也补齐 link — 指向 insights 归档页 */
-$insights_archive_url = $insights_cta_url !== '' ? $insights_cta_url : home_url('/cases-insights/');
-$insights = [
-    [
-        'date_zh' => '2024年10月15日',
-        'date_en' => 'October 15, 2024',
-        'title_zh' => '生成式AI如何重塑高端美妆行业的数字化未来',
-        'title_en' => 'How generative AI rewires the digital future of luxury beauty',
-        'image'    => $case_defaults[4],
-        'link'     => $insights_archive_url,
-    ],
-    [
-        'date_zh' => '2024年9月28日',
-        'date_en' => 'September 28, 2024',
-        'title_zh' => '解析数字人代言：奢华品牌的新世代公关策略',
-        'title_en' => 'Decoding digital-human endorsement: the next-gen PR play for luxury houses',
-        'image'    => $case_defaults[5],
-        'link'     => $insights_archive_url,
-    ],
-    [
-        'date_zh' => '2024年9月10日',
-        'date_en' => 'September 10, 2024',
-        'title_zh' => '超越物理极限：用AI构建旗舰级沉浸式电商空间',
-        'title_en' => 'Beyond physical limits: AI-built flagship immersive commerce spaces',
-        'image'    => $case_defaults[0],
-        'link'     => $insights_archive_url,
-    ],
-];
-
-/* --------------------------------------------------------------------
- * 4. Final CTA copy (no ACF group registered; preserve design copy)
- * -------------------------------------------------------------------- */
-$final_heading = $is_en
-    ? 'Ready to Redefine Humanity?'
-    : '准备好重新定义人性了吗？';
-$final_sub     = $is_en
-    ? "Join the exclusive echelon of leaders leveraging Aurelian AI\u2019s bespoke ecosystem."
-    : '加入运用 Aurelian AI 专属生态的领袖精英之列，开启属于您的篇章。';
-$final_primary = $is_en ? 'Start The Journey' : '开启旅程';
-$final_ghost   = $is_en ? 'Download Brand Book' : '下载品牌手册';
-$final_url     = $is_en ? '/contact/' : '/contact/';
-$final_ghost_url = $is_en ? '/contact/' : '/contact/';
-
-/* v3.0.9 (Block 1): 先探测 insights_cat_id — 后面 cases fallback 要用到它
- *   v3.0.8 ordering bug: line 217 引用了 $insights_cat_id，但 line 258 才定义。
- *   PHP 短路 + undefined var in boolean = null = falsy，恰好不会崩，
- *   但语义依赖 undefined var 是脆弱的。现在把 insights 探测提前。 */
-$insights_cat_id = function_exists('hireai_find_category_id')
-    ? hireai_find_category_id([
-        'insights', 'insight', 'industry-insights', 'blog', 'news', 'article', 'articles',
-        '洞察', '观点', '行业洞察', '我们的洞察',
-    ])
-    : 0;
-
-/* v3.0.8 (Bug D): 增强候选 slug + 中文名 fallback（v3.0.7 仅 6 个候选不足）
- *   v3.0.7 candidate: ['cases', 'case', 'casestudy', 'case-studies', '案例', '案例研究']
- *   v3.0.8 增加: 'case-showcase', 'case-collection', 'work', 'works', 'project',
- *                'projects', 'portfolio', '案例展示', '案例集', '我们的案例', '项目案例'
- */
+/* v3.0.8 (Bug D) + v3.0.9: cases category 探测 fallback */
 $cases_cat_id = function_exists('hireai_find_category_id')
     ? hireai_find_category_id([
         'cases', 'case', 'casestudy', 'case-studies', 'case-showcase', 'case-collection',
@@ -220,15 +92,10 @@ $cases_cat_id = function_exists('hireai_find_category_id')
         '案例', '案例研究', '案例展示', '案例集', '我们的案例', '项目案例',
     ])
     : 0;
-if (!$cases_cat_id && current_user_can('manage_options')) {
-    add_action('admin_notices', function () {
-        echo '<div class="notice notice-warning"><p>聘AI: 未找到 案例/案例研究 category。请到 文章 → 分类目录 创建 slug=cases 的分类。</p></div>';
-    });
-}
 $cases_q = [
     'post_type'      => 'post',
     'post_status'    => 'publish',
-    'numberposts'    => 6,
+    'numberposts'    => 4,
     'orderby'        => 'date',
     'order'          => 'DESC',
     'no_found_rows'  => true,
@@ -236,50 +103,90 @@ $cases_q = [
 if ($cases_cat_id) {
     $cases_q['cat'] = $cases_cat_id;
 } else {
-    /* v3.0.8 (Bug D): fallback — 用「非 insights 的所有 category」中 count>0 的第一个
-     *   让 Sasha 即使没建 cases category 也能看到案例（前提是 insights 探测成功） */
-    if (function_exists('hireai_fallback_post_category_id') && $insights_cat_id) {
-        $fallback_cat = hireai_fallback_post_category_id($insights_cat_id);
-        if ($fallback_cat) {
-            $cases_q['cat'] = $fallback_cat;
-            if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
-                error_log('[hireai v3.0.8] cases_fallback cat_id=' . $fallback_cat);
-            }
-        } else {
-            $cases_q['tax_query'] = [['taxonomy' => 'category', 'field' => 'slug', 'terms' => ['cases', 'case'], 'operator' => 'IN']];
-        }
-    } else {
-        $cases_q['tax_query'] = [['taxonomy' => 'category', 'field' => 'slug', 'terms' => ['cases', 'case'], 'operator' => 'IN']];
-    }
+    $cases_q['tax_query'] = [['taxonomy' => 'category', 'field' => 'slug', 'terms' => ['cases', 'case'], 'operator' => 'IN']];
 }
 $wp_cases = get_posts($cases_q);
+
+/* v2.2.6 杂志版: 4 张 case 的 badge 标签 (装饰性，纯视觉) */
+$case_badges = [
+    $is_en ? '+42% Retention'       : '+42% 留存提升',
+    $is_en ? 'AI Art Integration'   : 'AI 艺术融合',
+    $is_en ? '3.4x Conversion'      : '3.4x 转化率',
+    $is_en ? 'IP Protection 100%'   : 'IP 保护 100%',
+];
+$case_badge_pos = ['badge-tr', 'badge-bl', 'badge-tl', 'badge-br'];
+$case_default_imgs = [
+    'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&h=675&fit=crop',
+    'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=1067&fit=crop',
+    'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=1000&h=1000&fit=crop',
+    'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=1000&h=1250&fit=crop',
+];
+
+$cases_render = [];
 if (!empty($wp_cases)) {
-    $cases = [];
-    $chunks = array_chunk($wp_cases, 4);
-    $i = 0;
-    foreach ($chunks as $ci => $chunk) {
-        $is_wide = (0 === $ci % 2);
-        foreach ($chunk as $idx => $case) {
-            $cats = get_the_category($case->ID);
-            $cat_name = !empty($cats) ? $cats[0]->name : '';
-            $cases[] = [
-                'span'      => ($is_wide && 0 === $idx) ? 12 : 6,
-                'aspect'    => ($is_wide && 0 === $idx) ? '21 / 9' : '4 / 5',
-                'kicker_zh' => $cat_name,
-                'kicker_en' => $cat_name,
-                'title_zh'  => get_the_title($case->ID),
-                'title_en'  => get_the_title($case->ID),
-                'desc_zh'   => wp_strip_all_tags($case->post_excerpt ?: wp_trim_words(strip_tags($case->post_content), 30, '…')),
-                'desc_en'   => wp_strip_all_tags($case->post_excerpt ?: wp_trim_words(strip_tags($case->post_content), 30, '…')),
-                'image'     => get_the_post_thumbnail_url($case->ID, 'large') ?: ($case_defaults[$i % count($case_defaults)] ?? $case_defaults[0]),
-                'link'      => get_permalink($case->ID),
-            ];
-            $i++;
-        }
+    foreach ($wp_cases as $idx => $case) {
+        if ($idx >= 4) break;
+        $cats = get_the_category($case->ID);
+        $cat_name = !empty($cats) ? $cats[0]->name : '';
+        $cases_render[] = [
+            'kicker'  => $cat_name,
+            'title'   => get_the_title($case->ID),
+            'desc'    => wp_strip_all_tags($case->post_excerpt ?: wp_trim_words(strip_tags($case->post_content), 30, '…')),
+            'image'   => get_the_post_thumbnail_url($case->ID, 'large') ?: $case_default_imgs[$idx],
+            'link'    => get_permalink($case->ID),
+        ];
     }
+} else {
+    /* Fallback: 静态 4 张 (语义与 v2.2.6 一致) */
+    $cases_render = [
+        [
+            'kicker' => $is_en ? 'Bespoke' : '高定',
+            'title'  => $is_en ? 'Aurelian Prime for Private Banking' : '数字礼宾：高定精品馆',
+            'desc'   => $is_en
+                ? 'Reimagining wealth management through a hyper-realistic digital concierge.'
+                : '为高净值客户打造超写实数字人，引领其在元宇宙私密展厅中探索收藏系列。',
+            'image'  => $case_default_imgs[0],
+            'link'   => $cases_cta_url,
+        ],
+        [
+            'kicker' => 'IP',
+            'title'  => $is_en ? 'Lumina NFT Series' : 'Lumina NFT 系列',
+            'desc'   => $is_en
+                ? 'Exclusive IP collaboration merging generative algorithms with heritage craft.'
+                : '独家 IP 合作，将生成算法与传统工艺融合。',
+            'image'  => $case_default_imgs[1],
+            'link'   => $cases_cta_url,
+        ],
+        [
+            'kicker' => $is_en ? 'Retail' : '零售',
+            'title'  => $is_en ? 'E-commerce Evolution' : '电商进化论',
+            'desc'   => $is_en
+                ? 'Luxury retail performance scaling through personalized digital twin advisors.'
+                : '将浏览转化为沉浸式策展体验。',
+            'image'  => $case_default_imgs[2],
+            'link'   => $cases_cta_url,
+        ],
+        [
+            'kicker' => $is_en ? 'Brand' : '品牌',
+            'title'  => $is_en ? 'The Digital IP Vault' : '数字 IP 金库',
+            'desc'   => $is_en
+                ? 'Global PR audit and reputation management for AI-integrated luxury estates.'
+                : 'AI 集成奢侈房产的全球 PR 审计与声誉管理。',
+            'image'  => $case_default_imgs[3],
+            'link'   => $cases_cta_url,
+        ],
+    ];
 }
 
-/* v3.0.9 (Block 1): $insights_cat_id 已在前面探测；这里直接进入 WP_Query */
+/* --------------------------------------------------------------------
+ * 3. 洞察 cards (3 张) — 动态 get_posts(insights) 拉取最新 3 篇
+ * -------------------------------------------------------------------- */
+$insights_cat_id = function_exists('hireai_find_category_id')
+    ? hireai_find_category_id([
+        'insights', 'insight', 'industry-insights', 'blog', 'news', 'article', 'articles',
+        '洞察', '观点', '行业洞察', '我们的洞察',
+    ])
+    : 0;
 $insights_q = [
     'post_type'      => 'post',
     'post_status'    => 'publish',
@@ -294,571 +201,299 @@ if ($insights_cat_id) {
     $insights_q['tax_query'] = [['taxonomy' => 'category', 'field' => 'slug', 'terms' => ['insights', 'insight'], 'operator' => 'IN']];
 }
 $wp_insights = get_posts($insights_q);
+
+/* v2.2.6 杂志版: 3 张 insight 的装饰字符 + 估算阅读时间 */
+$insight_glyphs = ['✦', '◈', '❖'];
+$insight_fallback_titles = [
+    [
+        'cat'   => 'Aesthetics',
+        'title' => $is_en ? 'The Ghost in the Machine: <em>Defining</em> AI Beauty' : '机器中的幽灵：<em>定义</em> AI 之美',
+        'desc'  => $is_en ? 'Moving beyond uncanny valley into hyper-stylized digital.' : '为何传统品牌正走向超风格化的数字表达。',
+        'time'  => '8 MIN READ',
+    ],
+    [
+        'cat'   => 'Technology',
+        'title' => $is_en ? 'Neural Networks & Silk: Future Service' : '神经网络与丝绸：<em>未来</em>服务的织物',
+        'desc'  => $is_en ? 'Scaling personalized attention without losing human touch.' : '在不失去专属触感的前提下扩展个性化关怀。',
+        'time'  => '12 MIN READ',
+    ],
+    [
+        'cat'   => 'Strategy',
+        'title' => $is_en ? 'The New White Glove: AI as Ultimate Concierge' : '新白手套：<em>AI</em> 作为终极礼宾',
+        'desc'  => $is_en ? 'Loyalty evolution in automated high-end experiences.' : '审视自动化高端体验时代中忠诚度的演变。',
+        'time'  => '6 MIN READ',
+    ],
+];
+
+$insights_render = [];
 if (!empty($wp_insights)) {
-    $insights = [];
     foreach ($wp_insights as $idx => $ins) {
-        $ts = strtotime($ins->post_date);
-        $insights[] = [
-            'date_zh' => date('Y年n月j日', $ts),
-            'date_en' => date('F j, Y', $ts),
-            'title_zh'=> get_the_title($ins->ID),
-            'title_en'=> get_the_title($ins->ID),
-            'image'   => get_the_post_thumbnail_url($ins->ID, 'medium') ?: ($case_defaults[$idx % count($case_defaults)] ?? $case_defaults[0]),
-            'link'    => get_permalink($ins->ID),
+        if ($idx >= 3) break;
+        $cats = get_the_category($ins->ID);
+        $cat_name = !empty($cats) ? $cats[0]->name : ($insight_fallback_titles[$idx]['cat'] ?? 'Insight');
+        $insights_render[] = [
+            'glyph'  => $insight_glyphs[$idx] ?? '✦',
+            'cat'    => $cat_name,
+            'title'  => get_the_title($ins->ID),
+            'desc'   => wp_strip_all_tags($ins->post_excerpt ?: wp_trim_words(strip_tags($ins->post_content), 24, '…')),
+            'image'  => '',
+            'time'   => $insight_fallback_titles[$idx]['time'] ?? '8 MIN READ',
+            'link'   => get_permalink($ins->ID),
+        ];
+    }
+} else {
+    foreach ($insight_fallback_titles as $idx => $fb) {
+        $insights_render[] = [
+            'glyph'  => $insight_glyphs[$idx],
+            'cat'    => $fb['cat'],
+            'title'  => $fb['title'],
+            'desc'   => $fb['desc'],
+            'image'  => '',
+            'time'   => $fb['time'],
+            'link'   => $insights_cta_url,
         ];
     }
 }
 
+/* --------------------------------------------------------------------
+ * 4. 最终 CTA 文案 (v2.2.6 静态: 暗色 + 金色按钮)
+ * -------------------------------------------------------------------- */
+$consult_title = $is_en
+    ? 'Ready to define your legacy?'
+    : '准备好定义您的传承了吗？';
+$consult_sub   = $is_en
+    ? "Join the world's leading brands in the new era of digital human excellence."
+    : '加入全球领先的品牌 AI 数字员工计划。迈出第一步。';
+$consult_cta   = $is_en ? 'Initiate Consultation' : '立即咨询';
+
 ?>
 <style>
 /* =====================================================================
-   案例 & 洞察页 — 页面专有样式（仅本模板生效）
+   案例 & 洞察 — 杂志版 (v2.2.6 排版)
+   字体：英文 Playfair Display (标题) + Inter (正文)
+        中文通过浏览器 fallback chain 自动落到 Noto Serif SC / Noto Sans SC
    ===================================================================== */
 
-/* ---------- Hero：金色渐变标题 + 装饰竖线 ---------- */
-.ci-hero__title {
-    background: linear-gradient(to right, #775a19, #e9c176, #775a19);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    margin-bottom: 24px;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#775a19;--gold-l:#e9c176;--txt:#1a1c1c;--txt-v:#444748;--out-v:#c4c7c7;--bg:#faf9f9;--bg-s:#f4f3f3;--dark:#1b1c19}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
+
+.hero{
+  display:block !important;
+  min-height:auto !important;
+  padding:24px 24px 20px !important;
+  max-width:1200px !important;
+  margin:0 auto !important;
+  background:#faf9f9 !important;
+  border-radius:0 !important;
+  text-align:center !important;
+  align-items:unset !important;
+  position:relative !important;
 }
-.ci-hero__divider {
-    width: 1px;
-    height: 96px;
-    margin: 40px auto 0;
-    background: linear-gradient(to bottom, var(--lb-secondary, #775a19), transparent);
+.hero h1{color:#1a1c1c !important;margin-bottom:12px !important}
+.hero p{color:#444748}
+.hero span.kicker{
+  font-family:'Inter',sans-serif;
+  font-size:11px !important;
+  font-weight:600 !important;
+  letter-spacing:.3em !important;
+  text-transform:uppercase !important;
+  color:#775a19 !important;
+  display:block !important;
+  margin-bottom:12px !important;
+  text-align:center !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+.hero h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(32px,5vw,56px);
+  font-weight:600;
+  line-height:1.1;
+  margin:0 0 20px;
+  background:linear-gradient(135deg,#775a19 0%,#fed488 50%,#775a19 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  font-style:italic;
+}
+.hero p{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(14px,1.2vw,16px) !important;
+  line-height:1.6 !important;
+  color:var(--txt-v) !important;
+  margin:0 auto !important;
 }
 
-/* ---------- 通用 section 头 ---------- */
-.ci-section {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    gap: clamp(28px, 4vw, 48px);
-}
-.ci-section__head {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-}
-/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.3em (too wide); font uses Montserrat */
-.ci-section__kicker {
-    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--gold-leaf, #775a19);
-}
-.ci-section__title {
-    font-family: var(--font-serif, 'Playfair Display', serif);
-    font-size: clamp(28px, 4vw, 40px);
-    font-weight: 600;
-    line-height: 1.2;
-    color: var(--primary, #1a1c1c);
-    margin: 0;
-}
-/* v3.0.6: font uses Montserrat (English body spec) */
-.ci-section__sub {
-    margin: 0;
-    max-width: 640px;
-    /* v3.0.8 (Bug C): 用 --font-body-en (English body 规范字体) 而非 fallback Inter；
-       移除 italic + 改 on-surface 颜色；确保 16px */
-    font-family: var(--font-body-en, 'Inter'), sans-serif;
-    font-size: 16px;
-    font-style: normal !important;
-    color: var(--on-surface, #1a1c1c);
-    line-height: 1.6;
-}
-.ci-section__rule {
-    width: 1px;
-    height: 56px;
-    background: linear-gradient(to bottom, var(--gold-leaf, #775a19), transparent);
-    margin: 8px auto 0;
-}
+.cases{max-width:1200px;margin:0 auto;padding:0 24px 40px}
+.sec-hdr{margin-bottom:40px}
+.sec-hdr h2{font-family:'Playfair Display',serif;font-size:32px;font-weight:600}
+.sec-hdr__line{height:4px;width:48px;background:var(--gold);margin-top:10px}
 
-/* ---------- 案例 12 列网格 ---------- */
-.ci-cases-grid {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: clamp(24px, 3vw, 40px);
+.cases-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:20px;align-items:start}
+.case{position:relative;overflow:hidden;border-radius:12px}
+.case__media{position:relative;overflow:hidden;border-radius:12px}
+.case__img{width:90%;display:block;object-fit:cover;transition:transform .7s;margin:0 auto}
+.case:hover .case__img{transform:scale(1.05)}
+.case__badge{
+  position:absolute;
+  padding:6px 16px;
+  background:rgba(249,248,243,.7);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:1px solid rgba(119,90,25,.2);
+  border-radius:9999px;
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  font-weight:600;
+  color:var(--gold);
+  letter-spacing:.05em;
+  white-space:nowrap;
+  z-index:2;
 }
-.ci-case {
-    grid-column: span 12;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    min-width: 0;
-}
-@media (min-width: 769px) {
-    .ci-case[data-span="6"]  { grid-column: span 6;  }
-    .ci-case[data-span="12"] { grid-column: span 12; }
-}
-.ci-case__media {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-lg, 0.75rem);
-    border: 1px solid rgba(196, 199, 199, 0.35);
-    background: var(--surface-container, #eeeeee);
-    cursor: pointer;
-}
-.ci-case__media::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(26, 26, 26, 0.10);
-    transition: background 0.7s ease;
-    z-index: 2;
-    pointer-events: none;
-}
-.ci-case:hover .ci-case__media::after { background: transparent; }
-.ci-case__media img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scale(1);
-    transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.ci-case:hover .ci-case__media img { transform: scale(1.05); }
-.ci-case[data-aspect="21 / 9"] .ci-case__media { aspect-ratio: 21 / 9; }
-.ci-case[data-aspect="4 / 5"]  .ci-case__media { aspect-ratio: 4 / 5;  }
+.badge-tr{top:20px;right:20px}
+.badge-bl{bottom:20px;left:20px}
+.badge-tl{top:20px;left:20px}
+.badge-br{bottom:20px;right:20px}
+.case__body{padding:20px 0 0}
+.case__body h3{font-family:'Playfair Display',serif;font-size:20px;margin:0 0 6px}
+.case__body p{font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;color:var(--txt-v)}
 
-.ci-case__body {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 0 4px;
-}
-/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.2em; font uses Montserrat */
-.ci-case__kicker {
-    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--gold-leaf, #775a19);
-}
-.ci-case__title {
-    font-family: var(--font-serif, 'Playfair Display', serif);
-    font-size: clamp(22px, 2.2vw, 28px);
-    font-weight: 500;
-    line-height: 1.25;
-    color: var(--primary, #1a1c1c);
-    margin: 0;
-    transition: color 0.3s ease;
-}
-.ci-case:hover .ci-case__title { color: var(--gold-leaf, #775a19); }
-/* v3.0.6: font uses Montserrat (English body spec); font-size 16px (DESIGN.md body-md) */
-.ci-case__desc {
-    margin: 0;
-    font-family: var(--font-body, 'Montserrat', 'Inter', sans-serif), sans-serif;
-    font-size: var(--fs-body, 16px);
-    line-height: 1.6;
-    color: var(--on-surface-variant, #444748);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
+/* 杂志版 12 列错位 grid */
+.case-1{grid-column: span 8}
+.case-1 .case__img{aspect-ratio:16/9}
+.case-2{grid-column: span 4;margin-top:128px}
+.case-2 .case__img{aspect-ratio:3/4}
+.case-3{grid-column: span 6}
+.case-3 .case__img{aspect-ratio:1/1}
+.case-4{grid-column: span 6;margin-top:96px}
+.case-4 .case__img{aspect-ratio:4/5}
 
-/* ---------- 案例分页 / 关闭 CTA ---------- */
-.ci-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
-    padding: 16px 0 0;
-}
-.ci-pagination__btn {
-    width: 40px;
-    height: 40px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--outline-variant, #e2e2e2);
-    border-radius: 50%;
-    color: var(--on-surface-variant, #444748);
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-.ci-pagination__btn:hover {
-    border-color: var(--gold-leaf, #775a19);
-    color: var(--gold-leaf, #775a19);
-    box-shadow: 0 0 18px rgba(119, 90, 25, 0.18);
-}
-.ci-pagination__btn svg { width: 14px; height: 14px; }
-/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing); font uses Montserrat */
-.ci-pagination__count {
-    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--primary, #1a1c1c);
-    letter-spacing: 0.1em;
-}
+.pagi{display:flex;justify-content:center;gap:8px;padding:24px 0}
+.pagi__dot{width:8px;height:8px;border-radius:50%;border:1px solid var(--out-v);background:transparent;cursor:pointer;padding:0;transition:all .3s}
+.pagi__dot.on{background:var(--gold);border-color:var(--gold)}
 
-/* ---------- 洞察 3 列卡片 ---------- */
-.ci-insights-grid {
-    display: grid;
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-    gap: clamp(28px, 4vw, 48px);
+.insights{background:var(--bg-s);padding:60px 24px}
+.insights-hdr{text-align:center;margin-bottom:48px}
+.insights-hdr h2{font-family:'Playfair Display',serif;font-size:32px;margin-bottom:6px}
+.insights-hdr p{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--txt-v)}
+.art-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;max-width:1200px;margin:0 auto}
+.art{cursor:pointer}
+.art__iw{aspect-ratio:4/5;border-radius:8px;overflow:hidden;margin-bottom:16px}
+.art__ph{
+  width:100%;height:100%;
+  background:linear-gradient(135deg,var(--bg),#e8e5df);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;
+  font-size:48px;color:#747878;transition:transform .7s;
 }
-@media (min-width: 720px) {
-    .ci-insights-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (min-width: 1080px) {
-    .ci-insights-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-.ci-insight {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    min-width: 0;
-}
-.ci-insight__media {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-lg, 0.75rem);
-    aspect-ratio: 4 / 3;
-    background: var(--surface-container, #eeeeee);
-    border: 1px solid rgba(196, 199, 199, 0.35);
-    cursor: pointer;
-}
-.ci-insight__media::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(26, 26, 26, 0.08);
-    transition: background 0.7s ease;
-    z-index: 2;
-    pointer-events: none;
-}
-.ci-insight:hover .ci-insight__media::after { background: transparent; }
-.ci-insight__media img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scale(1);
-    transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.ci-insight:hover .ci-insight__media img { transform: scale(1.05); }
+.art:hover .art__ph{transform:scale(1.05)}
+.art__cat{font-family:'Inter',sans-serif;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:block}
+.art h4{font-family:'Playfair Display',serif;font-size:18px;line-height:1.3;margin:0 0 8px}
+.art h4 em{font-style:italic}
+.art:hover h4{color:var(--gold)}
+.art p{font-family:'Inter',sans-serif;font-size:13px;line-height:1.5;color:var(--txt-v);margin:0 0 12px}
+.art__rt{font-family:'Inter',sans-serif;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-v)}
 
-.ci-insight__body {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 0 4px;
+.consult{background:var(--dark);position:relative;overflow:hidden;padding:80px 24px;text-align:center}
+.consult__glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(119,90,25,.2),transparent 70%);pointer-events:none}
+.consult h2{font-family:'Playfair Display',serif;font-size:clamp(28px,3.5vw,48px);color:#fff;margin:0 0 16px;position:relative}
+.consult p{font-family:'Inter',sans-serif;font-size:16px;line-height:1.6;color:rgba(255,255,255,.7);margin:0 0 32px;position:relative}
+.consult__btn{
+  display:inline-block;
+  padding:16px 48px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-l));
+  color:#fff;border:none;border-radius:9999px;
+  font-family:'Inter',sans-serif;
+  font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;transition:all .3s;position:relative;
+  text-decoration:none;
 }
-/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing); font uses Montserrat */
-.ci-insight__date {
-    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--on-surface-variant, #444748);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
-.ci-insight__title {
-    font-family: var(--font-serif, 'Playfair Display', serif);
-    font-size: clamp(18px, 1.6vw, 22px);
-    font-weight: 500;
-    line-height: 1.3;
-    color: var(--primary, #1a1c1c);
-    margin: 0;
-    transition: color 0.3s ease;
-}
-.ci-insight:hover .ci-insight__title { color: var(--gold-leaf, #775a19); }
+.consult__btn:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(119,90,25,.4)}
 
-/* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing); font uses Montserrat */
-.ci-insight__cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--primary, #1a1c1c);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(26, 26, 26, 0.2);
-    padding-bottom: 4px;
-    transition: all 0.3s ease;
-    width: fit-content;
-}
-.ci-insight__cta:hover {
-    color: var(--gold-leaf, #775a19);
-    border-bottom-color: var(--gold-leaf, #775a19);
-}
-.ci-insight__cta svg { width: 12px; height: 12px; }
-
-/* ---------- Section 收尾 CTA（"查看全部案例" / "更多洞察"） ---------- */
-.ci-section__cta {
-    display: flex;
-    justify-content: center;
-    padding-top: 16px;
-}
-
-/* ---------- 滚动揭示动画 ---------- */
-.ci-reveal {
-    opacity: 0;
-    transform: translateY(28px);
-    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.ci-reveal.is-visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* v3.0.9 (Block 1): empty-state for cases / insights when WP_Query returns nothing */
-.ci-empty {
-    text-align: center;
-    padding: clamp(48px, 8vw, 96px) 24px;
-    border: 1px dashed rgba(196, 199, 199, 0.6);
-    border-radius: var(--radius-lg, 0.75rem);
-    background: rgba(250, 249, 249, 0.5);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-}
-.ci-empty__title {
-    font-family: var(--font-serif, 'Playfair Display'), serif;
-    font-size: clamp(20px, 2.4vw, 28px);
-    font-weight: 500;
-    color: var(--on-surface, #1a1c1c);
-    margin: 0;
-}
-.ci-empty__sub {
-    font-family: var(--font-body, 'Inter'), sans-serif;
-    font-size: var(--fs-body, 16px);
-    line-height: 1.6;
-    color: var(--on-surface-variant, #444748);
-    margin: 0;
-    max-width: 520px;
+/* 移动端：单列 */
+@media(max-width:768px){
+  .cases-grid{grid-template-columns:1fr}
+  .case-1,.case-2,.case-3,.case-4{grid-column:span 1;margin-top:0}
+  .case-1 .case__img{aspect-ratio:16/9}
+  .case-2 .case__img{aspect-ratio:3/4}
+  .case-3 .case__img{aspect-ratio:1/1}
+  .case-4 .case__img{aspect-ratio:4/5}
+  .art-grid{grid-template-columns:1fr}
+  .consult__btn{width:100%;text-align:center}
 }
 </style>
 
-<div class="lb-main">
-<div class="lb-container">
 
-    <!-- ═══════════════════════════════════════════════════════════
-         1. Hero
-         ═══════════════════════════════════════════════════════════ -->
-    <section class="lb-hero ci-hero" aria-labelledby="ci-hero-title-heading">
-        <span class="lb-hero__kicker"><?php echo esc_html($hero_kicker); ?></span>
-        <h1 class="lb-hero__title ci-hero__title" id="ci-hero-title-heading">
-            <?php echo esc_html($hero_title); ?>
-        </h1>
-        <p class="lb-hero__subtitle"><?php echo esc_html($hero_subtitle); ?></p>
-        <div class="ci-hero__divider" aria-hidden="true"></div>
-    </section>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         2. 案例 studies (12-col stagger grid)
-         ═══════════════════════════════════════════════════════════ -->
-    <section class="ci-section ci-cases" aria-labelledby="ci-cases-title-heading">
-        <header class="ci-section__head">
-            <h2 class="ci-section__title" id="ci-cases-title-heading">
-                <?php echo esc_html($cases_title); ?>
-            </h2>
-            <?php if ($cases_subtitle !== '') : ?>
-                <p class="ci-section__sub"><?php echo esc_html($cases_subtitle); ?></p>
-            <?php endif; ?>
-            <div class="ci-section__rule" aria-hidden="true"></div>
-        </header>
 
-        <?php if (empty($cases)) : ?>
-            <div class="ci-empty" role="status">
-                <p class="ci-empty__title"><?php echo esc_html($is_en ? 'No cases yet' : '暂无案例'); ?></p>
-                <p class="ci-empty__sub"><?php echo esc_html($is_en
-                    ? 'Please create some Case posts in WordPress admin → Posts.'
-                    : '请在 WordPress 后台 → 文章 中创建案例文章。'); ?></p>
-                <a class="lb-btn lb-btn--outline" href="<?php echo esc_url($cases_archive_url); ?>">
-                    <?php echo esc_html($is_en ? 'Browse all cases' : '查看全部案例'); ?>
-                    <?php echo hireai_svg('east', 14, 'lb-btn__icon'); ?>
-                </a>
-            </div>
-        <?php else : ?>
-        <div class="ci-cases-grid">
-            <?php foreach ($cases as $case) :
-                $img_url   = hireai_default_image($case['image']);
-                $title     = $is_en ? $case['title_en'] : $case['title_zh'];
-                $kicker    = $is_en ? $case['kicker_en'] : $case['kicker_zh'];
-                $desc      = $is_en ? $case['desc_en']   : $case['desc_zh'];
-                $span      = (int) $case['span'];
-                $aspect    = $case['aspect'];
-                /* v3.0.9 (Block 1): fallback 用 cases_archive_url，不再 'href=#' */
-                $case_link = isset($case['link']) && $case['link'] !== '' && $case['link'] !== '#'
-                    ? $case['link']
-                    : $cases_archive_url;
-                ?>
-                <a class="ci-case ci-reveal"
-                   href="<?php echo esc_url($case_link); ?>"
-                   data-span="<?php echo esc_attr($span); ?>"
-                   data-aspect="<?php echo esc_attr($aspect); ?>"
-                   aria-label="<?php echo esc_attr($title); ?>">
-                    <div class="ci-case__media">
-                        <img src="<?php echo esc_url($img_url); ?>"
-                             alt="<?php echo esc_attr($title); ?>"
-                             loading="lazy" decoding="async">
-                    </div>
-                    <div class="ci-case__body">
-                        <span class="ci-case__kicker"><?php echo esc_html($kicker); ?></span>
-                        <h3 class="ci-case__title"><?php echo esc_html($title); ?></h3>
-                        <p class="ci-case__desc"><?php echo esc_html($desc); ?></p>
-                    </div>
-                </a>
-            <?php endforeach; ?>
+<section class="hero">
+  <span class="kicker"><?php echo esc_html($hero_kicker); ?></span>
+  <h1><?php echo wp_kses_post($hero_title); ?></h1>
+  <p><?php echo esc_html($hero_subtitle); ?></p>
+  <div style="width:1px;height:40px;background:linear-gradient(180deg,#775a19,transparent);margin:20px auto 0"></div>
+</section>
+
+<section class="cases">
+  <div class="sec-hdr">
+    <h2><?php echo esc_html($cases_title); ?></h2>
+    <div class="sec-hdr__line"></div>
+  </div>
+  <div class="cases-grid">
+    <?php foreach ($cases_render as $idx => $c) :
+        $pos  = $case_badge_pos[$idx] ?? 'badge-tr';
+        $span_arr = [0 => '', 1 => 'margin-top:128px;', 2 => '', 3 => 'margin-top:96px;'];
+        $span_style = $span_arr[$idx] ?? '';
+        ?>
+        <div class="case case-<?php echo ($idx + 1); ?>" style="<?php echo $span_style; ?>">
+          <div class="case__media">
+            <img class="case__img" src="<?php echo esc_url($c['image']); ?>" alt="<?php echo esc_attr($c['title']); ?>">
+            <div class="case__badge <?php echo esc_attr($pos); ?>"><?php echo esc_html($case_badges[$idx] ?? ''); ?></div>
+          </div>
+          <div class="case__body">
+            <h3><?php echo esc_html($c['title']); ?></h3>
+            <p><?php echo esc_html($c['desc']); ?></p>
+          </div>
         </div>
-        <?php endif; ?>
+    <?php endforeach; ?>
+  </div>
+  <div class="pagi"><button class="pagi__dot on"></button><button class="pagi__dot"></button></div>
+  <div style="text-align:center;padding:16px 0 0">
+    <a class="consult__btn" style="background:transparent;border:1px solid var(--gold);color:var(--gold)" href="<?php echo esc_url($cases_cta_url); ?>">
+      <?php echo esc_html($cases_cta_title); ?>
+    </a>
+  </div>
+</section>
 
-        <div class="ci-pagination" role="group" aria-label="<?php echo esc_attr($is_en ? 'Case pagination' : '案例分页'); ?>">
-            <button type="button" class="ci-pagination__btn" aria-label="<?php echo esc_attr($is_en ? 'Previous' : '上一页'); ?>" disabled>
-                <?php echo hireai_svg('west', 14, 'ci-pagination__icon'); ?>
-            </button>
-            <span class="ci-pagination__count">01 / 03</span>
-            <button type="button" class="ci-pagination__btn" aria-label="<?php echo esc_attr($is_en ? 'Next' : '下一页'); ?>" disabled>
-                <?php echo hireai_svg('east', 14, 'ci-pagination__icon'); ?>
-            </button>
-        </div>
+<section class="insights">
+  <div class="insights-hdr">
+    <h2><?php echo esc_html($insights_title); ?></h2>
+    <p><?php echo esc_html($insights_subtitle); ?></p>
+  </div>
+  <div class="art-grid">
+    <?php foreach ($insights_render as $idx => $a) : ?>
+      <a class="art" href="<?php echo esc_url($a['link']); ?>" aria-label="<?php echo esc_attr(wp_strip_all_tags($a['title'])); ?>" style="text-decoration:none;color:inherit;display:block">
+        <div class="art__iw"><div class="art__ph"><?php echo esc_html($a['glyph']); ?></div></div>
+        <span class="art__cat"><?php echo esc_html($a['cat']); ?></span>
+        <h4><?php echo wp_kses_post($a['title']); ?></h4>
+        <p><?php echo esc_html($a['desc']); ?></p>
+        <span class="art__rt"><?php echo esc_html($a['time']); ?></span>
+      </a>
+    <?php endforeach; ?>
+  </div>
+  <div class="pagi"><button class="pagi__dot on"></button></div>
+  <div style="text-align:center;padding:24px 0 0">
+    <a class="consult__btn" style="background:transparent;border:1px solid var(--gold);color:var(--gold)" href="<?php echo esc_url($insights_cta_url); ?>">
+      <?php echo esc_html($insights_cta_title); ?>
+    </a>
+  </div>
+</section>
 
-        <div class="ci-section__cta">
-            <a class="lb-btn lb-btn--outline"
-               href="<?php echo esc_url($cases_cta_url); ?>">
-                <?php echo esc_html($cases_cta_title); ?>
-                <?php echo hireai_svg('east', 14, 'lb-btn__icon'); ?>
-            </a>
-        </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════
-         3. 洞察 / Insights (3-column)
-         ═══════════════════════════════════════════════════════════ -->
-    <section class="ci-section ci-insights" aria-labelledby="ci-insights-title-heading">
-        <header class="ci-section__head">
-            <span class="ci-section__kicker"><?php echo esc_html($insights_kicker); ?></span>
-            <h2 class="ci-section__title" id="ci-insights-title-heading">
-                <?php echo esc_html($insights_title); ?>
-            </h2>
-            <?php if ($insights_subtitle !== '') : ?>
-                <p class="ci-section__sub"><?php echo esc_html($insights_subtitle); ?></p>
-            <?php endif; ?>
-            <div class="ci-section__rule" aria-hidden="true"></div>
-        </header>
-
-        <?php if (empty($insights)) : ?>
-            <div class="ci-empty" role="status">
-                <p class="ci-empty__title"><?php echo esc_html($is_en ? 'No insights yet' : '暂无洞察'); ?></p>
-                <p class="ci-empty__sub"><?php echo esc_html($is_en
-                    ? 'Please create some Insight posts in WordPress admin → Posts.'
-                    : '请在 WordPress 后台 → 文章 中创建洞察文章。'); ?></p>
-                <a class="lb-btn lb-btn--outline" href="<?php echo esc_url($insights_archive_url); ?>">
-                    <?php echo esc_html($is_en ? 'Browse all insights' : '查看全部洞察'); ?>
-                    <?php echo hireai_svg('east', 14, 'lb-btn__icon'); ?>
-                </a>
-            </div>
-        <?php else : ?>
-        <div class="ci-insights-grid">
-            <?php foreach ($insights as $insight) :
-                $img_url  = hireai_default_image($insight['image']);
-                $title    = $is_en ? $insight['title_en'] : $insight['title_zh'];
-                $date     = $is_en ? $insight['date_en']  : $insight['date_zh'];
-                $delay_ms = isset($insight['_delay']) ? (int) $insight['_delay'] : 0;
-                $style_attr = $delay_ms > 0 ? ' style="transition-delay:' . esc_attr($delay_ms) . 'ms;"' : '';
-                /* v3.0.9 (Block 1): fallback 用 insights_archive_url，不再 'href=#' */
-                $insight_link = isset($insight['link']) && $insight['link'] !== '' && $insight['link'] !== '#'
-                    ? $insight['link']
-                    : $insights_archive_url;
-                ?>
-                <article class="ci-insight ci-reveal"<?php echo $style_attr; ?>
-                         aria-label="<?php echo esc_attr($title); ?>">
-                    <div class="ci-insight__media">
-                        <img src="<?php echo esc_url($img_url); ?>"
-                             alt="<?php echo esc_attr($title); ?>"
-                             loading="lazy" decoding="async">
-                    </div>
-                    <div class="ci-insight__body">
-                        <span class="ci-insight__date"><?php echo esc_html($date); ?></span>
-                        <h3 class="ci-insight__title"><?php echo esc_html($title); ?></h3>
-                        <a class="ci-insight__cta" href="<?php echo esc_url($insight_link); ?>">
-                            <span><?php echo esc_html($card_cta_text); ?></span>
-                            <?php echo hireai_svg('east', 12, 'ci-insight__cta-icon'); ?>
-                        </a>
-                    </div>
-                </article>
-            <?php endforeach; ?>
-        </div>
-        <?php endif; ?>
-
-        <div class="ci-pagination" role="group" aria-label="<?php echo esc_attr($is_en ? 'Insight pagination' : '洞察分页'); ?>">
-            <button type="button" class="ci-pagination__btn" aria-label="<?php echo esc_attr($is_en ? 'Previous' : '上一页'); ?>" disabled>
-                <?php echo hireai_svg('west', 14, 'ci-pagination__icon'); ?>
-            </button>
-            <button type="button" class="ci-pagination__btn" aria-label="<?php echo esc_attr($is_en ? 'Next' : '下一页'); ?>" disabled>
-                <?php echo hireai_svg('east', 14, 'ci-pagination__icon'); ?>
-            </button>
-        </div>
-
-        <div class="ci-section__cta">
-            <a class="lb-btn lb-btn--outline"
-               href="<?php echo esc_url($insights_cta_url); ?>">
-                <?php echo esc_html($insights_cta_title); ?>
-                <?php echo hireai_svg('east', 14, 'lb-btn__icon'); ?>
-            </a>
-        </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════
-         4. Bottom CTA banner
-         ═══════════════════════════════════════════════════════════ -->
-    <section class="lb-cta" aria-labelledby="ci-cta-heading">
-        <div class="lb-cta__inner">
-            <h2 class="lb-cta__heading" id="ci-cta-heading">
-                <?php echo esc_html($final_heading); ?>
-            </h2>
-            <p class="lb-cta__sub"><?php echo esc_html($final_sub); ?></p>
-            <div class="lb-cta__actions">
-                <a class="lb-btn lb-btn--primary" href="<?php echo esc_url($final_url); ?>">
-                    <?php echo esc_html($final_primary); ?>
-                </a>
-                <a class="lb-btn lb-btn--ghost" href="<?php echo esc_url($final_ghost_url); ?>">
-                    <?php echo esc_html($final_ghost); ?>
-                </a>
-            </div>
-        </div>
-    </section>
-
-</div><!-- /.lb-container -->
-</div><!-- /.lb-main -->
-
-<script>
-(function () {
-    'use strict';
-
-    /* Reveal-on-scroll for .ci-reveal */
-    if ('IntersectionObserver' in window) {
-        var io = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                    io.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-        document.querySelectorAll('.ci-reveal').forEach(function (el) { io.observe(el); });
-    } else {
-        document.querySelectorAll('.ci-reveal').forEach(function (el) { el.classList.add('is-visible'); });
-    }
-})();
-</script>
+<section class="consult">
+  <div class="consult__glow"></div>
+  <h2><?php echo esc_html($consult_title); ?></h2>
+  <p><?php echo esc_html($consult_sub); ?></p>
+  <a class="consult__btn" href="<?php echo esc_url($is_en ? '/contact/' : '/contact/'); ?>"><?php echo esc_html($consult_cta); ?></a>
+</section>
 
 <?php get_footer(); ?>
