@@ -1726,6 +1726,9 @@ add_action('acf/init', function () {
 
     acf_add_local_field_group($hireai_make_group('group_site_options', '站点设置 — 页脚', [
         ['name' => 'header_logo', 'label' => '页眉 Logo', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
+        ['name' => 'header_brand_label', 'label' => '页眉 · 品牌 aria-label（Logo 链接）', 'type' => 'text', 'zh' => '聘AI（Hire AI People）', 'en' => 'Hire AI People'],
+        ['name' => 'header_logo_alt', 'label' => '页眉 · Logo alt 文本', 'type' => 'text', 'zh' => '聘AI（Hire AI People）', 'en' => 'Hire AI People'],
+
         ['name' => 'footer_logo', 'label' => '页脚 Logo', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
         ['name' => 'header_cta_label', 'label' => '页眉CTA按钮文字', 'type' => 'text', 'zh' => '预约咨询', 'en' => 'Consultation'],
         ['name' => 'header_cta_url', 'label' => '页眉CTA按钮链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],

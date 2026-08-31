@@ -22,6 +22,17 @@ $lang_label = function_exists('hireai_field')
     ? hireai_field('header_lang_label', $is_en ? '中 / EN' : 'EN / 中', 'option')
     : ($is_en ? '中 / EN' : 'EN / 中');
 
+/* 品牌 / Logo aria-label 与 alt：hireai_field_lang 中英文 fallback */
+$brand_label = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_brand_label', $is_en ? 'en' : 'zh',
+        $is_en ? 'Hire AI People' : '聘AI（Hire AI People）', 'option')
+    : ($is_en ? 'Hire AI People' : '聘AI（Hire AI People）');
+
+$logo_alt = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_logo_alt', $is_en ? 'en' : 'zh',
+        $is_en ? 'Hire AI People' : '聘AI（Hire AI People）', 'option')
+    : ($is_en ? 'Hire AI People' : '聘AI（Hire AI People）');
+
 /* 跳到主要内容：hireai_field_lang 中英文 fallback */
 $skip_link_text = function_exists('hireai_field_lang')
     ? hireai_field_lang('header_skip_link', $is_en ? 'en' : 'zh',
@@ -65,8 +76,8 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
 <header class="hai-header" id="site-header">
   <div class="hai-header__inner">
     <!-- Left: logo -->
-    <a class="hai-header__brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="Hire AI People">
-      <img class="hai-header__logo" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People">
+    <a class="hai-header__brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="<?php echo esc_attr($brand_label); ?>">
+      <img class="hai-header__logo" src="<?php echo esc_url($logo_url); ?>" alt="<?php echo esc_attr($logo_alt); ?>">
     </a>
 
     <!-- Center: main nav (desktop only) -->
@@ -105,8 +116,8 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
 <!-- Mobile drawer -->
 <aside class="mobile-drawer" id="mobile-drawer" data-mobile-drawer aria-hidden="true">
   <div class="mobile-drawer__head">
-    <a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="Hire AI People">
-      <img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People">
+    <a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="<?php echo esc_attr($brand_label); ?>">
+      <img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="<?php echo esc_attr($logo_alt); ?>">
     </a>
     <button class="mobile-drawer__close" type="button" data-drawer-close aria-label="<?php echo esc_attr($menu_close_aria); ?>">
       <?php echo hireai_svg("close", 24, "hai-header__icon"); ?>
