@@ -10,15 +10,56 @@
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 
-<a class="skip-link screen-reader-text" href="#content"><?php echo esc_html(hireai_lang_suffix() === '_en' ? 'Skip to content' : '跳到主要内容'); ?></a>
-
 <?php
-$suffix  = hireai_lang_suffix();
-$is_en   = $suffix === '_en';
-$logo_url = hireai_image('header_logo', get_stylesheet_directory_uri() . '/assets/img/logo.png', 'option');
-/* Language switcher label */
-$lang_label = $is_en ? '中 / EN' : 'EN / 中';
+$suffix      = function_exists('hireai_lang_suffix') ? hireai_lang_suffix() : '';
+$is_en       = ($suffix === '_en');
+$logo_url    = function_exists('hireai_image')
+    ? hireai_image('header_logo', get_stylesheet_directory_uri() . '/assets/img/logo.png', 'option')
+    : get_stylesheet_directory_uri() . '/assets/img/logo.png';
+
+/* Language switcher label: hireai_field 双语 fallback */
+$lang_label = function_exists('hireai_field')
+    ? hireai_field('header_lang_label', $is_en ? '中 / EN' : 'EN / 中', 'option')
+    : ($is_en ? '中 / EN' : 'EN / 中');
+
+/* 跳到主要内容：hireai_field_lang 中英文 fallback */
+$skip_link_text = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_skip_link', $is_en ? 'en' : 'zh',
+        $is_en ? 'Skip to content' : '跳到主要内容', 'option')
+    : ($is_en ? 'Skip to content' : '跳到主要内容');
+
+/* 主导航 aria */
+$nav_aria_primary = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_nav_aria_primary', $is_en ? 'en' : 'zh',
+        $is_en ? 'Primary navigation' : '主导航', 'option')
+    : ($is_en ? 'Primary navigation' : '主导航');
+
+/* 我的账户按钮：hireai_field_lang 中英文 fallback */
+$account_label = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_account_label', $is_en ? 'en' : 'zh',
+        $is_en ? 'MY ACCOUNT' : '我的账户', 'option')
+    : ($is_en ? 'MY ACCOUNT' : '我的账户');
+
+/* 汉堡菜单按钮 aria */
+$menu_toggle_aria = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_menu_toggle_aria', $is_en ? 'en' : 'zh',
+        $is_en ? 'Toggle menu' : '切换菜单', 'option')
+    : ($is_en ? 'Toggle menu' : '切换菜单');
+
+/* 关闭菜单按钮 aria */
+$menu_close_aria = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_menu_close_aria', $is_en ? 'en' : 'zh',
+        $is_en ? 'Close menu' : '关闭菜单', 'option')
+    : ($is_en ? 'Close menu' : '关闭菜单');
+
+/* 移动端导航 aria */
+$nav_aria_mobile = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_nav_aria_mobile', $is_en ? 'en' : 'zh',
+        $is_en ? 'Mobile navigation' : '移动端导航', 'option')
+    : ($is_en ? 'Mobile navigation' : '移动端导航');
 ?>
+
+<a class="skip-link screen-reader-text" href="#content"><?php echo esc_html($skip_link_text); ?></a>
 
 <!-- Header: sticky-glass left-logo + horizontal nav + right actions -->
 <header class="hai-header" id="site-header">
@@ -29,7 +70,7 @@ $lang_label = $is_en ? '中 / EN' : 'EN / 中';
     </a>
 
     <!-- Center: main nav (desktop only) -->
-    <nav class="hai-header__nav" aria-label="<?php echo esc_attr($is_en ? 'Primary navigation' : '主导航'); ?>">
+    <nav class="hai-header__nav" aria-label="<?php echo esc_attr($nav_aria_primary); ?>">
       <?php
       wp_nav_menu([
         'theme_location' => 'primary',
@@ -45,14 +86,14 @@ $lang_label = $is_en ? '中 / EN' : 'EN / 中';
     <div class="hai-header__actions">
       <a class="hai-header__account"
          href="<?php echo esc_url(home_url('/my-account/')); ?>">
-        <?php echo esc_html($is_en ? 'MY ACCOUNT' : '我的账户'); ?>
+        <?php echo esc_html($account_label); ?>
       </a>
 
       <button class="hai-header__lang" type="button" onclick="hireaiSwitchLang((localStorage.getItem('hireai_lang') || 'zh') === 'zh' ? 'en' : 'zh')">
         <?php echo esc_html($lang_label); ?>
       </button>
 
-      <button class="hai-header__menu-toggle" id="nav-toggle" type="button" aria-label="<?php echo esc_attr($is_en ? 'Toggle menu' : '切换菜单'); ?>" aria-expanded="false" aria-controls="mobile-drawer">
+      <button class="hai-header__menu-toggle" id="nav-toggle" type="button" aria-label="<?php echo esc_attr($menu_toggle_aria); ?>" aria-expanded="false" aria-controls="mobile-drawer">
         <?php echo hireai_svg("menu", 24, "hai-header__icon"); ?>
       </button>
     </div>
@@ -67,11 +108,11 @@ $lang_label = $is_en ? '中 / EN' : 'EN / 中';
     <a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="Hire AI People">
       <img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="Hire AI People">
     </a>
-    <button class="mobile-drawer__close" type="button" data-drawer-close aria-label="<?php echo esc_attr($is_en ? 'Close menu' : '关闭菜单'); ?>">
+    <button class="mobile-drawer__close" type="button" data-drawer-close aria-label="<?php echo esc_attr($menu_close_aria); ?>">
       <?php echo hireai_svg("close", 24, "hai-header__icon"); ?>
     </button>
   </div>
-  <nav class="mobile-drawer__nav" aria-label="<?php echo esc_attr($is_en ? 'Mobile navigation' : '移动端导航'); ?>">
+  <nav class="mobile-drawer__nav" aria-label="<?php echo esc_attr($nav_aria_mobile); ?>">
     <?php
     wp_nav_menu([
       'theme_location' => 'primary',
