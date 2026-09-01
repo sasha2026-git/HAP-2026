@@ -328,11 +328,12 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
     font-size: clamp(40px, 6vw, 72px);
     line-height: 1.1;
     letter-spacing: -0.01em;
-    background: linear-gradient(to right, #775a19, #e9c176, #775a19);
+    background: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
+    font-style: italic;
 }
 .sols-page-hero__subtitle {
     max-width: 720px;

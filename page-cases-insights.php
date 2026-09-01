@@ -122,7 +122,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-sm
 .cases{max-width:1200px;margin:0 auto;padding:0 24px 40px}
 .sec-hdr{margin-bottom:40px}
 /* ★ v3.5.5 修复：.sec-hdr h2 与 .insights-hdr h2 完全一致（字号/字重/letter-spacing/颜色/上下 padding） */
-.sec-hdr h2,.insights-hdr h2{font-family:var(--fd);font-size:32px;font-weight:600;letter-spacing:0;margin:0 0 6px;line-height:1.2}
+.sec-hdr h2,.insights-hdr h2{font-family:var(--fd);font-size:32px;font-weight:600;letter-spacing:0;margin:0 0 12px;line-height:1.2}
 .sec-hdr__line{height:4px;width:48px;background:var(--gold);margin-top:10px}
 
 .cases-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:20px;align-items:start}

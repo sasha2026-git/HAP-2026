@@ -113,9 +113,9 @@ $form_action = esc_url(admin_url('admin-post.php'));
 .hireai-c-hero{padding:clamp(72px,9vw,128px) clamp(20px,5vw,80px) clamp(40px,5vw,72px);text-align:center;background:var(--hp-surface,#faf9f9);}
 .hireai-c-kicker{display:block;font-family:var(--hp-font-body);font-size:var(--fs-label);font-weight:700;letter-spacing:.4em;text-transform:uppercase;color:var(--hp-on-surface-var);margin:0 0 28px;}
 .hireai-c-title{margin:0;font-family:var(--hp-font-serif);font-weight:600;font-size:clamp(48px,7vw,88px);line-height:1.05;letter-spacing:-.01em;}
-.hireai-c-title__zh{display:inline-block;background:linear-gradient(135deg,#b8862e 0%,#e9c176 45%,#b8862e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700;}
+.hireai-c-title__zh{display:inline-block;background:linear-gradient(135deg,#775a19 0%,#fed488 50%,#775a19 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700;}
 .hireai-c-title__sep{display:inline-block;margin:0 .35em;color:var(--hp-secondary);opacity:.55;font-weight:300;}
-.hireai-c-title__en{display:inline-block;background:linear-gradient(135deg,#b8862e 0%,#e9c176 45%,#b8862e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-style:italic;font-weight:500;}
+.hireai-c-title__en{display:inline-block;background:linear-gradient(135deg,#775a19 0%,#fed488 50%,#775a19 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-style:italic;font-weight:500;}
 .hireai-c-subtitle{margin:28px auto 0;max-width:680px;font-family:var(--font-body-en,'Inter'),sans-serif;font-size:16px;font-style:normal !important;line-height:1.65;color:var(--on-surface,#1a1c1c);}
 
 /* ===== Decorative banner ===== */

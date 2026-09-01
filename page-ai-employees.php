@@ -36,38 +36,6 @@ $hero_kicker     = hireai_field('lookbook_hero_kicker',     $is_en ? 'The Atelie
 $hero_title      = hireai_field('lookbook_hero_title',      $is_en ? 'Elite Digital Solutions' : '精英数字解决方案');
 $hero_subtitle   = hireai_field('lookbook_hero_subtitle',   $is_en ? '"AI-led process, Human-delivered results."' : '"AI 主导流程，人类交付成果。"');
 
-$filter_kicker   = hireai_field('lookbook_filter_kicker',   $is_en ? 'BROWSE BY CRAFT' : '分类浏览');
-$filter_title    = hireai_field('lookbook_filter_title',    $is_en ? 'Discover your digital employee by role and craft.' : '按角色与场景，发现属于你的数字员工。');
-$filter_all_lbl  = hireai_field('lookbook_filter_all',      $is_en ? 'All' : '全部');
-
-$process_kicker  = hireai_field('lookbook_process_kicker',  $is_en ? 'OUR PROCESS' : '服务流程');
-$process_title   = hireai_field('lookbook_process_title',   $is_en ? 'Four steps from discovery to deployment.' : '从了解到上线，四步即可拥有专属数字员工。');
-
-$process_steps   = [];
-$proc_titles_zh  = ['需求洞察', '方案设计', '训练调优', '上线陪跑'];
-$proc_titles_en  = ['Discovery', 'Curation', 'Calibration', 'Co-pilot'];
-$proc_descs_zh   = [
-    '我们的顾问与您一起梳理业务场景与核心指标。',
-    '从精品模板库中挑选角色底座，并融入品牌基因。',
-    '以专属语料微调模型，确保语调与判断契合业务。',
-    '交付上线后由专属管家持续陪跑，按月复盘迭代。',
-];
-$proc_descs_en   = [
-    'Our consultants map your business context and KPIs.',
-    'Pick an archetype from our atelier and weave in your brand DNA.',
-    'We fine-tune the model on your proprietary corpus to match tone and judgement.',
-    'After deployment, your dedicated concierge reviews and iterates monthly.',
-];
-for ($i = 1; $i <= 4; $i++) {
-    $process_steps[] = [
-        'title' => hireai_field('lookbook_process_step' . $i . '_title',
-                          $is_en ? $proc_titles_en[$i - 1] : $proc_titles_zh[$i - 1]),
-        'desc'  => hireai_field('lookbook_process_step' . $i . '_desc',
-                          $is_en ? $proc_descs_en[$i - 1] : $proc_descs_zh[$i - 1]),
-    ];
-}
-
-$process_note    = hireai_field('lookbook_process_note',    $is_en ? 'Average delivery in 4–6 weeks, with a dedicated concierge throughout.' : '平均 4–6 周即可交付；全程由资深管家陪跑。');
 $cta_heading     = hireai_field('lookbook_cta_heading',     $is_en ? 'Ready to Redefine Humanity?' : '准备好重新定义人性了吗？');
 $cta_sub         = hireai_field('lookbook_cta_sub',         $is_en ? "Join the exclusive echelon of leaders leveraging Aurelian AI's bespoke ecosystem." : '加入运用 Aurelian AI 专属生态的领袖精英之列。');
 $cta_btn         = hireai_field('lookbook_cta_btn',         $is_en ? 'Start The Journey' : '开启旅程');
@@ -149,16 +117,6 @@ if ($current_page > $total_pages) {
 }
 $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 
-/* --------------------------------------------------------------------
- * 3. FILTER TABS — derive unique categories from the rows
- * -------------------------------------------------------------------- */
-$filters = [];
-foreach ($raw_rows as $r) {
-    $cat = trim((string) ($r['kicker'] ?? ''));
-    if ($cat !== '' && !in_array($cat, $filters, true)) {
-        $filters[] = $cat;
-    }
-}
 ?>
 <!-- ════════════════════════════════════════════════════════
      AI 数字员工 — Aurelian Luxury Lookbook
@@ -181,11 +139,12 @@ foreach ($raw_rows as $r) {
 
 /* Hero */
 .lb-att .lb-hero__title {
-    background: linear-gradient(120deg, var(--lb-att-gold) 0%, var(--lb-att-goldl) 50%, var(--lb-att-gold) 100%);
+    background: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
+    font-style: italic;
 }
 
 /* Section divider */
@@ -368,35 +327,7 @@ foreach ($raw_rows as $r) {
         <div class="lb-hero__divider" aria-hidden="true"></div>
     </section>
 
-    <!-- ─────────── Filter Tabs ─────────── -->
     <div class="lb-container">
-        <header class="lb-att-head">
-            <span class="lb-att-head__kicker"><?php echo esc_html($filter_kicker); ?></span>
-            <h2 class="lb-att-head__title"><?php echo esc_html($filter_title); ?></h2>
-            <span class="lb-att__rule" aria-hidden="true"></span>
-        </header>
-
-        <?php if (!empty($filters)) : ?>
-            <nav class="lb-att-tabs" role="tablist" aria-label="<?php echo esc_attr($is_en ? 'Filter by craft' : '按类别筛选'); ?>">
-                <button type="button"
-                        class="lb-att-tab is-active"
-                        data-filter="*"
-                        role="tab"
-                        aria-selected="true">
-                    <?php echo esc_html($filter_all_lbl); ?>
-                </button>
-                <?php foreach ($filters as $cat) : ?>
-                    <button type="button"
-                            class="lb-att-tab"
-                            data-filter="<?php echo esc_attr($cat); ?>"
-                            role="tab"
-                            aria-selected="false">
-                        <?php echo esc_html($cat); ?>
-                    </button>
-                <?php endforeach; ?>
-            </nav>
-        <?php endif; ?>
-
         <!-- ─────────── Employee Rows ─────────── -->
         <?php
         $rows_total = count($raw_rows);
@@ -463,24 +394,6 @@ foreach ($raw_rows as $r) {
         <?php endif; ?>
     </div>
 
-    <!-- ─────────── Service Process ─────────── -->
-    <section class="lb-container" aria-labelledby="lb-att-process-title">
-        <header class="lb-att-head">
-            <span class="lb-att-head__kicker"><?php echo esc_html($process_kicker); ?></span>
-            <h2 class="lb-att-head__title" id="lb-att-process-title"><?php echo esc_html($process_title); ?></h2>
-            <span class="lb-att__rule" aria-hidden="true"></span>
-        </header>
-
-        <ol class="lb-att-process" role="list">
-            <?php foreach ($process_steps as $step) : ?>
-                <li class="lb-att-step">
-                    <h3 class="lb-att-step__title"><?php echo esc_html($step['title']); ?></h3>
-                    <p class="lb-att-step__desc"><?php echo esc_html($step['desc']); ?></p>
-                </li>
-            <?php endforeach; ?>
-        </ol>
-    </section>
-
     <!-- ─────────── CTA ─────────── -->
     <section class="lb-cta">
         <div class="lb-cta__inner">
@@ -498,41 +411,10 @@ foreach ($raw_rows as $r) {
     </section>
 </div><!-- /.lb-main -->
 
-<!-- ─────────── Tiny progressive JS: filter tabs + reveal ─────────── -->
+<!-- ────────────── Tiny progressive JS: reveal-on-scroll ────────────── -->
 <script>
 (function () {
     'use strict';
-    var rows = document.querySelectorAll('.lb-att-rows .lb-row');
-    var tabs = document.querySelectorAll('.lb-att-tabs .lb-att-tab');
-
-    if (tabs.length) {
-        tabs.forEach(function (tab) {
-            tab.addEventListener('click', function () {
-                tabs.forEach(function (t) {
-                    t.classList.remove('is-active');
-                    t.setAttribute('aria-selected', 'false');
-                });
-                tab.classList.add('is-active');
-                tab.setAttribute('aria-selected', 'true');
-
-                var f = tab.getAttribute('data-filter');
-                var wrap = document.getElementById('lb-att-rows');
-                if (!wrap) return;
-                wrap.classList.add('is-filtering');
-                rows.forEach(function (r) {
-                    var cat = r.getAttribute('data-category') || '';
-                    var match = (f === '*') || (f === cat);
-                    if (match) {
-                        r.classList.remove('is-hidden');
-                    } else {
-                        r.classList.add('is-hidden');
-                    }
-                });
-                setTimeout(function () { wrap.classList.remove('is-filtering'); }, 420);
-            });
-        });
-    }
-
     /* Reveal-on-scroll (lightweight) */
     if ('IntersectionObserver' in window) {
         var io = new IntersectionObserver(function (entries) {
