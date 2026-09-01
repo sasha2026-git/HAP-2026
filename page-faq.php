@@ -268,12 +268,13 @@ if ($active_group === '') {
 <style id="hireai-faq-page-css">
 /* Gold leaf gradient text — 用于 Hero 大字 */
 .hireai-faq-hero__title {
-    background: linear-gradient(135deg, #e9c176 0%, #775a19 55%, #e9c176 100%);
+    background: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
     display: inline-block;
+    font-style: italic;
 }
 
 /* Hero layout spacing */
