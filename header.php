@@ -46,10 +46,11 @@ $nav_aria_primary = function_exists('hireai_field_lang')
     : ($is_en ? 'Primary navigation' : '主导航');
 
 /* 我的账户按钮：hireai_field_lang 中英文 fallback */
+/* v3.5.7-p9: 英文从 "MY ACCOUNT" 缩为 "Account"（缩短字符，节省横向空间） */
 $account_label = function_exists('hireai_field_lang')
     ? hireai_field_lang('header_account_label', $is_en ? 'en' : 'zh',
-        $is_en ? 'MY ACCOUNT' : '我的账户', 'option')
-    : ($is_en ? 'MY ACCOUNT' : '我的账户');
+        $is_en ? 'Account' : '我的账户', 'option')
+    : ($is_en ? 'Account' : '我的账户');
 
 /* 汉堡菜单按钮 aria */
 $menu_toggle_aria = function_exists('hireai_field_lang')
