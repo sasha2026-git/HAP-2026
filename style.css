@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.5.7-p10
+Version: 3.5.7-p11
 Text Domain:  hireaipeople
 */
 
@@ -659,21 +659,29 @@ h4 {
   }
 }
 
-/* v3.5.7-p10: 1280px+ 用横排 nav（缩到紧凑）+ 缩 actions */
+/* v3.5.7-p10: 1280px+ 用横排 nav（缩到紧凑）+ 缩 actions
+   v3.5.7-p11: 修复中文页没生效 — 把 nav 样式从 html[lang="en"] 改为全局（lang=en 仍可被下面的具体规则覆盖）*/
 @media (min-width: 1280px) {
-  html[lang="en"] .hai-header__nav {
+  .hai-header__nav {
     flex: 1 1 auto;
     min-width: 0;
   }
-  html[lang="en"] .hai-header__nav-list {
+  .hai-header__nav-list {
     flex-wrap: wrap;
     justify-content: flex-end;
     column-gap: 16px;
   }
-  html[lang="en"] .hai-header__nav-list li a {
+  .hai-header__nav-list li a {
     font-size: 12px;
     letter-spacing: 0.06em;
     padding: 4px 0;
+  }
+  html[lang="en"] .hai-header__nav-list {
+    column-gap: 18px;              /* 英文比中文稍宽（字符长） */
+  }
+  html[lang="en"] .hai-header__nav-list li a {
+    font-size: 12px;
+    letter-spacing: 0.06em;
   }
 }
 
