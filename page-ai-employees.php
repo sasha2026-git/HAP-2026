@@ -298,11 +298,12 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 }
 
 /* v3.0.8 (Bug B): section gap 160-200px（覆盖 style.css 默认 64-120px）
- * v3.5.7-p6: Hero 下 margin-bottom 砍半（用户反馈线条下还有大空白） */
+ * v3.5.7-p6: Hero 下 margin-bottom 砍半（用户反馈线条下还有大空白）
+ * v3.5.7-p7: 再砍半（用户截图手机端还有大空白 80-100px） */
 .lb-att .lb-hero {
     padding-block: clamp(53px, 7vw, 80px) clamp(13px, 2vw, 24px);
-    /* v3.5.7-p6: var(--gap) 160-200px → 80-100px（hero 区域下空白砍半） */
-    margin-bottom: clamp(80px, 9vw, 100px);
+    /* v3.5.7-p7: 80-100px → 40-60px（再砍半） */
+    margin-bottom: clamp(40px, 5vw, 60px);
 }
 .lb-att .lb-container {
     padding-bottom: var(--gap, clamp(160px, 18vw, 200px));
