@@ -252,21 +252,29 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
                         $stock = ($ss === false || $ss === '' || $ss === null) ? 'instock' : (string) $ss;
                     }
                 }
-                // kicker / retainer 强制转字符串，避免 ACF 返回数组时泄漏 "Array"
-                $kicker_raw   = function_exists('hireai_field') ? hireai_field('product_operative', '', $pid) : '';
-                $retainer_raw = function_exists('hireai_field') ? hireai_field('product_retainer_label', '', $pid) : '';
-                $kicker_str   = is_array($kicker_raw)   ? '' : (string) $kicker_raw;
-                $retainer_str = is_array($retainer_raw) ? '' : (string) $retainer_raw;
+                // v3.5.6: bilingual _zh / _en 双读（kicker=product_operative, retainer=product_retainer_label）
+                // 旧版用 hireai_field 只读当前语言，导致 EN 模式下显示中文 kicker；现在两边都读
+                // ACF 返回数组时强制转字符串，避免 "Array" 泄漏
+                $kz_raw   = function_exists('hireai_field_lang') ? hireai_field_lang('product_operative',        'zh', '', $pid) : (function_exists('hireai_field') ? hireai_field('product_operative',        '', $pid) : '');
+                $ken_raw  = function_exists('hireai_field_lang') ? hireai_field_lang('product_operative',        'en', '', $pid) : '';
+                $rtz_raw  = function_exists('hireai_field_lang') ? hireai_field_lang('product_retainer_label',  'zh', '', $pid) : (function_exists('hireai_field') ? hireai_field('product_retainer_label',  '', $pid) : '');
+                $rten_raw = function_exists('hireai_field_lang') ? hireai_field_lang('product_retainer_label',  'en', '', $pid) : '';
+                $kicker_zh   = is_array($kz_raw)   ? '' : (string) $kz_raw;
+                $kicker_en   = is_array($ken_raw)  ? '' : (string) $ken_raw;
+                $retainer_zh = is_array($rtz_raw)  ? '' : (string) $rtz_raw;
+                $retainer_en = is_array($rten_raw) ? '' : (string) $rten_raw;
                 $wc_products[] = [
-                    'id'       => $pid,
-                    'title'    => get_the_title(),
-                    'excerpt'  => get_the_excerpt() ?: wp_trim_words(strip_tags(get_the_content()), 24, '…'),
-                    'image'    => get_the_post_thumbnail_url($pid, 'medium'),
-                    'price'    => $price_html,
-                    'stock'    => $stock,
-                    'permalink'=> get_permalink($pid),
-                    'kicker'   => $kicker_str,
-                    'retainer' => $retainer_str,
+                    'id'          => $pid,
+                    'title'       => get_the_title(),
+                    'excerpt'     => get_the_excerpt() ?: wp_trim_words(strip_tags(get_the_content()), 24, '…'),
+                    'image'       => get_the_post_thumbnail_url($pid, 'medium'),
+                    'price'       => $price_html,
+                    'stock'       => $stock,
+                    'permalink'   => get_permalink($pid),
+                    'kicker_zh'   => $kicker_zh,
+                    'kicker_en'   => $kicker_en,
+                    'retainer_zh' => $retainer_zh,
+                    'retainer_en' => $retainer_en,
                 ];
             }
             wp_reset_postdata();
@@ -274,15 +282,23 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
                 $cards_total = (int) $wc_q->max_num_pages;
                 // 把静态 $cards 替换为真实商品；用 is_string 兜底，防止残留数组
                 $cards = array_map(function ($p) {
-                    $kz = isset($p['kicker']) && !is_array($p['kicker']) ? (string) $p['kicker'] : '';
+                    $kz_zh = isset($p['kicker_zh'])   && !is_array($p['kicker_zh'])   ? (string) $p['kicker_zh']   : '';
+                    $kz_en = isset($p['kicker_en'])   && !is_array($p['kicker_en'])   ? (string) $p['kicker_en']   : $kz_zh;
+                    $rt_zh = isset($p['retainer_zh']) && !is_array($p['retainer_zh']) ? (string) $p['retainer_zh'] : '';
+                    $rt_en = isset($p['retainer_en']) && !is_array($p['retainer_en']) ? (string) $p['retainer_en'] : $rt_zh;
                     return [
-                        'kicker_zh' => $kz, 'kicker_en' => $kz,
-                        'title_zh'  => (string) $p['title'], 'title_en'  => (string) $p['title'],
-                        'desc_zh'   => (string) $p['excerpt'], 'desc_en' => (string) $p['excerpt'],
-                        'price'     => isset($p['price']) ? (string) $p['price'] : '',
-                        'image'     => !empty($p['image']) ? $p['image'] : 'defaults/solution-1.jpg',
-                        'is_cta'    => false,
-                        'link'      => (string) $p['permalink'],
+                        'kicker_zh'   => $kz_zh,
+                        'kicker_en'   => $kz_en,
+                        'retainer_zh' => $rt_zh,
+                        'retainer_en' => $rt_en,
+                        'title_zh'    => (string) $p['title'],
+                        'title_en'    => (string) $p['title'],
+                        'desc_zh'     => (string) $p['excerpt'],
+                        'desc_en'     => (string) $p['excerpt'],
+                        'price'       => isset($p['price']) ? (string) $p['price'] : '',
+                        'image'       => !empty($p['image']) ? $p['image'] : 'defaults/solution-1.jpg',
+                        'is_cta'      => false,
+                        'link'        => (string) $p['permalink'],
                     ];
                 }, $wc_products);
             }

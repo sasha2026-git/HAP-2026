@@ -228,51 +228,92 @@ footer .copy{font-size:13px;color:var(--txt-v)}
     </h2>
     <div class="sec-hdr__line"></div>
   </div>
+<?php
+  /* === Cases 案例区：查询 category=cases 最新 4 篇；不足 4 个则用 v3.5.5 静态 ACF 兜底 === */
+  $ci_case_q = new WP_Query([
+      'post_type'      => 'post',
+      'post_status'    => 'publish',
+      'posts_per_page' => 4,
+      'category_name'  => 'cases',
+      'orderby'        => 'date',
+      'order'          => 'DESC',
+      'no_found_rows'  => true,
+  ]);
+  $ci_case_slots = [];
+  if ( $ci_case_q->have_posts() ) {
+      while ( $ci_case_q->have_posts() && count( $ci_case_slots ) < 4 ) {
+          $ci_case_q->the_post();
+          $ci_pid = get_the_ID();
+          $ci_post_img  = get_the_post_thumbnail_url( $ci_pid, 'large' );
+          $ci_post_excerpt = has_excerpt() ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( get_the_content() ), 32, '…' );
+          $ci_post_title   = get_the_title();
+          $ci_case_slots[] = [
+              'source'   => 'post',
+              'image'    => $ci_post_img ?: '',
+              'badge_zh' => (string) $ci_field_lang_force( 'case_badge', '', '', 'zh' ),
+              'badge_en' => (string) $ci_field_lang_force( 'case_badge', '', '', 'en' ),
+              'title_zh' => $ci_post_title,
+              'title_en' => $ci_post_title,
+              'desc_zh'  => $ci_post_excerpt,
+              'desc_en'  => $ci_post_excerpt,
+              'href'     => get_permalink(),
+          ];
+      }
+      wp_reset_postdata();
+  }
+  /* v3.5.5 静态兜底默认值（与硬编码一一对应） */
+  $ci_case_defaults = [
+      1 => [ 'img' => $DEF_IMG_C1, 'title_zh' => '数字礼宾：高定精品馆', 'title_en' => 'Aurelian Prime for Private Banking', 'desc_zh' => '为高净值客户打造超写实数字人，引领其在元宇宙私密展厅中探索收藏系列。', 'desc_en' => 'Reimagining wealth management through a hyper-realistic digital concierge.', 'badge_zh' => '+42% 留存', 'badge_en' => '+42% Retention' ],
+      2 => [ 'img' => $DEF_IMG_C2, 'title_zh' => 'Lumina NFT 系列',        'title_en' => 'Lumina NFT Series',                  'desc_zh' => '独家 IP 合作，将生成算法与传统工艺融合。', 'desc_en' => 'Exclusive IP collaboration merging generative algorithms with heritage craft.', 'badge_zh' => 'AI 艺术整合', 'badge_en' => 'AI Art Integration' ],
+      3 => [ 'img' => $DEF_IMG_C3, 'title_zh' => '电商进化论',              'title_en' => 'E-commerce Evolution',                'desc_zh' => '将浏览转化为沉浸式策展体验。', 'desc_en' => 'Luxury retail performance scaling through personalized digital twin advisors.', 'badge_zh' => '3.4 倍转化', 'badge_en' => '3.4x Conversion' ],
+      4 => [ 'img' => $DEF_IMG_C4, 'title_zh' => '数字 IP 金库',            'title_en' => 'The Digital IP Vault',                'desc_zh' => 'AI 集成奢侈房产的全球 PR 审计与声誉管理。', 'desc_en' => 'Global PR audit and reputation management for AI-integrated luxury estates.', 'badge_zh' => 'IP 保护 100%', 'badge_en' => 'IP Protection 100%' ],
+  ];
+  while ( count( $ci_case_slots ) < 4 ) {
+      $ci_i = count( $ci_case_slots );
+      $ci_idx = $ci_i + 1;
+      $ci_d = $ci_case_defaults[ $ci_idx ];
+      $ci_case_slots[] = [
+          'source'   => 'static',
+          'image'    => $ci_img( 'ci_case' . $ci_idx . '_image', $ci_d['img'] ),
+          'badge_zh' => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_badge', $ci_d['badge_zh'], $ci_d['badge_en'], 'zh' ),
+          'badge_en' => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_badge', $ci_d['badge_zh'], $ci_d['badge_en'], 'en' ),
+          'title_zh' => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_title_zh', $ci_d['title_zh'], $ci_d['title_en'], 'zh' ),
+          'title_en' => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_title_zh', $ci_d['title_zh'], $ci_d['title_en'], 'en' ),
+          'desc_zh'  => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_desc_zh',  $ci_d['desc_zh'],  $ci_d['desc_en'],  'zh' ),
+          'desc_en'  => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_desc_zh',  $ci_d['desc_zh'],  $ci_d['desc_en'],  'en' ),
+          'href'     => home_url( '/category/cases/' ),
+      ];
+  }
+  $ci_case_layout  = [ 'case-1', 'case-2', 'case-3', 'case-4' ];
+  $ci_badge_layout = [ 'badge-tr', 'badge-bl', 'badge-tl', 'badge-br' ];
+  ?>
   <div class="cases-grid">
-    <!-- 案例1: 大图 span 8 -->
-    <div class="case case-1">
-      <div class="case__media">
-        <img class="case__img" src="<?php echo esc_url($ci_img('ci_case1_image', $DEF_IMG_C1)); ?>" alt="">
-        <div class="case__badge badge-tr"><?php echo $ci_bi('ci_case1_badge', '+42% 留存', '+42% Retention'); ?></div>
+    <?php foreach ( $ci_case_slots as $ci_i => $ci_c ) :
+        $ci_layout  = $ci_case_layout[ $ci_i ];
+        $ci_bcls    = $ci_badge_layout[ $ci_i ];
+    ?>
+      <div class="case <?php echo esc_attr( $ci_layout ); ?>">
+        <div class="case__media">
+          <img class="case__img" src="<?php echo esc_url( $ci_c['image'] ); ?>" alt="">
+          <?php if ( $ci_c['badge_zh'] !== '' || $ci_c['badge_en'] !== '' ) : ?>
+          <div class="case__badge <?php echo esc_attr( $ci_bcls ); ?>">
+            <span class="zh"><?php echo esc_html( $ci_c['badge_zh'] ); ?></span>
+            <span class="en" style="display:none"><?php echo esc_html( $ci_c['badge_en'] ); ?></span>
+          </div>
+          <?php endif; ?>
+        </div>
+        <div class="case__body">
+          <h3>
+            <span class="zh"><?php echo esc_html( $ci_c['title_zh'] ); ?></span>
+            <span class="en" style="display:none"><?php echo esc_html( $ci_c['title_en'] ); ?></span>
+          </h3>
+          <p>
+            <span class="zh"><?php echo esc_html( $ci_c['desc_zh'] ); ?></span>
+            <span class="en" style="display:none"><?php echo esc_html( $ci_c['desc_en'] ); ?></span>
+          </p>
+        </div>
       </div>
-      <div class="case__body">
-        <?php echo '<h3>' . $ci_bi('ci_case1_title_zh', '数字礼宾：高定精品馆', 'Aurelian Prime for Private Banking') . '</h3>'; ?>
-        <?php echo '<p>' . $ci_bi('ci_case1_desc_zh', '为高净值客户打造超写实数字人，引领其在元宇宙私密展厅中探索收藏系列。', 'Reimagining wealth management through a hyper-realistic digital concierge.') . '</p>'; ?>
-      </div>
-    </div>
-    <!-- 案例2: 小图 span 4 + 下移 -->
-    <div class="case case-2">
-      <div class="case__media">
-        <img class="case__img" src="<?php echo esc_url($ci_img('ci_case2_image', $DEF_IMG_C2)); ?>" alt="">
-        <div class="case__badge badge-bl"><?php echo $ci_bi('ci_case2_badge', 'AI 艺术整合', 'AI Art Integration'); ?></div>
-      </div>
-      <div class="case__body">
-        <?php echo '<h3>' . $ci_bi('ci_case2_title_zh', 'Lumina NFT 系列', 'Lumina NFT Series') . '</h3>'; ?>
-        <?php echo '<p>' . $ci_bi('ci_case2_desc_zh', '独家 IP 合作，将生成算法与传统工艺融合。', 'Exclusive IP collaboration merging generative algorithms with heritage craft.') . '</p>'; ?>
-      </div>
-    </div>
-    <!-- 案例3: 方形 span 6 -->
-    <div class="case case-3">
-      <div class="case__media">
-        <img class="case__img" src="<?php echo esc_url($ci_img('ci_case3_image', $DEF_IMG_C3)); ?>" alt="">
-        <div class="case__badge badge-tl"><?php echo $ci_bi('ci_case3_badge', '3.4 倍转化', '3.4x Conversion'); ?></div>
-      </div>
-      <div class="case__body">
-        <?php echo '<h3>' . $ci_bi('ci_case3_title_zh', '电商进化论', 'E-commerce Evolution') . '</h3>'; ?>
-        <?php echo '<p>' . $ci_bi('ci_case3_desc_zh', '将浏览转化为沉浸式策展体验。', 'Luxury retail performance scaling through personalized digital twin advisors.') . '</p>'; ?>
-      </div>
-    </div>
-    <!-- 案例4: 大图 span 6 + 下移 -->
-    <div class="case case-4">
-      <div class="case__media">
-        <img class="case__img" src="<?php echo esc_url($ci_img('ci_case4_image', $DEF_IMG_C4)); ?>" alt="">
-        <div class="case__badge badge-br"><?php echo $ci_bi('ci_case4_badge', 'IP 保护 100%', 'IP Protection 100%'); ?></div>
-      </div>
-      <div class="case__body">
-        <?php echo '<h3>' . $ci_bi('ci_case4_title_zh', '数字 IP 金库', 'The Digital IP Vault') . '</h3>'; ?>
-        <?php echo '<p>' . $ci_bi('ci_case4_desc_zh', 'AI 集成奢侈房产的全球 PR 审计与声誉管理。', 'Global PR audit and reputation management for AI-integrated luxury estates.') . '</p>'; ?>
-      </div>
-    </div>
+    <?php endforeach; ?>
   </div>
   <div class="pagi"><button class="pagi__dot on"></button><button class="pagi__dot"></button></div>
 </section>
@@ -286,43 +327,105 @@ footer .copy{font-size:13px;color:var(--txt-v)}
       <?php echo $ci_bi('ci_insights_subtitle_zh', '行业洞察与思想领导力', 'INDUSTRY INSIGHTS & THOUGHT LEADERSHIP'); ?>
     </p>
   </div>
+<?php
+  /* === Insights 洞察区：查询 category=insights 最新 3 篇；不足 3 个则用 v3.5.5 静态 ACF 兜底 === */
+  $ci_art_q = new WP_Query([
+      'post_type'      => 'post',
+      'post_status'    => 'publish',
+      'posts_per_page' => 3,
+      'category_name'  => 'insights',
+      'orderby'        => 'date',
+      'order'          => 'DESC',
+      'no_found_rows'  => true,
+  ]);
+  $ci_art_slots = [];
+  if ( $ci_art_q->have_posts() ) {
+      while ( $ci_art_q->have_posts() && count( $ci_art_slots ) < 3 ) {
+          $ci_art_q->the_post();
+          $ci_pid = get_the_ID();
+          $ci_post_title   = get_the_title();
+          $ci_post_excerpt = has_excerpt() ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( get_the_content() ), 28, '…' );
+          $ci_post_cats    = get_the_category();
+          $ci_cat_name     = ! empty( $ci_post_cats ) ? $ci_post_cats[0]->name : '';
+          $ci_post_date    = get_the_date( 'Y.m.d' );
+          $ci_post_permalink = get_permalink();
+          /* insight_cat / insight_read_time 覆盖优先；否则用 WP 分类 / 日期 */
+          $ci_cat_zh  = (string) $ci_field_lang_force( 'insight_cat', $ci_cat_name, $ci_cat_name, 'zh' );
+          $ci_cat_en  = (string) $ci_field_lang_force( 'insight_cat', $ci_cat_name, $ci_cat_name, 'en' );
+          $ci_rt_zh   = (string) $ci_field_lang_force( 'insight_read_time', $ci_post_date, $ci_post_date, 'zh' );
+          $ci_rt_en   = (string) $ci_field_lang_force( 'insight_read_time', $ci_post_date, $ci_post_date, 'en' );
+          $ci_art_slots[] = [
+              'source'  => 'post',
+              'cat_zh'  => $ci_cat_zh,
+              'cat_en'  => $ci_cat_en,
+              'title_zh' => $ci_post_title,
+              'title_en' => $ci_post_title,
+              'desc_zh'  => $ci_post_excerpt,
+              'desc_en'  => $ci_post_excerpt,
+              'rt_zh'   => $ci_rt_zh,
+              'rt_en'   => $ci_rt_en,
+              'href'    => $ci_post_permalink,
+          ];
+      }
+      wp_reset_postdata();
+  }
+  /* v3.5.5 静态兜底默认值 */
+  $ci_art_defaults = [
+      1 => [ 'cat_zh' => 'Aesthetics', 'cat_en' => 'Aesthetics', 'title_zh' => '机器中的幽灵：', 'em_zh' => '定义', 'post_zh' => ' AI 之美', 'title_en' => 'The Ghost in the Machine: ', 'em_en' => 'Defining', 'post_en' => ' AI Beauty', 'desc_zh' => '为何传统品牌正走向超风格化的数字表达。', 'desc_en' => 'Moving beyond uncanny valley into hyper-stylized digital.', 'rt_zh' => '8 分钟阅读', 'rt_en' => '8 MIN READ' ],
+      2 => [ 'cat_zh' => 'Technology', 'cat_en' => 'Technology', 'title_zh' => '神经网络与丝绸：', 'em_zh' => '未来', 'post_zh' => ' 服务的织物', 'title_en' => 'Neural Networks & Silk: ', 'em_en' => 'Future', 'post_en' => ' Service', 'desc_zh' => '在不失去专属触感的前提下扩展个性化关怀。', 'desc_en' => 'Scaling personalized attention without losing human touch.', 'rt_zh' => '12 分钟阅读', 'rt_en' => '12 MIN READ' ],
+      3 => [ 'cat_zh' => 'Strategy',   'cat_en' => 'Strategy',   'title_zh' => '新白手套：',       'em_zh' => 'AI',     'post_zh' => ' 作为终极礼宾', 'title_en' => 'The New White Glove: ',         'em_en' => 'AI',       'post_en' => ' as Ultimate Concierge', 'desc_zh' => '审视自动化高端体验时代中忠诚度的演变。', 'desc_en' => 'Loyalty evolution in automated high-end experiences.', 'rt_zh' => '6 分钟阅读', 'rt_en' => '6 MIN READ' ],
+  ];
+  while ( count( $ci_art_slots ) < 3 ) {
+      $ci_i = count( $ci_art_slots );
+      $ci_idx = $ci_i + 1;
+      $ci_d = $ci_art_defaults[ $ci_idx ];
+      $ci_art_slots[] = [
+          'source'   => 'static',
+          'cat_zh'   => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_cat', $ci_d['cat_zh'], $ci_d['cat_en'], 'zh' ),
+          'cat_en'   => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_cat', $ci_d['cat_zh'], $ci_d['cat_en'], 'en' ),
+          'title_zh' => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_pre_zh', $ci_d['title_zh'], $ci_d['title_en'], 'zh' ),
+          'em_zh'    => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_em_zh',  $ci_d['em_zh'],    $ci_d['em_en'],    'zh' ),
+          'post_zh'  => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_post_zh', $ci_d['post_zh'], $ci_d['post_en'],  'zh' ),
+          'title_en' => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_pre_zh', $ci_d['title_zh'], $ci_d['title_en'], 'en' ),
+          'em_en'    => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_em_zh',  $ci_d['em_zh'],    $ci_d['em_en'],    'en' ),
+          'post_en'  => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_post_zh', $ci_d['post_zh'], $ci_d['post_en'],  'en' ),
+          'desc_zh'  => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_desc_zh', $ci_d['desc_zh'], $ci_d['desc_en'], 'zh' ),
+          'desc_en'  => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_desc_zh', $ci_d['desc_zh'], $ci_d['desc_en'], 'en' ),
+          'rt_zh'    => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_rt', $ci_d['rt_zh'], $ci_d['rt_en'], 'zh' ),
+          'rt_en'    => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_rt', $ci_d['rt_zh'], $ci_d['rt_en'], 'en' ),
+          'href'     => home_url( '/category/insights/' ),
+      ];
+  }
+  ?>
   <div class="art-grid">
-    <article class="art">
-      <div class="art__iw"><div class="art__ph">✦</div></div>
-      <span class="art__cat"><?php echo esc_html($ci_field('ci_art1_cat', 'Aesthetics', 'Aesthetics')); ?></span>
-      <h4>
-        <?php echo '<span class="zh">' . esc_html($ci_field_lang_force('ci_art1_title_pre_zh', '机器中的幽灵：', 'The Ghost in the Machine: ', 'zh')) . '<em>' . esc_html($ci_field_lang_force('ci_art1_title_em_zh', '定义', 'Defining', 'zh')) . '</em>' . esc_html($ci_field_lang_force('ci_art1_title_post_zh', ' AI 之美', ' AI Beauty', 'zh')) . '</span>'; ?>
-        <span class="en" style="display:none"><?php echo esc_html($ci_field_lang_force('ci_art1_title_pre_zh', '机器中的幽灵：', 'The Ghost in the Machine: ', 'en')); ?><em><?php echo esc_html($ci_field_lang_force('ci_art1_title_em_zh', '定义', 'Defining', 'en')); ?></em><?php echo esc_html($ci_field_lang_force('ci_art1_title_post_zh', ' AI 之美', ' AI Beauty', 'en')); ?></span>
-      </h4>
-      <p>
-        <?php echo $ci_bi('ci_art1_desc_zh', '为何传统品牌正走向超风格化的数字表达。', 'Moving beyond uncanny valley into hyper-stylized digital.'); ?>
-      </p>
-      <span class="art__rt"><?php echo esc_html($ci_field('ci_art1_rt', '8 分钟阅读', '8 MIN READ')); ?></span>
-    </article>
-    <article class="art">
-      <div class="art__iw"><div class="art__ph">◈</div></div>
-      <span class="art__cat"><?php echo esc_html($ci_field('ci_art2_cat', 'Technology', 'Technology')); ?></span>
-      <h4>
-        <?php echo '<span class="zh">' . esc_html($ci_field_lang_force('ci_art2_title_pre_zh', '神经网络与丝绸：', 'Neural Networks & Silk: ', 'zh')) . '<em>' . esc_html($ci_field_lang_force('ci_art2_title_em_zh', '未来', 'Future', 'zh')) . '</em>' . esc_html($ci_field_lang_force('ci_art2_title_post_zh', ' 服务的织物', ' Service', 'zh')) . '</span>'; ?>
-        <span class="en" style="display:none"><?php echo esc_html($ci_field_lang_force('ci_art2_title_pre_zh', '神经网络与丝绸：', 'Neural Networks & Silk: ', 'en')); ?><em><?php echo esc_html($ci_field_lang_force('ci_art2_title_em_zh', '未来', 'Future', 'en')); ?></em><?php echo esc_html($ci_field_lang_force('ci_art2_title_post_zh', ' 服务的织物', ' Service', 'en')); ?></span>
-      </h4>
-      <p>
-        <?php echo $ci_bi('ci_art2_desc_zh', '在不失去专属触感的前提下扩展个性化关怀。', 'Scaling personalized attention without losing human touch.'); ?>
-      </p>
-      <span class="art__rt"><?php echo esc_html($ci_field('ci_art2_rt', '12 分钟阅读', '12 MIN READ')); ?></span>
-    </article>
-    <article class="art">
-      <div class="art__iw"><div class="art__ph">❖</div></div>
-      <span class="art__cat"><?php echo esc_html($ci_field('ci_art3_cat', 'Strategy', 'Strategy')); ?></span>
-      <h4>
-        <?php echo '<span class="zh">' . esc_html($ci_field_lang_force('ci_art3_title_pre_zh', '新白手套：', 'The New White Glove: ', 'zh')) . '<em>' . esc_html($ci_field_lang_force('ci_art3_title_em_zh', 'AI', 'AI', 'zh')) . '</em>' . esc_html($ci_field_lang_force('ci_art3_title_post_zh', ' 作为终极礼宾', ' as Ultimate Concierge', 'zh')) . '</span>'; ?>
-        <span class="en" style="display:none"><?php echo esc_html($ci_field_lang_force('ci_art3_title_pre_zh', '新白手套：', 'The New White Glove: ', 'en')); ?><em><?php echo esc_html($ci_field_lang_force('ci_art3_title_em_zh', 'AI', 'AI', 'en')); ?></em><?php echo esc_html($ci_field_lang_force('ci_art3_title_post_zh', ' 作为终极礼宾', ' as Ultimate Concierge', 'en')); ?></span>
-      </h4>
-      <p>
-        <?php echo $ci_bi('ci_art3_desc_zh', '审视自动化高端体验时代中忠诚度的演变。', 'Loyalty evolution in automated high-end experiences.'); ?>
-      </p>
-      <span class="art__rt"><?php echo esc_html($ci_field('ci_art3_rt', '6 分钟阅读', '6 MIN READ')); ?></span>
-    </article>
+    <?php foreach ( $ci_art_slots as $ci_a ) : ?>
+      <article class="art">
+        <div class="art__iw"><div class="art__ph">✦</div></div>
+        <span class="art__cat">
+          <span class="zh"><?php echo esc_html( $ci_a['cat_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_a['cat_en'] ); ?></span>
+        </span>
+        <?php if ( $ci_a['source'] === 'static' ) : ?>
+          <h4>
+            <span class="zh"><?php echo esc_html( $ci_a['title_zh'] ); ?><em><?php echo esc_html( $ci_a['em_zh'] ); ?></em><?php echo esc_html( $ci_a['post_zh'] ); ?></span>
+            <span class="en" style="display:none"><?php echo esc_html( $ci_a['title_en'] ); ?><em><?php echo esc_html( $ci_a['em_en'] ); ?></em><?php echo esc_html( $ci_a['post_en'] ); ?></span>
+          </h4>
+        <?php else : ?>
+          <h4>
+            <span class="zh"><?php echo esc_html( $ci_a['title_zh'] ); ?></span>
+            <span class="en" style="display:none"><?php echo esc_html( $ci_a['title_en'] ); ?></span>
+          </h4>
+        <?php endif; ?>
+        <p>
+          <span class="zh"><?php echo esc_html( $ci_a['desc_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_a['desc_en'] ); ?></span>
+        </p>
+        <span class="art__rt">
+          <span class="zh"><?php echo esc_html( $ci_a['rt_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_a['rt_en'] ); ?></span>
+        </span>
+      </article>
+    <?php endforeach; ?>
   </div>
   <div class="pagi"><button class="pagi__dot on"></button></div>
 </section>

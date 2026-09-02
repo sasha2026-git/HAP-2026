@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.5.7-p12
+Version: 3.5.7-p13
 Text Domain:  hireaipeople
 */
 
@@ -484,17 +484,22 @@ h4 {
   gap: 0;
 }
 
-@media (min-width: 768px) {
-  .hai-header__inner { padding: 0 80px; }
+/* v3.5.7-p13 (header layout fix, mobile-first):
+   fluid padding via clamp() - no hard 768px breakpoint that competes with 1280px nav. */
+.hai-header__inner {
+  padding: 0 clamp(16px, 5vw, 80px);
 }
 
 /* Main nav — horizontal, right of logo */
 .hai-header__nav {
-  flex: 1;
+  flex: 1 1 auto;
   display: none;
-  padding-right: clamp(20px, 2.2vw, 40px);
+  /* v3.5.7-p13: fluid padding-right using clamp; no hard breakpoint edge. */
+  padding-right: clamp(12px, 1.6vw, 36px);
+  min-width: 0;
 }
-/* v3.5.7-p12 (header layout fix): nav shown at >=1280px so 6 items + actions fit on PC. */
+/* v3.5.7-p13 (header layout fix): single, unambiguous breakpoint.
+   >=1280px viewport => nav visible. <1280px => nav hidden, hamburger shows. */
 @media (min-width: 1280px) {
   .hai-header__nav { display: flex; }
 }
@@ -502,7 +507,8 @@ h4 {
 .hai-header__nav-list {
   display: flex;
   align-items: center;
-  gap: 22px;
+  /* v3.5.7-p13: fluid gap so nav fits at any PC width. */
+  gap: clamp(12px, 1.3vw, 22px);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -561,10 +567,10 @@ h4 {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  /* v3.5.7-p12 (header layout fix): give Account + Lang breathing room from
-     the right edge so the EN version does not look flush against viewport. */
-  padding-right: clamp(20px, 2vw, 28px);
+  /* v3.5.7-p13: fluid gap so Account + Lang + (mobile) hamburger never overflow. */
+  gap: clamp(6px, 0.6vw, 10px);
+  /* v3.5.7-p13: small right padding to keep Lang from kissing the viewport edge. */
+  padding-right: clamp(8px, 1.2vw, 20px);
   min-width: 0;
 }
 
@@ -609,19 +615,13 @@ h4 {
   cursor: pointer;
   padding: 0;
 }
-/* v3.5.7-p12 (header layout fix): PC breakpoint raised 1024 -> 1280.
-   At 1024-1279 the 6-item nav overflows and hamburger was hidden -> broken header.
-   Now <1280px always shows hamburger + drawer. */
+/* v3.5.7-p13 (header layout fix): single breakpoint at 1280px.
+   - >=1280px viewport: hamburger hidden (PC shows 6 nav items horizontally).
+   - <1280px viewport: hamburger visible (mobile uses drawer).
+   !important defends against JS-injected display toggles. */
 @media (min-width: 1280px) {
-  .hai-header__menu-toggle,
-  .mobile-drawer,
-  .hai-drawer-overlay {
-    display: none !important;
-  }
-}
-@media (max-width: 1279px) {
   .hai-header__menu-toggle {
-    display: flex;
+    display: none !important;
   }
 }
 
@@ -706,11 +706,12 @@ h4 {
   width: 100%;
 }
 
-/* v3.5.7-p12 (header layout fix, narrow viewport): hide Account button
-   at <480px so brand + Lang + hamburger fit without 6px overflow.
-   Account remains reachable via mobile-drawer CTA. */
+/* v3.5.7-p13b (header layout fix, narrow viewport specificity fix):
+   hide Account button at <480px so logo + Lang + hamburger fit.
+   !important needed because later .hai-header__account { display: inline-flex }
+   at line ~4180 has same specificity + later source order. */
 @media (max-width: 479px) {
-  .hai-header__account { display: none; }
+  .hai-header__account { display: none !important; }
 }
 
 /* ==========================================================================

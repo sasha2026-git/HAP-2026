@@ -1802,6 +1802,24 @@ add_action('acf/init', function () {
         ],
     ]);
 
+
+    /* ---- 9.4 案例文章 ACF：category=cases 文章的卡片覆盖字段 ---- */
+    acf_add_local_field_group($hireai_make_group('group_case_meta', '案例 — 卡片', [
+        ['name' => 'case_kicker', 'label' => '案例卡片 · kicker（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
+        ['name' => 'case_badge',  'label' => '案例卡片 · badge（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
+        ['name' => 'case_subtitle', 'label' => '案例卡片 · 副标题（覆盖 excerpt）', 'type' => 'textarea', 'zh' => '', 'en' => '', 'extra' => ['rows' => 2]],
+    ], [
+        [['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:cases']],
+    ]));
+
+    /* ---- 9.45 洞察文章 ACF：category=insights 文章的卡片覆盖字段 ---- */
+    acf_add_local_field_group($hireai_make_group('group_insight_meta', '洞察 — 卡片', [
+        ['name' => 'insight_cat',      'label' => '洞察 · 分类标签（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
+        ['name' => 'insight_read_time', 'label' => '洞察 · 阅读时长（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
+    ], [
+        [['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:insights']],
+    ]));
+
     /* ---- 9.5 商品 ACF：解决方案卡片 / 单产品页卖点 ---- */
     acf_add_local_field_group($hireai_make_group('group_product_meta', 'AI 解决方案 — 卡片与详情', [
         ['name' => 'product_operative', 'label' => '执行智能体', 'type' => 'text', 'zh' => '执行智能体：聘AI', 'en' => 'OPERATIVE: HIREAI'],
