@@ -297,10 +297,12 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
     .lb-att-tab { padding: 8px 16px; font-size: 11px; }
 }
 
-/* v3.0.8 (Bug B): section gap 160-200px（覆盖 style.css 默认 64-120px） */
+/* v3.0.8 (Bug B): section gap 160-200px（覆盖 style.css 默认 64-120px）
+ * v3.5.7-p6: Hero 下 margin-bottom 砍半（用户反馈线条下还有大空白） */
 .lb-att .lb-hero {
     padding-block: clamp(53px, 7vw, 80px) clamp(13px, 2vw, 24px);
-    margin-bottom: var(--gap, clamp(160px, 18vw, 200px));
+    /* v3.5.7-p6: var(--gap) 160-200px → 80-100px（hero 区域下空白砍半） */
+    margin-bottom: clamp(80px, 9vw, 100px);
 }
 .lb-att .lb-container {
     padding-bottom: var(--gap, clamp(160px, 18vw, 200px));

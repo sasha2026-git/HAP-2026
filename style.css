@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.5.7-p5
+Version: 3.5.7-p6
 Text Domain:  hireaipeople
 */
 
@@ -640,18 +640,19 @@ h4 {
   }
 }
 
-/* 1500px 以下：英文菜单字号 + 间距阶梯缩（Sasha 反馈 1430px 视口 MY ACCOUNT 按钮被切右半）
-   修复策略：缩 nav 项 letter-spacing（0.1em → 0.08em）+ column-gap（24px → 20px）+ font-size（保持 14px）*/
+/* v3.5.7-p6: 1500px 以下英文菜单更激进缩（Sasha 反馈 1430px 视口 MY ACCOUNT 仍被切 + FAQ/CONTACT 错位）
+   修复策略：缩 nav 项 letter-spacing（0.08em → 0.05em）+ column-gap（20px → 14px）+ font-size（14px → 13px）+ max-width 70% → 76%*/
 @media (min-width: 1280px) and (max-width: 1499px) {
   html[lang="en"] .hai-header__nav {
-    max-width: 70%;            /* 从 62% → 70%，给 nav 更多空间 */
+    max-width: 76%;            /* p4: 62% → 70%; p6: 70% → 76%（给 nav 更多空间） */
   }
   html[lang="en"] .hai-header__nav-list {
-    column-gap: 20px;
+    column-gap: 14px;           /* p4: 20px; p6: 14px（更紧凑） */
   }
   html[lang="en"] .hai-header__nav-list li a {
-    font-size: 14px;
-    letter-spacing: 0.08em;     /* 缩到 0.08em 减少横向占用 */
+    font-size: 13px;            /* p4: 14px; p6: 13px（更小） */
+    letter-spacing: 0.05em;     /* p4: 0.08em; p6: 0.05em（更紧凑） */
+    padding: 4px 0;             /* p6: 缩 padding 让链接更紧凑 */
   }
 }
 
