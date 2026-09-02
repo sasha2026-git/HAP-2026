@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.5.7-p11
+Version: 3.5.7-p12
 Text Domain:  hireaipeople
 */
 
@@ -484,11 +484,6 @@ h4 {
   gap: 0;
 }
 
-/* v3.5.7-p9: 英文页眉 padding 80px → 40px（Sasha 反馈英文版整体左移） */
-@media (min-width: 768px) {
-  html[lang="en"] .hai-header__inner { padding: 0 40px; }
-}
-
 @media (min-width: 768px) {
   .hai-header__inner { padding: 0 80px; }
 }
@@ -497,16 +492,17 @@ h4 {
 .hai-header__nav {
   flex: 1;
   display: none;
-  padding-right: clamp(24px, 3vw, 48px);
+  padding-right: clamp(20px, 2.2vw, 40px);
 }
-@media (min-width: 768px) {
+/* v3.5.7-p12 (header layout fix): nav shown at >=1280px so 6 items + actions fit on PC. */
+@media (min-width: 1280px) {
   .hai-header__nav { display: flex; }
 }
 
 .hai-header__nav-list {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 22px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -565,7 +561,10 @@ h4 {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 18px;
+  gap: 10px;
+  /* v3.5.7-p12 (header layout fix): give Account + Lang breathing room from
+     the right edge so the EN version does not look flush against viewport. */
+  padding-right: clamp(20px, 2vw, 28px);
   min-width: 0;
 }
 
@@ -574,12 +573,13 @@ h4 {
 /* v3.1.0 (Bug 4): 浅金色背景 + 金色细描边，与「我的账户」黑字协调但带品牌色 */
 .hai-header__lang {
   font-family: var(--font-label, 'Montserrat', 'Inter'), sans-serif;
-  font-size: 12px;
+  /* v3.5.7-p12 (header layout fix): shrink lang pill so it fits at 1280px. */
+  font-size: 11px;
   font-weight: 600;
   line-height: 1.2;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 8px 16px;
+  padding: 6px 12px;
   border: 1px solid rgba(115, 92, 0, 0.3);
   border-radius: var(--radius-full, 9999px);
   background: rgba(115, 92, 0, 0.05);
@@ -609,83 +609,9 @@ h4 {
   cursor: pointer;
   padding: 0;
 }
-/* v3.1.0 (Bug 5): PC (>=1024px) 隐藏汉堡菜单 — 仅移动端展示 */
-/* v3.5.7-p8: 改阈值 1024px → 1500px（让平板 + 桌面 1280-1499px 也用汉堡菜单）
-   原因：1280-1499px 视口下 6 项英文 nav 太长，无论怎么缩都装不下 logo + nav + actions */
-/* v3.5.7-p10: 阈值 1500 → 1280，并缩 Account + Lang 按钮让 1280px+ 横排 nav 能装下 */
-/* (p8 的 1500px 阈值 CSS 已在 p10 重写为 1280px，此处注释保留作为历史)*/
-
-/* ==========================================================================
-   v3.5.7-p2: 英文页眉响应式 — nav 在窄桌面自动换行 / 缩字号，保证 lang 按钮可见
-   根因：英文菜单 "CASES & INSIGHTS" 等字串比中文长 4-6 倍，6 项 + 250px actions 在 1024-1279px
-        视口下 nav intrinsic (≈870px) > available (≈464px)，actions 被挤出 viewport。
-   修复：nav 允许缩 (min-width:0) + 窄桌面 flex-wrap + 字号/间距阶梯缩放；
-        中文版不受影响 (html[lang^="zh"] 选择器隔离)。
-   ========================================================================== */
-@media (min-width: 768px) {
-  html[lang="en"] .hai-header__nav {
-    flex: 1 1 auto;            /* 允许缩 */
-    min-width: 0;              /* 关键：允许内容缩到比 intrinsic 更小 */
-    max-width: 62%;            /* Sasha 推荐 A 方案：nav 最大宽度限制 */
-  }
-  html[lang="en"] .hai-header__nav-list {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    column-gap: 24px;
-    row-gap: 0;
-  }
-}
-
-/* v3.5.7-p6: 1500px 以下英文菜单更激进缩（Sasha 反馈 1430px 视口 MY ACCOUNT 仍被切 + FAQ/CONTACT 错位）
-   修复策略：缩 nav 项 letter-spacing（0.08em → 0.05em）+ column-gap（20px → 14px）+ font-size（14px → 13px）+ max-width 70% → 76%
-   v3.5.7-p8: 改用 flex 自适应替代 max-width 百分比（1430px 视口 max-width:76%=1094px > 实际可用 823px，
-            nav 抢 actions 空间导致 MY ACCOUNT 被切）。改为 flex: 1 1 auto + min-width: 0 让 nav 自动适应剩余空间 */
-/* v3.5.7-p10: 汉堡菜单阈值 1500px → 1280px
-   原因：1280-1499px 的 6 项英文 nav 装不下，让 PC 也用汉堡菜单 */
-/* v3.5.7-p10: 缩 Account + Lang 按钮（p9 用户反馈） */
-@media (min-width: 1280px) {
-  .hai-header__account {
-    padding: 6px 12px;            /* p9: 8px 18px → 6px 12px（更紧凑） */
-    font-size: 11px;              /* p9: 12px → 11px */
-    letter-spacing: 0.05em;
-  }
-  .hai-header__lang {
-    padding: 6px 12px;            /* p9: 8px 16px → 6px 12px */
-    font-size: 11px;              /* p9: 12px → 11px */
-    letter-spacing: 0.08em;
-  }
-  .hai-header__actions {
-    gap: 10px;                    /* p9: 18px → 10px（actions 之间） */
-  }
-}
-
-/* v3.5.7-p10: 1280px+ 用横排 nav（缩到紧凑）+ 缩 actions
-   v3.5.7-p11: 修复中文页没生效 — 把 nav 样式从 html[lang="en"] 改为全局（lang=en 仍可被下面的具体规则覆盖）*/
-@media (min-width: 1280px) {
-  .hai-header__nav {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-  .hai-header__nav-list {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    column-gap: 16px;
-  }
-  .hai-header__nav-list li a {
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    padding: 4px 0;
-  }
-  html[lang="en"] .hai-header__nav-list {
-    column-gap: 18px;              /* 英文比中文稍宽（字符长） */
-  }
-  html[lang="en"] .hai-header__nav-list li a {
-    font-size: 12px;
-    letter-spacing: 0.06em;
-  }
-}
-
-/* v3.5.7-p10: 汉堡菜单阈值改 1280px（PC ≥ 1280px 用横排 nav + 缩 buttons，< 1280px 用汉堡）*/
+/* v3.5.7-p12 (header layout fix): PC breakpoint raised 1024 -> 1280.
+   At 1024-1279 the 6-item nav overflows and hamburger was hidden -> broken header.
+   Now <1280px always shows hamburger + drawer. */
 @media (min-width: 1280px) {
   .hai-header__menu-toggle,
   .mobile-drawer,
@@ -696,28 +622,6 @@ h4 {
 @media (max-width: 1279px) {
   .hai-header__menu-toggle {
     display: flex;
-  }
-}
-
-/* 1280px 以下：英文菜单字号 + 间距同步缩，避免溢出 */
-@media (min-width: 768px) and (max-width: 1279px) {
-  html[lang="en"] .hai-header__nav-list {
-    column-gap: 18px;
-  }
-  html[lang="en"] .hai-header__nav-list li a {
-    font-size: 13px;
-    letter-spacing: 0.06em;
-  }
-}
-
-/* 1100px 以下：进一步缩（兜底，确保 1024px 视口下 lang 按钮仍在视口内） */
-@media (min-width: 768px) and (max-width: 1099px) {
-  html[lang="en"] .hai-header__nav-list li a {
-    font-size: 12px;
-    letter-spacing: 0.04em;
-  }
-  html[lang="en"] .hai-header__nav-list {
-    column-gap: 14px;
   }
 }
 
@@ -800,6 +704,13 @@ h4 {
 
 .mobile-drawer__cta {
   width: 100%;
+}
+
+/* v3.5.7-p12 (header layout fix, narrow viewport): hide Account button
+   at <480px so brand + Lang + hamburger fit without 6px overflow.
+   Account remains reachable via mobile-drawer CTA. */
+@media (max-width: 479px) {
+  .hai-header__account { display: none; }
 }
 
 /* ==========================================================================
@@ -4230,13 +4141,15 @@ main,
 }
 
 .hai-header__account {
-  font-size: 12px;
-  letter-spacing: 0.05em;
+  /* v3.5.7-p12 (header layout fix): sync with primary definition. */
+  font-size: 11px;
+  letter-spacing: 0.08em;
 }
 
 .hai-header__lang {
-  font-size: 14px;
-  letter-spacing: 0.1em;
+  /* v3.5.7-p12 (header layout fix): neutralize earlier 14px bump. */
+  font-size: 11px;
+  letter-spacing: 0.08em;
 }
 
 .hai-footer__nav-list li a {
@@ -4267,15 +4180,17 @@ main,
 .hai-header__account {
   display: inline-flex;
   align-items: center;
-  padding: 8px 18px;
+  /* v3.5.7-p12 (header layout fix): shrink Account button so it fits at 1280px
+     alongside 6 nav items. */
+  padding: 6px 14px;
   background: #ffffff;
   color: #1a1a1a;
   border: 1px solid #1a1a1a;
   border-radius: 40px;
   font-family: var(--font-label, 'Montserrat', 'Inter'), sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
   transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
