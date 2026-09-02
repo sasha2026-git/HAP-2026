@@ -299,7 +299,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 
 /* v3.0.8 (Bug B): section gap 160-200px（覆盖 style.css 默认 64-120px） */
 .lb-att .lb-hero {
-    padding-block: clamp(80px, 10vw, 120px) clamp(40px, 5vw, 72px);
+    padding-block: clamp(53px, 7vw, 80px) clamp(13px, 2vw, 24px);
     margin-bottom: var(--gap, clamp(160px, 18vw, 200px));
 }
 .lb-att .lb-container {
