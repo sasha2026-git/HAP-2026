@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.5.7-p9
+Version: 3.5.7-p10
 Text Domain:  hireaipeople
 */
 
@@ -612,19 +612,8 @@ h4 {
 /* v3.1.0 (Bug 5): PC (>=1024px) 隐藏汉堡菜单 — 仅移动端展示 */
 /* v3.5.7-p8: 改阈值 1024px → 1500px（让平板 + 桌面 1280-1499px 也用汉堡菜单）
    原因：1280-1499px 视口下 6 项英文 nav 太长，无论怎么缩都装不下 logo + nav + actions */
-@media (min-width: 1500px) {
-  .hai-header__menu-toggle,
-  .mobile-drawer,
-  .hai-drawer-overlay {
-    display: none !important;
-  }
-}
-/* 移动端 + 平板 + 小桌面 (<1500px) 始终显示汉堡菜单 */
-@media (max-width: 1499px) {
-  .hai-header__menu-toggle {
-    display: flex;
-  }
-}
+/* v3.5.7-p10: 阈值 1500 → 1280，并缩 Account + Lang 按钮让 1280px+ 横排 nav 能装下 */
+/* (p8 的 1500px 阈值 CSS 已在 p10 重写为 1280px，此处注释保留作为历史)*/
 
 /* ==========================================================================
    v3.5.7-p2: 英文页眉响应式 — nav 在窄桌面自动换行 / 缩字号，保证 lang 按钮可见
@@ -651,33 +640,56 @@ h4 {
    修复策略：缩 nav 项 letter-spacing（0.08em → 0.05em）+ column-gap（20px → 14px）+ font-size（14px → 13px）+ max-width 70% → 76%
    v3.5.7-p8: 改用 flex 自适应替代 max-width 百分比（1430px 视口 max-width:76%=1094px > 实际可用 823px，
             nav 抢 actions 空间导致 MY ACCOUNT 被切）。改为 flex: 1 1 auto + min-width: 0 让 nav 自动适应剩余空间 */
-/* v3.5.7-p8: < 1500px 全部用 mobile drawer（汉堡菜单），所以 1280-1499px 不再需要横排 nav */
-@media (max-width: 1499px) {
-  html[lang="en"] .hai-header__nav,
-  html[lang="en"] .hai-header__nav-list {
-    display: none;                /* 全部走汉堡菜单 */
+/* v3.5.7-p10: 汉堡菜单阈值 1500px → 1280px
+   原因：1280-1499px 的 6 项英文 nav 装不下，让 PC 也用汉堡菜单 */
+/* v3.5.7-p10: 缩 Account + Lang 按钮（p9 用户反馈） */
+@media (min-width: 1280px) {
+  .hai-header__account {
+    padding: 6px 12px;            /* p9: 8px 18px → 6px 12px（更紧凑） */
+    font-size: 11px;              /* p9: 12px → 11px */
+    letter-spacing: 0.05em;
+  }
+  .hai-header__lang {
+    padding: 6px 12px;            /* p9: 8px 16px → 6px 12px */
+    font-size: 11px;              /* p9: 12px → 11px */
+    letter-spacing: 0.08em;
+  }
+  .hai-header__actions {
+    gap: 10px;                    /* p9: 18px → 10px（actions 之间） */
   }
 }
 
-/* 1500px+ 英文菜单（桌面上限以下，保持 p6 的紧凑设置）*/
-@media (min-width: 1500px) {
+/* v3.5.7-p10: 1280px+ 用横排 nav（缩到紧凑）+ 缩 actions */
+@media (min-width: 1280px) {
   html[lang="en"] .hai-header__nav {
-    flex: 1 1 auto;               /* 替代 max-width: 76%（自动适应） */
-    min-width: 0;                 /* 关键：允许内容缩到比 intrinsic 更小 */
+    flex: 1 1 auto;
+    min-width: 0;
   }
   html[lang="en"] .hai-header__nav-list {
     flex-wrap: wrap;
     justify-content: flex-end;
-    column-gap: 14px;
+    column-gap: 16px;
   }
   html[lang="en"] .hai-header__nav-list li a {
-    font-size: 13px;
-    letter-spacing: 0.05em;
+    font-size: 12px;
+    letter-spacing: 0.06em;
     padding: 4px 0;
   }
 }
 
-/* v3.5.7-p8: 移除冗余的 1280-1499px 档位（已被上面覆盖）*/
+/* v3.5.7-p10: 汉堡菜单阈值改 1280px（PC ≥ 1280px 用横排 nav + 缩 buttons，< 1280px 用汉堡）*/
+@media (min-width: 1280px) {
+  .hai-header__menu-toggle,
+  .mobile-drawer,
+  .hai-drawer-overlay {
+    display: none !important;
+  }
+}
+@media (max-width: 1279px) {
+  .hai-header__menu-toggle {
+    display: flex;
+  }
+}
 
 /* 1280px 以下：英文菜单字号 + 间距同步缩，避免溢出 */
 @media (min-width: 768px) and (max-width: 1279px) {
