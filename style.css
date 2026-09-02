@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.5.6
+Version: 3.5.7
 Text Domain:  hireaipeople
 */
 
@@ -616,6 +616,49 @@ h4 {
 @media (max-width: 1023px) {
   .hai-header__menu-toggle {
     display: flex;
+  }
+}
+
+/* ==========================================================================
+   v3.5.7-p2: 英文页眉响应式 — nav 在窄桌面自动换行 / 缩字号，保证 lang 按钮可见
+   根因：英文菜单 "CASES & INSIGHTS" 等字串比中文长 4-6 倍，6 项 + 250px actions 在 1024-1279px
+        视口下 nav intrinsic (≈870px) > available (≈464px)，actions 被挤出 viewport。
+   修复：nav 允许缩 (min-width:0) + 窄桌面 flex-wrap + 字号/间距阶梯缩放；
+        中文版不受影响 (html[lang^="zh"] 选择器隔离)。
+   ========================================================================== */
+@media (min-width: 768px) {
+  html[lang="en"] .hai-header__nav {
+    flex: 1 1 auto;            /* 允许缩 */
+    min-width: 0;              /* 关键：允许内容缩到比 intrinsic 更小 */
+    max-width: 62%;            /* Sasha 推荐 A 方案：nav 最大宽度限制 */
+  }
+  html[lang="en"] .hai-header__nav-list {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    column-gap: 24px;
+    row-gap: 0;
+  }
+}
+
+/* 1280px 以下：英文菜单字号 + 间距同步缩，避免溢出 */
+@media (min-width: 768px) and (max-width: 1279px) {
+  html[lang="en"] .hai-header__nav-list {
+    column-gap: 18px;
+  }
+  html[lang="en"] .hai-header__nav-list li a {
+    font-size: 13px;
+    letter-spacing: 0.06em;
+  }
+}
+
+/* 1100px 以下：进一步缩（兜底，确保 1024px 视口下 lang 按钮仍在视口内） */
+@media (min-width: 768px) and (max-width: 1099px) {
+  html[lang="en"] .hai-header__nav-list li a {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  html[lang="en"] .hai-header__nav-list {
+    column-gap: 14px;
   }
 }
 

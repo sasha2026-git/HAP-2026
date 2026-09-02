@@ -990,6 +990,41 @@ function hireai_fallback_nav() {
     echo '</ul>';
 }
 
+
+
+/**
+ * v3.5.7：主导航已由 WordPress 菜单初始化时，覆盖其菜单标题。
+ *
+ * 未创建主菜单时，hireai_fallback_nav() 仍负责六项双语回退；已创建
+ * 主菜单时，WordPress 会走 Walker 输出，fallback_cb 不会执行。通过
+ * nav_menu_item_title 过滤可在保留后台菜单管理能力的同时，继续使用
+ * site options 中六个 nav_item_*_label 双语 ACF 字段。
+ */
+function hireai_bilingual_nav_title($title, $item, $args = null, $depth = 0) {
+    $theme_location = is_object($args) && isset($args->theme_location)
+        ? (string) $args->theme_location
+        : '';
+
+    if ($theme_location !== 'primary' || !is_object($item)) {
+        return $title;
+    }
+
+    $object_id = isset($item->object_id) ? (int) $item->object_id : 0;
+    $post      = function_exists('get_post') ? get_post($object_id) : null;
+    if (!$post || !isset($post->post_type) || $post->post_type !== 'page' || empty($post->post_name)) {
+        return $title;
+    }
+
+    $field = 'nav_item_' . $post->post_name . '_label';
+    $lang  = function_exists('hireai_lang_suffix') && hireai_lang_suffix() === '_en' ? 'en' : 'zh';
+
+    return function_exists('hireai_field_lang')
+        ? hireai_field_lang($field, $lang, (string) $title, 'option')
+        : (string) $title;
+}
+
+add_filter('nav_menu_item_title', 'hireai_bilingual_nav_title', 10, 4);
+
 function hireai_fallback_footer_nav() {
     $slugs = ['privacy-policy', 'terms', 'refund-policy', 'legal'];
     echo '<ul class="footer-menu">';
