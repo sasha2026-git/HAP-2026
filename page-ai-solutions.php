@@ -320,6 +320,7 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
+/* v3.5.7: 移除 italic（font-weight:700 + 非斜体 + 香槟金渐变）— Sasha brief 2026-09-01 */
 .sols-page-hero__title {
     margin: 0 auto 24px;
     max-width: 920px;
@@ -333,7 +334,7 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
-    font-style: italic;
+    font-style: normal;
 }
 .sols-page-hero__subtitle {
     max-width: 720px;

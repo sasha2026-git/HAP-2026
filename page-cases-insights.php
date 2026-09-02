@@ -114,9 +114,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-sm
   margin-left:auto !important;
   margin-right:auto !important;
 }
-/* ★ v2.2.6 / v3.5.5 Hero 字体严格对齐：italic + 香槟金渐变（#775a19 → #fed488 → #775a19） */
+/* ★ v3.5.7 Hero 加粗非斜体规范：font-weight:600 + 香槟金渐变（#775a19 → #fed488 → #775a19），font-style:normal（移除 italic） */
 .hero h1{font-family:var(--fd);font-size:clamp(32px,5vw,56px);font-weight:600;line-height:1.1;margin:0 0 20px}
-.hero h1{background:linear-gradient(135deg,#775a19 0%,#fed488 50%,#775a19 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-style:italic}
+.hero h1{background:linear-gradient(135deg,#775a19 0%,#fed488 50%,#775a19 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-style:normal}
 .hero p{font-size:clamp(14px,1.2vw,16px) !important;line-height:1.6 !important;color:var(--txt-v) !important;margin:0 auto !important}
 
 .cases{max-width:1200px;margin:0 auto;padding:0 24px 40px}

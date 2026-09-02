@@ -266,6 +266,7 @@ if ($active_group === '') {
      Page-specific styles (gold-gradient hero title + sidebar + glassy accordion)
      ════════════════════════════════════════════════════════════════ -->
 <style id="hireai-faq-page-css">
+/* v3.5.7: 移除 italic（font-weight:700 + 非斜体 + 香槟金渐变）— Sasha brief 2026-09-01 */
 /* Gold leaf gradient text — 用于 Hero 大字 */
 .hireai-faq-hero__title {
     background: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
@@ -274,7 +275,7 @@ if ($active_group === '') {
     -webkit-text-fill-color: transparent;
     color: transparent;
     display: inline-block;
-    font-style: italic;
+    font-style: normal;
 }
 
 /* Hero layout spacing */
@@ -287,9 +288,10 @@ if ($active_group === '') {
     margin-bottom: 24px;
     color: #775a19;
 }
+/* v3.5.7: FAQ Hero 排版统一 — line-height 1.05→1.1（与其他 4 页一致：cases/employees/solutions/contact） */
 .hireai-faq-hero__title {
     margin-bottom: 28px;
-    line-height: 1.05;
+    line-height: 1.1;
     letter-spacing: -0.01em;
 }
 .hireai-faq-hero__subtitle {

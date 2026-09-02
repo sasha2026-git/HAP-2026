@@ -115,7 +115,8 @@ $form_action = esc_url(admin_url('admin-post.php'));
 .hireai-c-title{margin:0;font-family:var(--hp-font-serif);font-weight:600;font-size:clamp(48px,7vw,88px);line-height:1.05;letter-spacing:-.01em;}
 .hireai-c-title__zh{display:inline-block;background:linear-gradient(135deg,#775a19 0%,#fed488 50%,#775a19 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700;}
 .hireai-c-title__sep{display:inline-block;margin:0 .35em;color:var(--hp-secondary);opacity:.55;font-weight:300;}
-.hireai-c-title__en{display:inline-block;background:linear-gradient(135deg,#775a19 0%,#fed488 50%,#775a19 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-style:italic;font-weight:500;}
+/* v3.5.7: Contact 英文标题加粗非斜体（font-weight 500→700 + 移除 italic，与其他 4 页 .hero h1 字节级一致）— Sasha brief 2026-09-01 */
+.hireai-c-title__en{display:inline-block;background:linear-gradient(135deg,#775a19 0%,#fed488 50%,#775a19 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-style:normal;font-weight:700;}
 .hireai-c-subtitle{margin:28px auto 0;max-width:680px;font-family:var(--font-body-en,'Inter'),sans-serif;font-size:16px;font-style:normal !important;line-height:1.65;color:var(--on-surface,#1a1c1c);}
 
 /* ===== Decorative banner ===== */

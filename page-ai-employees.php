@@ -138,13 +138,14 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 }
 
 /* Hero */
+/* v3.5.7: 移除 italic（font-weight:700 + 非斜体 + 香槟金渐变）— Sasha brief 2026-09-01 */
 .lb-att .lb-hero__title {
     background: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
-    font-style: italic;
+    font-style: normal;
 }
 
 /* Section divider */
@@ -329,14 +330,6 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 
     <div class="lb-container">
         <!-- ─────────── Employee Rows ─────────── -->
-        <?php
-        $rows_total = count($raw_rows);
-        $rows_caption = hireai_field('lookbook_rows_caption',
-            $is_en
-                ? sprintf('%1$d curated digital employees, hand-picked from the atelier.', $rows_total)
-                : sprintf('共 %1$d 位数字员工，从工坊中精选而出。', $rows_total));
-        ?>
-        <p class="lb-att-rows__caption"><?php echo esc_html($rows_caption); ?></p>
         <div class="lb-att-rows" id="lb-att-rows">
             <?php
             $index = 0;
