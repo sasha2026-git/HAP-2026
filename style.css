@@ -640,6 +640,21 @@ h4 {
   }
 }
 
+/* 1500px 以下：英文菜单字号 + 间距阶梯缩（Sasha 反馈 1430px 视口 MY ACCOUNT 按钮被切右半）
+   修复策略：缩 nav 项 letter-spacing（0.1em → 0.08em）+ column-gap（24px → 20px）+ font-size（保持 14px）*/
+@media (min-width: 1280px) and (max-width: 1499px) {
+  html[lang="en"] .hai-header__nav {
+    max-width: 70%;            /* 从 62% → 70%，给 nav 更多空间 */
+  }
+  html[lang="en"] .hai-header__nav-list {
+    column-gap: 20px;
+  }
+  html[lang="en"] .hai-header__nav-list li a {
+    font-size: 14px;
+    letter-spacing: 0.08em;     /* 缩到 0.08em 减少横向占用 */
+  }
+}
+
 /* 1280px 以下：英文菜单字号 + 间距同步缩，避免溢出 */
 @media (min-width: 768px) and (max-width: 1279px) {
   html[lang="en"] .hai-header__nav-list {
