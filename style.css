@@ -486,8 +486,8 @@ h4 {
 
 /* v3.5.7-p13 (header layout fix, mobile-first):
    fluid padding via clamp() - no hard 768px breakpoint that competes with 1280px nav. */
-.hai-header__inner {
-  padding: 0 clamp(16px, 5vw, 80px);
+@media (min-width: 768px) {
+  .hai-header__inner { padding: 0 clamp(16px, 5vw, 80px); }
 }
 
 /* Main nav — horizontal, right of logo */
@@ -618,11 +618,27 @@ h4 {
 /* v3.5.7-p13 (header layout fix): single breakpoint at 1280px.
    - >=1280px viewport: hamburger hidden (PC shows 6 nav items horizontally).
    - <1280px viewport: hamburger visible (mobile uses drawer).
-   !important defends against JS-injected display toggles. */
+   !important defends against JS-injected display toggles.
+   At 1024-1279px viewport the 6-item nav would overflow, so hamburger stays. */
 @media (min-width: 1280px) {
+  .hai-header__menu-toggle,
+  .mobile-drawer,
+  .hai-drawer-overlay {
+    display: none !important;
+  }
+}
+@media (max-width: 1279px) {
   .hai-header__menu-toggle {
     display: none !important;
   }
+}
+
+/* v3.5.7-p13b (header layout fix, narrow viewport specificity fix):
+   hide Account button at <480px so logo + Lang + hamburger fit.
+   !important needed because later .hai-header__account { display: inline-flex }
+   has same specificity + later source order. */
+@media (max-width: 479px) {
+  .hai-header__account { display: none !important; }
 }
 
 /* Mobile drawer overlay */
