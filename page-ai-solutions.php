@@ -183,6 +183,9 @@ $wc_products = [];
 if (post_type_exists('product') && function_exists('wc_get_product')) {
     try {
         $paged = max(1, get_query_var('sols_paged') ?: (isset($_GET['sols_page']) ? (int)$_GET['sols_page'] : 1));
+        /* v3.5.7-p15: WC 商品 transient 缓存(包含分页 + product_cat)— save_post_product hook 发布时清
+         *   注意:只缓存 post IDs,args 每次都重新组装(避免 product_cat 重复添加) */
+        $wc_cache_key = 'hireai_solutions_cache_v1_p' . (int) $paged;
         $wc_q_args = [
             'post_type'      => 'product',
             'post_status'    => 'publish',
@@ -227,16 +230,42 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
         if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
             error_log('[hireai v3.0.8] wc_query: prod_cat_id=' . $prod_cat_id . ', found=' . (int) $wc_q->found_posts . ', max_pages=' . (int) $wc_q->max_num_pages);
         }
+        /* v3.5.7-p15: 把 query 结果缓存为 post IDs(5min)— 命中时跳过重复 query */
+        $wc_cached_ids = get_transient( $wc_cache_key );
+        if ( $wc_cached_ids === false ) {
+            $wc_q_for_cache = new WP_Query([
+                'post_type'      => 'product',
+                'post_status'    => 'publish',
+                'posts_per_page' => 9,
+                'paged'          => $paged,
+                'orderby'        => 'date',
+                'order'          => 'DESC',
+                'no_found_rows'  => true,
+                'fields'         => 'ids',
+                'tax_query'      => $wc_q_args['tax_query'] ?? [],
+            ]);
+            $wc_cached_ids = $wc_q_for_cache->posts;
+            wp_reset_postdata();
+            set_transient( $wc_cache_key, $wc_cached_ids, 5 * MINUTE_IN_SECONDS );
+        }
+        /* 无论命中还是 miss,WC 商品列表迭代用 $wc_cached_ids */
+        if ( empty( $wc_cached_ids ) ) {
+            $wc_cached_ids = $wc_q->posts;
+        }
         /* v3.0.8 (Bug E) admin notice: 拉到 0 个 publish product 时提醒 */
         if (!$wc_q->have_posts() && current_user_can('manage_options')) {
             add_action('admin_notices', function () use ($prod_cat_id) {
                 echo '<div class="notice notice-warning"><p>聘AI: AI 解决方案商城没有显示任何 WC 商品。可能原因：1) 商品 catalog_visibility=hidden; 2) product_cat 探测 ID=' . (int) $prod_cat_id . ' 不匹配; 3) WC 未启用。请到 WC → 产品 检查。</p></div>';
             });
         }
-        if ($wc_q->have_posts()) {
-            while ($wc_q->have_posts()) {
-                $wc_q->the_post();
-                $pid = get_the_ID();
+        if ( ! empty( $wc_cached_ids ) ) {
+            foreach ( (array) $wc_cached_ids as $pid ) {
+                $pid = (int) $pid;
+                $wc_post_obj = get_post( $pid );
+                if ( ! $wc_post_obj ) continue;
+                $wc_prev_post = $GLOBALS['post'] ?? null;
+                $GLOBALS['post'] = $wc_post_obj;
+                setup_postdata( $wc_post_obj );
                 $wc_obj = wc_get_product($pid);
                 $price_html = '';
                 $stock      = 'instock';
@@ -276,6 +305,8 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
                     'retainer_zh' => $retainer_zh,
                     'retainer_en' => $retainer_en,
                 ];
+                wp_reset_postdata();
+                if ( $wc_prev_post ) { $GLOBALS['post'] = $wc_prev_post; setup_postdata( $wc_prev_post ); }
             }
             wp_reset_postdata();
             if (!empty($wc_products)) {

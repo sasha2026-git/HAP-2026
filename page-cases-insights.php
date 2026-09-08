@@ -229,24 +229,53 @@ footer .copy{font-size:13px;color:var(--txt-v)}
     <div class="sec-hdr__line"></div>
   </div>
 <?php
-  /* === Cases 案例区：查询 category=cases 最新 4 篇；不足 4 个则用 v3.5.5 静态 ACF 兜底 === */
-  $ci_case_q = new WP_Query([
-      'post_type'      => 'post',
-      'post_status'    => 'publish',
-      'posts_per_page' => 4,
-      'category_name'  => 'cases',
-      'orderby'        => 'date',
-      'order'          => 'DESC',
-      'no_found_rows'  => true,
-  ]);
+  /* === v3.5.7-p15: Cases 案例区 — transient 包裹 WP_Query + 5 分钟 TTL ===
+   *   - save_post hook (functions.php) 发布 category=cases 文章时立即清缓存
+   *   - 缓存 post IDs 而非 slots,避免图片/ACF 字段更新后旧数据残留
+   *   - category_name 兼容 'cases' / '案例' slug */
+  $ci_case_cache_key = 'hireai_cases_cache_v1';
+  $ci_case_ids = get_transient( $ci_case_cache_key );
+  if ( $ci_case_ids === false ) {
+      $ci_case_cat_query = new WP_Query([
+          'post_type'      => 'post',
+          'post_status'    => 'publish',
+          'posts_per_page' => 4,
+          'category_name'  => 'cases',
+          'orderby'        => 'date',
+          'order'          => 'DESC',
+          'no_found_rows'  => true,
+          'fields'         => 'ids',
+      ]);
+      $ci_case_ids = $ci_case_cat_query->posts;
+      wp_reset_postdata();
+      if ( empty( $ci_case_ids ) ) {
+          $ci_case_cat_cn = new WP_Query([
+              'post_type'      => 'post',
+              'post_status'    => 'publish',
+              'posts_per_page' => 4,
+              'category_name'  => '案例',
+              'orderby'        => 'date',
+              'order'          => 'DESC',
+              'no_found_rows'  => true,
+              'fields'         => 'ids',
+          ]);
+          $ci_case_ids = $ci_case_cat_cn->posts;
+          wp_reset_postdata();
+      }
+      set_transient( $ci_case_cache_key, $ci_case_ids, 5 * MINUTE_IN_SECONDS );
+  }
   $ci_case_slots = [];
-  if ( $ci_case_q->have_posts() ) {
-      while ( $ci_case_q->have_posts() && count( $ci_case_slots ) < 4 ) {
-          $ci_case_q->the_post();
-          $ci_pid = get_the_ID();
+  if ( ! empty( $ci_case_ids ) ) {
+      foreach ( array_slice( (array) $ci_case_ids, 0, 4 ) as $ci_pid ) {
+          $ci_post_obj = get_post( $ci_pid );
+          if ( ! $ci_post_obj ) continue;
+          $ci_prev_post = $GLOBALS['post'] ?? null;
+          $GLOBALS['post'] = $ci_post_obj;
+          setup_postdata( $ci_post_obj );
           $ci_post_img  = get_the_post_thumbnail_url( $ci_pid, 'large' );
-          $ci_post_excerpt = has_excerpt() ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( get_the_content() ), 32, '…' );
-          $ci_post_title   = get_the_title();
+          $ci_post_excerpt = has_excerpt( $ci_pid ) ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( $ci_post_obj->post_content ), 32, '…' );
+          $ci_post_title   = get_the_title( $ci_pid );
+          $ci_post_permalink = get_permalink( $ci_pid );
           $ci_case_slots[] = [
               'source'   => 'post',
               'image'    => $ci_post_img ?: '',
@@ -256,10 +285,11 @@ footer .copy{font-size:13px;color:var(--txt-v)}
               'title_en' => $ci_post_title,
               'desc_zh'  => $ci_post_excerpt,
               'desc_en'  => $ci_post_excerpt,
-              'href'     => get_permalink(),
+              'href'     => $ci_post_permalink,
           ];
+          wp_reset_postdata();
+          if ( $ci_prev_post ) { $GLOBALS['post'] = $ci_prev_post; setup_postdata( $ci_prev_post ); }
       }
-      wp_reset_postdata();
   }
   /* v3.5.5 静态兜底默认值（与硬编码一一对应） */
   $ci_case_defaults = [
@@ -328,27 +358,55 @@ footer .copy{font-size:13px;color:var(--txt-v)}
     </p>
   </div>
 <?php
-  /* === Insights 洞察区：查询 category=insights 最新 3 篇；不足 3 个则用 v3.5.5 静态 ACF 兜底 === */
-  $ci_art_q = new WP_Query([
-      'post_type'      => 'post',
-      'post_status'    => 'publish',
-      'posts_per_page' => 3,
-      'category_name'  => 'insights',
-      'orderby'        => 'date',
-      'order'          => 'DESC',
-      'no_found_rows'  => true,
-  ]);
+  /* === v3.5.7-p15: Insights 洞察区 — transient 包裹 WP_Query + 5 分钟 TTL ===
+   *   - save_post hook (functions.php) 发布 category=insights 文章时立即清缓存
+   *   - 缓存 post IDs 而非 slots,保证 ACF 字段实时刷新
+   *   - category_name 兼容 'insights' / '洞察' slug */
+  $ci_art_cache_key = 'hireai_insights_cache_v1';
+  $ci_art_ids = get_transient( $ci_art_cache_key );
+  if ( $ci_art_ids === false ) {
+      $ci_art_cat_query = new WP_Query([
+          'post_type'      => 'post',
+          'post_status'    => 'publish',
+          'posts_per_page' => 3,
+          'category_name'  => 'insights',
+          'orderby'        => 'date',
+          'order'          => 'DESC',
+          'no_found_rows'  => true,
+          'fields'         => 'ids',
+      ]);
+      $ci_art_ids = $ci_art_cat_query->posts;
+      wp_reset_postdata();
+      if ( empty( $ci_art_ids ) ) {
+          $ci_art_cat_cn = new WP_Query([
+              'post_type'      => 'post',
+              'post_status'    => 'publish',
+              'posts_per_page' => 3,
+              'category_name'  => '洞察',
+              'orderby'        => 'date',
+              'order'          => 'DESC',
+              'no_found_rows'  => true,
+              'fields'         => 'ids',
+          ]);
+          $ci_art_ids = $ci_art_cat_cn->posts;
+          wp_reset_postdata();
+      }
+      set_transient( $ci_art_cache_key, $ci_art_ids, 5 * MINUTE_IN_SECONDS );
+  }
   $ci_art_slots = [];
-  if ( $ci_art_q->have_posts() ) {
-      while ( $ci_art_q->have_posts() && count( $ci_art_slots ) < 3 ) {
-          $ci_art_q->the_post();
-          $ci_pid = get_the_ID();
-          $ci_post_title   = get_the_title();
-          $ci_post_excerpt = has_excerpt() ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( get_the_content() ), 28, '…' );
-          $ci_post_cats    = get_the_category();
+  if ( ! empty( $ci_art_ids ) ) {
+      foreach ( array_slice( (array) $ci_art_ids, 0, 3 ) as $ci_pid ) {
+          $ci_post_obj = get_post( $ci_pid );
+          if ( ! $ci_post_obj ) continue;
+          $ci_prev_post = $GLOBALS['post'] ?? null;
+          $GLOBALS['post'] = $ci_post_obj;
+          setup_postdata( $ci_post_obj );
+          $ci_post_title   = get_the_title( $ci_pid );
+          $ci_post_excerpt = has_excerpt( $ci_pid ) ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( $ci_post_obj->post_content ), 28, '…' );
+          $ci_post_cats    = get_the_category( $ci_pid );
           $ci_cat_name     = ! empty( $ci_post_cats ) ? $ci_post_cats[0]->name : '';
           $ci_post_date    = get_the_date( 'Y.m.d' );
-          $ci_post_permalink = get_permalink();
+          $ci_post_permalink = get_permalink( $ci_pid );
           /* insight_cat / insight_read_time 覆盖优先；否则用 WP 分类 / 日期 */
           $ci_cat_zh  = (string) $ci_field_lang_force( 'insight_cat', $ci_cat_name, $ci_cat_name, 'zh' );
           $ci_cat_en  = (string) $ci_field_lang_force( 'insight_cat', $ci_cat_name, $ci_cat_name, 'en' );
@@ -366,8 +424,9 @@ footer .copy{font-size:13px;color:var(--txt-v)}
               'rt_en'   => $ci_rt_en,
               'href'    => $ci_post_permalink,
           ];
+          wp_reset_postdata();
+          if ( $ci_prev_post ) { $GLOBALS['post'] = $ci_prev_post; setup_postdata( $ci_prev_post ); }
       }
-      wp_reset_postdata();
   }
   /* v3.5.5 静态兜底默认值 */
   $ci_art_defaults = [

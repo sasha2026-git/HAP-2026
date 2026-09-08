@@ -1936,9 +1936,13 @@ add_action('upgrader_process_complete', function ($upgrader, $options) {
 add_action('save_post_product', function ($post_id, $post) {
     if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) return;
     if ($post->post_status !== 'publish') return;
-    // 1. transient
+    // 1. transient (v3.5.7-p15: 增加 hireai_solutions_cache_v1_p{N},确保分页缓存也清)
     delete_site_transient('update_themes');
     delete_transient('hireai_solutions_products');
+    delete_transient('hireai_solutions_cache_v1');
+    for ($wc_p = 1; $wc_p <= 9; $wc_p++) {
+        delete_transient('hireai_solutions_cache_v1_p' . (int) $wc_p);
+    }
     // 2. ACF 字段缓存
     if (function_exists('acf_get_store')) {
         $s = acf_get_store('fields');         if ($s) { $s->reset(); }
@@ -1960,6 +1964,9 @@ add_action('save_post', function ($post_id, $post) {
     if (array_intersect((array)$cats, ['cases', 'insights', 'ai-employee', 'case', 'insight'])) {
         delete_site_transient('update_themes');
         delete_transient('hireai_cases_insights_posts');
+        /* v3.5.7-p15: 拆分为 cases/insights 独立 cache,确保 WP 后台发布后即时同步 */
+        delete_transient('hireai_cases_cache_v1');
+        delete_transient('hireai_insights_cache_v1');
         if (function_exists('acf_get_store')) {
             $s = acf_get_store('fields');         if ($s) { $s->reset(); }
             $g = acf_get_store('field-groups');   if ($g) { $g->reset(); }
