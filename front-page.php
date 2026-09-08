@@ -101,7 +101,40 @@ $sol_explore_label  = hireai_field_lang('fp_solutions_explore_label', $lang, $is
 $sol_explore_url    = hireai_field('fp_solutions_explore_url', home_url('/ai-solutions/'));
 
 $solutions = [];
+
+/* v3.5.7-p17 Bug 3 修复：头版 4 张方案卡从 WC 商品动态拉取（mmx 报告确认 front-page.php 头版硬编码 ACF 根本不接 WC）
+ *   - WC 商品不足 4 时,fallback 到原 ACF fp_sol1..4（向后兼容）
+ *   - WC 商品为空时,完全保留 ACF 默认值
+ *   - 数据源：hireai_get_ai_solutions_products() 已含 tax_query + 缓存逻辑
+ */
+if (function_exists('hireai_get_ai_solutions_products')) {
+    $_fp_wc_sols = hireai_get_ai_solutions_products(1, 4);
+    if (!empty($_fp_wc_sols)) {
+        foreach ($_fp_wc_sols as $_fp_sol) {
+            $_fp_id      = is_object($_fp_sol) ? (int) $_fp_sol->ID : (int) $_fp_sol;
+            if ($_fp_id <= 0) continue;
+            $_fp_thumb   = get_the_post_thumbnail_url($_fp_id, 'large');
+            $_fp_title   = get_the_title($_fp_id);
+            $_fp_link    = get_permalink($_fp_id);
+            $_fp_excerpt = has_excerpt($_fp_id)
+                ? get_the_excerpt()
+                : wp_trim_words(wp_strip_all_tags(get_post_field('post_content', $_fp_id)), 24, '…');
+            $_fp_tag     = function_exists('hireai_field_lang')
+                ? hireai_field_lang('product_retainer_label', $lang, '', $_fp_id)
+                : '';
+            $solutions[] = [
+                'title' => $_fp_title,
+                'desc'  => $_fp_excerpt,
+                'tag'   => $_fp_tag,
+                'img'   => $_fp_thumb,
+                'url'   => $_fp_link,
+            ];
+        }
+    }
+}
+
 foreach ([1, 2, 3, 4] as $i) {
+    if (count($solutions) >= 4) break;
     $dflt = [
         1 => ['title' => '金融与财富管理',     'desc' => '智能顾问与客户关系维护的数字化重塑。', 'tag' => '金融', 'img' => 'solution-finance'],
         2 => ['title' => '高端零售与电商',     'desc' => '24/7 全天候奢华购物体验升级。',         'tag' => '零售', 'img' => 'solution-retail'],

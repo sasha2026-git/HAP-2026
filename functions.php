@@ -31,7 +31,11 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
 
 // 版本号自动从 style.css Header 读取，每次更新 style.css 的 Version 字段即可
 if (!defined('HIREAI_VERSION')) {
-    define('HIREAI_VERSION', wp_get_theme()->get('Version'));
+    // v3.5.7-p17 Bug 1 修复：实时读取 style.css Header 的 Version 字段
+    //   - wp_get_theme()->get('Version') 有静态缓存,不会自动同步 style.css 更新
+    //   - get_file_data() 是 WP 内置函数,每次调用实时读文件,不会缓存
+    $theme_data = get_file_data(get_stylesheet_directory() . '/style.css', ['Version' => 'Version']);
+    define('HIREAI_VERSION', $theme_data['Version'] ?? '1.0.0');
 }
 
 /* 每页数量（可通过常量覆盖） */
@@ -1058,7 +1062,10 @@ $ver = function ($file) {
 
 add_action('wp_enqueue_scripts', function () use ($ver) {
     // 父主题样式（只加载一次）
-    wp_enqueue_style('parent-style', get_template_directory_uri() . '/style.css', [], HIREAI_VERSION);
+    // v3.5.7-p17 Bug 1 修复：父主题 CSS URL 加 filemtime 防缓存
+    //   - 即使 WP 后台缓存 / CDN / OPcache 拦截,HIREAI_VERSION + mtime 也会强制 bust
+    $parent_mtime = file_exists(get_template_directory() . '/style.css') ? filemtime(get_template_directory() . '/style.css') : HIREAI_VERSION;
+    wp_enqueue_style('parent-style', get_template_directory_uri() . '/style.css', [], HIREAI_VERSION . '-' . $parent_mtime);
 
     // 子主题样式（版本号随文件时间戳变化，缓存自动失效）
     wp_enqueue_style(
@@ -2143,16 +2150,29 @@ add_action('upgrader_process_complete', function ($upgrader, $options) {
  *      - WC 商品价格/库存/图片 -> 同步
  *      - WP 文章 (cases/insights/employee) -> 同步
  * ---------------------------------------------------------------------- */
-add_action('save_post_product', function ($post_id, $post) {
-    if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) return;
-    if ($post->post_status !== 'publish') return;
-    // 1. transient (v3.5.7-p15: 增加 hireai_solutions_cache_v1_p{N},确保分页缓存也清)
+/* v3.5.7-p17 Bug 3 修复：抽出清缓存函数 (save_post_product + transition_post_status 共用)
+ *   - 清所有 hireai_solutions_* transient (page / global / pagination v1..v9)
+ *   - 清 WP update_themes transient (强制 WP 检测到主题更新)
+ *   - 缓存 key 与 hireai_get_ai_solutions_products() 一致
+ */
+function hireai_flush_solutions_cache() {
     delete_site_transient('update_themes');
     delete_transient('hireai_solutions_products');
     delete_transient('hireai_solutions_cache_v1');
     for ($wc_p = 1; $wc_p <= 9; $wc_p++) {
         delete_transient('hireai_solutions_cache_v1_p' . (int) $wc_p);
     }
+}
+
+/* v3.5.7-p17 Bug 3 修复：保留原 save_post_product hook (WC 价格/库存变化但 status 不变时仍需清缓存)
+ *   - 仍然只在 publish 状态时清缓存 (与 v3.5.7-p16 行为一致)
+ *   - 抽出 hireai_flush_solutions_cache() 复用
+ */
+add_action('save_post_product', function ($post_id, $post) {
+    if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) return;
+    if ($post->post_status !== 'publish') return;
+    // 1. transient (使用 v3.5.7-p17 抽出的统一清缓存函数)
+    hireai_flush_solutions_cache();
     // 2. ACF 字段缓存
     if (function_exists('acf_get_store')) {
         $s = acf_get_store('fields');         if ($s) { $s->reset(); }
@@ -2164,6 +2184,25 @@ add_action('save_post_product', function ($post_id, $post) {
     // 4. OPcache
     if (function_exists('opcache_reset')) { opcache_reset(); }
 }, 20, 2);
+
+/* v3.5.7-p17 Bug 3 修复：新增 transition_post_status 监听 (覆盖 auto-draft → publish 路径)
+ *   - 当商品从非 publish 变 publish 时清缓存 (例如 WC 后台快速发布按钮)
+ *   - 解决 save_post 在 auto-draft -> publish 路径不触发的问题
+ *   - 与 save_post_product 共用 hireai_flush_solutions_cache()
+ */
+add_action('transition_post_status', function ($new, $old, $post) {
+    if (!$post || $post->post_type !== 'product') return;
+    if ($new === 'publish' && $old !== 'publish') {
+        hireai_flush_solutions_cache();
+        if (function_exists('acf_get_store')) {
+            $s = acf_get_store('fields');         if ($s) { $s->reset(); }
+            $g = acf_get_store('field-groups');   if ($g) { $g->reset(); }
+        }
+        if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
+        if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai product published'); }
+        if (function_exists('opcache_reset')) { opcache_reset(); }
+    }
+}, 20, 3);
 
 add_action('save_post', function ($post_id, $post) {
     if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) return;

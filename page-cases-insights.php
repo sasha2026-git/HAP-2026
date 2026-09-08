@@ -160,6 +160,9 @@ body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-sm
 .art{cursor:pointer}
 .art__iw{aspect-ratio:4/5;border-radius:8px;overflow:hidden;margin-bottom:16px}
 .art__ph{width:100%;height:100%;background:linear-gradient(135deg,var(--bg),#e8e5df);display:flex;align-items:center;justify-content:center;font-size:48px;color:#747878;transition:transform .7s}
+/* v3.5.7-p17 Bug 2 修复：洞察 ACF 配图样式 */
+.art__img{width:100%;height:100%;object-fit:cover;transition:transform .7s;}
+.art:hover .art__img{transform:scale(1.05)}
 .art:hover .art__ph{transform:scale(1.05)}
 .art__cat{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:block}
 .art h4{font-family:var(--fd);font-size:18px;line-height:1.3;margin:0 0 8px}
@@ -269,6 +272,8 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           set_transient( $ci_case_cache_key, $ci_case_ids, 5 * MINUTE_IN_SECONDS );
       }
   }
+  // v3.5.7-p17 Bug 2 修复：cases 区块空 image fallback（与 v3.5.5 静态兜底一致）
+  $_ci_case_default_imgs = [$DEF_IMG_C1, $DEF_IMG_C2, $DEF_IMG_C3, $DEF_IMG_C4];
   $ci_case_slots = [];
   if ( ! empty( $ci_case_ids ) ) {
       foreach ( array_slice( (array) $ci_case_ids, 0, 4 ) as $ci_pid ) {
@@ -283,7 +288,7 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           $ci_post_permalink = get_permalink( $ci_pid );
           $ci_case_slots[] = [
               'source'   => 'post',
-              'image'    => $ci_post_img ?: '',
+              'image'    => $ci_post_img ?: $_ci_case_default_imgs[count($ci_case_slots)],
               'badge_zh' => (string) $ci_field_lang_force( 'case_badge', '', '', 'zh' ),
               'badge_en' => (string) $ci_field_lang_force( 'case_badge', '', '', 'en' ),
               'title_zh' => $ci_post_title,
@@ -422,8 +427,14 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           $ci_cat_en  = (string) $ci_field_lang_force( 'insight_cat', $ci_cat_name, $ci_cat_name, 'en' );
           $ci_rt_zh   = (string) $ci_field_lang_force( 'insight_read_time', $ci_post_date, $ci_post_date, 'zh' );
           $ci_rt_en   = (string) $ci_field_lang_force( 'insight_read_time', $ci_post_date, $ci_post_date, 'en' );
+          // v3.5.7-p17 Bug 2 修复：洞察文章优先用 ACF insight_cover_image,fallback 到 WP 特色图
+          $ci_art_img = function_exists('get_field') ? get_field('insight_cover_image', $ci_pid) : '';
+          if (empty($ci_art_img)) {
+              $ci_art_img = get_the_post_thumbnail_url($ci_pid, 'large');
+          }
           $ci_art_slots[] = [
               'source'  => 'post',
+              'img'     => is_array($ci_art_img) ? ($ci_art_img['url'] ?? '') : (string) $ci_art_img,
               'cat_zh'  => $ci_cat_zh,
               'cat_en'  => $ci_cat_en,
               'title_zh' => $ci_post_title,
@@ -469,7 +480,7 @@ footer .copy{font-size:13px;color:var(--txt-v)}
   <div class="art-grid">
     <?php foreach ( $ci_art_slots as $ci_a ) : ?>
       <article class="art">
-        <div class="art__iw"><div class="art__ph">✦</div></div>
+        <div class="art__iw"><?php if (!empty($ci_a['img'])) : ?><img class="art__img" src="<?php echo esc_url($ci_a['img']); ?>" alt="<?php echo esc_attr($ci_a['title_zh']); ?>" loading="lazy" /><?php else : ?><div class="art__ph">✦</div><?php endif; ?></div>
         <span class="art__cat">
           <span class="zh"><?php echo esc_html( $ci_a['cat_zh'] ); ?></span>
           <span class="en" style="display:none"><?php echo esc_html( $ci_a['cat_en'] ); ?></span>
