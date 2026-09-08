@@ -183,57 +183,18 @@ $wc_products = [];
 if (post_type_exists('product') && function_exists('wc_get_product')) {
     try {
         $paged = max(1, get_query_var('sols_paged') ?: (isset($_GET['sols_page']) ? (int)$_GET['sols_page'] : 1));
-        /* v3.5.7-p15: WC 商品 transient 缓存(包含分页 + product_cat)— save_post_product hook 发布时清
-         *   注意:只缓存 post IDs,args 每次都重新组装(避免 product_cat 重复添加) */
-        $wc_cache_key = 'hireai_solutions_cache_v1_p' . (int) $paged;
-        $wc_q_args = [
-            'post_type'      => 'product',
-            'post_status'    => 'publish',
-            'posts_per_page' => 9,
-            'paged'          => $paged,
-            'orderby'        => 'date',
-            'order'          => 'DESC',
-            'no_found_rows'  => false,
-            /* v3.0.7: 排除 catalog-visibility=hidden/excluded 的商品（即使 WC 11.0.1 已装，也可能没显示） */
-            'tax_query'      => [[
-                'taxonomy' => 'product_visibility',
-                'field'    => 'name',
-                'terms'    => ['exclude-from-catalog', 'exclude-from-search'],
-                'operator' => 'NOT IN',
-            ]],
-        ];
-        /* v3.0.8 (Bug E): 探测 product_cat term_id → 探测成功时限定 category（避免拉无关 product）
-         *   探测失败时不传 category filter，让所有 publish product 都返回 */
-        $prod_cat_id = function_exists('hireai_find_product_category_id')
-            ? hireai_find_product_category_id([
-                'solution', 'solutions', 'product', 'products', 'ai-solution', 'ai-solutions',
-                'shop', 'store', '商城',
-                '解决方案', '商品', 'AI解决方案', '产品', '服务', '解决方案商城',
-                '公关', '电商', '零售', '金融', '医疗', '娱乐',
-            ])
-            : 0;
-        if ($prod_cat_id) {
-            // product_cat 是 WC 自定义 taxonomy，不是 WP 'category'
-            $wc_q_args['tax_query'][] = [
-                'taxonomy' => 'product_cat',
-                'field'    => 'term_id',
-                'terms'    => [$prod_cat_id],
-                'operator' => 'IN',
-            ];
-            // 多 tax_query 时需要 relation
-            if (count($wc_q_args['tax_query']) > 1) {
-                $wc_q_args['tax_query']['relation'] = 'AND';
-            }
-        }
-        $wc_q = new WP_Query($wc_q_args);
-        /* v3.0.8 debug: 记录实际 category + 拉到的 product 数 */
-        if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
-            error_log('[hireai v3.0.8] wc_query: prod_cat_id=' . $prod_cat_id . ', found=' . (int) $wc_q->found_posts . ', max_pages=' . (int) $wc_q->max_num_pages);
-        }
-        /* v3.5.7-p15: 把 query 结果缓存为 post IDs(5min)— 命中时跳过重复 query */
-        $wc_cached_ids = get_transient( $wc_cache_key );
-        if ( $wc_cached_ids === false ) {
-            $wc_q_for_cache = new WP_Query([
+        /* v3.5.7-p16: 改用数据层 hook hireai_get_ai_solutions_products($paged)
+         *   - 自动探测 product_cat + 探测失败 fallback(回退全部 publish product)
+         *   - 自动应用 hireai_dedupe_tax_query 修 v3.5.7-p15 的 product_cat 重复 push bug
+         *   - 缓存 key 与 save_post_product hook 一致,WP 后台发布后即时同步
+         *   - 返回的 IDs 已去重 + 已组装 tax_query
+         */
+        $wc_cached_ids = function_exists('hireai_get_ai_solutions_products')
+            ? hireai_get_ai_solutions_products($paged, 9)
+            : [];
+        /* 兼容旧路径: hook 不存在时回退到内联 WP_Query */
+        if (empty($wc_cached_ids)) {
+            $wc_q_args = [
                 'post_type'      => 'product',
                 'post_status'    => 'publish',
                 'posts_per_page' => 9,
@@ -242,18 +203,41 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
                 'order'          => 'DESC',
                 'no_found_rows'  => true,
                 'fields'         => 'ids',
-                'tax_query'      => $wc_q_args['tax_query'] ?? [],
-            ]);
-            $wc_cached_ids = $wc_q_for_cache->posts;
+                'tax_query'      => [[
+                    'taxonomy' => 'product_visibility',
+                    'field'    => 'name',
+                    'terms'    => ['exclude-from-catalog', 'exclude-from-search'],
+                    'operator' => 'NOT IN',
+                ]],
+            ];
+            $prod_cat_id_fb = function_exists('hireai_find_product_category_id')
+                ? hireai_find_product_category_id('default')
+                : 0;
+            if ($prod_cat_id_fb > 0) {
+                $wc_q_args['tax_query'][] = [
+                    'taxonomy' => 'product_cat',
+                    'field'    => 'term_id',
+                    'terms'    => [$prod_cat_id_fb],
+                    'operator' => 'IN',
+                ];
+            }
+            $wc_q_args['tax_query'] = function_exists('hireai_dedupe_tax_query')
+                ? hireai_dedupe_tax_query($wc_q_args['tax_query'])
+                : $wc_q_args['tax_query'];
+            $wc_q_fallback = new WP_Query($wc_q_args);
+            $wc_cached_ids = is_array($wc_q_fallback->posts) ? $wc_q_fallback->posts : [];
             wp_reset_postdata();
-            set_transient( $wc_cache_key, $wc_cached_ids, 5 * MINUTE_IN_SECONDS );
+            $prod_cat_id = $prod_cat_id_fb;
+        } else {
+            $prod_cat_id = function_exists('hireai_find_product_category_id')
+                ? hireai_find_product_category_id('default')
+                : 0;
         }
-        /* 无论命中还是 miss,WC 商品列表迭代用 $wc_cached_ids */
-        if ( empty( $wc_cached_ids ) ) {
-            $wc_cached_ids = $wc_q->posts;
+        if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
+            error_log('[hireai v3.5.7-p16] wc_query: prod_cat_id=' . $prod_cat_id . ', cached_ids=' . count((array) $wc_cached_ids));
         }
         /* v3.0.8 (Bug E) admin notice: 拉到 0 个 publish product 时提醒 */
-        if (!$wc_q->have_posts() && current_user_can('manage_options')) {
+        if (empty($wc_cached_ids) && current_user_can('manage_options')) {
             add_action('admin_notices', function () use ($prod_cat_id) {
                 echo '<div class="notice notice-warning"><p>聘AI: AI 解决方案商城没有显示任何 WC 商品。可能原因：1) 商品 catalog_visibility=hidden; 2) product_cat 探测 ID=' . (int) $prod_cat_id . ' 不匹配; 3) WC 未启用。请到 WC → 产品 检查。</p></div>';
             });
@@ -310,7 +294,18 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
             }
             wp_reset_postdata();
             if (!empty($wc_products)) {
-                $cards_total = (int) $wc_q->max_num_pages;
+                /* v3.5.7-p16: hireai_get_ai_solutions_products 用 no_found_rows=true,
+                 *   max_num_pages 不可用.改用 found_posts 推算 (upper bound). */
+                $wc_count_q = new WP_Query([
+                    'post_type'      => 'product',
+                    'post_status'    => 'publish',
+                    'posts_per_page' => 1,
+                    'paged'          => $paged,
+                    'fields'         => 'ids',
+                    'no_found_rows'  => false,
+                ]);
+                $cards_total = max(1, (int) ceil((int) $wc_count_q->found_posts / 9));
+                wp_reset_postdata();
                 // 把静态 $cards 替换为真实商品；用 is_string 兜底，防止残留数组
                 $cards = array_map(function ($p) {
                     $kz_zh = isset($p['kicker_zh'])   && !is_array($p['kicker_zh'])   ? (string) $p['kicker_zh']   : '';

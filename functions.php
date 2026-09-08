@@ -679,13 +679,48 @@ function hireai_fallback_post_category_id($exclude_cat_id = 0) {
 }
 
 /**
+ * v3.5.7-p16: 扩展 product_cat 中文候选词 — 覆盖 page-ai-solutions.php 默认 $cards 的 kicker_zh 全部 9 个
+ *   - 公关危机 / 整合营销 / 电商视觉 / 创意设计 / 酒店服务 / 数据洞察 / 金融风控 / 空间美学 / 企业服务
+ *   - 同时补 slug / 拼音 / 通用 slug 的英文候选,提高探测命中率
+ *
+ * @return array<string> 候选 slug/name 列表(供 hireai_find_product_category_id 探测)
+ */
+function hireai_product_category_candidates() {
+    return [
+        // 通用 slug/name
+        'solution', 'solutions', 'product', 'products', 'ai-solution', 'ai-solutions',
+        'shop', 'store', '商城',
+        '解决方案', '商品', 'AI解决方案', '产品', '服务', '解决方案商城',
+        // kicker_zh 全部 9 个(中文 → slug → 拼音/英文)
+        '公关危机', '危机公关', 'crisis-counsel', 'crisis', 'pr-crisis',
+        '整合营销', 'integrated-marketing', 'marketing',
+        '电商视觉', 'e-commerce', 'ecommerce', 'retail',
+        '创意设计', 'creative-design', 'creative', 'design',
+        '酒店服务', 'hospitality', 'hotel',
+        '数据洞察', 'data-insight', 'data', 'insight',
+        '金融风控', 'finance', 'risk-control', 'fintech',
+        '空间美学', 'spatial', 'aesthetics', 'space',
+        '企业服务', 'enterprise', 'enterprise-service',
+        // 兜底关键词
+        '公关', '营销', '电商', '设计', '酒店', '数据', '金融', '空间', '企业',
+        '创意', '服务', '零售', '医疗', '娱乐', '教育',
+    ];
+}
+
+/**
  * v3.0.8 (Bug E) — 智能探测 WC product_cat term_id
  *
- * @param array $candidates 候选 slug 或 term name
- * @return int product_cat term_id；找不到返回 0
+ * v3.5.7-p16: 接受 "default" 关键字时,自动加载 hireai_product_category_candidates() 全集
+ *            (覆盖 page-ai-solutions.php 默认 $cards kicker_zh 全部 9 个)
+ *
+ * @param array|string $candidates 候选 slug / term name,或 'default'
+ * @return int product_cat term_id;找不到返回 0
  */
 function hireai_find_product_category_id($candidates) {
     if (!taxonomy_exists('product_cat')) return 0;
+    if ($candidates === 'default' || (is_array($candidates) && count($candidates) === 1 && $candidates[0] === 'default')) {
+        $candidates = hireai_product_category_candidates();
+    }
     $candidates = is_array($candidates) ? $candidates : [$candidates];
     foreach ($candidates as $key) {
         $key = trim((string) $key);
@@ -698,6 +733,36 @@ function hireai_find_product_category_id($candidates) {
         if ($term && !is_wp_error($term)) return (int) $term->term_id;
     }
     return 0;
+}
+
+/**
+ * v3.5.7-p16: tax_query 去重 — 同一 taxonomy 多次 push 时只保留最后一次
+ *   - 修 v3.5.7-p15 bug: page-ai-solutions.php 的 product_cat 在某些路径下被 push 两次
+ *   - 返回干净的 tax_query 数组(已按 taxonomy 去重 + 自动补 relation='AND')
+ *
+ * @param array $tax_query tax_query 项列表(每项: ['taxonomy','field','terms','operator'])
+ * @return array 清洗后的 tax_query
+ */
+function hireai_dedupe_tax_query($tax_query) {
+    if (!is_array($tax_query) || empty($tax_query)) return [];
+    $by_tax    = [];
+    $non_assoc = [];
+    foreach ($tax_query as $key => $item) {
+        if (!is_array($item)) {
+            $non_assoc[$key] = $item;
+            continue;
+        }
+        $tax = isset($item['taxonomy']) ? (string) $item['taxonomy'] : '';
+        if ($tax === '') continue;
+        $by_tax[$tax] = $item;
+    }
+    $out = array_values($by_tax);
+    if (count($out) > 1 && !isset($non_assoc['relation'])) {
+        $out['relation'] = 'AND';
+    } elseif (isset($non_assoc['relation'])) {
+        $out['relation'] = $non_assoc['relation'];
+    }
+    return $out;
 }
 
 /**
@@ -772,6 +837,151 @@ function hireai_resolve_employee_url($index = 0, $fallback_url = '') {
         $fallback_url = home_url('/ai-employees/');
     }
     return $fallback_url;
+}
+
+/* -------------------------------------------------------------------------
+ * 2.7. v3.5.7-p16 — 数据层 hooks(数据源抽象)
+ *    让 page-ai-solutions.php / page-cases-insights.php 不再直接写 WP_Query
+ *    而是调用这两个 hook,确保:
+ *      - product_cat 探测+去重(修 v3.5.7-p15 product_cat 重复 push bug)
+ *      - 缓存 key 命名一致(save_post / save_post_product 清缓存路径固定)
+ *      - 双语 fallback 逻辑统一(zh 失败自动试英文 slug)
+ * ---------------------------------------------------------------------- */
+
+/**
+ * v3.5.7-p16: 获取 AI 解决方案页面用的 WC 商品 ID 列表(已应用 tax_query + 去重)
+ *   - 调用 page-ai-solutions.php 直接消费返回的 IDs
+ *   - 缓存 key: hireai_solutions_cache_v1_p{N},与 save_post_product hook 一致
+ *   - product_visibility NOT IN(排除 hidden/search 屏蔽)
+ *   - product_cat 探测用 hireai_find_product_category_id('default')(覆盖全部 9 个 kicker_zh)
+ *   - 探测失败时 fallback:不过滤 product_cat,让所有 publish product 都返回
+ *
+ * @param int $paged 当前页码
+ * @param int $per_page 每页商品数
+ * @return array<int> WC product post IDs
+ */
+function hireai_get_ai_solutions_products($paged = 1, $per_page = 9) {
+    if (!post_type_exists('product') || !function_exists('wc_get_product')) return [];
+    $paged    = max(1, (int) $paged);
+    $per_page = max(1, (int) $per_page);
+    $cache_key = 'hireai_solutions_cache_v1_p' . $paged;
+
+    $cached = get_transient($cache_key);
+    if (is_array($cached) && !empty($cached)) {
+        return array_map('intval', $cached);
+    }
+
+    // 1. 基础 tax_query:排除 catalog-visibility=hidden / search-excluded
+    $tax_query = [[
+        'taxonomy' => 'product_visibility',
+        'field'    => 'name',
+        'terms'    => ['exclude-from-catalog', 'exclude-from-search'],
+        'operator' => 'NOT IN',
+    ]];
+
+    // 2. 探测 product_cat (用默认全集候选,覆盖全部 9 个 kicker_zh)
+    $prod_cat_id = function_exists('hireai_find_product_category_id')
+        ? hireai_find_product_category_id('default')
+        : 0;
+    if ($prod_cat_id > 0) {
+        $tax_query[] = [
+            'taxonomy' => 'product_cat',
+            'field'    => 'term_id',
+            'terms'    => [$prod_cat_id],
+            'operator' => 'IN',
+        ];
+    }
+
+    // 3. 去重 + 补 relation(防 product_cat 重复 push)
+    $tax_query = function_exists('hireai_dedupe_tax_query')
+        ? hireai_dedupe_tax_query($tax_query)
+        : $tax_query;
+
+    // 4. 拉 IDs
+    $q = new WP_Query([
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'posts_per_page' => $per_page,
+        'paged'          => $paged,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'no_found_rows'  => true,
+        'fields'         => 'ids',
+        'tax_query'      => $tax_query,
+    ]);
+    $ids = is_array($q->posts) ? array_map('intval', $q->posts) : [];
+    wp_reset_postdata();
+
+    set_transient($cache_key, $ids, 5 * MINUTE_IN_SECONDS);
+    return $ids;
+}
+
+/**
+ * v3.5.7-p16: 获取 Cases / Insights 文章 ID 列表
+ *   - 调用 page-cases-insights.php 消费
+ *   - $type: 'cases' (拉 4 篇) | 'insights' (拉 3 篇) | 其他按需
+ *   - 双语 fallback: 'cases' 失败 → '案例';'insights' 失败 → '洞察'
+ *   - 缓存 key: hireai_cases_cache_v1 / hireai_insights_cache_v1(与 save_post hook 一致)
+ *
+ * @param string $type 'cases' | 'insights' (其他值原样作为 category slug)
+ * @param int    $limit 拉取数量
+ * @return array<int> post IDs
+ */
+function hireai_get_cases_insights_posts($type = 'cases', $limit = 4) {
+    $type  = trim((string) $type);
+    $limit = max(1, (int) $limit);
+
+    $cache_key_map = [
+        'cases'    => 'hireai_cases_cache_v1',
+        'insights' => 'hireai_insights_cache_v1',
+    ];
+    $cache_key = isset($cache_key_map[$type])
+        ? $cache_key_map[$type]
+        : 'hireai_' . sanitize_key($type) . '_cache_v1';
+
+    $cached = get_transient($cache_key);
+    if (is_array($cached)) {
+        return array_map('intval', array_slice($cached, 0, $limit));
+    }
+
+    $cn_fallback_map = [
+        'cases'    => '案例',
+        'insights' => '洞察',
+    ];
+
+    // 第 1 次:英文 slug
+    $q = new WP_Query([
+        'post_type'      => 'post',
+        'post_status'    => 'publish',
+        'posts_per_page' => $limit,
+        'category_name'  => $type,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'no_found_rows'  => true,
+        'fields'         => 'ids',
+    ]);
+    $ids = is_array($q->posts) ? $q->posts : [];
+    wp_reset_postdata();
+
+    // 第 2 次:中文 slug fallback
+    if (empty($ids) && isset($cn_fallback_map[$type])) {
+        $q2 = new WP_Query([
+            'post_type'      => 'post',
+            'post_status'    => 'publish',
+            'posts_per_page' => $limit,
+            'category_name'  => $cn_fallback_map[$type],
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'no_found_rows'  => true,
+            'fields'         => 'ids',
+        ]);
+        $ids = is_array($q2->posts) ? $q2->posts : [];
+        wp_reset_postdata();
+    }
+
+    $ids = array_map('intval', $ids);
+    set_transient($cache_key, $ids, 5 * MINUTE_IN_SECONDS);
+    return array_slice($ids, 0, $limit);
 }
 
 /* -------------------------------------------------------------------------

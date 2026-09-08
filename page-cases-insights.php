@@ -229,40 +229,45 @@ footer .copy{font-size:13px;color:var(--txt-v)}
     <div class="sec-hdr__line"></div>
   </div>
 <?php
-  /* === v3.5.7-p15: Cases 案例区 — transient 包裹 WP_Query + 5 分钟 TTL ===
-   *   - save_post hook (functions.php) 发布 category=cases 文章时立即清缓存
-   *   - 缓存 post IDs 而非 slots,避免图片/ACF 字段更新后旧数据残留
-   *   - category_name 兼容 'cases' / '案例' slug */
-  $ci_case_cache_key = 'hireai_cases_cache_v1';
-  $ci_case_ids = get_transient( $ci_case_cache_key );
-  if ( $ci_case_ids === false ) {
-      $ci_case_cat_query = new WP_Query([
-          'post_type'      => 'post',
-          'post_status'    => 'publish',
-          'posts_per_page' => 4,
-          'category_name'  => 'cases',
-          'orderby'        => 'date',
-          'order'          => 'DESC',
-          'no_found_rows'  => true,
-          'fields'         => 'ids',
-      ]);
-      $ci_case_ids = $ci_case_cat_query->posts;
-      wp_reset_postdata();
-      if ( empty( $ci_case_ids ) ) {
-          $ci_case_cat_cn = new WP_Query([
+  /* === v3.5.7-p16: Cases 案例区 — 改用数据层 hook hireai_get_cases_insights_posts()
+   *   - 缓存 key hireai_cases_cache_v1 与 save_post hook 保持一致
+   *   - 'cases' slug 失败时自动 fallback '案例'
+   *   - 返回的 IDs 已设置 transient,5 分钟 TTL
+   *   - 兼容旧路径: hook 不存在时回退到内联 WP_Query(双保险) */
+  if ( function_exists( 'hireai_get_cases_insights_posts' ) ) {
+      $ci_case_ids = hireai_get_cases_insights_posts( 'cases', 4 );
+  } else {
+      $ci_case_cache_key = 'hireai_cases_cache_v1';
+      $ci_case_ids = get_transient( $ci_case_cache_key );
+      if ( $ci_case_ids === false ) {
+          $ci_case_cat_query = new WP_Query([
               'post_type'      => 'post',
               'post_status'    => 'publish',
               'posts_per_page' => 4,
-              'category_name'  => '案例',
+              'category_name'  => 'cases',
               'orderby'        => 'date',
               'order'          => 'DESC',
               'no_found_rows'  => true,
               'fields'         => 'ids',
           ]);
-          $ci_case_ids = $ci_case_cat_cn->posts;
+          $ci_case_ids = $ci_case_cat_query->posts;
           wp_reset_postdata();
+          if ( empty( $ci_case_ids ) ) {
+              $ci_case_cat_cn = new WP_Query([
+                  'post_type'      => 'post',
+                  'post_status'    => 'publish',
+                  'posts_per_page' => 4,
+                  'category_name'  => '案例',
+                  'orderby'        => 'date',
+                  'order'          => 'DESC',
+                  'no_found_rows'  => true,
+                  'fields'         => 'ids',
+              ]);
+              $ci_case_ids = $ci_case_cat_cn->posts;
+              wp_reset_postdata();
+          }
+          set_transient( $ci_case_cache_key, $ci_case_ids, 5 * MINUTE_IN_SECONDS );
       }
-      set_transient( $ci_case_cache_key, $ci_case_ids, 5 * MINUTE_IN_SECONDS );
   }
   $ci_case_slots = [];
   if ( ! empty( $ci_case_ids ) ) {
@@ -358,40 +363,45 @@ footer .copy{font-size:13px;color:var(--txt-v)}
     </p>
   </div>
 <?php
-  /* === v3.5.7-p15: Insights 洞察区 — transient 包裹 WP_Query + 5 分钟 TTL ===
-   *   - save_post hook (functions.php) 发布 category=insights 文章时立即清缓存
-   *   - 缓存 post IDs 而非 slots,保证 ACF 字段实时刷新
-   *   - category_name 兼容 'insights' / '洞察' slug */
-  $ci_art_cache_key = 'hireai_insights_cache_v1';
-  $ci_art_ids = get_transient( $ci_art_cache_key );
-  if ( $ci_art_ids === false ) {
-      $ci_art_cat_query = new WP_Query([
-          'post_type'      => 'post',
-          'post_status'    => 'publish',
-          'posts_per_page' => 3,
-          'category_name'  => 'insights',
-          'orderby'        => 'date',
-          'order'          => 'DESC',
-          'no_found_rows'  => true,
-          'fields'         => 'ids',
-      ]);
-      $ci_art_ids = $ci_art_cat_query->posts;
-      wp_reset_postdata();
-      if ( empty( $ci_art_ids ) ) {
-          $ci_art_cat_cn = new WP_Query([
+  /* === v3.5.7-p16: Insights 洞察区 — 改用数据层 hook hireai_get_cases_insights_posts()
+   *   - 缓存 key hireai_insights_cache_v1 与 save_post hook 保持一致
+   *   - 'insights' slug 失败时自动 fallback '洞察'
+   *   - 返回的 IDs 已设置 transient,5 分钟 TTL
+   *   - 兼容旧路径: hook 不存在时回退到内联 WP_Query(双保险) */
+  if ( function_exists( 'hireai_get_cases_insights_posts' ) ) {
+      $ci_art_ids = hireai_get_cases_insights_posts( 'insights', 3 );
+  } else {
+      $ci_art_cache_key = 'hireai_insights_cache_v1';
+      $ci_art_ids = get_transient( $ci_art_cache_key );
+      if ( $ci_art_ids === false ) {
+          $ci_art_cat_query = new WP_Query([
               'post_type'      => 'post',
               'post_status'    => 'publish',
               'posts_per_page' => 3,
-              'category_name'  => '洞察',
+              'category_name'  => 'insights',
               'orderby'        => 'date',
               'order'          => 'DESC',
               'no_found_rows'  => true,
               'fields'         => 'ids',
           ]);
-          $ci_art_ids = $ci_art_cat_cn->posts;
+          $ci_art_ids = $ci_art_cat_query->posts;
           wp_reset_postdata();
+          if ( empty( $ci_art_ids ) ) {
+              $ci_art_cat_cn = new WP_Query([
+                  'post_type'      => 'post',
+                  'post_status'    => 'publish',
+                  'posts_per_page' => 3,
+                  'category_name'  => '洞察',
+                  'orderby'        => 'date',
+                  'order'          => 'DESC',
+                  'no_found_rows'  => true,
+                  'fields'         => 'ids',
+              ]);
+              $ci_art_ids = $ci_art_cat_cn->posts;
+              wp_reset_postdata();
+          }
+          set_transient( $ci_art_cache_key, $ci_art_ids, 5 * MINUTE_IN_SECONDS );
       }
-      set_transient( $ci_art_cache_key, $ci_art_ids, 5 * MINUTE_IN_SECONDS );
   }
   $ci_art_slots = [];
   if ( ! empty( $ci_art_ids ) ) {
