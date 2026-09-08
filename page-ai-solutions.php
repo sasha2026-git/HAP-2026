@@ -77,94 +77,37 @@ $filters_fallback = array(
     array( 'label_zh' => '企业管理', 'label_en' => 'Enterprise', 'slug' => 'enterprise' ),
 );
 $filters = $filters_fallback;
+/* v3.5.7-p18 Task B: 7 场景 tab fallback = hireai_list_solution_categories()
+ *   - repeater 仍可用,ACF 编辑器可继续添加额外场景(向后兼容)
+ *   - 默认回退到内置 8 项(全部 + 7 个场景)
+ */
+$filters = array();
 if ( function_exists( 'have_rows' ) && have_rows( 'solutions_filters', $page_id ) ) {
-    $tmp = array();
     while ( have_rows( 'solutions_filters', $page_id ) ) {
         the_row();
-        $tmp[] = array(
+        $filters[] = array(
             'label_zh' => get_sub_field( 'filter_label_zh' ),
             'label_en' => get_sub_field( 'filter_label_en' ),
             'slug'     => get_sub_field( 'filter_slug' ),
         );
     }
-    if ( ! empty( $tmp ) ) { $filters = $tmp; }
+}
+if ( empty( $filters ) && function_exists( 'hireai_list_solution_categories' ) ) {
+    foreach ( hireai_list_solution_categories() as $slug => $cat ) {
+        $filters[] = array(
+            'label_zh' => $cat['name_zh'],
+            'label_en' => $cat['name_en'],
+            'slug'     => $slug,
+        );
+    }
 }
 
-/* ====== 方案卡片（兜底 9 张） ====== */
-$cards = array(
-    array(
-        'kicker_zh' => '公关危机', 'kicker_en' => 'Crisis Counsel',
-        'title_zh'  => '公关审惨预警', 'title_en' => 'Crisis Forecast',
-        'desc_zh'   => 'AI驱动您的全球网络神经全天候守护品牌声誉，提供24×7全天候的舆情风暴预警机制。',
-        'desc_en'   => 'AI-driven global network nerve provides 24/7 brand reputation monitoring and crisis early-warning.',
-        'price'     => '¥3000 起', 'image' => 'home/solution-finance.png',
-        'is_cta'    => false, 'link' => '/contact/',
-    ),
-    array(
-        'kicker_zh' => '整合营销', 'kicker_en' => 'Marketing',
-        'title_zh'  => 'IP联名及营销整合', 'title_en' => 'IP Co-Marketing',
-        'desc_zh'   => '利用数字孪生与跨界算法，精准匹配全球顶级IP，打造现象级的跨界营销链路。',
-        'desc_en'   => 'Digital twin + cross-boundary algorithms precisely match global premium IP for blockbuster collaborations.',
-        'price'     => '¥8000 起', 'image' => 'home/solution-retail.png',
-        'is_cta'    => false, 'link' => '/contact/',
-    ),
-    array(
-        'kicker_zh' => '电商视觉', 'kicker_en' => 'E-Commerce',
-        'title_zh'  => '电商主图及套图设计', 'title_en' => 'E-Commerce Hero Visuals',
-        'desc_zh'   => '生成式AI打造高级感产品的高级视觉矩阵，提升奢品与高定类目的转化率。',
-        'desc_en'   => 'Generative AI crafts premium product visual matrices to lift conversions in luxury and bespoke categories.',
-        'price'     => '¥1500 起', 'image' => 'defaults/solution-1.jpg',
-        'is_cta'    => false, 'link' => '/contact/',
-    ),
-    array(
-        'kicker_zh' => '创意设计', 'kicker_en' => 'Creative',
-        'title_zh'  => 'AI艺术图片设计', 'title_en' => 'AI Art Imagery',
-        'desc_zh'   => '突破物理边界的视觉艺术创造，专为顶级展会、画册及数字资产量身定制。',
-        'desc_en'   => 'Boundary-defying visual art, bespoke for premium exhibitions, lookbooks, and digital assets.',
-        'price'     => '¥3000 起', 'image' => 'defaults/solution-2.jpg',
-        'is_cta'    => false, 'link' => '/contact/',
-    ),
-    array(
-        'kicker_zh' => '酒店服务', 'kicker_en' => 'Hospitality',
-        'title_zh'  => '鸡尾酒单设计师', 'title_en' => 'Cocktail Menu Designer',
-        'desc_zh'   => '结合风味算法与视觉美学，为高端酒吧与私人酒会设计独具匠心的酒单体验。',
-        'desc_en'   => 'Pairing flavor algorithms with visual artistry, crafting signature menus for premium bars and private events.',
-        'price'     => '¥1200 起', 'image' => 'defaults/solution-3.jpg',
-        'is_cta'    => false, 'link' => '/contact/',
-    ),
-    array(
-        'kicker_zh' => '数据洞察', 'kicker_en' => 'Data Insight',
-        'title_zh'  => '高定客户数据洞察', 'title_en' => 'Bespoke Client Insight',
-        'desc_zh'   => '深度挖掘VIP客户偏好，构建多维立体画像，实现千人千面的精准营销与尊享服务。',
-        'desc_en'   => 'Mine VIP preferences and build multidimensional personas for one-to-one marketing and concierge service.',
-        'price'     => '¥5000 起', 'image' => 'defaults/solution-4.jpg',
-        'is_cta'    => false, 'link' => '/contact/',
-    ),
-    array(
-        'kicker_zh' => '金融风控', 'kicker_en' => 'Finance',
-        'title_zh'  => '智能投顾助理', 'title_en' => 'Smart Advisor',
-        'desc_zh'   => '结合宏观经济指标与市场情绪，提供个性化的资产配置建议与风险预警。',
-        'desc_en'   => 'Macro indicators and market sentiment fused—personalized asset allocation with proactive risk alerts.',
-        'price'     => '¥12000 起', 'image' => 'defaults/solution-1.jpg',
-        'is_cta'    => false, 'link' => '/contact/',
-    ),
-    array(
-        'kicker_zh' => '空间美学', 'kicker_en' => 'Spatial',
-        'title_zh'  => '奢华空间漫游生成', 'title_en' => 'Luxury Spatial Walkthrough',
-        'desc_zh'   => '分钟级生成超写实的高端商业空间与私宅内部漫游视频，革新设计提案体验。',
-        'desc_en'   => 'Photorealistic premium commercial and private residence walkthroughs in minutes—reinventing design proposals.',
-        'price'     => '¥8000 起', 'image' => 'defaults/solution-2.jpg',
-        'is_cta'    => false, 'link' => '/contact/',
-    ),
-    array(
-        'kicker_zh' => '企业服务', 'kicker_en' => 'Enterprise',
-        'title_zh'  => '个性化定制服务', 'title_en' => 'Personalized Bespoke',
-        'desc_zh'   => '全方位企业级AI咨询与定制数字员工方案，为高净值企业级客群提供专属服务。',
-        'desc_en'   => 'Full-spectrum enterprise AI consulting and bespoke digital employees—signature service for HNW enterprises.',
-        'price'     => '', 'image' => 'defaults/solution-3.jpg',
-        'is_cta'    => true, 'link' => '/contact/',
-    ),
-);
+/* v3.5.7-p18 Task B: 静态兜底 $cards 已废弃 —— 改为 WC 商品驱动
+ *   - 之前有 9 张硬编码 fallback（含一张 CTA「联络助理」）
+ *   - 现在所有卡片 = WC 商品 hireai_get_ai_solutions_products(1, 9)
+ *   - 没装 WC 或无商品时 = 空数组,UI 显示 empty_text
+ */
+$cards = array();
 
 /* ====== v3.0.4 hotfix: WC 集成防御 + 保留 fallback ====== */
 /* v3.0.8 (Bug E): 增强 product_cat 探测 + fallback 到「全商品」
@@ -179,162 +122,61 @@ $cards = array(
    同时 hireai_field('product_operative') 若字段返回数组会导致卡片 kicker 显示 "Array"。
    现包裹 try/catch + is_object 检查；只要 WC 任意一步出错就跳过整个覆盖、保留 $cards 兜底。
  */
-$wc_products = [];
+/* v3.5.7-p18 Task B: 8 个 tab 数据(1 全部 + 7 场景),每个 tab 单独拉一次 WC 商品
+ *   - $cards_by_tab['all'] = 全部商品(无 category 过滤)
+ *   - $cards_by_tab['brand-ip'] = brand-ip 分类商品
+ *   - ... 每个 scene 一个 key
+ *   - 数字人 persona 维度在 client-side 二次过滤(每张卡片打 data-persona 属性)
+ *
+ * 备援:hiraei_get_ai_solutions_products 不存在 → 静默空数组
+ */
+$cards_by_tab = [
+    'all'        => [],
+    'brand-ip'   => [],
+    'marketing'  => [],
+    'visual-design' => [],
+    'ecommerce'  => [],
+    'crisis'     => [],
+    'copywriting' => [],
+    'custom'     => [],
+];
+$personas_for_filter = function_exists('hireai_list_solution_personas') ? hireai_list_solution_personas() : [];
+
 if (post_type_exists('product') && function_exists('wc_get_product')) {
     try {
-        $paged = max(1, get_query_var('sols_paged') ?: (isset($_GET['sols_page']) ? (int)$_GET['sols_page'] : 1));
-        /* v3.5.7-p16: 改用数据层 hook hireai_get_ai_solutions_products($paged)
-         *   - 自动探测 product_cat + 探测失败 fallback(回退全部 publish product)
-         *   - 自动应用 hireai_dedupe_tax_query 修 v3.5.7-p15 的 product_cat 重复 push bug
-         *   - 缓存 key 与 save_post_product hook 一致,WP 后台发布后即时同步
-         *   - 返回的 IDs 已去重 + 已组装 tax_query
-         */
-        $wc_cached_ids = function_exists('hireai_get_ai_solutions_products')
-            ? hireai_get_ai_solutions_products($paged, 9)
+        /* 全部 tab：不过滤 category */
+        $ids_all = function_exists('hireai_get_ai_solutions_products')
+            ? hireai_get_ai_solutions_products(1, 9, '', '')
             : [];
-        /* 兼容旧路径: hook 不存在时回退到内联 WP_Query */
-        if (empty($wc_cached_ids)) {
-            $wc_q_args = [
-                'post_type'      => 'product',
-                'post_status'    => 'publish',
-                'posts_per_page' => 9,
-                'paged'          => $paged,
-                'orderby'        => 'date',
-                'order'          => 'DESC',
-                'no_found_rows'  => true,
-                'fields'         => 'ids',
-                'tax_query'      => [[
-                    'taxonomy' => 'product_visibility',
-                    'field'    => 'name',
-                    'terms'    => ['exclude-from-catalog', 'exclude-from-search'],
-                    'operator' => 'NOT IN',
-                ]],
-            ];
-            $prod_cat_id_fb = function_exists('hireai_find_product_category_id')
-                ? hireai_find_product_category_id('default')
-                : 0;
-            if ($prod_cat_id_fb > 0) {
-                $wc_q_args['tax_query'][] = [
-                    'taxonomy' => 'product_cat',
-                    'field'    => 'term_id',
-                    'terms'    => [$prod_cat_id_fb],
-                    'operator' => 'IN',
-                ];
-            }
-            $wc_q_args['tax_query'] = function_exists('hireai_dedupe_tax_query')
-                ? hireai_dedupe_tax_query($wc_q_args['tax_query'])
-                : $wc_q_args['tax_query'];
-            $wc_q_fallback = new WP_Query($wc_q_args);
-            $wc_cached_ids = is_array($wc_q_fallback->posts) ? $wc_q_fallback->posts : [];
-            wp_reset_postdata();
-            $prod_cat_id = $prod_cat_id_fb;
-        } else {
-            $prod_cat_id = function_exists('hireai_find_product_category_id')
-                ? hireai_find_product_category_id('default')
-                : 0;
+        $cards_by_tab['all'] = hireai_build_solution_cards_from_ids($ids_all);
+
+        /* 每个场景 tab 单独拉 */
+        $scene_keys = ['brand-ip', 'marketing', 'visual-design', 'ecommerce', 'crisis', 'copywriting', 'custom'];
+        foreach ($scene_keys as $scene_key) {
+            $ids_scene = function_exists('hireai_get_ai_solutions_products')
+                ? hireai_get_ai_solutions_products(1, 9, $scene_key, '')
+                : [];
+            $cards_by_tab[$scene_key] = hireai_build_solution_cards_from_ids($ids_scene);
         }
+
         if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
-            error_log('[hireai v3.5.7-p16] wc_query: prod_cat_id=' . $prod_cat_id . ', cached_ids=' . count((array) $wc_cached_ids));
+            $total_count = 0;
+            foreach ($cards_by_tab as $k => $arr) { $total_count += count($arr); }
+            error_log('[hireai v3.5.7-p18] tab cards: ' . $total_count . ' across ' . count($cards_by_tab) . ' tabs');
         }
-        /* v3.0.8 (Bug E) admin notice: 拉到 0 个 publish product 时提醒 */
-        if (empty($wc_cached_ids) && current_user_can('manage_options')) {
-            add_action('admin_notices', function () use ($prod_cat_id) {
-                echo '<div class="notice notice-warning"><p>聘AI: AI 解决方案商城没有显示任何 WC 商品。可能原因：1) 商品 catalog_visibility=hidden; 2) product_cat 探测 ID=' . (int) $prod_cat_id . ' 不匹配; 3) WC 未启用。请到 WC → 产品 检查。</p></div>';
+        if (empty($cards_by_tab['all']) && current_user_can('manage_options')) {
+            add_action('admin_notices', function () {
+                echo '<div class="notice notice-warning"><p>聘AI: AI 解决方案商城没有显示任何 WC 商品。可能原因:1) 商品 catalog_visibility=hidden; 2) WC 未启用。请到 WC → 产品 检查。</p></div>';
             });
         }
-        if ( ! empty( $wc_cached_ids ) ) {
-            foreach ( (array) $wc_cached_ids as $pid ) {
-                $pid = (int) $pid;
-                $wc_post_obj = get_post( $pid );
-                if ( ! $wc_post_obj ) continue;
-                $wc_prev_post = $GLOBALS['post'] ?? null;
-                $GLOBALS['post'] = $wc_post_obj;
-                setup_postdata( $wc_post_obj );
-                $wc_obj = wc_get_product($pid);
-                $price_html = '';
-                $stock      = 'instock';
-                if (is_object($wc_obj)) {
-                    if (function_exists('wc_format_price_range')) {
-                        $price_html = wc_format_price_range($wc_obj);
-                    } elseif (method_exists($wc_obj, 'get_price_html')) {
-                        $price_html = $wc_obj->get_price_html();
-                    }
-                    if (method_exists($wc_obj, 'get_stock_status')) {
-                        /* v3.0.7: get_stock_status() 可能返回 false（商品无库存管理）→ 统一回落 'instock' 避免显示问题 */
-                        $ss = $wc_obj->get_stock_status();
-                        $stock = ($ss === false || $ss === '' || $ss === null) ? 'instock' : (string) $ss;
-                    }
-                }
-                // v3.5.6: bilingual _zh / _en 双读（kicker=product_operative, retainer=product_retainer_label）
-                // 旧版用 hireai_field 只读当前语言，导致 EN 模式下显示中文 kicker；现在两边都读
-                // ACF 返回数组时强制转字符串，避免 "Array" 泄漏
-                $kz_raw   = function_exists('hireai_field_lang') ? hireai_field_lang('product_operative',        'zh', '', $pid) : (function_exists('hireai_field') ? hireai_field('product_operative',        '', $pid) : '');
-                $ken_raw  = function_exists('hireai_field_lang') ? hireai_field_lang('product_operative',        'en', '', $pid) : '';
-                $rtz_raw  = function_exists('hireai_field_lang') ? hireai_field_lang('product_retainer_label',  'zh', '', $pid) : (function_exists('hireai_field') ? hireai_field('product_retainer_label',  '', $pid) : '');
-                $rten_raw = function_exists('hireai_field_lang') ? hireai_field_lang('product_retainer_label',  'en', '', $pid) : '';
-                $kicker_zh   = is_array($kz_raw)   ? '' : (string) $kz_raw;
-                $kicker_en   = is_array($ken_raw)  ? '' : (string) $ken_raw;
-                $retainer_zh = is_array($rtz_raw)  ? '' : (string) $rtz_raw;
-                $retainer_en = is_array($rten_raw) ? '' : (string) $rten_raw;
-                $wc_products[] = [
-                    'id'          => $pid,
-                    'title'       => get_the_title(),
-                    'excerpt'     => get_the_excerpt() ?: wp_trim_words(strip_tags(get_the_content()), 24, '…'),
-                    'image'       => get_the_post_thumbnail_url($pid, 'medium'),
-                    'price'       => $price_html,
-                    'stock'       => $stock,
-                    'permalink'   => get_permalink($pid),
-                    'kicker_zh'   => $kicker_zh,
-                    'kicker_en'   => $kicker_en,
-                    'retainer_zh' => $retainer_zh,
-                    'retainer_en' => $retainer_en,
-                ];
-                wp_reset_postdata();
-                if ( $wc_prev_post ) { $GLOBALS['post'] = $wc_prev_post; setup_postdata( $wc_prev_post ); }
-            }
-            wp_reset_postdata();
-            if (!empty($wc_products)) {
-                /* v3.5.7-p16: hireai_get_ai_solutions_products 用 no_found_rows=true,
-                 *   max_num_pages 不可用.改用 found_posts 推算 (upper bound). */
-                $wc_count_q = new WP_Query([
-                    'post_type'      => 'product',
-                    'post_status'    => 'publish',
-                    'posts_per_page' => 1,
-                    'paged'          => $paged,
-                    'fields'         => 'ids',
-                    'no_found_rows'  => false,
-                ]);
-                $cards_total = max(1, (int) ceil((int) $wc_count_q->found_posts / 9));
-                wp_reset_postdata();
-                // 把静态 $cards 替换为真实商品；用 is_string 兜底，防止残留数组
-                $cards = array_map(function ($p) {
-                    $kz_zh = isset($p['kicker_zh'])   && !is_array($p['kicker_zh'])   ? (string) $p['kicker_zh']   : '';
-                    $kz_en = isset($p['kicker_en'])   && !is_array($p['kicker_en'])   ? (string) $p['kicker_en']   : $kz_zh;
-                    $rt_zh = isset($p['retainer_zh']) && !is_array($p['retainer_zh']) ? (string) $p['retainer_zh'] : '';
-                    $rt_en = isset($p['retainer_en']) && !is_array($p['retainer_en']) ? (string) $p['retainer_en'] : $rt_zh;
-                    return [
-                        'kicker_zh'   => $kz_zh,
-                        'kicker_en'   => $kz_en,
-                        'retainer_zh' => $rt_zh,
-                        'retainer_en' => $rt_en,
-                        'title_zh'    => (string) $p['title'],
-                        'title_en'    => (string) $p['title'],
-                        'desc_zh'     => (string) $p['excerpt'],
-                        'desc_en'     => (string) $p['excerpt'],
-                        'price'       => isset($p['price']) ? (string) $p['price'] : '',
-                        'image'       => !empty($p['image']) ? $p['image'] : 'defaults/solution-1.jpg',
-                        'is_cta'      => false,
-                        'link'        => (string) $p['permalink'],
-                    ];
-                }, $wc_products);
-            }
-        }
     } catch (Throwable $e) {
-        // WC 任意一步抛异常 → 静默回退到静态 $cards 兜底
-        $wc_products = [];
+        // 任意一步抛异常 → 静默回退到每个 tab 空数组
+        $cards_by_tab = array_fill_keys(array_keys($cards_by_tab), []);
     }
 }
 
+/* 默认 $cards(向后兼容 hero / pagination 旧代码引用) = 全部 tab */
+$cards = $cards_by_tab['all'];
 ?>
 <style>
 /* ============== 页面专有样式（仅本模板生效） ============== */
@@ -811,84 +653,106 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
         </div>
     </header>
 
-    <!-- ============== 筛选 ============== -->
-    <section class="sols-filter" aria-label="<?php echo esc_attr( $is_en ? 'Solution filters' : '方案筛选' ); ?>">
-        <div class="sols-filter__tabs" role="tablist">
-            <button class="sols-filter__tab is-active" type="button" role="tab" aria-selected="true" data-tab="scene">
-                <?php echo esc_html( $tab_scene_text ); ?>
-            </button>
-            <button class="sols-filter__tab" type="button" role="tab" aria-selected="false" data-tab="employee">
-                <?php echo esc_html( $tab_employee_text ); ?>
-            </button>
-        </div>
-        <div class="sols-filter__panel">
-            <div class="sols-filter__chips" role="group">
-                <?php foreach ( $filters as $idx => $f ) :
-                    $label    = $is_en ? $f['label_en'] : $f['label_zh'];
-                    $slug     = isset( $f['slug'] ) ? $f['slug'] : '';
-                    $is_first = ( 0 === $idx );
-                ?>
-                    <button class="sols-filter__chip<?php echo $is_first ? ' is-active' : ''; ?>" type="button" data-slug="<?php echo esc_attr( $slug ); ?>">
-                        <?php echo esc_html( $label ); ?>
-                    </button>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============== 方案卡片网格 ============== -->
-    <section class="sols-grid-wrap" aria-label="<?php echo esc_attr( $is_en ? 'Solution cards' : '方案列表' ); ?>">
-        <div class="sols-grid">
-            <?php foreach ( $cards as $i => $c ) :
-                $kicker = $is_en ? $c['kicker_en'] : $c['kicker_zh'];
-                $title  = $is_en ? $c['title_en']  : $c['title_zh'];
-                $desc   = $is_en ? $c['desc_en']   : $c['desc_zh'];
-                $img    = isset( $c['image'] ) ? $c['image'] : 'defaults/solution-1.jpg';
-                $price  = isset( $c['price'] ) ? $c['price'] : '';
-                $link   = isset( $c['link'] )  ? $c['link']  : '/contact/';
-                $is_cta = ! empty( $c['is_cta'] );
-                $cta_label = $is_cta ? ( $is_en ? 'Contact Us' : '联络助理' ) : $card_cta_text;
-                $img_url = function_exists( 'hireai_default_image' ) ? hireai_default_image( $img ) : '';
-                if ( ! $img_url ) { $img_url = get_stylesheet_directory_uri() . '/assets/img/' . $img; }
+    <!-- ============== v3.5.7-p18: 8 个场景 tab + 数字人筛选 ============== -->
+    <section class="sols-tabs-wrap" aria-label="<?php echo esc_attr( $is_en ? 'Solution scenario tabs' : '方案场景' ); ?>">
+        <div class="sols-tabs" role="tablist" data-sols-tabs>
+            <?php
+            $scene_tabs = function_exists('hireai_list_solution_categories') ? hireai_list_solution_categories() : [];
+            $first_scene = true;
+            foreach ($scene_tabs as $slug => $cat) :
+                $tab_label = $is_en ? $cat['name_en'] : $cat['name_zh'];
+                $tab_key   = $slug === '' ? 'all' : $slug;
+                $is_active = $first_scene;
+                $first_scene = false;
             ?>
-                <article class="sols-card<?php echo $is_cta ? ' sols-card--cta-highlight' : ''; ?>">
-                    <a class="sols-card__media" href="<?php echo esc_url( $link ); ?>" aria-label="<?php echo esc_attr( $title ); ?>">
-                        <img loading="lazy" src="<?php echo esc_url( $img_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
-                    </a>
-                    <div class="sols-card__body">
-                        <span class="sols-card__kicker"><?php echo esc_html( $kicker ); ?></span>
-                        <h3 class="sols-card__title"><?php echo esc_html( $title ); ?></h3>
-                        <p class="sols-card__desc"><?php echo esc_html( $desc ); ?></p>
-                        <div class="sols-card__foot">
-                            <?php if ( $price ) : ?>
-                                <span class="sols-card__price"><?php echo esc_html( $price ); ?></span>
-                            <?php else : ?>
-                                <span></span>
-                            <?php endif; ?>
-                            <a class="sols-card__cta" href="<?php echo esc_url( $link ); ?>">
-                                <?php echo esc_html( $cta_label ); ?>
-                                <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'arrow', 14 ) : ''; ?>
-                            </a>
-                        </div>
-                    </div>
-                </article>
+                <button type="button" role="tab" class="sols-tab<?php echo $is_active ? ' is-active' : ''; ?>"
+                        aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>"
+                        data-tab="<?php echo esc_attr($tab_key); ?>">
+                    <?php echo esc_html($tab_label); ?>
+                </button>
             <?php endforeach; ?>
         </div>
 
-        <!-- ============== 分页 ============== -->
-        <nav class="sols-pagination" aria-label="<?php echo esc_attr( $is_en ? 'Pagination' : '分页' ); ?>">
-            <button class="sols-pagination__btn" type="button" aria-label="<?php echo esc_attr( $is_en ? 'Previous' : '上一页' ); ?>">
-                <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'chevron-left', 14 ) : '&lsaquo;'; ?>
-            </button>
-            <button class="sols-pagination__btn is-active" type="button">1</button>
-            <button class="sols-pagination__btn" type="button">2</button>
-            <button class="sols-pagination__btn" type="button">3</button>
-            <span class="sols-pagination__ellipsis">&hellip;</span>
-            <button class="sols-pagination__btn" type="button">8</button>
-            <button class="sols-pagination__btn" type="button" aria-label="<?php echo esc_attr( $is_en ? 'Next' : '下一页' ); ?>">
-                <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'chevron-right', 14 ) : '&rsaquo;'; ?>
-            </button>
-        </nav>
+        <?php if (!empty($personas_for_filter)) : ?>
+        <div class="sols-personas" role="group" aria-label="<?php echo esc_attr( $is_en ? 'Filter by digital employee' : '按数字人筛选' ); ?>">
+            <span class="sols-personas__label"><?php echo esc_html($is_en ? 'By Digital Employee' : '按数字人'); ?>:</span>
+            <button type="button" class="sols-persona-chip is-active" data-persona=""><?php echo esc_html($is_en ? 'All' : '全部'); ?></button>
+            <?php foreach ($personas_for_filter as $per_slug => $per) : ?>
+                <button type="button" class="sols-persona-chip" data-persona="<?php echo esc_attr($per_slug); ?>"
+                        title="<?php echo esc_attr( sprintf( '%s (%d)', $per['name'], $per['count'] ) ); ?>">
+                    <?php echo esc_html($per['name']); ?>
+                </button>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+    </section>
+
+    <!-- ============== v3.5.7-p18: 8 个 tab panel ============== -->
+    <section class="sols-grid-wrap" aria-label="<?php echo esc_attr( $is_en ? 'Solution cards' : '方案列表' ); ?>" data-sols-panels>
+        <?php
+        $empty_text_local = $empty_text;
+        $card_template    = function ($c) use ($is_en, $card_cta_text) {
+            $kicker = $is_en ? $c['kicker_en'] : $c['kicker_zh'];
+            $title  = $is_en ? $c['title_en']  : $c['title_zh'];
+            $desc   = $is_en ? $c['desc_en']   : $c['desc_zh'];
+            $img    = isset($c['image']) ? $c['image'] : 'defaults/solution-1.jpg';
+            $price  = isset($c['price']) ? $c['price'] : '';
+            $link   = isset($c['link'])  ? $c['link']  : '/contact/';
+            $personas_attr = '';
+            if (!empty($c['personas']) && is_array($c['personas'])) {
+                $personas_attr = ' data-personas="' . esc_attr(implode(' ', $c['personas'])) . '"';
+            }
+            $img_url = function_exists('hireai_default_image') ? hireai_default_image($img) : '';
+            if (!$img_url) { $img_url = get_stylesheet_directory_uri() . '/assets/img/' . $img; }
+            ?>
+            <article class="sols-card"<?php echo $personas_attr; ?>>
+                <a class="sols-card__media" href="<?php echo esc_url($link); ?>" aria-label="<?php echo esc_attr($title); ?>">
+                    <img loading="lazy" src="<?php echo esc_url($img_url); ?>" alt="<?php echo esc_attr($title); ?>">
+                </a>
+                <div class="sols-card__body">
+                    <span class="sols-card__kicker"><?php echo esc_html($kicker); ?></span>
+                    <h3 class="sols-card__title"><?php echo esc_html($title); ?></h3>
+                    <p class="sols-card__desc"><?php echo esc_html($desc); ?></p>
+                    <div class="sols-card__foot">
+                        <?php if ($price) : ?>
+                            <span class="sols-card__price"><?php echo esc_html($price); ?></span>
+                        <?php else : ?>
+                            <span></span>
+                        <?php endif; ?>
+                        <a class="sols-card__cta" href="<?php echo esc_url($link); ?>">
+                            <?php echo esc_html($card_cta_text); ?>
+                            <?php echo function_exists('hireai_svg') ? hireai_svg('arrow', 14) : ''; ?>
+                        </a>
+                    </div>
+                </div>
+            </article>
+            <?php
+        };
+        $first_panel = true;
+        foreach ($scene_tabs as $slug => $cat) :
+            $panel_key = $slug === '' ? 'all' : $slug;
+            $panel_cards = isset($cards_by_tab[$panel_key]) ? $cards_by_tab[$panel_key] : [];
+            $is_active = $first_panel;
+            $first_panel = false;
+            $raw_cards = $panel_cards;
+        ?>
+            <div class="sols-tab-panel<?php echo $is_active ? ' is-active' : ''; ?>" data-panel="<?php echo esc_attr($panel_key); ?>" role="tabpanel">
+                <div class="sols-grid">
+                    <?php
+                    if (!empty($raw_cards)) {
+                        foreach ($raw_cards as $c) {
+                            $tmpl = hireai_solution_card_template_fields($c);
+                            $card_template($tmpl);
+                        }
+                    } else {
+                        ?>
+                        <div class="sols-empty"><?php echo esc_html($empty_text_local); ?></div>
+                        <?php
+                    }
+                    ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
     </section>
 
 </main>
@@ -953,8 +817,9 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
 </section>
 
 <script>
-/* 邀约礼遇 — 复制推荐码 / 筛选 / 分页交互 */
+/* v3.5.7-p18 Task B: 邀约礼遇 — 复制推荐码 + 8 tab 切换 + 数字人筛选 */
 (function(){
+    /* === 1. 复制推荐码 === */
     var btn = document.querySelector('.sols-invite__copy');
     if (btn) {
         btn.addEventListener('click', function(){
@@ -986,31 +851,60 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
         });
     }
 
-    var chips = document.querySelectorAll('.sols-filter__chip');
-    chips.forEach(function(chip){
-        chip.addEventListener('click', function(){
-            chips.forEach(function(c){ c.classList.remove('is-active'); });
-            chip.classList.add('is-active');
+    /* === 2. 8 个场景 tab 切换 === */
+    var tabs = document.querySelectorAll('[data-sols-tabs] .sols-tab');
+    var panels = document.querySelectorAll('[data-sols-panels] .sols-tab-panel');
+    function switchTab(tabKey) {
+        tabs.forEach(function(t){
+            var isActive = t.getAttribute('data-tab') === tabKey;
+            t.classList.toggle('is-active', isActive);
+            t.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
-    });
-
-    var tabs = document.querySelectorAll('.sols-filter__tab');
+        panels.forEach(function(p){
+            var isActive = p.getAttribute('data-panel') === tabKey;
+            p.classList.toggle('is-active', isActive);
+        });
+        applyPersonaFilter();  // 切 tab 后重新应用 persona 筛选
+        /* 更新 URL hash 以便分享 */
+        if (history && history.replaceState && tabKey !== 'all') {
+            try { history.replaceState(null, '', '#scene=' + tabKey); } catch(e) {}
+        }
+    }
     tabs.forEach(function(tab){
         tab.addEventListener('click', function(){
-            tabs.forEach(function(t){ t.classList.remove('is-active'); t.setAttribute('aria-selected','false'); });
-            tab.classList.add('is-active');
-            tab.setAttribute('aria-selected','true');
+            switchTab(tab.getAttribute('data-tab'));
         });
     });
 
-    var pageBtns = document.querySelectorAll('.sols-pagination__btn');
-    pageBtns.forEach(function(b){
-        b.addEventListener('click', function(){
-            if (b.textContent.trim() === '') return;
-            pageBtns.forEach(function(x){ x.classList.remove('is-active'); });
-            b.classList.add('is-active');
+    /* === 3. 数字人 chip 筛选(client-side hide/show) === */
+    var personaChips = document.querySelectorAll('.sols-persona-chip');
+    var activePersona = '';
+    function applyPersonaFilter() {
+        var activePanel = document.querySelector('[data-sols-panels] .sols-tab-panel.is-active');
+        if (!activePanel) return;
+        var cards = activePanel.querySelectorAll('.sols-card');
+        cards.forEach(function(card){
+            if (!activePersona) { card.style.display = ''; return; }
+            var dataP = card.getAttribute('data-personas') || '';
+            var list = dataP.split(/\s+/).filter(Boolean);
+            card.style.display = list.indexOf(activePersona) >= 0 ? '' : 'none';
+        });
+    }
+    personaChips.forEach(function(chip){
+        chip.addEventListener('click', function(){
+            personaChips.forEach(function(c){ c.classList.remove('is-active'); });
+            chip.classList.add('is-active');
+            activePersona = chip.getAttribute('data-persona') || '';
+            applyPersonaFilter();
         });
     });
+
+    /* === 4. 初始:从 URL hash 恢复 tab 状态 === */
+    var hashMatch = (window.location.hash || '').match(/scene=([a-z0-9_-]+)/);
+    if (hashMatch && hashMatch[1]) {
+        var matched = document.querySelector('[data-sols-tabs] .sols-tab[data-tab="' + hashMatch[1] + '"]');
+        if (matched) switchTab(hashMatch[1]);
+    }
 })();
 </script>
 

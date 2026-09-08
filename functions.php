@@ -29,13 +29,18 @@ if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
  *       辅助函数回退 / 联系表单处理 / 分页
  */
 
-// 版本号自动从 style.css Header 读取，每次更新 style.css 的 Version 字段即可
+// v3.5.7-p18: HIREAI_VERSION 强化 —— 每次调用实时读 style.css（不用常量缓存）
+//   - wp_get_theme()->get('Version') 有静态缓存 + get_file_data() 在某些环境下也会被 OPcache 拦截
+//   - 旧方案 define('HIREAI_VERSION', ...) 一旦声明,WP 全局常量后续不可改
+//   - 新方案 hireai_get_version() 每次 wp_loaded 自动检测版本变化,触发强制清缓存
+if (!function_exists('hireai_get_version')) {
+    function hireai_get_version() {
+        $theme_data = get_file_data(get_stylesheet_directory() . '/style.css', ['Version' => 'Version']);
+        return !empty($theme_data['Version']) ? $theme_data['Version'] : '1.0.0';
+    }
+}
 if (!defined('HIREAI_VERSION')) {
-    // v3.5.7-p17 Bug 1 修复：实时读取 style.css Header 的 Version 字段
-    //   - wp_get_theme()->get('Version') 有静态缓存,不会自动同步 style.css 更新
-    //   - get_file_data() 是 WP 内置函数,每次调用实时读文件,不会缓存
-    $theme_data = get_file_data(get_stylesheet_directory() . '/style.css', ['Version' => 'Version']);
-    define('HIREAI_VERSION', $theme_data['Version'] ?? '1.0.0');
+    define('HIREAI_VERSION', hireai_get_version());
 }
 
 /* 每页数量（可通过常量覆盖） */
@@ -790,6 +795,172 @@ function hireai_list_all_product_categories() {
 }
 
 /**
+ * v3.5.7-p18 Task B: 7 个场景分类清单(用于 AI 解决方案商城 tab)
+ *   - 全部 + 7 个场景,共 8 个选项
+ *   - name_zh / name_en 双语 fallback(ACF 未填值时回退到此处)
+ *   - 调用 page-ai-solutions.php 渲染 tab UI
+ *
+ * @return array<string,array{slug:string,name_zh:string,name_en:string,is_scene:bool}>
+ */
+function hireai_list_solution_categories() {
+    return [
+        ''              => ['slug' => '',          'name_zh' => '全部',           'name_en' => 'All',           'is_scene' => false],
+        'brand-ip'      => ['slug' => 'brand-ip', 'name_zh' => '品牌&IP',        'name_en' => 'Brand & IP',    'is_scene' => true],
+        'marketing'     => ['slug' => 'marketing','name_zh' => '市场营销',       'name_en' => 'Marketing',     'is_scene' => true],
+        'visual-design' => ['slug' => 'visual-design','name_zh' => '视觉设计',   'name_en' => 'Visual Design', 'is_scene' => true],
+        'ecommerce'     => ['slug' => 'ecommerce','name_zh' => '电商&网站',      'name_en' => 'E-commerce & Website', 'is_scene' => true],
+        'crisis'        => ['slug' => 'crisis',   'name_zh' => '公关危机',       'name_en' => 'Crisis',        'is_scene' => true],
+        'copywriting'   => ['slug' => 'copywriting','name_zh' => '文案报告',     'name_en' => 'Copywriting',   'is_scene' => true],
+        'custom'        => ['slug' => 'custom',   'name_zh' => '定制方案',       'name_en' => 'Custom',        'is_scene' => true],
+    ];
+}
+
+/**
+ * v3.5.7-p18 Task B: 把 product ID 列表转换为 cards 数组(page-ai-solutions.php 渲染用)
+ *   - 提取 title / excerpt / image / price / stock / kicker_zh-en / retainer_zh-en / persona slugs
+ *   - 自动跳过不可访问 / 非 publish 的商品
+ *   - 若全部失败返回空数组(由 UI 显示 empty_text)
+ *
+ * @param array $ids product post IDs
+ * @return array<int,array> card 数据
+ */
+function hireai_build_solution_cards_from_ids($ids) {
+    if (!is_array($ids) || empty($ids)) return [];
+    if (!function_exists('wc_get_product')) return [];
+    $cards = [];
+    foreach ($ids as $pid) {
+        $pid = (int) $pid;
+        $wc_post_obj = get_post($pid);
+        if (!$wc_post_obj || $wc_post_obj->post_status !== 'publish') continue;
+        $wc_prev_post = $GLOBALS['post'] ?? null;
+        $GLOBALS['post'] = $wc_post_obj;
+        setup_postdata($wc_post_obj);
+        $wc_obj  = wc_get_product($pid);
+        $price_html = '';
+        $stock      = 'instock';
+        if (is_object($wc_obj)) {
+            if (function_exists('wc_format_price_range')) {
+                $price_html = wc_format_price_range($wc_obj);
+            } elseif (method_exists($wc_obj, 'get_price_html')) {
+                $price_html = $wc_obj->get_price_html();
+            }
+            if (method_exists($wc_obj, 'get_stock_status')) {
+                $ss = $wc_obj->get_stock_status();
+                $stock = ($ss === false || $ss === '' || $ss === null) ? 'instock' : (string) $ss;
+            }
+        }
+        /* 双语 ACF 字段(kicker=product_operative, retainer=product_retainer_label) */
+        $kz_raw   = function_exists('hireai_field_lang') ? hireai_field_lang('product_operative',       'zh', '', $pid) : (function_exists('hireai_field') ? hireai_field('product_operative',       '', $pid) : '');
+        $ken_raw  = function_exists('hireai_field_lang') ? hireai_field_lang('product_operative',       'en', '', $pid) : '';
+        $rtz_raw  = function_exists('hireai_field_lang') ? hireai_field_lang('product_retainer_label', 'zh', '', $pid) : (function_exists('hireai_field') ? hireai_field('product_retainer_label', '', $pid) : '');
+        $rten_raw = function_exists('hireai_field_lang') ? hireai_field_lang('product_retainer_label', 'en', '', $pid) : '';
+        $kicker_zh   = is_array($kz_raw)   ? '' : (string) $kz_raw;
+        $kicker_en   = is_array($ken_raw)  ? '' : (string) $ken_raw;
+        $retainer_zh = is_array($rtz_raw)  ? '' : (string) $rtz_raw;
+        $retainer_en = is_array($rten_raw) ? '' : (string) $rten_raw;
+        /* 提取数字人 product_cat 标签(非场景的)—— 用于 client-side persona 过滤 */
+        $persona_slugs = [];
+        if (function_exists('hireai_list_solution_categories')) {
+            $scene_slugs = array_map(function ($c) { return $c['slug']; }, array_filter(function ($c) { return !empty($c['is_scene']); }, hireai_list_solution_categories()));
+        } else {
+            $scene_slugs = ['brand-ip','marketing','visual-design','ecommerce','crisis','copywriting','custom'];
+        }
+        $product_terms = wp_get_post_terms($pid, 'product_cat', ['fields' => 'slugs']);
+        if (!is_wp_error($product_terms) && !empty($product_terms)) {
+            foreach ($product_terms as $slug) {
+                if (!in_array($slug, $scene_slugs, true) && !empty($slug)) {
+                    $persona_slugs[] = $slug;
+                }
+            }
+        }
+        $cards[] = [
+            'id'          => $pid,
+            'title'       => get_the_title(),
+            'excerpt'     => get_the_excerpt() ?: wp_trim_words(strip_tags(get_the_content()), 24, '…'),
+            'image'       => get_the_post_thumbnail_url($pid, 'medium'),
+            'price'       => $price_html,
+            'stock'       => $stock,
+            'permalink'   => get_permalink($pid),
+            'kicker_zh'   => $kicker_zh,
+            'kicker_en'   => $kicker_en,
+            'retainer_zh' => $retainer_zh,
+            'retainer_en' => $retainer_en,
+            'personas'    => $persona_slugs,
+        ];
+        wp_reset_postdata();
+        if ($wc_prev_post) { $GLOBALS['post'] = $wc_prev_post; setup_postdata($wc_prev_post); }
+    }
+    wp_reset_postdata();
+    return $cards;
+}
+
+/**
+ * v3.5.7-p18 Task B: 把 card 数据映射到前端模板用的字段
+ *   - is_cta 强制 false(已废弃 CTA 卡)
+ *   - 标题/描述 双语(zh 优先,缺失时 fallback en)
+ *
+ * @param array $p card 数据(从 hireai_build_solution_cards_from_ids 返回)
+ * @return array
+ */
+function hireai_solution_card_template_fields($p) {
+    $kz_zh = isset($p['kicker_zh'])   && !is_array($p['kicker_zh'])   ? (string) $p['kicker_zh']   : '';
+    $kz_en = isset($p['kicker_en'])   && !is_array($p['kicker_en'])   ? (string) $p['kicker_en']   : $kz_zh;
+    $rt_zh = isset($p['retainer_zh']) && !is_array($p['retainer_zh']) ? (string) $p['retainer_zh'] : '';
+    $rt_en = isset($p['retainer_en']) && !is_array($p['retainer_en']) ? (string) $p['retainer_en'] : $rt_zh;
+    return [
+        'kicker_zh'   => $kz_zh,
+        'kicker_en'   => $kz_en,
+        'retainer_zh' => $rt_zh,
+        'retainer_en' => $rt_en,
+        'title_zh'    => (string) $p['title'],
+        'title_en'    => (string) $p['title'],
+        'desc_zh'     => (string) $p['excerpt'],
+        'desc_en'     => (string) $p['excerpt'],
+        'price'       => isset($p['price']) ? (string) $p['price'] : '',
+        'image'       => !empty($p['image']) ? $p['image'] : 'defaults/solution-1.jpg',
+        'is_cta'      => false,
+        'link'        => (string) $p['permalink'],
+        'personas'    => isset($p['personas']) ? (array) $p['personas'] : [],
+    ];
+}
+
+/**
+ * v3.5.7-p18 Task B: 数字人分类清单(独立维度,与场景 AND 关系)
+ *   - 自动从 WC product_cat term 抽出(排除 7 个场景分类)
+ *   - hide_empty=true:只列有商品的数字人分类
+ *   - 调用 page-ai-solutions.php 渲染 persona chip UI
+ *
+ * @return array<string,array{slug:string,name:string,count:int}>
+ */
+function hireai_list_solution_personas() {
+    if (!taxonomy_exists('product_cat')) return [];
+    /* 场景 slug 用于排除 */
+    $scene_slugs = array_map(
+        function ($c) { return $c['slug']; },
+        array_filter(
+            function ($c) { return !empty($c['is_scene']); },
+            hireai_list_solution_categories()
+        )
+    );
+    $terms = get_terms([
+        'taxonomy'   => 'product_cat',
+        'hide_empty' => true,
+        'exclude'    => [],  /* 不能直接 exclude slug 列表,只能循环过滤 */
+    ]);
+    if (is_wp_error($terms) || empty($terms)) return [];
+    $personas = [];
+    foreach ($terms as $t) {
+        if (in_array($t->slug, $scene_slugs, true)) continue;
+        $personas[$t->slug] = [
+            'slug'  => $t->slug,
+            'name'  => $t->name,
+            'count' => (int) $t->count,
+        ];
+    }
+    return $personas;
+}
+
+/**
  * 智能探测"数字员工"Post — 多 slug + 中文 category fallback
  * 返回 WP_Post[] 数组（按 menu_order 排序）
  *
@@ -853,25 +1024,32 @@ function hireai_resolve_employee_url($index = 0, $fallback_url = '') {
  * ---------------------------------------------------------------------- */
 
 /**
- * v3.5.7-p16: 获取 AI 解决方案页面用的 WC 商品 ID 列表(已应用 tax_query + 去重)
+ * v3.5.7-p18: 获取 AI 解决方案页面用的 WC 商品 ID 列表(已应用 tax_query + 去重)
  *   - 调用 page-ai-solutions.php 直接消费返回的 IDs
- *   - 缓存 key: hireai_solutions_cache_v1_p{N},与 save_post_product hook 一致
+ *   - 缓存 key: hireai_solutions_cache_v2_p{N}_cat{SLUG}_per{PERSONA_SLUG}(与 save_post_product hook 一致)
  *   - product_visibility NOT IN(排除 hidden/search 屏蔽)
- *   - product_cat 探测用 hireai_find_product_category_id('default')(覆盖全部 9 个 kicker_zh)
+ *   - 7 场景 product_cat:brand-ip / marketing / visual-design / ecommerce / crisis / copywriting / custom
+ *   - 数字人 product_cat:由 hireai_list_solution_personas() 动态从 DB 抽出(独立维度,与场景 AND 关系)
  *   - 探测失败时 fallback:不过滤 product_cat,让所有 publish product 都返回
  *
- * @param int $paged 当前页码
- * @param int $per_page 每页商品数
+ * @param int    $paged         当前页码
+ * @param int    $per_page      每页商品数
+ * @param string $category_slug 场景分类 slug(留空=全部)
+ * @param string $persona_slug  数字人分类 slug(留空=全部)
  * @return array<int> WC product post IDs
  */
-function hireai_get_ai_solutions_products($paged = 1, $per_page = 9) {
+function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_slug = '', $persona_slug = '') {
     if (!post_type_exists('product') || !function_exists('wc_get_product')) return [];
-    $paged    = max(1, (int) $paged);
-    $per_page = max(1, (int) $per_page);
-    $cache_key = 'hireai_solutions_cache_v1_p' . $paged;
+    $paged         = max(1, (int) $paged);
+    $per_page      = max(1, (int) $per_page);
+    $category_slug = is_string($category_slug) ? sanitize_key($category_slug) : '';
+    $persona_slug  = is_string($persona_slug)  ? sanitize_key($persona_slug)  : '';
+
+    /* v3.5.7-p18: 缓存 key 升级到 v2 + 双维度 slug 后缀(分类 + 数字人) */
+    $cache_key = 'hireai_solutions_cache_v2_p' . $paged . '_cat' . $category_slug . '_per' . $persona_slug;
 
     $cached = get_transient($cache_key);
-    if (is_array($cached) && !empty($cached)) {
+    if (is_array($cached)) {
         return array_map('intval', $cached);
     }
 
@@ -883,25 +1061,41 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9) {
         'operator' => 'NOT IN',
     ]];
 
-    // 2. 探测 product_cat (用默认全集候选,覆盖全部 9 个 kicker_zh)
-    $prod_cat_id = function_exists('hireai_find_product_category_id')
-        ? hireai_find_product_category_id('default')
-        : 0;
-    if ($prod_cat_id > 0) {
-        $tax_query[] = [
-            'taxonomy' => 'product_cat',
-            'field'    => 'term_id',
-            'terms'    => [$prod_cat_id],
-            'operator' => 'IN',
-        ];
+    // 2. 场景分类筛选(可选)
+    if (!empty($category_slug)) {
+        $term = get_term_by('slug', $category_slug, 'product_cat');
+        if ($term && !is_wp_error($term)) {
+            $tax_query[] = [
+                'taxonomy' => 'product_cat',
+                'field'    => 'term_id',
+                'terms'    => [(int) $term->term_id],
+            ];
+        }
     }
 
-    // 3. 去重 + 补 relation(防 product_cat 重复 push)
+    // 3. 数字人筛选(独立维度,与场景 AND 关系)
+    if (!empty($persona_slug)) {
+        $term = get_term_by('slug', $persona_slug, 'product_cat');
+        if ($term && !is_wp_error($term)) {
+            $tax_query[] = [
+                'taxonomy' => 'product_cat',
+                'field'    => 'term_id',
+                'terms'    => [(int) $term->term_id],
+            ];
+        }
+    }
+
+    // 4. 两套筛选同时存在 → relation=AND
+    if (count($tax_query) > 1) {
+        $tax_query['relation'] = 'AND';
+    }
+
+    // 5. 去重 + 兼容旧 hook 调用
     $tax_query = function_exists('hireai_dedupe_tax_query')
         ? hireai_dedupe_tax_query($tax_query)
         : $tax_query;
 
-    // 4. 拉 IDs
+    // 6. 拉 IDs
     $q = new WP_Query([
         'post_type'      => 'product',
         'post_status'    => 'publish',
@@ -2159,8 +2353,28 @@ function hireai_flush_solutions_cache() {
     delete_site_transient('update_themes');
     delete_transient('hireai_solutions_products');
     delete_transient('hireai_solutions_cache_v1');
+    delete_transient('hireai_solutions_cache_v2');
     for ($wc_p = 1; $wc_p <= 9; $wc_p++) {
         delete_transient('hireai_solutions_cache_v1_p' . (int) $wc_p);
+        /* v3.5.7-p18: 清 v2 cache(分页 × 8 个场景分类 × N 个数字人) */
+        if (function_exists('hireai_list_solution_categories')) {
+            $scenes = array_keys(hireai_list_solution_categories());
+            foreach ($scenes as $cat) {
+                delete_transient('hireai_solutions_cache_v2_p' . (int) $wc_p . '_cat' . $cat);
+                delete_transient('hireai_solutions_cache_v2_p' . (int) $wc_p . '_cat' . $cat . '_per');
+            }
+        }
+        delete_transient('hireai_solutions_cache_v2_p' . (int) $wc_p . '_cat_per');
+    }
+    /* v3.5.7-p18: 数字人分类缓存（p1-p9 × 所有数字人 slug） */
+    if (function_exists('hireai_list_solution_personas')) {
+        $personas = array_keys(hireai_list_solution_personas());
+        for ($wc_p = 1; $wc_p <= 9; $wc_p++) {
+            foreach ($personas as $per) {
+                delete_transient('hireai_solutions_cache_v2_p' . (int) $wc_p . '_cat_per' . $per);
+                delete_transient('hireai_solutions_cache_v2_p' . (int) $wc_p . '_cat_per' . $per . '_per');
+            }
+        }
     }
 }
 
@@ -2224,4 +2438,77 @@ add_action('save_post', function ($post_id, $post) {
         if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai post saved'); }
         if (function_exists('opcache_reset')) { opcache_reset(); }
     }
+    /* v3.5.7-p18: 文章保存时强制下次 wp_loaded 重新检测版本（避免后台编辑时不刷新缓存） */
+    delete_option('hireai_last_seen_version');
 }, 20, 2);
+
+/* -------------------------------------------------------------------------
+ * v3.5.7-p18 Task A: page header 缓存 hotfix —— wp_loaded + after_switch_theme
+ *   - 每次 wp_loaded 检测 version 变化 → 自动清 WP object cache + LiteSpeed + OPcache
+ *   - after_switch_theme 强制清（用户切主题或被强制启用子主题时）
+ *   - 配合 hireai_get_version() 函数,使 HIREAI_VERSION 真正实时同步
+ * ---------------------------------------------------------------------- */
+add_action('wp_loaded', function () {
+    $current_version = hireai_get_version();
+    $stored_version  = get_option('hireai_last_seen_version', '');
+    if ($current_version === $stored_version) return;
+
+    update_option('hireai_last_seen_version', $current_version, false);
+
+    // 1. 清 WP object cache (themes group)
+    if (function_exists('wp_cache_flush_group')) {
+        wp_cache_flush_group('themes');
+    }
+    // 2. 清 LiteSpeed 全页缓存
+    if (class_exists('\LiteSpeed\Purge')) {
+        \LiteSpeed\Purge::purge_all('hireai version changed to ' . $current_version);
+    }
+    // 3. 清 OPcache
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+    }
+    // 4. 清 ACF 字段缓存（版本变更可能伴随 ACF 字段组调整）
+    if (function_exists('acf_get_store')) {
+        $s = acf_get_store('fields');         if ($s) { $s->reset(); }
+        $g = acf_get_store('field-groups');   if ($g) { $g->reset(); }
+    }
+});
+
+add_action('after_switch_theme', function () {
+    /* v3.5.7-p18: 主题切换时强制清 OPcache + LiteSpeed（覆盖旧 hook 只清 LiteSpeed 的情况） */
+    if (class_exists('\LiteSpeed\Purge')) {
+        \LiteSpeed\Purge::purge_all('hireai theme switched p18');
+    }
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+    }
+    /* 强制下次 wp_loaded 重新检测版本 */
+    delete_option('hireai_last_seen_version');
+});
+
+/* -------------------------------------------------------------------------
+ * v3.5.7-p18 Task D: 7 个 product_cat term 自动创建（如不存在）
+ *   - 仅在 WP 后台 init 钩子上跑一次(用 transient 标记避免重复查询)
+ *   - 7 场景:brand-ip / marketing / visual-design / ecommerce / crisis / copywriting / custom
+ *   - 已存在则跳过(wp_insert_term 不会覆盖)
+ * ---------------------------------------------------------------------- */
+add_action('init', function () {
+    if (!taxonomy_exists('product_cat')) return;
+    if (get_transient('hireai_p18_product_cat_seeded')) return;
+    $scenes = [
+        'brand-ip'      => '品牌&IP',
+        'marketing'     => '市场营销',
+        'visual-design' => '视觉设计',
+        'ecommerce'     => '电商&网站',
+        'crisis'        => '公关危机',
+        'copywriting'   => '文案报告',
+        'custom'        => '定制方案',
+    ];
+    foreach ($scenes as $slug => $name) {
+        if (!term_exists($slug, 'product_cat')) {
+            wp_insert_term($name, 'product_cat', ['slug' => $slug]);
+        }
+    }
+    set_transient('hireai_p18_product_cat_seeded', 1, DAY_IN_SECONDS);
+}, 20);
+
