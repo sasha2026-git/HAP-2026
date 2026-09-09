@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.5.7-p21.1
+Version: 3.5.7-p22
 Text Domain:  hireaipeople
 */
 
@@ -498,9 +498,10 @@ h4 {
   padding-right: clamp(12px, 1.6vw, 36px);
   min-width: 0;
 }
-/* v3.5.7-p13 (header layout fix): single, unambiguous breakpoint.
-   >=1280px viewport => nav visible. <1280px => nav hidden, hamburger shows. */
-@media (min-width: 1280px) {
+/* v3.5.7-p22 (header layout fix): lower nav breakpoint from 1280px to 1024px
+   so mainstream PC laptops (1024-1279px) see horizontal nav, not hamburger.
+   Fluid gap (clamp(12px, 1.3vw, 22px)) already keeps 6 items fitting. */
+@media (min-width: 1024px) {
   .hai-header__nav { display: flex; }
 }
 
@@ -615,12 +616,11 @@ h4 {
   cursor: pointer;
   padding: 0;
 }
-/* v3.5.7-p13 (header layout fix): single breakpoint at 1280px.
-   - >=1280px viewport: hamburger hidden (PC shows 6 nav items horizontally).
-   - <1280px viewport: hamburger visible (mobile uses drawer).
-   !important defends against JS-injected display toggles.
-   At 1024-1279px viewport the 6-item nav would overflow, so hamburger stays. */
-@media (min-width: 1280px) {
+/* v3.5.7-p22 (header layout fix): single breakpoint at 1024px.
+   - >=1024px viewport: nav visible, hamburger hidden.
+   - <1024px viewport: hamburger visible (mobile uses drawer).
+   !important defends against JS-injected display toggles. */
+@media (min-width: 1024px) {
   .hai-header__menu-toggle,
   .mobile-drawer,
   .hai-drawer-overlay {
