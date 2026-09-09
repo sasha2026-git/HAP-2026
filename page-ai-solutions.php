@@ -66,20 +66,14 @@ if ( function_exists( 'have_rows' ) && have_rows( 'solutions_invite_steps', $pag
     if ( ! empty( $tmp ) ) { $invite_steps = $tmp; }
 }
 
-/* ====== 筛选 chips（repeater，兜底 7 个场景） ====== */
-$filters_fallback = array(
-    array( 'label_zh' => '全国统一者', 'label_en' => 'Apex Strategist', 'slug' => 'apex' ),
-    array( 'label_zh' => '总裁高效', 'label_en' => 'Executive', 'slug' => 'executive' ),
-    array( 'label_zh' => '营销推广', 'label_en' => 'Marketing', 'slug' => 'marketing' ),
-    array( 'label_zh' => '电子商务', 'label_en' => 'E-Commerce', 'slug' => 'ecommerce' ),
-    array( 'label_zh' => '创意设计', 'label_en' => 'Design', 'slug' => 'design' ),
-    array( 'label_zh' => '高效服务', 'label_en' => 'Hospitality', 'slug' => 'hospitality' ),
-    array( 'label_zh' => '企业管理', 'label_en' => 'Enterprise', 'slug' => 'enterprise' ),
-);
-$filters = $filters_fallback;
-/* v3.5.7-p18 Task B: 7 场景 tab fallback = hireai_list_solution_categories()
- *   - repeater 仍可用,ACF 编辑器可继续添加额外场景(向后兼容)
- *   - 默认回退到内置 8 项(全部 + 7 个场景)
+/* ====== v3.5.7-p21.1: 6 个数字人 chip fallback(取代 7 个场景)
+ *  - 旧 fallback 用 hireai_list_solution_categories() → 场景 slug(brand-ip/marketing/...)
+ *    但 $cards 的 data-personas 是数字人 slug(victoria/adrian/iris/kai/evan)
+ *    JS 字符串相等比较 → 切任何 chip → 全部 hide
+ *  - 新 fallback = 6 个数字人短 slug,与 data-personas 一一对应,JS 直接匹配
+ *  - hireai_list_solution_categories() 函数保留不动(其他页面可能用)
+ *  - 顺序:全部 → Victoria → Adrian → Iris → Kai → Evan (与 Echo 申请一致)
+ *  - ACF repeater 'solutions_filters' 仍可用(WP 后台可覆盖)
  */
 $filters = array();
 if ( function_exists( 'have_rows' ) && have_rows( 'solutions_filters', $page_id ) ) {
@@ -92,14 +86,15 @@ if ( function_exists( 'have_rows' ) && have_rows( 'solutions_filters', $page_id 
         );
     }
 }
-if ( empty( $filters ) && function_exists( 'hireai_list_solution_categories' ) ) {
-    foreach ( hireai_list_solution_categories() as $slug => $cat ) {
-        $filters[] = array(
-            'label_zh' => $cat['name_zh'],
-            'label_en' => $cat['name_en'],
-            'slug'     => $slug,
-        );
-    }
+if ( empty( $filters ) ) {
+    $filters = array(
+        array( 'label_zh' => '全部',                'label_en' => 'All',                'slug' => 'all' ),
+        array( 'label_zh' => 'Victoria · 公关',     'label_en' => 'Victoria · PR',      'slug' => 'victoria' ),
+        array( 'label_zh' => 'Adrian · 品牌IP',     'label_en' => 'Adrian · Brand-IP',  'slug' => 'adrian' ),
+        array( 'label_zh' => 'Iris · 视觉',         'label_en' => 'Iris · Visual',      'slug' => 'iris' ),
+        array( 'label_zh' => 'Kai · 电商',          'label_en' => 'Kai · E-Commerce',   'slug' => 'kai' ),
+        array( 'label_zh' => 'Evan · 文案',         'label_en' => 'Evan · Copywriting', 'slug' => 'evan' ),
+    );
 }
 
 /* v3.5.7-p18 Task B: 静态兜底 $cards 已废弃 —— 改为 WC 商品驱动
