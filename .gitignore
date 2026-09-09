@@ -21,3 +21,10 @@ BUILD_PROMPT.md
 
 # 本地预览文件（不入库）
 preview-*.html
+
+# Codex CLI 调试时生成的临时文件(不入版本库)
+/specs-review/
+/V305-FIX-SUMMARY.md
+/WORKSPACE-NAV.md
+/functions.php.bak-*
+/style.css.bak-*
