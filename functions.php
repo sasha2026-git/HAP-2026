@@ -1366,7 +1366,7 @@ function hireai_fallback_nav() {
     $items       = [
         ['slug' => '',             'zh' => '首页',         'en' => 'Home'],
         ['slug' => 'ai-employees', 'zh' => 'AI 数字员工',  'en' => 'AI Employees'],
-        ['slug' => 'ai-solutions', 'zh' => 'AI 解决方案',  'en' => 'AI Solutions'],
+        ['slug' => 'ai-solutions', 'zh' => 'AI 解决方案商城',  'en' => 'AI Solutions'],
         ['slug' => 'cases-insights','zh' => '案例与洞察',   'en' => 'Cases & Insights'],
         ['slug' => 'faq',          'zh' => '常见问题',     'en' => 'FAQ'],
         ['slug' => 'contact',      'zh' => '联系我们',     'en' => 'Contact'],
@@ -2266,7 +2266,7 @@ add_action('acf/init', function () {
         /* ★ v3.5.5 新增：6 个导航项双语 ACF 标签（hireai_fallback_nav 后台可编辑） */
         ['name' => 'nav_item_home_label', 'label' => '导航 · 首页', 'type' => 'text', 'zh' => '首页', 'en' => 'Home'],
         ['name' => 'nav_item_ai-employees_label', 'label' => '导航 · AI 数字员工', 'type' => 'text', 'zh' => 'AI 数字员工', 'en' => 'AI Employees'],
-        ['name' => 'nav_item_ai-solutions_label', 'label' => '导航 · AI 解决方案', 'type' => 'text', 'zh' => 'AI 解决方案', 'en' => 'AI Solutions'],
+        ['name' => 'nav_item_ai-solutions_label', 'label' => '导航 · AI 解决方案商城', 'type' => 'text', 'zh' => 'AI 解决方案商城', 'en' => 'AI Solutions'],
         ['name' => 'nav_item_cases-insights_label', 'label' => '导航 · 案例与洞察', 'type' => 'text', 'zh' => '案例与洞察', 'en' => 'Cases & Insights'],
         ['name' => 'nav_item_faq_label', 'label' => '导航 · 常见问题', 'type' => 'text', 'zh' => '常见问题', 'en' => 'FAQ'],
         ['name' => 'nav_item_contact_label', 'label' => '导航 · 联系我们', 'type' => 'text', 'zh' => '联系我们', 'en' => 'Contact'],
