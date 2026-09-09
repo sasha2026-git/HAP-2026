@@ -2386,9 +2386,37 @@ add_action('upgrader_process_complete', function ($upgrader, $options) {
             $groups_store->reset();
         }
     }
+/* ============================================================================
+ * ⚠️ 重要架构约束 (v3.5.7-p24):opcache + PHP-FPM 多子进程架构下,本文件的清缓存 hook
+ *   不能保证 100% 立即生效。理由:
+ *
+ *     1. opcache_reset() 和 opcache_invalidate($file, true) 都只对当前 PHP-FPM
+ *        子进程生效(都加了 @ 抑制警告,但行为不变)
+ *     2. WP-FPM pool 默认 pm.max_children=5+,多个子进程并行处理请求
+ *     3. 当前 hook 触发时只 invalidate 一个子进程,其他子进程仍跑旧字节码
+ *        → 下一个请求落到其他子进程时,行为看起来像没部署
+ *
+ *   100% 生效方案(任选一种):
+ *     A. SSH 进 server 跑: sudo systemctl reload php8.2-fpm
+ *        (或 php-fpm / php8.1-fpm / php7.4-fpm 看实际版本)
+ *     B. WP 后台多次手动触发 save_post_product(覆盖所有子进程,通常 3-5 次)
+ *
+ *   历史教训:
+ *     - v3.5.7-p23 部署后 Codex 代码已部署但页面 HTML 没新代码痕迹
+ *     - Echo 9/9 验证诊断 + Codex 反思确认:opcache_reset 多子进程不可靠
+ *     - v3.5.7-p24:opcache_reset → opcache_invalidate(__FILE__, true)
+ *       优势:精确只 invalidate functions.php,不影响其他 opcache 缓存
+ *       劣势:同样只对当前 PHP-FPM 子进程生效,需配合 reload
+ *
+ *   未来部署流程必须包含:
+ *     1. git push + GitHub Release 创建
+ *     2. WP 后台 → 外观 → 主题 → 检查更新 → 升级
+ *     3. ⚠️ SSH 跑: sudo systemctl reload php8.X-fpm
+ * ============================================================================ */
+
     // 3. 清 OPcache(防止 PHP 文件更新但缓存还在跑旧字节码)
-    if (function_exists('opcache_reset')) {
-        opcache_reset();
+    if (function_exists('opcache_invalidate')) {
+        @opcache_invalidate(__FILE__, true);
     }
 }, 11, 2);
 
@@ -2465,7 +2493,7 @@ add_action('save_post_product', function ($post_id, $post) {
     if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
     if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai product saved'); }
     // 4. OPcache
-    if (function_exists('opcache_reset')) { opcache_reset(); }
+    if (function_exists('opcache_invalidate')) { @opcache_invalidate(__FILE__, true); }
 }, 20, 2);
 
 /* v3.5.7-p17 Bug 3 修复：新增 transition_post_status 监听 (覆盖 auto-draft → publish 路径)
@@ -2483,7 +2511,7 @@ add_action('transition_post_status', function ($new, $old, $post) {
         }
         if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
         if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai product published'); }
-        if (function_exists('opcache_reset')) { opcache_reset(); }
+        if (function_exists('opcache_invalidate')) { @opcache_invalidate(__FILE__, true); }
     }
 }, 20, 3);
 
@@ -2505,7 +2533,7 @@ add_action('save_post', function ($post_id, $post) {
         }
         if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
         if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai post saved'); }
-        if (function_exists('opcache_reset')) { opcache_reset(); }
+        if (function_exists('opcache_invalidate')) { @opcache_invalidate(__FILE__, true); }
     }
     /* v3.5.7-p18: 文章保存时强制下次 wp_loaded 重新检测版本（避免后台编辑时不刷新缓存） */
     delete_option('hireai_last_seen_version');
@@ -2533,8 +2561,8 @@ add_action('wp_loaded', function () {
         \LiteSpeed\Purge::purge_all('hireai version changed to ' . $current_version);
     }
     // 3. 清 OPcache
-    if (function_exists('opcache_reset')) {
-        opcache_reset();
+    if (function_exists('opcache_invalidate')) {
+        @opcache_invalidate(__FILE__, true);
     }
     // 4. 清 ACF 字段缓存（版本变更可能伴随 ACF 字段组调整）
     if (function_exists('acf_get_store')) {
@@ -2548,8 +2576,8 @@ add_action('after_switch_theme', function () {
     if (class_exists('\LiteSpeed\Purge')) {
         \LiteSpeed\Purge::purge_all('hireai theme switched p18');
     }
-    if (function_exists('opcache_reset')) {
-        opcache_reset();
+    if (function_exists('opcache_invalidate')) {
+        @opcache_invalidate(__FILE__, true);
     }
     /* 强制下次 wp_loaded 重新检测版本 */
     delete_option('hireai_last_seen_version');
