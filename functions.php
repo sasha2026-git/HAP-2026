@@ -2431,6 +2431,22 @@ function hireai_flush_solutions_cache() {
     }
 }
 
+/* v3.5.7-p23 Bug Fix: 商品 taxonomy 变化时清 solutions cache
+ *   解决「Echo 9/8 打 product_tag 后 Codex 缓存不刷新 → 商城 0 张卡」
+ *
+ *   WP 5.4+ 的 set_object_terms 钩子在以下场景触发:
+ *     - wp_set_object_terms() / wp_add_object_terms() / wp_remove_object_terms()
+ *     - WP REST POST /wp/v2/product/{id} with product_tag/product_cat 字段
+ *     - WP 后台 → 产品 → 编辑 → 标签/分类面板操作
+ *
+ *   注意:save_post_product 不会触发 set_object_terms,反之亦然 → 两个 hook 都要
+ */
+add_action('set_object_terms', function ($object_id, $terms, $tt_ids, $taxonomy) {
+    if (get_post_type($object_id) !== 'product') return;
+    if (!in_array($taxonomy, ['product_tag', 'product_cat', 'product_brand'], true)) return;
+    hireai_flush_solutions_cache();
+}, 10, 4);
+
 /* v3.5.7-p17 Bug 3 修复：保留原 save_post_product hook (WC 价格/库存变化但 status 不变时仍需清缓存)
  *   - 仍然只在 publish 状态时清缓存 (与 v3.5.7-p16 行为一致)
  *   - 抽出 hireai_flush_solutions_cache() 复用
