@@ -2664,3 +2664,11 @@ function hireai_digital_human_full_slug($slug) {
     }
     return isset($short_to_full[$slug]) ? $short_to_full[$slug] : $slug;
 }
+
+/* v3.5.7-p27 Bug Fix: 禁用 Polylang 自动同步 category term
+ *   解决「Sasha 后台挂 cat 时 Polylang 自动建翻译 cat(案例-zh)→ Echo 怎么挂都被覆盖」
+ *   - 之前给中文文章挂 cat 156 (案例) 时 Polylang 自动建 cat 165 (案例-zh), 文章被移走
+ *   - 禁用后任何 cat 挂载都直接生效,不再建翻译 cat
+ *   - 单语站点(本案)不需要 sync,无副作用
+ */
+add_filter('pll_sync_taxonomy_terms', '__return_false', 10, 1);
