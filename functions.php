@@ -858,17 +858,48 @@ function hireai_build_solution_cards_from_ids($ids) {
         $kicker_en   = is_array($ken_raw)  ? '' : (string) $ken_raw;
         $retainer_zh = is_array($rtz_raw)  ? '' : (string) $rtz_raw;
         $retainer_en = is_array($rten_raw) ? '' : (string) $rten_raw;
-        /* 提取数字人 product_cat 标签(非场景的)—— 用于 client-side persona 过滤 */
+        /* 提取数字人标签(用于 client-side persona 过滤)
+         * v3.5.7-p21: 优先 product_tag(Echo 数据完整,5 个数字人 slug),product_cat fallback
+         *   - 短 slug(victoria/adrian/...)和完整 slug(victoria-brand-pr/...)都接受
+         *   - 每张卡片打 data-personas="short1 short2 ..."(短名),JS chip 切换按短名匹配
+         */
         $persona_slugs = [];
-        if (function_exists('hireai_list_solution_categories')) {
+        $dh_map        = function_exists('hireai_digital_humans') ? hireai_digital_humans() : [];
+        $dh_short_set  = array_keys($dh_map);
+        $dh_full_to_short = [];
+        foreach ($dh_map as $short => $info) {
+            if (!empty($info['full'])) { $dh_full_to_short[$info['full']] = $short; }
+        }
+        /* 1) product_tag 优先(Echo 数据) */
+        $tag_terms = function_exists('wp_get_post_terms') ? wp_get_post_terms($pid, 'product_tag', ['fields' => 'slugs']) : [];
+        if (!is_wp_error($tag_terms) && !empty($tag_terms)) {
+            foreach ($tag_terms as $slug) {
+                if ($slug === '' || $slug === null) continue;
+                if (in_array($slug, $dh_short_set, true)) {
+                    if (!in_array($slug, $persona_slugs, true)) { $persona_slugs[] = $slug; }
+                } elseif (isset($dh_full_to_short[$slug])) {
+                    $short = $dh_full_to_short[$slug];
+                    if (!in_array($short, $persona_slugs, true)) { $persona_slugs[] = $short; }
+                }
+            }
+        }
+        /* 2) product_cat fallback(旧数据,Echo 9/8 之前) */
+        if (empty($persona_slugs) && function_exists('hireai_list_solution_categories')) {
             $scene_slugs = array_map(function ($c) { return $c['slug']; }, array_filter(hireai_list_solution_categories(), function ($c) { return !empty($c['is_scene']); }));
         } else {
             $scene_slugs = ['brand-ip','marketing','visual-design','ecommerce','crisis','copywriting','custom'];
         }
-        $product_terms = wp_get_post_terms($pid, 'product_cat', ['fields' => 'slugs']);
-        if (!is_wp_error($product_terms) && !empty($product_terms)) {
-            foreach ($product_terms as $slug) {
-                if (!in_array($slug, $scene_slugs, true) && !empty($slug)) {
+        $cat_terms = function_exists('wp_get_post_terms') ? wp_get_post_terms($pid, 'product_cat', ['fields' => 'slugs']) : [];
+        if (!is_wp_error($cat_terms) && !empty($cat_terms)) {
+            foreach ($cat_terms as $slug) {
+                if ($slug === '' || $slug === null) continue;
+                if (in_array($slug, $scene_slugs, true)) continue;
+                if (in_array($slug, $dh_short_set, true)) {
+                    if (!in_array($slug, $persona_slugs, true)) { $persona_slugs[] = $slug; }
+                } elseif (isset($dh_full_to_short[$slug])) {
+                    $short = $dh_full_to_short[$slug];
+                    if (!in_array($short, $persona_slugs, true)) { $persona_slugs[] = $short; }
+                } elseif (!in_array($slug, $persona_slugs, true)) {
                     $persona_slugs[] = $slug;
                 }
             }
@@ -1074,11 +1105,33 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
     }
 
     // 3. 数字人筛选(独立维度,与场景 AND 关系)
+    /* v3.5.7-p21: persona_slug 改走 product_tag(Echo 数据) + 短→长 slug 映射
+     *   - 之前查 product_cat(Echo 没写) -> 数字人 chip 永远拉不到商品
+     *   - 接受短名(victoria/adrian/iris/kai/evan)或完整 slug(victoria-brand-pr/...)
+     *   - 优先查 product_tag;若 term 不存在,fallback 到 product_cat(兼容历史数据)
+     */
     if (!empty($persona_slug)) {
-        $term = get_term_by('slug', $persona_slug, 'product_cat');
-        if ($term && !is_wp_error($term)) {
+        $effective_slug = function_exists('hireai_digital_human_full_slug')
+            ? hireai_digital_human_full_slug($persona_slug)
+            : $persona_slug;
+        $term     = null;
+        $tax_used = '';
+        if (taxonomy_exists('product_tag')) {
+            $term = get_term_by('slug', $effective_slug, 'product_tag');
+            if ($term && !is_wp_error($term)) {
+                $tax_used = 'product_tag';
+            }
+        }
+        if ((!$term || is_wp_error($term)) && taxonomy_exists('product_cat')) {
+            $fallback = get_term_by('slug', $effective_slug, 'product_cat');
+            if ($fallback && !is_wp_error($fallback)) {
+                $term     = $fallback;
+                $tax_used = 'product_cat';
+            }
+        }
+        if ($term && !is_wp_error($term) && $tax_used !== '') {
             $tax_query[] = [
-                'taxonomy' => 'product_cat',
+                'taxonomy' => $tax_used,
                 'field'    => 'term_id',
                 'terms'    => [(int) $term->term_id],
             ];
@@ -2512,3 +2565,55 @@ add_action('init', function () {
     set_transient('hireai_p18_product_cat_seeded', 1, DAY_IN_SECONDS);
 }, 20);
 
+
+/* -------------------------------------------------------------------------
+ * v3.5.7-p21: 注册 category taxonomy 到 product CPT + 6 个数字人 chip 配置
+ *   - WP 5.5+ 默认断开 category 与 product 关联,Echo 9/8 写入的 80-92 post category 静默丢失
+ *   - 加这行(priority 5,在 p18 seed priority 20 之前)让防御生效,不影响现有 page-is_singular('product') 代码
+ *   - 数字人 chip 改为 6 个(All + 5 数字人),slug 走 product_tag,short→full 映射兼容历史数据
+ * ---------------------------------------------------------------------- */
+add_action('init', function () {
+    register_taxonomy_for_object_type('category', 'product');
+}, 5);
+
+/**
+ * v3.5.7-p21: 6 个数字人 chip 配置(AI 解决方案商城顶栏筛选)
+ *   - 取代 v3.5.7-p18 的 8 个场景 tab(product_cat 字段空 → 8 个 panel 全空)
+ *   - slug 走 product_tag(Echo 数据最完整的就是 product_tag 5 个数字人)
+ *   - short slug(victoria/adrian/iris/kai/evan) = chip 显示用
+ *   - full slug(victoria-brand-pr/...) = 历史 product_tag 数据,Echo 也可能用 short
+ *   - ACF repeater 'solutions_filters' 仍可覆盖(向后兼容)
+ *
+ * @return array<string,array{slug:string,full:string,label_zh:string,label_en:string}>
+ */
+function hireai_digital_humans() {
+    return [
+        'victoria' => ['slug' => 'victoria', 'full' => 'victoria-brand-pr', 'label_zh' => 'Victoria · 公关',   'label_en' => 'Victoria · PR'],
+        'adrian'   => ['slug' => 'adrian',   'full' => 'adrian-strategy',  'label_zh' => 'Adrian · 品牌IP',  'label_en' => 'Adrian · Brand-IP'],
+        'iris'     => ['slug' => 'iris',     'full' => 'iris-visual',      'label_zh' => 'Iris · 视觉',      'label_en' => 'Iris · Visual'],
+        'kai'      => ['slug' => 'kai',      'full' => 'kai-ecommerce',    'label_zh' => 'Kai · 电商',       'label_en' => 'Kai · E-Commerce'],
+        'evan'     => ['slug' => 'evan',     'full' => 'evan-copywriting', 'label_zh' => 'Evan · 文案',      'label_en' => 'Evan · Copywriting'],
+    ];
+}
+
+/**
+ * v3.5.7-p21: slug 映射(short → full),供 hireai_get_ai_solutions_products() 用
+ *   - 接受 'victoria' → 返回 'victoria-brand-pr'(或反之)
+ *   - 如果传入的 slug 不在 map,原样返回(兼容未来新增数字人)
+ *
+ * @param string $slug chip 短名或完整 slug
+ * @return string 完整 product_tag slug
+ */
+function hireai_digital_human_full_slug($slug) {
+    if (!is_string($slug) || $slug === '') return '';
+    static $short_to_full = null;
+    if ($short_to_full === null) {
+        $map = function_exists('hireai_digital_humans') ? hireai_digital_humans() : [];
+        $short_to_full = [];
+        foreach ($map as $short => $info) {
+            $short_to_full[$short] = $info['full'];
+            $short_to_full[$info['full']] = $info['full']; // 幂等
+        }
+    }
+    return isset($short_to_full[$slug]) ? $short_to_full[$slug] : $slug;
+}

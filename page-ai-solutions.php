@@ -122,61 +122,41 @@ $cards = array();
    同时 hireai_field('product_operative') 若字段返回数组会导致卡片 kicker 显示 "Array"。
    现包裹 try/catch + is_object 检查；只要 WC 任意一步出错就跳过整个覆盖、保留 $cards 兜底。
  */
-/* v3.5.7-p18 Task B: 8 个 tab 数据(1 全部 + 7 场景),每个 tab 单独拉一次 WC 商品
- *   - $cards_by_tab['all'] = 全部商品(无 category 过滤)
- *   - $cards_by_tab['brand-ip'] = brand-ip 分类商品
- *   - ... 每个 scene 一个 key
- *   - 数字人 persona 维度在 client-side 二次过滤(每张卡片打 data-persona 属性)
+/* v3.5.7-p21: 单 panel 一次 query(取代 v3.5.7-p18 的 8 场景分别 query)
+ *   - 之前 8 个 panel 各自 query product_cat -> Echo 没写 product_cat -> 全空
+ *   - 现在只 query 一次(不带 category/persona 过滤),拿全部 publish 商品
+ *   - chip 切换由 client-side JS 处理(data-personas 属性)
  *
- * 备援:hiraei_get_ai_solutions_products 不存在 → 静默空数组
+ * 备援:hireai_get_ai_solutions_products 不存在 -> 静默空数组
  */
-$cards_by_tab = [
-    'all'        => [],
-    'brand-ip'   => [],
-    'marketing'  => [],
-    'visual-design' => [],
-    'ecommerce'  => [],
-    'crisis'     => [],
-    'copywriting' => [],
-    'custom'     => [],
-];
+$cards_all = [];
 $personas_for_filter = function_exists('hireai_list_solution_personas') ? hireai_list_solution_personas() : [];
 
 if (post_type_exists('product') && function_exists('wc_get_product')) {
     try {
-        /* 全部 tab：不过滤 category */
+        /* 单次 query:全部 publish 商品,最多 12 张(Echo 数据约 6 张,留扩展) */
         $ids_all = function_exists('hireai_get_ai_solutions_products')
-            ? hireai_get_ai_solutions_products(1, 9, '', '')
+            ? hireai_get_ai_solutions_products(1, 12, '', '')
             : [];
-        $cards_by_tab['all'] = hireai_build_solution_cards_from_ids($ids_all);
-
-        /* 每个场景 tab 单独拉 */
-        $scene_keys = ['brand-ip', 'marketing', 'visual-design', 'ecommerce', 'crisis', 'copywriting', 'custom'];
-        foreach ($scene_keys as $scene_key) {
-            $ids_scene = function_exists('hireai_get_ai_solutions_products')
-                ? hireai_get_ai_solutions_products(1, 9, $scene_key, '')
-                : [];
-            $cards_by_tab[$scene_key] = hireai_build_solution_cards_from_ids($ids_scene);
-        }
+        $cards_all = hireai_build_solution_cards_from_ids($ids_all);
 
         if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
-            $total_count = 0;
-            foreach ($cards_by_tab as $k => $arr) { $total_count += count($arr); }
-            error_log('[hireai v3.5.7-p18] tab cards: ' . $total_count . ' across ' . count($cards_by_tab) . ' tabs');
+            error_log('[hireai v3.5.7-p21] single panel cards: ' . count($cards_all));
         }
-        if (empty($cards_by_tab['all']) && current_user_can('manage_options')) {
+        if (empty($cards_all) && current_user_can('manage_options')) {
             add_action('admin_notices', function () {
-                echo '<div class="notice notice-warning"><p>聘AI: AI 解决方案商城没有显示任何 WC 商品。可能原因:1) 商品 catalog_visibility=hidden; 2) WC 未启用。请到 WC → 产品 检查。</p></div>';
+                echo '<div class="notice notice-warning"><p>聘AI: AI 解决方案商城没有显示任何 WC 商品。可能原因:1) 商品 catalog_visibility=hidden; 2) WC 未启用。请到 WC -> 产品 检查。</p></div>';
             });
         }
     } catch (Throwable $e) {
-        // 任意一步抛异常 → 静默回退到每个 tab 空数组
-        $cards_by_tab = array_fill_keys(array_keys($cards_by_tab), []);
+        $cards_all = [];
     }
 }
 
-/* 默认 $cards(向后兼容 hero / pagination 旧代码引用) = 全部 tab */
-$cards = $cards_by_tab['all'];
+/* 默认 $cards(向后兼容 hero / pagination 旧代码引用) */
+$cards = $cards_all;
+/* v3.5.7-p21: 保留 $cards_by_tab key='all' 让旧 panel 渲染回退路径不报错(虽然不再使用) */
+$cards_by_tab = ['all' => $cards_all];
 ?>
 <style>
 /* ============== 页面专有样式（仅本模板生效） ============== */
@@ -653,41 +633,27 @@ $cards = $cards_by_tab['all'];
         </div>
     </header>
 
-    <!-- ============== v3.5.7-p18: 8 个场景 tab + 数字人筛选 ============== -->
-    <section class="sols-tabs-wrap" aria-label="<?php echo esc_attr( $is_en ? 'Solution scenario tabs' : '方案场景' ); ?>">
+    <!-- ============== v3.5.7-p21: 6 个数字人 chip(取代 8 场景 tab) ============== -->
+    <section class="sols-tabs-wrap" aria-label="<?php echo esc_attr( $is_en ? 'Filter by digital employee' : '按数字人筛选' ); ?>">
         <div class="sols-tabs" role="tablist" data-sols-tabs>
             <?php
-            $scene_tabs = function_exists('hireai_list_solution_categories') ? hireai_list_solution_categories() : [];
-            $first_scene = true;
-            foreach ($scene_tabs as $slug => $cat) :
-                $tab_label = $is_en ? $cat['name_en'] : $cat['name_zh'];
-                $tab_key   = $slug === '' ? 'all' : $slug;
-                $is_active = $first_scene;
-                $first_scene = false;
+            $first_chip = true;
+            foreach ( $filters as $f ) :
+                $chip_label = $is_en ? $f['label_en'] : $f['label_zh'];
+                $chip_slug  = isset( $f['slug'] ) ? (string) $f['slug'] : '';
+                $is_active  = $first_chip;
+                $first_chip = false;
             ?>
                 <button type="button" role="tab" class="sols-tab<?php echo $is_active ? ' is-active' : ''; ?>"
                         aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>"
-                        data-tab="<?php echo esc_attr($tab_key); ?>">
-                    <?php echo esc_html($tab_label); ?>
+                        data-tab="<?php echo esc_attr( $chip_slug ); ?>">
+                    <?php echo esc_html( $chip_label ); ?>
                 </button>
             <?php endforeach; ?>
         </div>
-
-        <?php if (!empty($personas_for_filter)) : ?>
-        <div class="sols-personas" role="group" aria-label="<?php echo esc_attr( $is_en ? 'Filter by digital employee' : '按数字人筛选' ); ?>">
-            <span class="sols-personas__label"><?php echo esc_html($is_en ? 'By Digital Employee' : '按数字人'); ?>:</span>
-            <button type="button" class="sols-persona-chip is-active" data-persona=""><?php echo esc_html($is_en ? 'All' : '全部'); ?></button>
-            <?php foreach ($personas_for_filter as $per_slug => $per) : ?>
-                <button type="button" class="sols-persona-chip" data-persona="<?php echo esc_attr($per_slug); ?>"
-                        title="<?php echo esc_attr( sprintf( '%s (%d)', $per['name'], $per['count'] ) ); ?>">
-                    <?php echo esc_html($per['name']); ?>
-                </button>
-            <?php endforeach; ?>
-        </div>
-        <?php endif; ?>
     </section>
 
-    <!-- ============== v3.5.7-p18: 8 个 tab panel ============== -->
+    <!-- ============== v3.5.7-p21: 单 panel 一次渲染 12 张卡(JS chip 切换 hide/show) ============== -->
     <section class="sols-grid-wrap" aria-label="<?php echo esc_attr( $is_en ? 'Solution cards' : '方案列表' ); ?>" data-sols-panels>
         <?php
         $empty_text_local = $empty_text;
@@ -728,31 +694,22 @@ $cards = $cards_by_tab['all'];
             </article>
             <?php
         };
-        $first_panel = true;
-        foreach ($scene_tabs as $slug => $cat) :
-            $panel_key = $slug === '' ? 'all' : $slug;
-            $panel_cards = isset($cards_by_tab[$panel_key]) ? $cards_by_tab[$panel_key] : [];
-            $is_active = $first_panel;
-            $first_panel = false;
-            $raw_cards = $panel_cards;
         ?>
-            <div class="sols-tab-panel<?php echo $is_active ? ' is-active' : ''; ?>" data-panel="<?php echo esc_attr($panel_key); ?>" role="tabpanel">
+            <div class="sols-tab-panel is-active" data-panel="all" role="tabpanel">
                 <div class="sols-grid">
-                    <?php
-                    if (!empty($raw_cards)) {
-                        foreach ($raw_cards as $c) {
-                            $tmpl = hireai_solution_card_template_fields($c);
-                            $card_template($tmpl);
-                        }
-                    } else {
-                        ?>
-                        <div class="sols-empty"><?php echo esc_html($empty_text_local); ?></div>
-                        <?php
-                    }
-                    ?>
+                    <?php if ( ! empty( $cards_all ) ) : ?>
+                        <?php foreach ( $cards_all as $c ) :
+                            $tmpl = hireai_solution_card_template_fields( $c );
+                            $card_template( $tmpl );
+                        endforeach; ?>
+                    <?php else : ?>
+                        <div class="sols-empty">
+                            <p><?php echo esc_html( $is_en ? 'No solutions in this category yet.' : '该数字人暂无作品' ); ?></p>
+                            <p class="sols-empty__hint"><?php echo esc_html( $is_en ? 'Contact us for bespoke solutions.' : '可联系助理定制方案' ); ?> <a href="/contact/">→ /contact/</a></p>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
-        <?php endforeach; ?>
     </section>
 
 </main>
@@ -851,59 +808,45 @@ $cards = $cards_by_tab['all'];
         });
     }
 
-    /* === 2. 8 个场景 tab 切换 === */
-    var tabs = document.querySelectorAll('[data-sols-tabs] .sols-tab');
-    var panels = document.querySelectorAll('[data-sols-panels] .sols-tab-panel');
-    function switchTab(tabKey) {
-        tabs.forEach(function(t){
-            var isActive = t.getAttribute('data-tab') === tabKey;
-            t.classList.toggle('is-active', isActive);
-            t.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        });
-        panels.forEach(function(p){
-            var isActive = p.getAttribute('data-panel') === tabKey;
-            p.classList.toggle('is-active', isActive);
-        });
-        applyPersonaFilter();  // 切 tab 后重新应用 persona 筛选
-        /* 更新 URL hash 以便分享 */
-        if (history && history.replaceState && tabKey !== 'all') {
-            try { history.replaceState(null, '', '#scene=' + tabKey); } catch(e) {}
-        }
-    }
-    tabs.forEach(function(tab){
-        tab.addEventListener('click', function(){
-            switchTab(tab.getAttribute('data-tab'));
-        });
-    });
-
-    /* === 3. 数字人 chip 筛选(client-side hide/show) === */
-    var personaChips = document.querySelectorAll('.sols-persona-chip');
+    /* === 2. v3.5.7-p21: 6 个数字人 chip 切换(单 panel,client-side 过滤) === */
+    var chips   = document.querySelectorAll('[data-sols-tabs] .sols-tab');
+    var panel   = document.querySelector('[data-sols-panels] .sols-tab-panel.is-active');
+    var cards   = panel ? panel.querySelectorAll('.sols-card') : [];
     var activePersona = '';
-    function applyPersonaFilter() {
-        var activePanel = document.querySelector('[data-sols-panels] .sols-tab-panel.is-active');
-        if (!activePanel) return;
-        var cards = activePanel.querySelectorAll('.sols-card');
+    function applyChipFilter() {
         cards.forEach(function(card){
             if (!activePersona) { card.style.display = ''; return; }
             var dataP = card.getAttribute('data-personas') || '';
-            var list = dataP.split(/\s+/).filter(Boolean);
+            var list  = dataP.split(/\s+/).filter(Boolean);
             card.style.display = list.indexOf(activePersona) >= 0 ? '' : 'none';
         });
     }
-    personaChips.forEach(function(chip){
+    function switchChip(slug) {
+        chips.forEach(function(c){
+            var isActive = c.getAttribute('data-tab') === slug;
+            c.classList.toggle('is-active', isActive);
+            c.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        activePersona = (!slug || slug === 'all') ? '' : slug;
+        applyChipFilter();
+        /* 更新 URL hash 以便分享 */
+        if (history && history.replaceState) {
+            try {
+                history.replaceState(null, '', activePersona ? '#persona=' + activePersona : window.location.pathname + window.location.search);
+            } catch(e) {}
+        }
+    }
+    chips.forEach(function(chip){
         chip.addEventListener('click', function(){
-            personaChips.forEach(function(c){ c.classList.remove('is-active'); });
-            chip.classList.add('is-active');
-            activePersona = chip.getAttribute('data-persona') || '';
-            applyPersonaFilter();
+            switchChip(chip.getAttribute('data-tab'));
         });
     });
 
-    /* === 4. 初始:从 URL hash 恢复 tab 状态 === */
-    var hashMatch = (window.location.hash || '').match(/scene=([a-z0-9_-]+)/);
+    /* === 3. 初始:从 URL hash 恢复 chip 状态 === */
+    var hashMatch = (window.location.hash || '').match(/persona=([a-z0-9_-]+)/);
     if (hashMatch && hashMatch[1]) {
         var matched = document.querySelector('[data-sols-tabs] .sols-tab[data-tab="' + hashMatch[1] + '"]');
-        if (matched) switchTab(hashMatch[1]);
+        if (matched) switchChip(hashMatch[1]);
     }
 })();
 </script>
