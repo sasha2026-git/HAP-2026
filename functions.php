@@ -1168,10 +1168,11 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
 }
 
 /**
- * v3.5.7-p16: 获取 Cases / Insights 文章 ID 列表
+ * v3.5.7-p16/p25: 获取 Cases / Insights 文章 ID 列表
  *   - 调用 page-cases-insights.php 消费
  *   - $type: 'cases' (拉 4 篇) | 'insights' (拉 3 篇) | 其他按需
- *   - 双语 fallback: 'cases' 失败 → '案例';'insights' 失败 → '洞察'
+ *   - v3.5.7-p25: 改用 tax_query 多 slug IN,覆盖 Polylang 自动建翻译 cat
+ *     (例如 cases-en / insights-en,Polylang 重建时 ID 会变,slug 通常稳定)
  *   - 缓存 key: hireai_cases_cache_v1 / hireai_insights_cache_v1(与 save_post hook 一致)
  *
  * @param string $type 'cases' | 'insights' (其他值原样作为 category slug)
@@ -1195,17 +1196,27 @@ function hireai_get_cases_insights_posts($type = 'cases', $limit = 4) {
         return array_map('intval', array_slice($cached, 0, $limit));
     }
 
-    $cn_fallback_map = [
-        'cases'    => '案例',
-        'insights' => '洞察',
+    /* v3.5.7-p25: 多 slug IN 关系覆盖 Polylang 自动建翻译 cat
+     *   - cases: cat 51 (cases EN) + cat 136 (cases-en Polylang ZH 翻译,ID 不固定)
+     *   - insights: cat 45 (洞察 ZH) + ?? (insights EN,如有)
+     *   - 用 slug 而非 cat ID 因为 Polylang 重建 ID 会变,slug 通常稳定
+     */
+    $slug_map = [
+        'cases'    => ['cases', 'cases-en', '案例&洞察', '案例'],
+        'insights' => ['insights', 'insight', '洞察', 'insights-en'],
     ];
+    $terms = isset($slug_map[$type]) ? $slug_map[$type] : [$type];
 
-    // 第 1 次:英文 slug
     $q = new WP_Query([
         'post_type'      => 'post',
         'post_status'    => 'publish',
         'posts_per_page' => $limit,
-        'category_name'  => $type,
+        'tax_query'      => [[
+            'taxonomy' => 'category',
+            'field'    => 'slug',
+            'terms'    => $terms,
+            'operator' => 'IN',
+        ]],
         'orderby'        => 'date',
         'order'          => 'DESC',
         'no_found_rows'  => true,
@@ -1213,22 +1224,6 @@ function hireai_get_cases_insights_posts($type = 'cases', $limit = 4) {
     ]);
     $ids = is_array($q->posts) ? $q->posts : [];
     wp_reset_postdata();
-
-    // 第 2 次:中文 slug fallback
-    if (empty($ids) && isset($cn_fallback_map[$type])) {
-        $q2 = new WP_Query([
-            'post_type'      => 'post',
-            'post_status'    => 'publish',
-            'posts_per_page' => $limit,
-            'category_name'  => $cn_fallback_map[$type],
-            'orderby'        => 'date',
-            'order'          => 'DESC',
-            'no_found_rows'  => true,
-            'fields'         => 'ids',
-        ]);
-        $ids = is_array($q2->posts) ? $q2->posts : [];
-        wp_reset_postdata();
-    }
 
     $ids = array_map('intval', $ids);
     set_transient($cache_key, $ids, 5 * MINUTE_IN_SECONDS);
@@ -2520,8 +2515,16 @@ add_action('save_post', function ($post_id, $post) {
     if ($post->post_status !== 'publish') return;
     if ($post->post_type !== 'post') return;
     // 仅清当文章位于 case/insight/ai-employee 时
-    $cats = wp_get_post_terms($post_id, 'category', ['fields' => 'slugs']);
-    if (array_intersect((array)$cats, ['cases', 'insights', 'ai-employee', 'case', 'insight'])) {
+    /* v3.5.7-p25: cache 白名单从 slug 改成 cat ID
+     *   - 之前 'cases' slug 命中 cat 51 但 Polylang 建的 'cases-en' (cat 136) 不命中
+     *   - '洞察' 不在白名单 -> Sasha 发洞察文章 Codex cache 不刷新
+     *   - cat ID 数组 [44, 45, 51, 136, 137, 138] 覆盖所有可能的 case/insight cat
+     *   - Polylang 重建 ID 范围大概率在这区间
+     *   - 如发现新 Polylang 自动 cat(如 cat 150),直接加进数组
+     */
+    $cats = wp_get_post_terms($post_id, 'category', ['fields' => 'ids']);
+    $case_insight_cat_ids = [44, 45, 51, 136, 137, 138];
+    if (array_intersect((array)$cats, $case_insight_cat_ids)) {
         delete_site_transient('update_themes');
         delete_transient('hireai_cases_insights_posts');
         /* v3.5.7-p15: 拆分为 cases/insights 独立 cache,确保 WP 后台发布后即时同步 */
