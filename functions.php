@@ -1202,8 +1202,8 @@ function hireai_get_cases_insights_posts($type = 'cases', $limit = 4) {
      *   - 用 slug 而非 cat ID 因为 Polylang 重建 ID 会变,slug 通常稳定
      */
     $slug_map = [
-        'cases'    => ['cases', 'cases-en', '案例&洞察', '案例'],
-        'insights' => ['insights', 'insight', '洞察', 'insights-en'],
+        'cases'    => ['cases', '案例'],
+        'insights' => ['insights', '洞察'],
     ];
     $terms = isset($slug_map[$type]) ? $slug_map[$type] : [$type];
 
@@ -2522,9 +2522,9 @@ add_action('save_post', function ($post_id, $post) {
      *   - Polylang 重建 ID 范围大概率在这区间
      *   - 如发现新 Polylang 自动 cat(如 cat 150),直接加进数组
      */
-    $cats = wp_get_post_terms($post_id, 'category', ['fields' => 'ids']);
-    $case_insight_cat_ids = [44, 45, 51, 136, 137, 138];
-    if (array_intersect((array)$cats, $case_insight_cat_ids)) {
+    $cats = wp_get_post_terms($post_id, 'category', ['fields' => 'slugs']);
+    $case_insight_cat_slugs = ['cases', '案例', 'insights', '洞察'];
+    if (array_intersect((array)$cats, $case_insight_cat_slugs)) {
         delete_site_transient('update_themes');
         delete_transient('hireai_cases_insights_posts');
         /* v3.5.7-p15: 拆分为 cases/insights 独立 cache,确保 WP 后台发布后即时同步 */
