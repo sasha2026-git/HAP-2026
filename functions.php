@@ -861,7 +861,7 @@ function hireai_build_solution_cards_from_ids($ids) {
         /* 提取数字人 product_cat 标签(非场景的)—— 用于 client-side persona 过滤 */
         $persona_slugs = [];
         if (function_exists('hireai_list_solution_categories')) {
-            $scene_slugs = array_map(function ($c) { return $c['slug']; }, array_filter(function ($c) { return !empty($c['is_scene']); }, hireai_list_solution_categories()));
+            $scene_slugs = array_map(function ($c) { return $c['slug']; }, array_filter(hireai_list_solution_categories(), function ($c) { return !empty($c['is_scene']); }));
         } else {
             $scene_slugs = ['brand-ip','marketing','visual-design','ecommerce','crisis','copywriting','custom'];
         }
@@ -938,8 +938,8 @@ function hireai_list_solution_personas() {
     $scene_slugs = array_map(
         function ($c) { return $c['slug']; },
         array_filter(
-            function ($c) { return !empty($c['is_scene']); },
-            hireai_list_solution_categories()
+            hireai_list_solution_categories(),
+            function ($c) { return !empty($c['is_scene']); }
         )
     );
     $terms = get_terms([
