@@ -55,19 +55,24 @@ echo "  分支: $CURRENT_BRANCH"
 echo "  HEAD: $HEAD_COMMIT"
 echo "  信息: $HEAD_MSG"
 
-# ===== Step 2: 工作目录干净检查 =====
+# ===== Step 2: 工作目录干净检查(自动 commit) =====
+# 2026-09-09 v3.5.7-p23 教训:之前 dirty 时只询问 y/N 不自动 commit,
+#   导致 tag 指向旧 commit + ZIP 包含 working tree 但 git index 没更新 = P0 事故(Sasha 第 6 次踩雷)
+#   现在 dirty 时自动 commit(除非 SKIP_COMMIT=true)。
 echo ""
 echo "[2/9] 检查工作目录..."
-if ! git diff --quiet HEAD 2>/dev/null; then
+if ! git diff --quiet HEAD 2>/dev/null || ! git diff --cached --quiet HEAD 2>/dev/null; then
     warn "有未提交改动"
     git status --short
-    read -p "  继续？(y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        err "用户中断"
+    if [ -z "${SKIP_COMMIT:-}" ]; then
+        git add -A
+        git commit -m "chore: dirty worktree auto-commit before publish (v3.5.7-p23 fix)"
+        ok "已自动 commit 工作目录改动"
+    else
+        warn "SKIP_COMMIT=true,跳过自动 commit(⚠️ 风险:tag 可能指向旧 commit)"
     fi
 fi
-ok "工作目录干净或已确认"
+ok "工作目录干净或已自动 commit"
 
 # ===== Step 3: ⛔ 铁律门禁：tag == style.css Version =====
 echo ""
