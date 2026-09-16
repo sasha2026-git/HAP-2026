@@ -2291,6 +2291,196 @@ add_action('acf/init', function () {
         [['param' => 'post_type', 'operator' => '==', 'value' => 'product']],
     ]));
 
+
+      /* ====================================================================
+       * v3.6.0 新增 - 2 个 ACF Field Group:
+       *   ① group_frontpage_v360     首页 5 Section 全双语可视化编辑（5 Tab × 中英）
+       *   ② group_product_featured_v360  商品双语 + 首页推荐开关
+       *
+       * 设计原则:
+       *   - 与现有 group_front_hero / group_front_modules / group_product_meta 并存不互斥
+       *     (ACF 允许同名 name 跨组共存;WP 后台显示两份,值共享一份 meta)
+       *   - 字段 name 显式带 _zh / _en 后缀(由 front-page.php 用 get_field 直接读,不依赖 lang_suffix 自动追加)
+       *   - 解决方案/案例/FAQ 三大区域用 repeater 实现「C: 可选哪些上首页」+「ACF 双 fallback」
+       *   - 商品组新增 sol_featured_on_home + sol_featured_order,默认全部 false / 99
+       *     (用户自己到 WP 后台勾选,不需要 Codex 写入 product 数据)
+       * ==================================================================== */
+
+      /* ---- v3.6.0-A: 首页 5 Section 双语 ---- */
+      acf_add_local_field_group([
+          'key'      => 'group_frontpage_v360',
+          'title'    => '首页 v3.6.0 — 全部 Section 双语',
+          'fields'   => [
+              /* ===== Tab ① Hero ===== */
+              ['key' => 'field_fp_hero_tab',              'label' => '① Hero 区域',              'type' => 'tab'],
+              ['key' => 'field_fp_hero_kicker_zh',       'label' => '眉题 · 中',                 'name' => 'fp_hero_kicker_zh',     'type' => 'text'],
+              ['key' => 'field_fp_hero_kicker_en',       'label' => 'Eyebrow · EN',              'name' => 'fp_hero_kicker_en',     'type' => 'text'],
+              ['key' => 'field_fp_hero_title_zh',        'label' => '主标题 · 中',               'name' => 'fp_hero_title_zh',      'type' => 'text'],
+              ['key' => 'field_fp_hero_title_en',        'label' => 'Headline · EN',             'name' => 'fp_hero_title_en',      'type' => 'text'],
+              ['key' => 'field_fp_hero_subtitle_zh',     'label' => '副标题 · 中',               'name' => 'fp_hero_subtitle_zh',   'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_fp_hero_subtitle_en',     'label' => 'Subtitle · EN',             'name' => 'fp_hero_subtitle_en',   'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_fp_hero_cta_label_zh',    'label' => 'CTA 按钮文字 · 中',         'name' => 'fp_hero_cta_label_zh',  'type' => 'text'],
+              ['key' => 'field_fp_hero_cta_label_en',    'label' => 'CTA Label · EN',            'name' => 'fp_hero_cta_label_en',  'type' => 'text'],
+              ['key' => 'field_fp_hero_cta_url',         'label' => 'CTA 链接 (中英共用)',       'name' => 'fp_hero_cta_url',       'type' => 'url'],
+
+              /* ===== Tab ② Solutions ===== */
+              ['key' => 'field_fp_solutions_tab',                'label' => '② 解决方案区域',                                  'type' => 'tab'],
+              ['key' => 'field_fp_solutions_kicker_zh',          'label' => '眉题 · 中',                                        'name' => 'fp_solutions_kicker_zh',         'type' => 'text'],
+              ['key' => 'field_fp_solutions_kicker_en',          'label' => 'Eyebrow · EN',                                     'name' => 'fp_solutions_kicker_en',         'type' => 'text'],
+              ['key' => 'field_fp_solutions_title_zh',           'label' => '标题 · 中',                                        'name' => 'fp_solutions_title_zh',          'type' => 'text'],
+              ['key' => 'field_fp_solutions_title_en',           'label' => 'Title · EN',                                       'name' => 'fp_solutions_title_en',          'type' => 'text'],
+              ['key' => 'field_fp_solutions_subtitle_zh',        'label' => '副标题 · 中',                                      'name' => 'fp_solutions_subtitle_zh',       'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_solutions_subtitle_en',        'label' => 'Subtitle · EN',                                    'name' => 'fp_solutions_subtitle_en',       'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_solutions_explore_label_zh',   'label' => '「探索更多」按钮文字 · 中',                       'name' => 'fp_solutions_explore_label_zh',  'type' => 'text'],
+              ['key' => 'field_fp_solutions_explore_label_en',   'label' => 'Explore More · EN',                                'name' => 'fp_solutions_explore_label_en',  'type' => 'text'],
+              ['key' => 'field_fp_solutions_explore_url',        'label' => '「探索更多」链接 (中英共用)',                      'name' => 'fp_solutions_explore_url',       'type' => 'url'],
+              [
+                  'key'           => 'field_fp_sol_static_repeater',
+                  'label'         => '解决方案静态卡片（最多 4 张 · WC 首页推荐商品未填时回退到此）',
+                  'name'          => 'fp_sol_static_repeater',
+                  'type'          => 'repeater',
+                  'max'           => 4,
+                  'layout'        => 'row',
+                  'button_label'  => '添加一张方案卡',
+                  'sub_fields'    => [
+                      ['key' => 'field_fp_sol_static_title_zh', 'label' => '标题 · 中',    'name' => 'title_zh', 'type' => 'text'],
+                      ['key' => 'field_fp_sol_static_title_en', 'label' => 'Title · EN',   'name' => 'title_en', 'type' => 'text'],
+                      ['key' => 'field_fp_sol_static_desc_zh',  'label' => '描述 · 中',    'name' => 'desc_zh',  'type' => 'textarea', 'rows' => 2],
+                      ['key' => 'field_fp_sol_static_desc_en',  'label' => 'Description · EN', 'name' => 'desc_en', 'type' => 'textarea', 'rows' => 2],
+                      ['key' => 'field_fp_sol_static_tag_zh',   'label' => '标签 · 中',    'name' => 'tag_zh',   'type' => 'text'],
+                      ['key' => 'field_fp_sol_static_tag_en',   'label' => 'Tag · EN',     'name' => 'tag_en',   'type' => 'text'],
+                      ['key' => 'field_fp_sol_static_image',    'label' => '图片（中英共用）', 'name' => 'image',   'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
+                      ['key' => 'field_fp_sol_static_url',      'label' => '链接（中英共用）', 'name' => 'url',     'type' => 'url'],
+                  ],
+              ],
+
+              /* ===== Tab ③ Cases & Insights ===== */
+              ['key' => 'field_fp_cases_tab',                'label' => '③ 案例与观点',                                       'type' => 'tab'],
+              ['key' => 'field_fp_cases_kicker_zh',          'label' => '眉题 · 中',                                          'name' => 'fp_cases_kicker_zh',         'type' => 'text'],
+              ['key' => 'field_fp_cases_kicker_en',          'label' => 'Eyebrow · EN',                                       'name' => 'fp_cases_kicker_en',         'type' => 'text'],
+              ['key' => 'field_fp_cases_title_zh',           'label' => '标题 · 中',                                          'name' => 'fp_cases_title_zh',          'type' => 'text'],
+              ['key' => 'field_fp_cases_title_en',           'label' => 'Title · EN',                                         'name' => 'fp_cases_title_en',          'type' => 'text'],
+              ['key' => 'field_fp_cases_subtitle_zh',        'label' => '副标题 · 中',                                        'name' => 'fp_cases_subtitle_zh',       'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_cases_subtitle_en',        'label' => 'Subtitle · EN',                                      'name' => 'fp_cases_subtitle_en',       'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_cases_explore_label_zh',   'label' => '「探索更多」按钮文字 · 中',                          'name' => 'fp_cases_explore_label_zh',  'type' => 'text'],
+              ['key' => 'field_fp_cases_explore_label_en',   'label' => 'Explore More · EN',                                  'name' => 'fp_cases_explore_label_en',  'type' => 'text'],
+              ['key' => 'field_fp_cases_explore_url',        'label' => '「探索更多」链接（中英共用）',                       'name' => 'fp_cases_explore_url',       'type' => 'url'],
+              ['key' => 'field_fp_case_major_label_zh',      'label' => '大案例 · 标签 · 中',                                 'name' => 'fp_case_major_label_zh',     'type' => 'text'],
+              ['key' => 'field_fp_case_major_label_en',      'label' => '大案例 · Label · EN',                                'name' => 'fp_case_major_label_en',     'type' => 'text'],
+              ['key' => 'field_fp_case_major_title_zh',      'label' => '大案例 · 标题 · 中',                                 'name' => 'fp_case_major_title_zh',     'type' => 'text'],
+              ['key' => 'field_fp_case_major_title_en',      'label' => '大案例 · Title · EN',                                'name' => 'fp_case_major_title_en',     'type' => 'text'],
+              ['key' => 'field_fp_case_major_desc_zh',       'label' => '大案例 · 描述 · 中',                                 'name' => 'fp_case_major_desc_zh',      'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_fp_case_major_desc_en',       'label' => '大案例 · Description · EN',                          'name' => 'fp_case_major_desc_en',      'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_fp_case_major_image',         'label' => '大案例 · 图片（中英共用）',                          'name' => 'fp_case_major_image',        'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
+              [
+                  'key'           => 'field_fp_cases_minor_repeater',
+                  'label'         => '小案例列表（最多 6 张 · 与大案例对应）',
+                  'name'          => 'fp_cases_minor_repeater',
+                  'type'          => 'repeater',
+                  'max'           => 6,
+                  'layout'        => 'row',
+                  'button_label'  => '添加一张小案例',
+                  'sub_fields'    => [
+                      ['key' => 'field_fp_cases_minor_title_zh', 'label' => '标题 · 中',  'name' => 'title_zh', 'type' => 'text'],
+                      ['key' => 'field_fp_cases_minor_title_en', 'label' => 'Title · EN', 'name' => 'title_en', 'type' => 'text'],
+                      ['key' => 'field_fp_cases_minor_desc_zh',  'label' => '描述 · 中',  'name' => 'desc_zh',  'type' => 'textarea', 'rows' => 2],
+                      ['key' => 'field_fp_cases_minor_desc_en',  'label' => 'Description · EN', 'name' => 'desc_en', 'type' => 'textarea', 'rows' => 2],
+                      ['key' => 'field_fp_cases_minor_image',    'label' => '图片（中英共用）', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
+                      ['key' => 'field_fp_cases_minor_url',      'label' => '链接（中英共用）', 'name' => 'url',   'type' => 'url'],
+                  ],
+              ],
+
+              /* ===== Tab ④ FAQ ===== */
+              ['key' => 'field_fp_faq_tab',     'label' => '④ FAQ 区域',                'type' => 'tab'],
+              ['key' => 'field_fp_faq_kicker_zh',     'label' => '眉题 · 中',                'name' => 'fp_faq_kicker_zh',     'type' => 'text'],
+              ['key' => 'field_fp_faq_kicker_en',     'label' => 'Eyebrow · EN',             'name' => 'fp_faq_kicker_en',     'type' => 'text'],
+              ['key' => 'field_fp_faq_title_zh',      'label' => '标题 · 中',                'name' => 'fp_faq_title_zh',      'type' => 'text'],
+              ['key' => 'field_fp_faq_title_en',      'label' => 'Title · EN',               'name' => 'fp_faq_title_en',      'type' => 'text'],
+              ['key' => 'field_fp_faq_subtitle_zh',   'label' => '副标题 · 中',              'name' => 'fp_faq_subtitle_zh',   'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_faq_subtitle_en',   'label' => 'Subtitle · EN',            'name' => 'fp_faq_subtitle_en',   'type' => 'textarea', 'rows' => 2],
+              [
+                  'key'           => 'field_fp_faq_repeater',
+                  'label'         => 'FAQ 问答列表（最多 10 题）',
+                  'name'          => 'fp_faq_repeater',
+                  'type'          => 'repeater',
+                  'max'           => 10,
+                  'layout'        => 'row',
+                  'button_label'  => '添加一道 FAQ',
+                  'sub_fields'    => [
+                      ['key' => 'field_fp_faq_question_zh', 'label' => '问题 · 中',  'name' => 'question_zh', 'type' => 'text'],
+                      ['key' => 'field_fp_faq_question_en', 'label' => 'Question · EN', 'name' => 'question_en', 'type' => 'text'],
+                      ['key' => 'field_fp_faq_answer_zh',   'label' => '回答 · 中',  'name' => 'answer_zh',   'type' => 'textarea', 'rows' => 3],
+                      ['key' => 'field_fp_faq_answer_en',   'label' => 'Answer · EN', 'name' => 'answer_en',   'type' => 'textarea', 'rows' => 3],
+                  ],
+              ],
+
+              /* ===== Tab ⑤ CTA ===== */
+              ['key' => 'field_fp_cta_tab',             'label' => '⑤ CTA 区域',           'type' => 'tab'],
+              ['key' => 'field_fp_cta_kicker_zh',       'label' => '眉题 · 中',            'name' => 'fp_cta_kicker_zh',       'type' => 'text'],
+              ['key' => 'field_fp_cta_kicker_en',       'label' => 'Eyebrow · EN',         'name' => 'fp_cta_kicker_en',       'type' => 'text'],
+              ['key' => 'field_fp_cta_title_zh',        'label' => '标题 · 中',            'name' => 'fp_cta_title_zh',        'type' => 'text'],
+              ['key' => 'field_fp_cta_title_en',        'label' => 'Title · EN',           'name' => 'fp_cta_title_en',        'type' => 'text'],
+              ['key' => 'field_fp_cta_subtitle_zh',     'label' => '副标题 · 中',          'name' => 'fp_cta_subtitle_zh',     'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_cta_subtitle_en',     'label' => 'Subtitle · EN',        'name' => 'fp_cta_subtitle_en',     'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_cta_button_label_zh', 'label' => '按钮文字 · 中',        'name' => 'fp_cta_button_label_zh', 'type' => 'text'],
+              ['key' => 'field_fp_cta_button_label_en', 'label' => 'Button Label · EN',    'name' => 'fp_cta_button_label_en', 'type' => 'text'],
+              ['key' => 'field_fp_cta_button_url',      'label' => '按钮链接（中英共用）', 'name' => 'fp_cta_button_url',      'type' => 'url'],
+          ],
+          'location' => [
+              [['param' => 'page_type',      'operator' => '==', 'value' => 'front_page']],
+              [['param' => 'page_template',  'operator' => '==', 'value' => 'front-page.php']],
+          ],
+          'menu_order'            => 5,
+          'position'              => 'normal',
+          'style'                 => 'default',
+          'label_placement'       => 'top',
+          'instruction_placement' => 'label',
+          'hide_on_screen'        => ['the_content', 'excerpt', 'discussion', 'comments', 'revisions', 'author', 'format', 'page_attributes'],
+      ]);
+
+      /* ---- v3.6.0-B: 商品双语 + 首页推荐 ---- */
+      acf_add_local_field_group([
+          'key'      => 'group_product_featured_v360',
+          'title'    => 'AI 解决方案商品 · v3.6.0 双语 + 首页推荐',
+          'fields'   => [
+              ['key' => 'field_sol_title_zh',             'label' => '解决方案标题 · 中（覆盖默认 WP title）',     'name' => 'sol_title_zh',             'type' => 'text'],
+              ['key' => 'field_sol_title_en',             'label' => 'Solution Title · EN',                       'name' => 'sol_title_en',             'type' => 'text'],
+              ['key' => 'field_sol_desc_zh',              'label' => '解决方案描述 · 中（覆盖默认 excerpt）',     'name' => 'sol_desc_zh',              'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_sol_desc_en',              'label' => 'Solution Description · EN',                 'name' => 'sol_desc_en',              'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_sol_tag_zh',               'label' => '标签 · 中',                                  'name' => 'sol_tag_zh',               'type' => 'text'],
+              ['key' => 'field_sol_tag_en',               'label' => 'Tag · EN',                                   'name' => 'sol_tag_en',               'type' => 'text'],
+              [
+                  'key'           => 'field_sol_featured_on_home',
+                  'label'         => '★ 首页推荐开关（默认未勾选；勾选后此商品会被 front-page 解决方案区拉取）',
+                  'name'          => 'sol_featured_on_home',
+                  'type'          => 'true_false',
+                  'default_value' => 0,
+                  'ui'            => 1,
+                  'ui_on_text'    => '推荐上首页',
+                  'ui_off_text'   => '不上首页',
+              ],
+              [
+                  'key'           => 'field_sol_featured_order',
+                  'label'         => '首页推荐排序（数字越小越靠前；默认 99）',
+                  'name'          => 'sol_featured_order',
+                  'type'          => 'number',
+                  'default_value' => 99,
+                  'min'           => 1,
+                  'max'           => 99,
+                  'step'          => 1,
+              ],
+          ],
+          'location' => [
+              [['param' => 'post_type', 'operator' => '==', 'value' => 'product']],
+          ],
+          'menu_order'            => 10,
+          'position'              => 'normal',
+          'style'                 => 'default',
+          'label_placement'       => 'top',
+          'instruction_placement' => 'label',
+          'hide_on_screen'        => [],
+      ]);
+
     /* ---- 10. 站点选项（页脚，ACF Pro Options Page）---- */
     if (function_exists('acf_add_options_page')) {
         acf_add_options_page([
