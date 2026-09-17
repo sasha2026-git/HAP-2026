@@ -283,6 +283,16 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           $GLOBALS['post'] = $ci_post_obj;
           setup_postdata( $ci_post_obj );
           $ci_post_img  = get_the_post_thumbnail_url( $ci_pid, 'large' );
+          // v3.7.1: 优先读取 ACF case_cover_image 字段（可由 WP 后台为每篇案例单独配置），空白则回退 featured image
+          $ci_case_cover = function_exists('get_field') ? get_field('case_cover_image', $ci_pid) : '';
+          if (is_array($ci_case_cover) && !empty($ci_case_cover['url'])) {
+              $ci_post_img = $ci_case_cover['url'];
+          } elseif (is_string($ci_case_cover) && $ci_case_cover !== '') {
+              $ci_post_img = $ci_case_cover;
+          }
+          if (empty($ci_post_img)) {
+              $ci_post_img = get_the_post_thumbnail_url($ci_pid, 'large');
+          }
           $ci_post_excerpt = has_excerpt( $ci_pid ) ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( $ci_post_obj->post_content ), 32, '…' );
           $ci_post_title   = get_the_title( $ci_pid );
           $ci_post_permalink = get_permalink( $ci_pid );

@@ -1685,10 +1685,9 @@ add_action('acf/init', function () {
             'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium'],
         ],
     ], [
-        // 同 AllScented：精准匹配博客首页 / 静态首页（ACF 免费版标准 location 格式）
+        // v3.7.1: 用 page_type=front_page + page_template 双兜底，避免写死 slug 'home'/'front-page' 导致 WP 后台看不到字段
+        [['param' => 'page_type', 'operator' => '==', 'value' => 'front_page']],
         [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
-        [['param' => 'page', 'operator' => '==', 'value' => 'home']],
-        [['param' => 'page', 'operator' => '==', 'value' => 'front-page']],
     ]));
 
     /* ---- 2. 首页各模块（字段名与 front-page.php 读取的 fp_* 一一对应） ---- */
@@ -1801,9 +1800,9 @@ add_action('acf/init', function () {
         ['name' => 'fp_cta_btn_title', 'label' => 'CTA · 按钮文字', 'type' => 'text', 'zh' => '联系我们', 'en' => 'Contact Us'],
         ['name' => 'fp_cta_btn_url', 'label' => 'CTA · 按钮地址', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
     ], [
+        // v3.7.1: 用 page_type=front_page + page_template 双兜底，避免写死 slug 'home'/'front-page' 导致 WP 后台看不到字段
+        [['param' => 'page_type', 'operator' => '==', 'value' => 'front_page']],
         [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
-        [['param' => 'page', 'operator' => '==', 'value' => 'home']],
-        [['param' => 'page', 'operator' => '==', 'value' => 'front-page']],
     ]));
 
     /* ---- 3. AI 数字员工列表页 ---- */
@@ -2272,6 +2271,7 @@ add_action('acf/init', function () {
         ['name' => 'case_kicker', 'label' => '案例卡片 · kicker（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'case_badge',  'label' => '案例卡片 · badge（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'case_subtitle', 'label' => '案例卡片 · 副标题（覆盖 excerpt）', 'type' => 'textarea', 'zh' => '', 'en' => '', 'extra' => ['rows' => 2]],
+        ['name' => 'case_cover_image', 'label' => '案例 · 封面图片（覆盖 WP 特色图，空白则回退 featured image）', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
     ], [
         [['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:cases']],
     ]));
@@ -2280,6 +2280,7 @@ add_action('acf/init', function () {
     acf_add_local_field_group($hireai_make_group('group_insight_meta', '洞察 — 卡片', [
         ['name' => 'insight_cat',      'label' => '洞察 · 分类标签（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'insight_read_time', 'label' => '洞察 · 阅读时长（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
+        ['name' => 'insight_cover_image', 'label' => '洞察 · 封面图片（覆盖 WP 特色图，空白则回退 featured image）', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
     ], [
         [['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:insights']],
     ]));
