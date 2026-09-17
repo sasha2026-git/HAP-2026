@@ -93,123 +93,289 @@ foreach ([1, 2, 3] as $i) {
     ];
 }
 
-/* Solutions section */
-$sol_section_kicker = hireai_field_lang('fp_solutions_kicker', $lang, $is_en ? 'Industry Empowerment' : '行业赋能');
-$sol_section_title  = hireai_field_lang('fp_solutions_title',  $lang, $is_en ? 'AI Solutions' : 'AI 解决方案');
-$sol_section_sub    = hireai_field_lang('fp_solutions_subtitle', $lang, $is_en ? 'Bespoke intelligent solutions across industries.' : '面向多元行业，打造量身定制的智能解决方案。');
-$sol_explore_label  = hireai_field_lang('fp_solutions_explore_label', $lang, $is_en ? 'Explore More' : '探索更多');
-$sol_explore_url    = hireai_field('fp_solutions_explore_url', home_url('/ai-solutions/'));
+
+/* ═══════════════════════════════════════════════════════════════════════
+   v3.6.0 改造 — 5 个 Section 渲染逻辑升级
+   策略（C+ACF 双 fallback + 保留旧链）:
+     - 优先：v3.6.0 NEW ACF (group_frontpage_v360) 显式双语字段 / repeater
+     - 次优：v3.6.0 NEW WC 商品（sol_featured_on_home=true）的双语 cover
+     - 第三：v3.5.7-p27 既有链 WC 商品 → ACF fp_* 字段 → 默认值
+   安全约束:
+     - 不删除 / 不改 hireai_* helper 函数
+     - 不改 typography / spacing / radius / container 数值
+     - 保留 hireai_get_ai_solutions_products 函数定义(虽然此处改用 inline WP_Query)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ---------- 读 NEW ACF 双语 helper（直接读 _zh / _en 后缀名） ---------- */
+$hireai_v360 = function ($base, $lang_code) {
+    $sfx = ($lang_code === 'en') ? '_en' : '_zh';
+    if (!function_exists('get_field')) return '';
+    $v = get_field($base . $sfx);
+    if (is_array($v)) return isset($v['url']) ? (string) $v['url'] : '';
+    return is_string($v) ? $v : '';
+};
+$hireai_v360_url = function ($base) {
+    if (!function_exists('get_field')) return '';
+    $v = get_field($base);
+    return is_string($v) ? trim($v) : '';
+};
+$hireai_v360_image_url = function ($base) {
+    if (!function_exists('get_field')) return '';
+    $v = get_field($base);
+    if (is_array($v) && !empty($v['url'])) return (string) $v['url'];
+    if (is_string($v)) return $v;
+    return '';
+};
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ① Hero 区域 — 优先 NEW ACF → fallback p27 旧字段
+   ═══════════════════════════════════════════════════════════════════════ */
+$hero_kicker      = $hireai_v360('fp_hero_kicker',   $lang) ?: hireai_field_lang('fp_hero_kicker',   $lang, $is_en ? '工匠精神与算法 / Prestige Digital Labor' : '工匠精神与算法');
+$hero_title       = $hireai_v360('fp_hero_title',    $lang) ?: hireai_field_lang('fp_hero_static',   $lang, $is_en ? 'Redefining' : '重新定义');
+$hero_subtitle    = $hireai_v360('fp_hero_subtitle', $lang) ?: hireai_field_lang('fp_hero_subtitle', $lang, $is_en ? 'Fusing cutting-edge technology with a luxurious aesthetic to craft your bespoke digital workforce.' : '融合尖端科技与奢华质感，为您打造专属的数字员工矩阵。');
+$hero_cta_label   = $hireai_v360('fp_hero_cta_label',$lang) ?: hireai_field_lang('fp_hero_cta_1_title', $lang, $is_en ? 'Explore Series' : '探索系列');
+$hero_cta_url     = $hireai_v360_url('fp_hero_cta_url') ?: hireai_field('fp_hero_cta_1_url', home_url('/ai-employees/'));
+/* fp_hero_accent 在 NEW 组里没有独立字段(只有 fp_hero_title) — 保留旧 group_front_hero 的 fp_hero_accent 作为金色斜体 */
+$hero_accent      = hireai_field_lang('fp_hero_accent', $lang, $is_en ? 'Digital Labor' : '数字劳动力');
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ② 解决方案区域 — 三层 fallback
+   Layer 1: NEW ACF repeater (fp_sol_static_repeater)  ← D
+   Layer 2: NEW WC featured (sol_featured_on_home=1)   ← C
+   Layer 3: p27 旧链 WC → ACF fp_sol1..4 → defaults
+   ═══════════════════════════════════════════════════════════════════════ */
+$sol_section_kicker = $hireai_v360('fp_solutions_kicker',       $lang) ?: hireai_field_lang('fp_solutions_kicker',       $lang, $is_en ? 'Industry Empowerment' : '行业赋能');
+$sol_section_title  = $hireai_v360('fp_solutions_title',        $lang) ?: hireai_field_lang('fp_solutions_title',        $lang, $is_en ? 'AI Solutions' : 'AI 解决方案');
+$sol_section_sub    = $hireai_v360('fp_solutions_subtitle',     $lang) ?: hireai_field_lang('fp_solutions_subtitle',     $lang, $is_en ? 'Bespoke intelligent solutions across industries.' : '面向多元行业，打造量身定制的智能解决方案。');
+$sol_explore_label  = $hireai_v360('fp_solutions_explore_label',$lang) ?: hireai_field_lang('fp_solutions_explore_label',$lang, $is_en ? 'Explore More' : '探索更多');
+$sol_explore_url    = $hireai_v360_url('fp_solutions_explore_url') ?: hireai_field('fp_solutions_explore_url', home_url('/ai-solutions/'));
 
 $solutions = [];
 
-/* v3.5.7-p17 Bug 3 修复：头版 4 张方案卡从 WC 商品动态拉取（mmx 报告确认 front-page.php 头版硬编码 ACF 根本不接 WC）
- *   - WC 商品不足 4 时,fallback 到原 ACF fp_sol1..4（向后兼容）
- *   - WC 商品为空时,完全保留 ACF 默认值
- *   - 数据源：hireai_get_ai_solutions_products() 已含 tax_query + 缓存逻辑
- */
-if (function_exists('hireai_get_ai_solutions_products')) {
-    $_fp_wc_sols = hireai_get_ai_solutions_products(1, 4);
-    if (!empty($_fp_wc_sols)) {
-        foreach ($_fp_wc_sols as $_fp_sol) {
-            $_fp_id      = is_object($_fp_sol) ? (int) $_fp_sol->ID : (int) $_fp_sol;
-            if ($_fp_id <= 0) continue;
-            $_fp_thumb   = get_the_post_thumbnail_url($_fp_id, 'large');
-            $_fp_title   = get_the_title($_fp_id);
-            $_fp_link    = get_permalink($_fp_id);
-            $_fp_excerpt = has_excerpt($_fp_id)
-                ? get_the_excerpt()
-                : wp_trim_words(wp_strip_all_tags(get_post_field('post_content', $_fp_id)), 24, '…');
-            $_fp_tag     = function_exists('hireai_field_lang')
-                ? hireai_field_lang('product_retainer_label', $lang, '', $_fp_id)
-                : '';
-            $solutions[] = [
-                'title' => $_fp_title,
-                'desc'  => $_fp_excerpt,
-                'tag'   => $_fp_tag,
-                'img'   => $_fp_thumb,
-                'url'   => $_fp_link,
-            ];
+/* ---- Layer 1: NEW ACF repeater (最多 4 张) ---- */
+$_v360_sols_rep = function_exists('get_field') ? get_field('fp_sol_static_repeater') : null;
+if (is_array($_v360_sols_rep) && !empty($_v360_sols_rep)) {
+    foreach (array_slice($_v360_sols_rep, 0, 4) as $_row) {
+        if (!is_array($_row)) continue;
+        $_t = $is_en ? ($_row['title_en'] ?? '') : ($_row['title_zh'] ?? '');
+        if (!is_string($_t) || $_t === '') continue;
+        $_img = '';
+        if (!empty($_row['image']) && is_array($_row['image']) && !empty($_row['image']['url'])) {
+            $_img = (string) $_row['image']['url'];
         }
+        $solutions[] = [
+            'title' => $_t,
+            'desc'  => $is_en ? ($_row['desc_en'] ?? '') : ($_row['desc_zh'] ?? ''),
+            'tag'   => $is_en ? ($_row['tag_en'] ?? '')  : ($_row['tag_zh'] ?? ''),
+            'img'   => $_img,
+            'url'   => !empty($_row['url']) ? (string) $_row['url'] : home_url('/ai-solutions/'),
+        ];
     }
 }
 
-foreach ([1, 2, 3, 4] as $i) {
-    if (count($solutions) >= 4) break;
-    $dflt = [
-        1 => ['title' => '金融与财富管理',     'desc' => '智能顾问与客户关系维护的数字化重塑。', 'tag' => '金融', 'img' => 'solution-finance'],
-        2 => ['title' => '高端零售与电商',     'desc' => '24/7 全天候奢华购物体验升级。',         'tag' => '零售', 'img' => 'solution-retail'],
-        3 => ['title' => '医疗健康与陪伴',     'desc' => '充满同理心的智能关怀与健康咨询。',       'tag' => '健康', 'img' => ''],
-        4 => ['title' => '泛娱乐与虚拟偶像',   'desc' => '打造永不塌房的超级 IP 与互动体验。',     'tag' => '娱乐', 'img' => ''],
-    ];
-    $d = $dflt[$i];
-    $solutions[] = [
-        'title' => hireai_field_lang("fp_sol{$i}_title", $lang, $d['title']),
-        'desc'  => hireai_field_lang("fp_sol{$i}_desc",  $lang, $d['desc']),
-        'tag'   => hireai_field_lang("fp_sol{$i}_tag",   $lang, $d['tag']),
-        'img'   => hireai_image("fp_sol{$i}_image", $d['img'] ? $home . '/assets/img/home/' . $d['img'] . '.png' : ''),
-        'url'   => home_url('/ai-solutions/'),
-    ];
+/* ---- Layer 2: NEW WC featured products (sol_featured_on_home=1, 按 sol_featured_order ASC) ---- */
+if (count($solutions) < 4 && post_type_exists('product') && function_exists('get_posts')) {
+    $_v360_feat = new WP_Query([
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'posts_per_page' => 4 - count($solutions),
+        'no_found_rows'  => true,
+        'meta_query'     => [
+            ['key' => 'sol_featured_on_home', 'value' => '1', 'compare' => '='],
+        ],
+        'meta_key'       => 'sol_featured_order',
+        'orderby'        => 'meta_value_num',
+        'order'          => 'ASC',
+    ]);
+    if ($_v360_feat->have_posts()) {
+        foreach ($_v360_feat->posts as $_p) {
+            $_pid = (int) $_p->ID;
+            /* NEW ACF 优先;无则回退 WP title/excerpt */
+            $_t_zh = function_exists('get_field') ? get_field('sol_title_zh', $_pid) : '';
+            $_t_en = function_exists('get_field') ? get_field('sol_title_en', $_pid) : '';
+            $_d_zh = function_exists('get_field') ? get_field('sol_desc_zh',  $_pid) : '';
+            $_d_en = function_exists('get_field') ? get_field('sol_desc_en',  $_pid) : '';
+            $_g_zh = function_exists('get_field') ? get_field('sol_tag_zh',   $_pid) : '';
+            $_g_en = function_exists('get_field') ? get_field('sol_tag_en',   $_pid) : '';
+            $_t = $is_en ? (is_string($_t_en) && $_t_en !== '' ? $_t_en : $_p->post_title)
+                         : (is_string($_t_zh) && $_t_zh !== '' ? $_t_zh : $_p->post_title);
+            $_d = $is_en ? (is_string($_d_en) && $_d_en !== '' ? $_d_en : wp_trim_words(wp_strip_all_tags($_p->post_content), 24, '…'))
+                         : (is_string($_d_zh) && $_d_zh !== '' ? $_d_zh : wp_trim_words(wp_strip_all_tags($_p->post_content), 24, '…'));
+            $_g = $is_en ? ($_g_en ?: ($is_en ? 'Solution' : '解决方案'))
+                         : ($_g_zh ?: ($is_en ? 'Solution' : '解决方案'));
+            $solutions[] = [
+                'title' => (string) $_t,
+                'desc'  => (string) $_d,
+                'tag'   => (string) $_g,
+                'img'   => (string) get_the_post_thumbnail_url($_pid, 'large'),
+                'url'   => (string) get_permalink($_pid),
+            ];
+        }
+        wp_reset_postdata();
+    }
 }
 
-/* Cases section */
-$cases_kicker        = hireai_field_lang('fp_cases_kicker', $lang, $is_en ? 'Frontier Vision' : '前沿视野');
-$cases_title         = hireai_field_lang('fp_cases_title',  $lang, $is_en ? 'Cases & Insights' : '案例 & 洞察');
-$cases_sub           = hireai_field_lang('fp_cases_subtitle', $lang, $is_en ? 'See how digital employees transform operations.' : '见证数字员工如何改变企业的运营方式。');
-$cases_explore_label = hireai_field_lang('fp_cases_explore_label', $lang, $is_en ? 'Explore More' : '探索更多');
-$cases_explore_url   = hireai_field('fp_cases_explore_url', home_url('/cases-insights/'));
+/* ---- Layer 3: p27 旧链 — 完全保留（hireai_get_ai_solutions_products + ACF fp_sol1..4 + 默认值） ---- */
+if (count($solutions) < 4) {
+    if (function_exists('hireai_get_ai_solutions_products')) {
+        $_fp_wc_sols = hireai_get_ai_solutions_products(1, 4 - count($solutions));
+        if (!empty($_fp_wc_sols)) {
+            foreach ($_fp_wc_sols as $_fp_sol) {
+                if (count($solutions) >= 4) break;
+                $_fp_id      = is_object($_fp_sol) ? (int) $_fp_sol->ID : (int) $_fp_sol;
+                if ($_fp_id <= 0) continue;
+                /* v3.6.0 防御: featured 商品已被 Layer 2 用过 — 用 featured_order 排除 */
+                if (function_exists('get_field') && get_field('sol_featured_on_home', $_fp_id)) continue;
+                $_fp_thumb   = get_the_post_thumbnail_url($_fp_id, 'large');
+                $_fp_title   = get_the_title($_fp_id);
+                $_fp_link    = get_permalink($_fp_id);
+                $_fp_excerpt = has_excerpt($_fp_id)
+                    ? get_the_excerpt()
+                    : wp_trim_words(wp_strip_all_tags(get_post_field('post_content', $_fp_id)), 24, '…');
+                $_fp_tag     = function_exists('hireai_field_lang')
+                    ? hireai_field_lang('product_retainer_label', $lang, '', $_fp_id)
+                    : '';
+                $solutions[] = [
+                    'title' => $_fp_title,
+                    'desc'  => $_fp_excerpt,
+                    'tag'   => $_fp_tag,
+                    'img'   => $_fp_thumb,
+                    'url'   => $_fp_link,
+                ];
+            }
+        }
+    }
+
+    foreach ([1, 2, 3, 4] as $i) {
+        if (count($solutions) >= 4) break;
+        $dflt = [
+            1 => ['title' => '金融与财富管理',     'desc' => '智能顾问与客户关系维护的数字化重塑。', 'tag' => '金融', 'img' => 'solution-finance'],
+            2 => ['title' => '高端零售与电商',     'desc' => '24/7 全天候奢华购物体验升级。',         'tag' => '零售', 'img' => 'solution-retail'],
+            3 => ['title' => '医疗健康与陪伴',     'desc' => '充满同理心的智能关怀与健康咨询。',       'tag' => '健康', 'img' => ''],
+            4 => ['title' => '泛娱乐与虚拟偶像',   'desc' => '打造永不塌房的超级 IP 与互动体验。',     'tag' => '娱乐', 'img' => ''],
+        ];
+        $d = $dflt[$i];
+        $solutions[] = [
+            'title' => hireai_field_lang("fp_sol{$i}_title", $lang, $d['title']),
+            'desc'  => hireai_field_lang("fp_sol{$i}_desc",  $lang, $d['desc']),
+            'tag'   => hireai_field_lang("fp_sol{$i}_tag",   $lang, $d['tag']),
+            'img'   => hireai_image("fp_sol{$i}_image", $d['img'] ? $home . '/assets/img/home/' . $d['img'] . '.png' : ''),
+            'url'   => home_url('/ai-solutions/'),
+        ];
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ③ Cases & Insights — 双层 fallback (NEW ACF repeater → 旧 ACF + 默认值)
+   ═══════════════════════════════════════════════════════════════════════ */
+$cases_kicker        = $hireai_v360('fp_cases_kicker',        $lang) ?: hireai_field_lang('fp_cases_kicker',        $lang, $is_en ? 'Frontier Vision' : '前沿视野');
+$cases_title         = $hireai_v360('fp_cases_title',         $lang) ?: hireai_field_lang('fp_cases_title',         $lang, $is_en ? 'Cases & Insights' : '案例 & 洞察');
+$cases_sub           = $hireai_v360('fp_cases_subtitle',      $lang) ?: hireai_field_lang('fp_cases_subtitle',      $lang, $is_en ? 'See how digital employees transform operations.' : '见证数字员工如何改变企业的运营方式。');
+$cases_explore_label = $hireai_v360('fp_cases_explore_label', $lang) ?: hireai_field_lang('fp_cases_explore_label', $lang, $is_en ? 'Explore More' : '探索更多');
+$cases_explore_url   = $hireai_v360_url('fp_cases_explore_url') ?: hireai_field('fp_cases_explore_url', home_url('/cases-insights/'));
+
+/* Major case — NEW ACF 优先 */
+$major_title_v360 = $hireai_v360('fp_case_major_title', $lang);
+$major_label_v360 = $hireai_v360('fp_case_major_label', $lang);
+$major_desc_v360  = $hireai_v360('fp_case_major_desc',  $lang);
+$major_image_v360 = $hireai_v360_image_url('fp_case_major_image');
 
 $major_case = [
-    'label' => hireai_field_lang('fp_case_major_label', $lang, $is_en ? 'CASE STUDY' : '案例研究'),
-    'title' => hireai_field_lang('fp_case_major_title', $lang, $is_en ? 'Aurelian Prime in Private Banking' : 'Aurelian Prime 在私人银行的应用'),
-    'desc'  => hireai_field_lang('fp_case_major_desc',  $lang, $is_en ? 'Learn how our top digital employee boosts retention and satisfaction for high-net-worth clients.' : '了解我们的顶级数字员工如何提升高净值客户的留存率与满意度。'),
-    'img'   => hireai_image('fp_case_major_image', $home . '/assets/img/defaults/case-1.jpg'),
+    'label' => $major_label_v360 ?: hireai_field_lang('fp_case_major_label', $lang, $is_en ? 'CASE STUDY' : '案例研究'),
+    'title' => $major_title_v360 ?: hireai_field_lang('fp_case_major_title', $lang, $is_en ? 'Aurelian Prime in Private Banking' : 'Aurelian Prime 在私人银行的应用'),
+    'desc'  => $major_desc_v360  ?: hireai_field_lang('fp_case_major_desc',  $lang, $is_en ? 'Learn how our top digital employee boosts retention and satisfaction for high-net-worth clients.' : '了解我们的顶级数字员工如何提升高净值客户的留存率与满意度。'),
+    'img'   => $major_image_v360 ?: hireai_image('fp_case_major_image', $home . '/assets/img/defaults/case-1.jpg'),
     'url'   => home_url('/cases-insights/'),
 ];
 
+/* Minor cases — Layer 1: NEW ACF repeater; Layer 2: 旧 fp_case1/2 + 默认值 */
 $side_cases = [];
-foreach ([1, 2] as $i) {
-    $dflt = [
-        1 => ['tag' => '案例研究', 'title' => '电商视觉革命：转化率提升 55%',    'desc' => '重塑线上购物体验，结合虚拟试穿与个性化推荐带来的商业增长。',           'img' => 'case-2'],
-        2 => ['tag' => '深度洞察', 'title' => '"未来不再仅仅是代码，更是交响乐。"', 'desc' => '探讨数字人性化的趋势，以及我们在构建有温度的 AI 方面的思考与实践。', 'img' => 'case-3'],
-    ];
-    $d = $dflt[$i];
-    $side_cases[] = [
-        'tag'   => hireai_field_lang("fp_case{$i}_tag",   $lang, $d['tag']),
-        'title' => hireai_field_lang("fp_case{$i}_title", $lang, $d['title']),
-        'desc'  => hireai_field_lang("fp_case{$i}_desc",  $lang, $d['desc']),
-        'img'   => hireai_image("fp_case{$i}_image", $home . '/assets/img/defaults/' . $d['img'] . '.jpg'),
-        'url'   => home_url('/cases-insights/'),
-    ];
+$_v360_minor = function_exists('get_field') ? get_field('fp_cases_minor_repeater') : null;
+if (is_array($_v360_minor) && !empty($_v360_minor)) {
+    foreach (array_slice($_v360_minor, 0, 6) as $_row) {
+        if (!is_array($_row)) continue;
+        $_t = $is_en ? ($_row['title_en'] ?? '') : ($_row['title_zh'] ?? '');
+        if (!is_string($_t) || $_t === '') continue;
+        $_img = '';
+        if (!empty($_row['image']) && is_array($_row['image']) && !empty($_row['image']['url'])) {
+            $_img = (string) $_row['image']['url'];
+        }
+        $side_cases[] = [
+            'tag'   => '',
+            'title' => $_t,
+            'desc'  => $is_en ? ($_row['desc_en'] ?? '') : ($_row['desc_zh'] ?? ''),
+            'img'   => $_img,
+            'url'   => !empty($_row['url']) ? (string) $_row['url'] : home_url('/cases-insights/'),
+        ];
+    }
+}
+if (count($side_cases) < 2) {
+    foreach ([1, 2] as $i) {
+        if (count($side_cases) >= 2) break;
+        $dflt = [
+            1 => ['tag' => '案例研究', 'title' => '电商视觉革命：转化率提升 55%',    'desc' => '重塑线上购物体验，结合虚拟试穿与个性化推荐带来的商业增长。',           'img' => 'case-2'],
+            2 => ['tag' => '深度洞察', 'title' => '"未来不再仅仅是代码，更是交响乐。"', 'desc' => '探讨数字人性化的趋势，以及我们在构建有温度的 AI 方面的思考与实践。', 'img' => 'case-3'],
+        ];
+        $d = $dflt[$i];
+        $side_cases[] = [
+            'tag'   => hireai_field_lang("fp_case{$i}_tag",   $lang, $d['tag']),
+            'title' => hireai_field_lang("fp_case{$i}_title", $lang, $d['title']),
+            'desc'  => hireai_field_lang("fp_case{$i}_desc",  $lang, $d['desc']),
+            'img'   => hireai_image("fp_case{$i}_image", $home . '/assets/img/defaults/' . $d['img'] . '.jpg'),
+            'url'   => home_url('/cases-insights/'),
+        ];
+    }
 }
 
-/* FAQ section */
-$faq_kicker        = hireai_field_lang('fp_faq_kicker', $lang, $is_en ? 'FAQ' : '常见问题');
-$faq_title         = hireai_field_lang('fp_faq_title',  $lang, $is_en ? 'Answers to your questions about digital employees.' : '解答关于数字员工的疑虑，开启智能新纪元。');
-$faq_explore_label = hireai_field_lang('fp_faq_explore_label', $lang, $is_en ? 'Explore More' : '探索更多');
-$faq_explore_url   = hireai_field('fp_faq_explore_url', home_url('/faq/'));
+/* ═══════════════════════════════════════════════════════════════════════
+   ④ FAQ — 双层 fallback (NEW ACF repeater → 旧 fp_faq1..3 + 默认值)
+   ═══════════════════════════════════════════════════════════════════════ */
+$faq_kicker        = $hireai_v360('fp_faq_kicker',        $lang) ?: hireai_field_lang('fp_faq_kicker',        $lang, $is_en ? 'FAQ' : '常见问题');
+$faq_title         = $hireai_v360('fp_faq_title',         $lang) ?: hireai_field_lang('fp_faq_title',         $lang, $is_en ? 'Answers to your questions about digital employees.' : '解答关于数字员工的疑虑，开启智能新纪元。');
+$faq_sub           = $hireai_v360('fp_faq_subtitle',      $lang) ?: ($is_en ? 'Answers to your questions about digital employees.' : '解答关于数字员工的疑虑，开启智能新纪元。');
+$faq_explore_label = $hireai_v360('fp_faq_explore_label', $lang) ?: hireai_field_lang('fp_faq_explore_label', $lang, $is_en ? 'Explore More' : '探索更多');
+$faq_explore_url   = $hireai_v360_url('fp_faq_explore_url') ?: hireai_field('fp_faq_explore_url', home_url('/faq/'));
 
 $faq_items = [];
-foreach ([1, 2, 3] as $i) {
-    $dflt = [
-        1 => ['q' => '定制一位数字员工需要多长时间？', 'a' => '这取决于定制的复杂程度。基础模型微调通常需要 2–4 周，而完全定制化（包括独特外观建模、声音克隆和深度行业知识库训练）可能需要 8–12 周。'],
-        2 => ['q' => '数字员工的知识库可以实时更新吗？', 'a' => '是的，我们的系统支持通过 API 进行实时知识库更新。您可以随时添加新的产品信息、政策变更或行业动态，确保数字员工始终掌握最新资讯。'],
-        3 => ['q' => '如何保障数据隐私与安全？',         'a' => '我们采用企业级加密标准，所有交互数据均在本地或专属私有云中处理。我们严格遵守全球数据保护法规，确保您的商业机密与客户隐私绝对安全。'],
-    ];
-    $d = $dflt[$i];
-    $faq_items[] = [
-        'q' => hireai_field_lang("fp_faq{$i}_q", $lang, $d['q']),
-        'a' => hireai_field_lang("fp_faq{$i}_a", $lang, $d['a']),
-    ];
+$_v360_faq = function_exists('get_field') ? get_field('fp_faq_repeater') : null;
+if (is_array($_v360_faq) && !empty($_v360_faq)) {
+    foreach (array_slice($_v360_faq, 0, 10) as $_row) {
+        if (!is_array($_row)) continue;
+        $_q = $is_en ? ($_row['question_en'] ?? '') : ($_row['question_zh'] ?? '');
+        if (!is_string($_q) || trim($_q) === '') continue;
+        $faq_items[] = [
+            'q' => $_q,
+            'a' => $is_en ? ($_row['answer_en'] ?? '') : ($_row['answer_zh'] ?? ''),
+        ];
+    }
+}
+if (count($faq_items) < 1) {
+    foreach ([1, 2, 3] as $i) {
+        if (count($faq_items) >= 3) break;
+        $dflt = [
+            1 => ['q' => '定制一位数字员工需要多长时间？', 'a' => '这取决于定制的复杂程度。基础模型微调通常需要 2–4 周，而完全定制化（包括独特外观建模、声音克隆和深度行业知识库训练）可能需要 8–12 周。'],
+            2 => ['q' => '数字员工的知识库可以实时更新吗？', 'a' => '是的，我们的系统支持通过 API 进行实时知识库更新。您可以随时添加新的产品信息、政策变更或行业动态，确保数字员工始终掌握最新资讯。'],
+            3 => ['q' => '如何保障数据隐私与安全？',         'a' => '我们采用企业级加密标准，所有交互数据均在本地或专属私有云中处理。我们严格遵守全球数据保护法规，确保您的商业机密与客户隐私绝对安全。'],
+        ];
+        $d = $dflt[$i];
+        $faq_items[] = [
+            'q' => hireai_field_lang("fp_faq{$i}_q", $lang, $d['q']),
+            'a' => hireai_field_lang("fp_faq{$i}_a", $lang, $d['a']),
+        ];
+    }
 }
 
-/* CTA band（仅 title / desc / btn_title / btn_url 四个字段；kicker / btn_2 用 fallback） */
-$cta_kicker   = $is_en ? 'NEXT STEP' : '开启旅程';
-$cta_title    = hireai_field_lang('fp_cta_title', $lang, $is_en ? 'Begin Your AI Hiring Journey' : '开启您的 AI 雇佣之旅');
-$cta_desc     = hireai_field_lang('fp_cta_desc',  $lang, $is_en ? 'Speak with our team and craft a digital workforce made for you.' : '与我们的团队对话，打造专属您的数字员工阵容。');
-$cta_btn_title = hireai_field_lang('fp_cta_btn_title', $lang, $is_en ? 'Contact Us' : '联系我们');
-$cta_btn_url   = hireai_field('fp_cta_btn_url', home_url('/contact/'));
+/* ═══════════════════════════════════════════════════════════════════════
+   ⑤ CTA — NEW ACF 优先 → 旧字段 fallback
+   ═══════════════════════════════════════════════════════════════════════ */
+$cta_kicker    = $hireai_v360('fp_cta_kicker',        $lang) ?: ($is_en ? 'NEXT STEP' : '开启旅程');
+$cta_title     = $hireai_v360('fp_cta_title',         $lang) ?: hireai_field_lang('fp_cta_title',    $lang, $is_en ? 'Begin Your AI Hiring Journey' : '开启您的 AI 雇佣之旅');
+$cta_desc      = $hireai_v360('fp_cta_subtitle',      $lang) ?: hireai_field_lang('fp_cta_desc',     $lang, $is_en ? 'Speak with our team and craft a digital workforce made for you.' : '与我们的团队对话，打造专属您的数字员工阵容。');
+$cta_btn_title = $hireai_v360('fp_cta_button_label',  $lang) ?: hireai_field_lang('fp_cta_btn_title',$lang, $is_en ? 'Contact Us' : '联系我们');
+$cta_btn_url   = $hireai_v360_url('fp_cta_button_url') ?: hireai_field('fp_cta_btn_url', home_url('/contact/'));
 $cta_btn_2_title = $is_en ? 'Book Consultation' : '预约咨询';
 $cta_btn_2_url   = home_url('/contact/');
+
 
 /* i18n text */
 $t = [

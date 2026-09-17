@@ -858,17 +858,48 @@ function hireai_build_solution_cards_from_ids($ids) {
         $kicker_en   = is_array($ken_raw)  ? '' : (string) $ken_raw;
         $retainer_zh = is_array($rtz_raw)  ? '' : (string) $rtz_raw;
         $retainer_en = is_array($rten_raw) ? '' : (string) $rten_raw;
-        /* 提取数字人 product_cat 标签(非场景的)—— 用于 client-side persona 过滤 */
+        /* 提取数字人标签(用于 client-side persona 过滤)
+         * v3.5.7-p21: 优先 product_tag(Echo 数据完整,5 个数字人 slug),product_cat fallback
+         *   - 短 slug(victoria/adrian/...)和完整 slug(victoria-brand-pr/...)都接受
+         *   - 每张卡片打 data-personas="short1 short2 ..."(短名),JS chip 切换按短名匹配
+         */
         $persona_slugs = [];
-        if (function_exists('hireai_list_solution_categories')) {
-            $scene_slugs = array_map(function ($c) { return $c['slug']; }, array_filter(function ($c) { return !empty($c['is_scene']); }, hireai_list_solution_categories()));
+        $dh_map        = function_exists('hireai_digital_humans') ? hireai_digital_humans() : [];
+        $dh_short_set  = array_keys($dh_map);
+        $dh_full_to_short = [];
+        foreach ($dh_map as $short => $info) {
+            if (!empty($info['full'])) { $dh_full_to_short[$info['full']] = $short; }
+        }
+        /* 1) product_tag 优先(Echo 数据) */
+        $tag_terms = function_exists('wp_get_post_terms') ? wp_get_post_terms($pid, 'product_tag', ['fields' => 'slugs']) : [];
+        if (!is_wp_error($tag_terms) && !empty($tag_terms)) {
+            foreach ($tag_terms as $slug) {
+                if ($slug === '' || $slug === null) continue;
+                if (in_array($slug, $dh_short_set, true)) {
+                    if (!in_array($slug, $persona_slugs, true)) { $persona_slugs[] = $slug; }
+                } elseif (isset($dh_full_to_short[$slug])) {
+                    $short = $dh_full_to_short[$slug];
+                    if (!in_array($short, $persona_slugs, true)) { $persona_slugs[] = $short; }
+                }
+            }
+        }
+        /* 2) product_cat fallback(旧数据,Echo 9/8 之前) */
+        if (empty($persona_slugs) && function_exists('hireai_list_solution_categories')) {
+            $scene_slugs = array_map(function ($c) { return $c['slug']; }, array_filter(hireai_list_solution_categories(), function ($c) { return !empty($c['is_scene']); }));
         } else {
             $scene_slugs = ['brand-ip','marketing','visual-design','ecommerce','crisis','copywriting','custom'];
         }
-        $product_terms = wp_get_post_terms($pid, 'product_cat', ['fields' => 'slugs']);
-        if (!is_wp_error($product_terms) && !empty($product_terms)) {
-            foreach ($product_terms as $slug) {
-                if (!in_array($slug, $scene_slugs, true) && !empty($slug)) {
+        $cat_terms = function_exists('wp_get_post_terms') ? wp_get_post_terms($pid, 'product_cat', ['fields' => 'slugs']) : [];
+        if (!is_wp_error($cat_terms) && !empty($cat_terms)) {
+            foreach ($cat_terms as $slug) {
+                if ($slug === '' || $slug === null) continue;
+                if (in_array($slug, $scene_slugs, true)) continue;
+                if (in_array($slug, $dh_short_set, true)) {
+                    if (!in_array($slug, $persona_slugs, true)) { $persona_slugs[] = $slug; }
+                } elseif (isset($dh_full_to_short[$slug])) {
+                    $short = $dh_full_to_short[$slug];
+                    if (!in_array($short, $persona_slugs, true)) { $persona_slugs[] = $short; }
+                } elseif (!in_array($slug, $persona_slugs, true)) {
                     $persona_slugs[] = $slug;
                 }
             }
@@ -938,8 +969,8 @@ function hireai_list_solution_personas() {
     $scene_slugs = array_map(
         function ($c) { return $c['slug']; },
         array_filter(
-            function ($c) { return !empty($c['is_scene']); },
-            hireai_list_solution_categories()
+            hireai_list_solution_categories(),
+            function ($c) { return !empty($c['is_scene']); }
         )
     );
     $terms = get_terms([
@@ -1053,13 +1084,17 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
         return array_map('intval', $cached);
     }
 
-    // 1. 基础 tax_query:排除 catalog-visibility=hidden / search-excluded
-    $tax_query = [[
-        'taxonomy' => 'product_visibility',
-        'field'    => 'name',
-        'terms'    => ['exclude-from-catalog', 'exclude-from-search'],
-        'operator' => 'NOT IN',
+    // 1. v3.7.0 紧急修复:基础可见性过滤改走 meta_query _visibility != 'hidden'
+    //    之前 tax_query 用 'product_visibility' + field 'name' + terms 'exclude-from-catalog' / 'exclude-from-search'
+    //    在某些 WP/WC 版本下 product_visibility 是 internal taxonomy,name 字段匹配不上 term_id -> 0 product
+    //    改用 meta_query _visibility (WC 内部统一 post meta) 更稳,覆盖 catalog/search hidden
+    $meta_query = [[
+        'key'     => '_visibility',
+        'value'   => 'hidden',
+        'compare' => '!=',
     ]];
+    //    cat / persona 仍走 tax_query(下面 append),初始空数组
+    $tax_query = [];
 
     // 2. 场景分类筛选(可选)
     if (!empty($category_slug)) {
@@ -1074,11 +1109,33 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
     }
 
     // 3. 数字人筛选(独立维度,与场景 AND 关系)
+    /* v3.5.7-p21: persona_slug 改走 product_tag(Echo 数据) + 短→长 slug 映射
+     *   - 之前查 product_cat(Echo 没写) -> 数字人 chip 永远拉不到商品
+     *   - 接受短名(victoria/adrian/iris/kai/evan)或完整 slug(victoria-brand-pr/...)
+     *   - 优先查 product_tag;若 term 不存在,fallback 到 product_cat(兼容历史数据)
+     */
     if (!empty($persona_slug)) {
-        $term = get_term_by('slug', $persona_slug, 'product_cat');
-        if ($term && !is_wp_error($term)) {
+        $effective_slug = function_exists('hireai_digital_human_full_slug')
+            ? hireai_digital_human_full_slug($persona_slug)
+            : $persona_slug;
+        $term     = null;
+        $tax_used = '';
+        if (taxonomy_exists('product_tag')) {
+            $term = get_term_by('slug', $effective_slug, 'product_tag');
+            if ($term && !is_wp_error($term)) {
+                $tax_used = 'product_tag';
+            }
+        }
+        if ((!$term || is_wp_error($term)) && taxonomy_exists('product_cat')) {
+            $fallback = get_term_by('slug', $effective_slug, 'product_cat');
+            if ($fallback && !is_wp_error($fallback)) {
+                $term     = $fallback;
+                $tax_used = 'product_cat';
+            }
+        }
+        if ($term && !is_wp_error($term) && $tax_used !== '') {
             $tax_query[] = [
-                'taxonomy' => 'product_cat',
+                'taxonomy' => $tax_used,
                 'field'    => 'term_id',
                 'terms'    => [(int) $term->term_id],
             ];
@@ -1106,6 +1163,7 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
         'no_found_rows'  => true,
         'fields'         => 'ids',
         'tax_query'      => $tax_query,
+        'meta_query'     => $meta_query,
     ]);
     $ids = is_array($q->posts) ? array_map('intval', $q->posts) : [];
     wp_reset_postdata();
@@ -1115,10 +1173,11 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
 }
 
 /**
- * v3.5.7-p16: 获取 Cases / Insights 文章 ID 列表
+ * v3.5.7-p16/p25: 获取 Cases / Insights 文章 ID 列表
  *   - 调用 page-cases-insights.php 消费
  *   - $type: 'cases' (拉 4 篇) | 'insights' (拉 3 篇) | 其他按需
- *   - 双语 fallback: 'cases' 失败 → '案例';'insights' 失败 → '洞察'
+ *   - v3.5.7-p25: 改用 tax_query 多 slug IN,覆盖 Polylang 自动建翻译 cat
+ *     (例如 cases-en / insights-en,Polylang 重建时 ID 会变,slug 通常稳定)
  *   - 缓存 key: hireai_cases_cache_v1 / hireai_insights_cache_v1(与 save_post hook 一致)
  *
  * @param string $type 'cases' | 'insights' (其他值原样作为 category slug)
@@ -1142,17 +1201,27 @@ function hireai_get_cases_insights_posts($type = 'cases', $limit = 4) {
         return array_map('intval', array_slice($cached, 0, $limit));
     }
 
-    $cn_fallback_map = [
-        'cases'    => '案例',
-        'insights' => '洞察',
+    /* v3.5.7-p25: 多 slug IN 关系覆盖 Polylang 自动建翻译 cat
+     *   - cases: cat 51 (cases EN) + cat 136 (cases-en Polylang ZH 翻译,ID 不固定)
+     *   - insights: cat 45 (洞察 ZH) + ?? (insights EN,如有)
+     *   - 用 slug 而非 cat ID 因为 Polylang 重建 ID 会变,slug 通常稳定
+     */
+    $slug_map = [
+        'cases'    => ['cases', '案例'],
+        'insights' => ['insights', '洞察'],
     ];
+    $terms = isset($slug_map[$type]) ? $slug_map[$type] : [$type];
 
-    // 第 1 次:英文 slug
     $q = new WP_Query([
         'post_type'      => 'post',
         'post_status'    => 'publish',
         'posts_per_page' => $limit,
-        'category_name'  => $type,
+        'tax_query'      => [[
+            'taxonomy' => 'category',
+            'field'    => 'slug',
+            'terms'    => $terms,
+            'operator' => 'IN',
+        ]],
         'orderby'        => 'date',
         'order'          => 'DESC',
         'no_found_rows'  => true,
@@ -1160,22 +1229,6 @@ function hireai_get_cases_insights_posts($type = 'cases', $limit = 4) {
     ]);
     $ids = is_array($q->posts) ? $q->posts : [];
     wp_reset_postdata();
-
-    // 第 2 次:中文 slug fallback
-    if (empty($ids) && isset($cn_fallback_map[$type])) {
-        $q2 = new WP_Query([
-            'post_type'      => 'post',
-            'post_status'    => 'publish',
-            'posts_per_page' => $limit,
-            'category_name'  => $cn_fallback_map[$type],
-            'orderby'        => 'date',
-            'order'          => 'DESC',
-            'no_found_rows'  => true,
-            'fields'         => 'ids',
-        ]);
-        $ids = is_array($q2->posts) ? $q2->posts : [];
-        wp_reset_postdata();
-    }
 
     $ids = array_map('intval', $ids);
     set_transient($cache_key, $ids, 5 * MINUTE_IN_SECONDS);
@@ -1366,7 +1419,7 @@ function hireai_fallback_nav() {
     $items       = [
         ['slug' => '',             'zh' => '首页',         'en' => 'Home'],
         ['slug' => 'ai-employees', 'zh' => 'AI 数字员工',  'en' => 'AI Employees'],
-        ['slug' => 'ai-solutions', 'zh' => 'AI 解决方案',  'en' => 'AI Solutions'],
+        ['slug' => 'ai-solutions', 'zh' => 'AI 解决方案商城',  'en' => 'AI Solutions'],
         ['slug' => 'cases-insights','zh' => '案例与洞察',   'en' => 'Cases & Insights'],
         ['slug' => 'faq',          'zh' => '常见问题',     'en' => 'FAQ'],
         ['slug' => 'contact',      'zh' => '联系我们',     'en' => 'Contact'],
@@ -1632,10 +1685,9 @@ add_action('acf/init', function () {
             'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium'],
         ],
     ], [
-        // 同 AllScented：精准匹配博客首页 / 静态首页（ACF 免费版标准 location 格式）
+        // v3.7.1: 用 page_type=front_page + page_template 双兜底，避免写死 slug 'home'/'front-page' 导致 WP 后台看不到字段
+        [['param' => 'page_type', 'operator' => '==', 'value' => 'front_page']],
         [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
-        [['param' => 'page', 'operator' => '==', 'value' => 'home']],
-        [['param' => 'page', 'operator' => '==', 'value' => 'front-page']],
     ]));
 
     /* ---- 2. 首页各模块（字段名与 front-page.php 读取的 fp_* 一一对应） ---- */
@@ -1748,9 +1800,9 @@ add_action('acf/init', function () {
         ['name' => 'fp_cta_btn_title', 'label' => 'CTA · 按钮文字', 'type' => 'text', 'zh' => '联系我们', 'en' => 'Contact Us'],
         ['name' => 'fp_cta_btn_url', 'label' => 'CTA · 按钮地址', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
     ], [
+        // v3.7.1: 用 page_type=front_page + page_template 双兜底，避免写死 slug 'home'/'front-page' 导致 WP 后台看不到字段
+        [['param' => 'page_type', 'operator' => '==', 'value' => 'front_page']],
         [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
-        [['param' => 'page', 'operator' => '==', 'value' => 'home']],
-        [['param' => 'page', 'operator' => '==', 'value' => 'front-page']],
     ]));
 
     /* ---- 3. AI 数字员工列表页 ---- */
@@ -2219,6 +2271,7 @@ add_action('acf/init', function () {
         ['name' => 'case_kicker', 'label' => '案例卡片 · kicker（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'case_badge',  'label' => '案例卡片 · badge（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'case_subtitle', 'label' => '案例卡片 · 副标题（覆盖 excerpt）', 'type' => 'textarea', 'zh' => '', 'en' => '', 'extra' => ['rows' => 2]],
+        ['name' => 'case_cover_image', 'label' => '案例 · 封面图片（覆盖 WP 特色图，空白则回退 featured image）', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
     ], [
         [['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:cases']],
     ]));
@@ -2227,6 +2280,7 @@ add_action('acf/init', function () {
     acf_add_local_field_group($hireai_make_group('group_insight_meta', '洞察 — 卡片', [
         ['name' => 'insight_cat',      'label' => '洞察 · 分类标签（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'insight_read_time', 'label' => '洞察 · 阅读时长（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
+        ['name' => 'insight_cover_image', 'label' => '洞察 · 封面图片（覆盖 WP 特色图，空白则回退 featured image）', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
     ], [
         [['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:insights']],
     ]));
@@ -2242,6 +2296,196 @@ add_action('acf/init', function () {
     ], [
         [['param' => 'post_type', 'operator' => '==', 'value' => 'product']],
     ]));
+
+
+      /* ====================================================================
+       * v3.6.0 新增 - 2 个 ACF Field Group:
+       *   ① group_frontpage_v360     首页 5 Section 全双语可视化编辑（5 Tab × 中英）
+       *   ② group_product_featured_v360  商品双语 + 首页推荐开关
+       *
+       * 设计原则:
+       *   - 与现有 group_front_hero / group_front_modules / group_product_meta 并存不互斥
+       *     (ACF 允许同名 name 跨组共存;WP 后台显示两份,值共享一份 meta)
+       *   - 字段 name 显式带 _zh / _en 后缀(由 front-page.php 用 get_field 直接读,不依赖 lang_suffix 自动追加)
+       *   - 解决方案/案例/FAQ 三大区域用 repeater 实现「C: 可选哪些上首页」+「ACF 双 fallback」
+       *   - 商品组新增 sol_featured_on_home + sol_featured_order,默认全部 false / 99
+       *     (用户自己到 WP 后台勾选,不需要 Codex 写入 product 数据)
+       * ==================================================================== */
+
+      /* ---- v3.6.0-A: 首页 5 Section 双语 ---- */
+      acf_add_local_field_group([
+          'key'      => 'group_frontpage_v360',
+          'title'    => '首页 v3.6.0 — 全部 Section 双语',
+          'fields'   => [
+              /* ===== Tab ① Hero ===== */
+              ['key' => 'field_fp_hero_tab',              'label' => '① Hero 区域',              'type' => 'tab'],
+              ['key' => 'field_fp_hero_kicker_zh',       'label' => '眉题 · 中',                 'name' => 'fp_hero_kicker_zh',     'type' => 'text'],
+              ['key' => 'field_fp_hero_kicker_en',       'label' => 'Eyebrow · EN',              'name' => 'fp_hero_kicker_en',     'type' => 'text'],
+              ['key' => 'field_fp_hero_title_zh',        'label' => '主标题 · 中',               'name' => 'fp_hero_title_zh',      'type' => 'text'],
+              ['key' => 'field_fp_hero_title_en',        'label' => 'Headline · EN',             'name' => 'fp_hero_title_en',      'type' => 'text'],
+              ['key' => 'field_fp_hero_subtitle_zh',     'label' => '副标题 · 中',               'name' => 'fp_hero_subtitle_zh',   'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_fp_hero_subtitle_en',     'label' => 'Subtitle · EN',             'name' => 'fp_hero_subtitle_en',   'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_fp_hero_cta_label_zh',    'label' => 'CTA 按钮文字 · 中',         'name' => 'fp_hero_cta_label_zh',  'type' => 'text'],
+              ['key' => 'field_fp_hero_cta_label_en',    'label' => 'CTA Label · EN',            'name' => 'fp_hero_cta_label_en',  'type' => 'text'],
+              ['key' => 'field_fp_hero_cta_url',         'label' => 'CTA 链接 (中英共用)',       'name' => 'fp_hero_cta_url',       'type' => 'url'],
+
+              /* ===== Tab ② Solutions ===== */
+              ['key' => 'field_fp_solutions_tab',                'label' => '② 解决方案区域',                                  'type' => 'tab'],
+              ['key' => 'field_fp_solutions_kicker_zh',          'label' => '眉题 · 中',                                        'name' => 'fp_solutions_kicker_zh',         'type' => 'text'],
+              ['key' => 'field_fp_solutions_kicker_en',          'label' => 'Eyebrow · EN',                                     'name' => 'fp_solutions_kicker_en',         'type' => 'text'],
+              ['key' => 'field_fp_solutions_title_zh',           'label' => '标题 · 中',                                        'name' => 'fp_solutions_title_zh',          'type' => 'text'],
+              ['key' => 'field_fp_solutions_title_en',           'label' => 'Title · EN',                                       'name' => 'fp_solutions_title_en',          'type' => 'text'],
+              ['key' => 'field_fp_solutions_subtitle_zh',        'label' => '副标题 · 中',                                      'name' => 'fp_solutions_subtitle_zh',       'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_solutions_subtitle_en',        'label' => 'Subtitle · EN',                                    'name' => 'fp_solutions_subtitle_en',       'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_solutions_explore_label_zh',   'label' => '「探索更多」按钮文字 · 中',                       'name' => 'fp_solutions_explore_label_zh',  'type' => 'text'],
+              ['key' => 'field_fp_solutions_explore_label_en',   'label' => 'Explore More · EN',                                'name' => 'fp_solutions_explore_label_en',  'type' => 'text'],
+              ['key' => 'field_fp_solutions_explore_url',        'label' => '「探索更多」链接 (中英共用)',                      'name' => 'fp_solutions_explore_url',       'type' => 'url'],
+              [
+                  'key'           => 'field_fp_sol_static_repeater',
+                  'label'         => '解决方案静态卡片（最多 4 张 · WC 首页推荐商品未填时回退到此）',
+                  'name'          => 'fp_sol_static_repeater',
+                  'type'          => 'repeater',
+                  'max'           => 4,
+                  'layout'        => 'row',
+                  'button_label'  => '添加一张方案卡',
+                  'sub_fields'    => [
+                      ['key' => 'field_fp_sol_static_title_zh', 'label' => '标题 · 中',    'name' => 'title_zh', 'type' => 'text'],
+                      ['key' => 'field_fp_sol_static_title_en', 'label' => 'Title · EN',   'name' => 'title_en', 'type' => 'text'],
+                      ['key' => 'field_fp_sol_static_desc_zh',  'label' => '描述 · 中',    'name' => 'desc_zh',  'type' => 'textarea', 'rows' => 2],
+                      ['key' => 'field_fp_sol_static_desc_en',  'label' => 'Description · EN', 'name' => 'desc_en', 'type' => 'textarea', 'rows' => 2],
+                      ['key' => 'field_fp_sol_static_tag_zh',   'label' => '标签 · 中',    'name' => 'tag_zh',   'type' => 'text'],
+                      ['key' => 'field_fp_sol_static_tag_en',   'label' => 'Tag · EN',     'name' => 'tag_en',   'type' => 'text'],
+                      ['key' => 'field_fp_sol_static_image',    'label' => '图片（中英共用）', 'name' => 'image',   'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
+                      ['key' => 'field_fp_sol_static_url',      'label' => '链接（中英共用）', 'name' => 'url',     'type' => 'url'],
+                  ],
+              ],
+
+              /* ===== Tab ③ Cases & Insights ===== */
+              ['key' => 'field_fp_cases_tab',                'label' => '③ 案例与观点',                                       'type' => 'tab'],
+              ['key' => 'field_fp_cases_kicker_zh',          'label' => '眉题 · 中',                                          'name' => 'fp_cases_kicker_zh',         'type' => 'text'],
+              ['key' => 'field_fp_cases_kicker_en',          'label' => 'Eyebrow · EN',                                       'name' => 'fp_cases_kicker_en',         'type' => 'text'],
+              ['key' => 'field_fp_cases_title_zh',           'label' => '标题 · 中',                                          'name' => 'fp_cases_title_zh',          'type' => 'text'],
+              ['key' => 'field_fp_cases_title_en',           'label' => 'Title · EN',                                         'name' => 'fp_cases_title_en',          'type' => 'text'],
+              ['key' => 'field_fp_cases_subtitle_zh',        'label' => '副标题 · 中',                                        'name' => 'fp_cases_subtitle_zh',       'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_cases_subtitle_en',        'label' => 'Subtitle · EN',                                      'name' => 'fp_cases_subtitle_en',       'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_cases_explore_label_zh',   'label' => '「探索更多」按钮文字 · 中',                          'name' => 'fp_cases_explore_label_zh',  'type' => 'text'],
+              ['key' => 'field_fp_cases_explore_label_en',   'label' => 'Explore More · EN',                                  'name' => 'fp_cases_explore_label_en',  'type' => 'text'],
+              ['key' => 'field_fp_cases_explore_url',        'label' => '「探索更多」链接（中英共用）',                       'name' => 'fp_cases_explore_url',       'type' => 'url'],
+              ['key' => 'field_fp_case_major_label_zh',      'label' => '大案例 · 标签 · 中',                                 'name' => 'fp_case_major_label_zh',     'type' => 'text'],
+              ['key' => 'field_fp_case_major_label_en',      'label' => '大案例 · Label · EN',                                'name' => 'fp_case_major_label_en',     'type' => 'text'],
+              ['key' => 'field_fp_case_major_title_zh',      'label' => '大案例 · 标题 · 中',                                 'name' => 'fp_case_major_title_zh',     'type' => 'text'],
+              ['key' => 'field_fp_case_major_title_en',      'label' => '大案例 · Title · EN',                                'name' => 'fp_case_major_title_en',     'type' => 'text'],
+              ['key' => 'field_fp_case_major_desc_zh',       'label' => '大案例 · 描述 · 中',                                 'name' => 'fp_case_major_desc_zh',      'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_fp_case_major_desc_en',       'label' => '大案例 · Description · EN',                          'name' => 'fp_case_major_desc_en',      'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_fp_case_major_image',         'label' => '大案例 · 图片（中英共用）',                          'name' => 'fp_case_major_image',        'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
+              [
+                  'key'           => 'field_fp_cases_minor_repeater',
+                  'label'         => '小案例列表（最多 6 张 · 与大案例对应）',
+                  'name'          => 'fp_cases_minor_repeater',
+                  'type'          => 'repeater',
+                  'max'           => 6,
+                  'layout'        => 'row',
+                  'button_label'  => '添加一张小案例',
+                  'sub_fields'    => [
+                      ['key' => 'field_fp_cases_minor_title_zh', 'label' => '标题 · 中',  'name' => 'title_zh', 'type' => 'text'],
+                      ['key' => 'field_fp_cases_minor_title_en', 'label' => 'Title · EN', 'name' => 'title_en', 'type' => 'text'],
+                      ['key' => 'field_fp_cases_minor_desc_zh',  'label' => '描述 · 中',  'name' => 'desc_zh',  'type' => 'textarea', 'rows' => 2],
+                      ['key' => 'field_fp_cases_minor_desc_en',  'label' => 'Description · EN', 'name' => 'desc_en', 'type' => 'textarea', 'rows' => 2],
+                      ['key' => 'field_fp_cases_minor_image',    'label' => '图片（中英共用）', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
+                      ['key' => 'field_fp_cases_minor_url',      'label' => '链接（中英共用）', 'name' => 'url',   'type' => 'url'],
+                  ],
+              ],
+
+              /* ===== Tab ④ FAQ ===== */
+              ['key' => 'field_fp_faq_tab',     'label' => '④ FAQ 区域',                'type' => 'tab'],
+              ['key' => 'field_fp_faq_kicker_zh',     'label' => '眉题 · 中',                'name' => 'fp_faq_kicker_zh',     'type' => 'text'],
+              ['key' => 'field_fp_faq_kicker_en',     'label' => 'Eyebrow · EN',             'name' => 'fp_faq_kicker_en',     'type' => 'text'],
+              ['key' => 'field_fp_faq_title_zh',      'label' => '标题 · 中',                'name' => 'fp_faq_title_zh',      'type' => 'text'],
+              ['key' => 'field_fp_faq_title_en',      'label' => 'Title · EN',               'name' => 'fp_faq_title_en',      'type' => 'text'],
+              ['key' => 'field_fp_faq_subtitle_zh',   'label' => '副标题 · 中',              'name' => 'fp_faq_subtitle_zh',   'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_faq_subtitle_en',   'label' => 'Subtitle · EN',            'name' => 'fp_faq_subtitle_en',   'type' => 'textarea', 'rows' => 2],
+              [
+                  'key'           => 'field_fp_faq_repeater',
+                  'label'         => 'FAQ 问答列表（最多 10 题）',
+                  'name'          => 'fp_faq_repeater',
+                  'type'          => 'repeater',
+                  'max'           => 10,
+                  'layout'        => 'row',
+                  'button_label'  => '添加一道 FAQ',
+                  'sub_fields'    => [
+                      ['key' => 'field_fp_faq_question_zh', 'label' => '问题 · 中',  'name' => 'question_zh', 'type' => 'text'],
+                      ['key' => 'field_fp_faq_question_en', 'label' => 'Question · EN', 'name' => 'question_en', 'type' => 'text'],
+                      ['key' => 'field_fp_faq_answer_zh',   'label' => '回答 · 中',  'name' => 'answer_zh',   'type' => 'textarea', 'rows' => 3],
+                      ['key' => 'field_fp_faq_answer_en',   'label' => 'Answer · EN', 'name' => 'answer_en',   'type' => 'textarea', 'rows' => 3],
+                  ],
+              ],
+
+              /* ===== Tab ⑤ CTA ===== */
+              ['key' => 'field_fp_cta_tab',             'label' => '⑤ CTA 区域',           'type' => 'tab'],
+              ['key' => 'field_fp_cta_kicker_zh',       'label' => '眉题 · 中',            'name' => 'fp_cta_kicker_zh',       'type' => 'text'],
+              ['key' => 'field_fp_cta_kicker_en',       'label' => 'Eyebrow · EN',         'name' => 'fp_cta_kicker_en',       'type' => 'text'],
+              ['key' => 'field_fp_cta_title_zh',        'label' => '标题 · 中',            'name' => 'fp_cta_title_zh',        'type' => 'text'],
+              ['key' => 'field_fp_cta_title_en',        'label' => 'Title · EN',           'name' => 'fp_cta_title_en',        'type' => 'text'],
+              ['key' => 'field_fp_cta_subtitle_zh',     'label' => '副标题 · 中',          'name' => 'fp_cta_subtitle_zh',     'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_cta_subtitle_en',     'label' => 'Subtitle · EN',        'name' => 'fp_cta_subtitle_en',     'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_cta_button_label_zh', 'label' => '按钮文字 · 中',        'name' => 'fp_cta_button_label_zh', 'type' => 'text'],
+              ['key' => 'field_fp_cta_button_label_en', 'label' => 'Button Label · EN',    'name' => 'fp_cta_button_label_en', 'type' => 'text'],
+              ['key' => 'field_fp_cta_button_url',      'label' => '按钮链接（中英共用）', 'name' => 'fp_cta_button_url',      'type' => 'url'],
+          ],
+          'location' => [
+              [['param' => 'page_type',      'operator' => '==', 'value' => 'front_page']],
+              [['param' => 'page_template',  'operator' => '==', 'value' => 'front-page.php']],
+          ],
+          'menu_order'            => 5,
+          'position'              => 'normal',
+          'style'                 => 'default',
+          'label_placement'       => 'top',
+          'instruction_placement' => 'label',
+          'hide_on_screen'        => ['the_content', 'excerpt', 'discussion', 'comments', 'revisions', 'author', 'format', 'page_attributes'],
+      ]);
+
+      /* ---- v3.6.0-B: 商品双语 + 首页推荐 ---- */
+      acf_add_local_field_group([
+          'key'      => 'group_product_featured_v360',
+          'title'    => 'AI 解决方案商品 · v3.6.0 双语 + 首页推荐',
+          'fields'   => [
+              ['key' => 'field_sol_title_zh',             'label' => '解决方案标题 · 中（覆盖默认 WP title）',     'name' => 'sol_title_zh',             'type' => 'text'],
+              ['key' => 'field_sol_title_en',             'label' => 'Solution Title · EN',                       'name' => 'sol_title_en',             'type' => 'text'],
+              ['key' => 'field_sol_desc_zh',              'label' => '解决方案描述 · 中（覆盖默认 excerpt）',     'name' => 'sol_desc_zh',              'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_sol_desc_en',              'label' => 'Solution Description · EN',                 'name' => 'sol_desc_en',              'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_sol_tag_zh',               'label' => '标签 · 中',                                  'name' => 'sol_tag_zh',               'type' => 'text'],
+              ['key' => 'field_sol_tag_en',               'label' => 'Tag · EN',                                   'name' => 'sol_tag_en',               'type' => 'text'],
+              [
+                  'key'           => 'field_sol_featured_on_home',
+                  'label'         => '★ 首页推荐开关（默认未勾选；勾选后此商品会被 front-page 解决方案区拉取）',
+                  'name'          => 'sol_featured_on_home',
+                  'type'          => 'true_false',
+                  'default_value' => 0,
+                  'ui'            => 1,
+                  'ui_on_text'    => '推荐上首页',
+                  'ui_off_text'   => '不上首页',
+              ],
+              [
+                  'key'           => 'field_sol_featured_order',
+                  'label'         => '首页推荐排序（数字越小越靠前；默认 99）',
+                  'name'          => 'sol_featured_order',
+                  'type'          => 'number',
+                  'default_value' => 99,
+                  'min'           => 1,
+                  'max'           => 99,
+                  'step'          => 1,
+              ],
+          ],
+          'location' => [
+              [['param' => 'post_type', 'operator' => '==', 'value' => 'product']],
+          ],
+          'menu_order'            => 10,
+          'position'              => 'normal',
+          'style'                 => 'default',
+          'label_placement'       => 'top',
+          'instruction_placement' => 'label',
+          'hide_on_screen'        => [],
+      ]);
 
     /* ---- 10. 站点选项（页脚，ACF Pro Options Page）---- */
     if (function_exists('acf_add_options_page')) {
@@ -2266,7 +2510,7 @@ add_action('acf/init', function () {
         /* ★ v3.5.5 新增：6 个导航项双语 ACF 标签（hireai_fallback_nav 后台可编辑） */
         ['name' => 'nav_item_home_label', 'label' => '导航 · 首页', 'type' => 'text', 'zh' => '首页', 'en' => 'Home'],
         ['name' => 'nav_item_ai-employees_label', 'label' => '导航 · AI 数字员工', 'type' => 'text', 'zh' => 'AI 数字员工', 'en' => 'AI Employees'],
-        ['name' => 'nav_item_ai-solutions_label', 'label' => '导航 · AI 解决方案', 'type' => 'text', 'zh' => 'AI 解决方案', 'en' => 'AI Solutions'],
+        ['name' => 'nav_item_ai-solutions_label', 'label' => '导航 · AI 解决方案商城', 'type' => 'text', 'zh' => 'AI 解决方案商城', 'en' => 'AI Solutions'],
         ['name' => 'nav_item_cases-insights_label', 'label' => '导航 · 案例与洞察', 'type' => 'text', 'zh' => '案例与洞察', 'en' => 'Cases & Insights'],
         ['name' => 'nav_item_faq_label', 'label' => '导航 · 常见问题', 'type' => 'text', 'zh' => '常见问题', 'en' => 'FAQ'],
         ['name' => 'nav_item_contact_label', 'label' => '导航 · 联系我们', 'type' => 'text', 'zh' => '联系我们', 'en' => 'Contact'],
@@ -2333,9 +2577,37 @@ add_action('upgrader_process_complete', function ($upgrader, $options) {
             $groups_store->reset();
         }
     }
+/* ============================================================================
+ * ⚠️ 重要架构约束 (v3.5.7-p24):opcache + PHP-FPM 多子进程架构下,本文件的清缓存 hook
+ *   不能保证 100% 立即生效。理由:
+ *
+ *     1. opcache_reset() 和 opcache_invalidate($file, true) 都只对当前 PHP-FPM
+ *        子进程生效(都加了 @ 抑制警告,但行为不变)
+ *     2. WP-FPM pool 默认 pm.max_children=5+,多个子进程并行处理请求
+ *     3. 当前 hook 触发时只 invalidate 一个子进程,其他子进程仍跑旧字节码
+ *        → 下一个请求落到其他子进程时,行为看起来像没部署
+ *
+ *   100% 生效方案(任选一种):
+ *     A. SSH 进 server 跑: sudo systemctl reload php8.2-fpm
+ *        (或 php-fpm / php8.1-fpm / php7.4-fpm 看实际版本)
+ *     B. WP 后台多次手动触发 save_post_product(覆盖所有子进程,通常 3-5 次)
+ *
+ *   历史教训:
+ *     - v3.5.7-p23 部署后 Codex 代码已部署但页面 HTML 没新代码痕迹
+ *     - Echo 9/9 验证诊断 + Codex 反思确认:opcache_reset 多子进程不可靠
+ *     - v3.5.7-p24:opcache_reset → opcache_invalidate(__FILE__, true)
+ *       优势:精确只 invalidate functions.php,不影响其他 opcache 缓存
+ *       劣势:同样只对当前 PHP-FPM 子进程生效,需配合 reload
+ *
+ *   未来部署流程必须包含:
+ *     1. git push + GitHub Release 创建
+ *     2. WP 后台 → 外观 → 主题 → 检查更新 → 升级
+ *     3. ⚠️ SSH 跑: sudo systemctl reload php8.X-fpm
+ * ============================================================================ */
+
     // 3. 清 OPcache(防止 PHP 文件更新但缓存还在跑旧字节码)
-    if (function_exists('opcache_reset')) {
-        opcache_reset();
+    if (function_exists('opcache_invalidate')) {
+        @opcache_invalidate(__FILE__, true);
     }
 }, 11, 2);
 
@@ -2378,6 +2650,22 @@ function hireai_flush_solutions_cache() {
     }
 }
 
+/* v3.5.7-p23 Bug Fix: 商品 taxonomy 变化时清 solutions cache
+ *   解决「Echo 9/8 打 product_tag 后 Codex 缓存不刷新 → 商城 0 张卡」
+ *
+ *   WP 5.4+ 的 set_object_terms 钩子在以下场景触发:
+ *     - wp_set_object_terms() / wp_add_object_terms() / wp_remove_object_terms()
+ *     - WP REST POST /wp/v2/product/{id} with product_tag/product_cat 字段
+ *     - WP 后台 → 产品 → 编辑 → 标签/分类面板操作
+ *
+ *   注意:save_post_product 不会触发 set_object_terms,反之亦然 → 两个 hook 都要
+ */
+add_action('set_object_terms', function ($object_id, $terms, $tt_ids, $taxonomy) {
+    if (get_post_type($object_id) !== 'product') return;
+    if (!in_array($taxonomy, ['product_tag', 'product_cat', 'product_brand'], true)) return;
+    hireai_flush_solutions_cache();
+}, 10, 4);
+
 /* v3.5.7-p17 Bug 3 修复：保留原 save_post_product hook (WC 价格/库存变化但 status 不变时仍需清缓存)
  *   - 仍然只在 publish 状态时清缓存 (与 v3.5.7-p16 行为一致)
  *   - 抽出 hireai_flush_solutions_cache() 复用
@@ -2396,7 +2684,7 @@ add_action('save_post_product', function ($post_id, $post) {
     if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
     if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai product saved'); }
     // 4. OPcache
-    if (function_exists('opcache_reset')) { opcache_reset(); }
+    if (function_exists('opcache_invalidate')) { @opcache_invalidate(__FILE__, true); }
 }, 20, 2);
 
 /* v3.5.7-p17 Bug 3 修复：新增 transition_post_status 监听 (覆盖 auto-draft → publish 路径)
@@ -2414,7 +2702,7 @@ add_action('transition_post_status', function ($new, $old, $post) {
         }
         if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
         if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai product published'); }
-        if (function_exists('opcache_reset')) { opcache_reset(); }
+        if (function_exists('opcache_invalidate')) { @opcache_invalidate(__FILE__, true); }
     }
 }, 20, 3);
 
@@ -2423,8 +2711,16 @@ add_action('save_post', function ($post_id, $post) {
     if ($post->post_status !== 'publish') return;
     if ($post->post_type !== 'post') return;
     // 仅清当文章位于 case/insight/ai-employee 时
+    /* v3.5.7-p25: cache 白名单从 slug 改成 cat ID
+     *   - 之前 'cases' slug 命中 cat 51 但 Polylang 建的 'cases-en' (cat 136) 不命中
+     *   - '洞察' 不在白名单 -> Sasha 发洞察文章 Codex cache 不刷新
+     *   - cat ID 数组 [44, 45, 51, 136, 137, 138] 覆盖所有可能的 case/insight cat
+     *   - Polylang 重建 ID 范围大概率在这区间
+     *   - 如发现新 Polylang 自动 cat(如 cat 150),直接加进数组
+     */
     $cats = wp_get_post_terms($post_id, 'category', ['fields' => 'slugs']);
-    if (array_intersect((array)$cats, ['cases', 'insights', 'ai-employee', 'case', 'insight'])) {
+    $case_insight_cat_slugs = ['cases', '案例', 'insights', '洞察'];
+    if (array_intersect((array)$cats, $case_insight_cat_slugs)) {
         delete_site_transient('update_themes');
         delete_transient('hireai_cases_insights_posts');
         /* v3.5.7-p15: 拆分为 cases/insights 独立 cache,确保 WP 后台发布后即时同步 */
@@ -2436,7 +2732,7 @@ add_action('save_post', function ($post_id, $post) {
         }
         if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
         if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai post saved'); }
-        if (function_exists('opcache_reset')) { opcache_reset(); }
+        if (function_exists('opcache_invalidate')) { @opcache_invalidate(__FILE__, true); }
     }
     /* v3.5.7-p18: 文章保存时强制下次 wp_loaded 重新检测版本（避免后台编辑时不刷新缓存） */
     delete_option('hireai_last_seen_version');
@@ -2464,8 +2760,8 @@ add_action('wp_loaded', function () {
         \LiteSpeed\Purge::purge_all('hireai version changed to ' . $current_version);
     }
     // 3. 清 OPcache
-    if (function_exists('opcache_reset')) {
-        opcache_reset();
+    if (function_exists('opcache_invalidate')) {
+        @opcache_invalidate(__FILE__, true);
     }
     // 4. 清 ACF 字段缓存（版本变更可能伴随 ACF 字段组调整）
     if (function_exists('acf_get_store')) {
@@ -2479,8 +2775,8 @@ add_action('after_switch_theme', function () {
     if (class_exists('\LiteSpeed\Purge')) {
         \LiteSpeed\Purge::purge_all('hireai theme switched p18');
     }
-    if (function_exists('opcache_reset')) {
-        opcache_reset();
+    if (function_exists('opcache_invalidate')) {
+        @opcache_invalidate(__FILE__, true);
     }
     /* 强制下次 wp_loaded 重新检测版本 */
     delete_option('hireai_last_seen_version');
@@ -2510,5 +2806,110 @@ add_action('init', function () {
         }
     }
     set_transient('hireai_p18_product_cat_seeded', 1, DAY_IN_SECONDS);
+}, 20);
+
+
+/* -------------------------------------------------------------------------
+ * v3.5.7-p21: 注册 category taxonomy 到 product CPT + 6 个数字人 chip 配置
+ *   - WP 5.5+ 默认断开 category 与 product 关联,Echo 9/8 写入的 80-92 post category 静默丢失
+ *   - 加这行(priority 5,在 p18 seed priority 20 之前)让防御生效,不影响现有 page-is_singular('product') 代码
+ *   - 数字人 chip 改为 6 个(All + 5 数字人),slug 走 product_tag,short→full 映射兼容历史数据
+ * ---------------------------------------------------------------------- */
+add_action('init', function () {
+    register_taxonomy_for_object_type('category', 'product');
+}, 5);
+
+/**
+ * v3.5.7-p21: 6 个数字人 chip 配置(AI 解决方案商城顶栏筛选)
+ *   - 取代 v3.5.7-p18 的 8 个场景 tab(product_cat 字段空 → 8 个 panel 全空)
+ *   - slug 走 product_tag(Echo 数据最完整的就是 product_tag 5 个数字人)
+ *   - short slug(victoria/adrian/iris/kai/evan) = chip 显示用
+ *   - full slug(victoria-brand-pr/...) = 历史 product_tag 数据,Echo 也可能用 short
+ *   - ACF repeater 'solutions_filters' 仍可覆盖(向后兼容)
+ *
+ * @return array<string,array{slug:string,full:string,label_zh:string,label_en:string}>
+ */
+function hireai_digital_humans() {
+    return [
+        'victoria' => ['slug' => 'victoria', 'full' => 'victoria-brand-pr', 'label_zh' => 'Victoria · 公关',   'label_en' => 'Victoria · PR'],
+        'adrian'   => ['slug' => 'adrian',   'full' => 'adrian-strategy',  'label_zh' => 'Adrian · 品牌IP',  'label_en' => 'Adrian · Brand-IP'],
+        'iris'     => ['slug' => 'iris',     'full' => 'iris-visual',      'label_zh' => 'Iris · 视觉',      'label_en' => 'Iris · Visual'],
+        'kai'      => ['slug' => 'kai',      'full' => 'kai-ecommerce',    'label_zh' => 'Kai · 电商',       'label_en' => 'Kai · E-Commerce'],
+        'evan'     => ['slug' => 'evan',     'full' => 'evan-copywriting', 'label_zh' => 'Evan · 文案',      'label_en' => 'Evan · Copywriting'],
+    ];
+}
+
+/**
+ * v3.5.7-p21: slug 映射(short → full),供 hireai_get_ai_solutions_products() 用
+ *   - 接受 'victoria' → 返回 'victoria-brand-pr'(或反之)
+ *   - 如果传入的 slug 不在 map,原样返回(兼容未来新增数字人)
+ *
+ * @param string $slug chip 短名或完整 slug
+ * @return string 完整 product_tag slug
+ */
+function hireai_digital_human_full_slug($slug) {
+    if (!is_string($slug) || $slug === '') return '';
+    static $short_to_full = null;
+    if ($short_to_full === null) {
+        $map = function_exists('hireai_digital_humans') ? hireai_digital_humans() : [];
+        $short_to_full = [];
+        foreach ($map as $short => $info) {
+            $short_to_full[$short] = $info['full'];
+            $short_to_full[$info['full']] = $info['full']; // 幂等
+        }
+    }
+    return isset($short_to_full[$slug]) ? $short_to_full[$slug] : $slug;
+}
+
+/* v3.5.7-p27 Bug Fix: 禁用 Polylang 自动同步 category term
+ *   解决「Sasha 后台挂 cat 时 Polylang 自动建翻译 cat(案例-zh)→ Echo 怎么挂都被覆盖」
+ *   - 之前给中文文章挂 cat 156 (案例) 时 Polylang 自动建 cat 165 (案例-zh), 文章被移走
+ *   - 禁用后任何 cat 挂载都直接生效,不再建翻译 cat
+ *   - 单语站点(本案)不需要 sync,无副作用
+ */
+add_filter('pll_sync_taxonomy_terms', '__return_false', 10, 1);
+
+/* -------------------------------------------------------------------------
+ * v3.7.0 紧急修复:文章正文末尾追加「相关服务」CTA
+ *   - Echo 9/15 映射表:特定 post ID 在正文末尾追加链接到 hireai 服务/数字人页
+ *   - 815/787 -> 小关 AI 公关危机顾问 (335) + AI 公关服务方案 (793)
+ *   - 813 -> 迈克 AI 视觉创意 (630)
+ *   - 539 -> 迈克 AI 视觉创意 (630) + AI 潮联社 (632)
+ *   - 仅 is_singular('post') 触发,其他页面 (page/product/...) 不影响
+ *   - 渲染 .related-services 容器,样式由 style.css v3.7.0 段补 (card-grid)
+ * ---------------------------------------------------------------------- */
+add_filter('the_content', function ($content) {
+    if (!is_singular('post') || !in_the_loop() || !is_main_query()) return $content;
+    $map = [
+        815 => [
+            ['id' => 335, 'label' => '小关 · AI 公关危机顾问'],
+            ['id' => 793, 'label' => 'AI 公关服务方案'],
+        ],
+        813 => [
+            ['id' => 630, 'label' => '迈克 · AI 视觉创意'],
+        ],
+        787 => [
+            ['id' => 335, 'label' => '小关 · AI 公关危机顾问'],
+            ['id' => 793, 'label' => 'AI 公关服务方案'],
+        ],
+        539 => [
+            ['id' => 630, 'label' => '迈克 · AI 视觉创意'],
+            ['id' => 632, 'label' => 'AI 潮联社'],
+        ],
+    ];
+    $pid = get_the_ID();
+    if (!isset($map[$pid]) || empty($map[$pid])) return $content;
+    $links  = '<div class="related-services"><h4 class="related-services__title">相关服务</h4><ul class="related-services__list">';
+    foreach ($map[$pid] as $svc) {
+        $url = get_permalink((int) $svc['id']);
+        if (!$url) continue;
+        $links .= sprintf(
+            '<li><a class="related-services__link" href="%s">%s</a></li>',
+            esc_url($url),
+            esc_html($svc['label'])
+        );
+    }
+    $links .= '</ul></div>';
+    return $content . $links;
 }, 20);
 
