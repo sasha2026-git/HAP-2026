@@ -1800,84 +1800,189 @@ add_action('acf/init', function () {
         array(array('param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:insights')),
     )));
 
-    /* ---- 5. 案例 & 洞察页 ---- */
-    acf_add_local_field_group(hireai_make_bilingual_group('group_page_cases_insights', '案例 & 洞察页', [
-        ['name' => 'hero_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '案例与洞察', 'en' => 'CASES & INSIGHTS'],
-        ['name' => 'hero_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '案例与洞察', 'en' => 'Cases & Insights', 'extra' => ['rows' => 1]],
-        ['name' => 'hero_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '见证数字员工如何改变企业的运营方式，洞察 AI 行业的深层趋势。', 'en' => 'See how digital employees transform operations and explore the deeper currents of AI.', 'extra' => ['rows' => 2]],
+/* ---- 5. 案例 & 洞察页（v3.7.4 重写：AllScented 模式直接注册，去 hireai_make_bilingual_group 闭包）
+     *    历史：v3.7.3 用 hireai_make_bilingual_group() 闭包，对已带 _zh 后缀的字段（如 ci_hero_h1_pre_zh）
+     *          会自动追加 _zh，最终注册成带双后缀的 field name。源码里难看清字段对应关系。
+     *    修复：直接展开成两层 Tab（zh + en），每个字段 name 严格按 page 实际读取的格式（带单后缀 _zh / _en）。
+     *          AllScented 模式 + acf/init hook 包裹（ACF 6.x 兼容）。
+     * ---------------------------------------------------------------------- */
+    acf_add_local_field_group(array(
+        'key'    => 'group_page_cases_insights',
+        'title'  => '案例 & 洞察页',
+        'fields' => array(
 
-        ['name' => 'cases_kicker', 'label' => '案例 · 眉题', 'type' => 'text', 'zh' => '案例', 'en' => 'CASES'],
-        ['name' => 'cases_title', 'label' => '案例 · 标题', 'type' => 'textarea', 'zh' => '精选案例', 'en' => 'Selected Cases', 'extra' => ['rows' => 1]],
-        ['name' => 'cases_subtitle', 'label' => '案例 · 副标题', 'type' => 'textarea', 'zh' => '真实客户如何借助数字员工实现增长。', 'en' => 'How real clients grow with digital employees.', 'extra' => ['rows' => 2]],
-        ['name' => 'cases_cta_url', 'label' => '案例 · 链接', 'type' => 'text', 'zh' => '/category/cases/', 'en' => '/category/cases/'],
-        ['name' => 'cases_cta_title', 'label' => '案例 · 按钮文字', 'type' => 'text', 'zh' => '查看全部案例', 'en' => 'All Cases'],
+            /* === 中文 Tab === */
+            array('key' => 'group_page_cases_insights_tab_zh', 'label' => '中文内容', 'type' => 'tab'),
 
-        ['name' => 'insights_kicker', 'label' => '洞察 · 眉题', 'type' => 'text', 'zh' => '洞察', 'en' => 'INSIGHTS'],
-        ['name' => 'insights_title', 'label' => '洞察 · 标题', 'type' => 'textarea', 'zh' => '前沿洞察', 'en' => 'Frontier Insights', 'extra' => ['rows' => 1]],
-        ['name' => 'insights_subtitle', 'label' => '洞察 · 副标题', 'type' => 'textarea', 'zh' => '关于 AI 行业与数字员工的深度思考。', 'en' => 'Deep thinking on AI and the digital workforce.', 'extra' => ['rows' => 2]],
-        ['name' => 'insights_cta_url', 'label' => '洞察 · 链接', 'type' => 'text', 'zh' => '/category/insights/', 'en' => '/category/insights/'],
-        ['name' => 'insights_cta_title', 'label' => '洞察 · 按钮文字', 'type' => 'text', 'zh' => '更多洞察', 'en' => 'More Insights'],
+            /* 页眉 */
+            array('key' => 'field_hero_kicker_zh',          'label' => '页眉眉题',                 'name' => 'hero_kicker_zh',          'type' => 'text',     'default_value' => '案例与洞察'),
+            array('key' => 'field_hero_title_zh',           'label' => '页眉标题',                 'name' => 'hero_title_zh',           'type' => 'textarea', 'default_value' => '案例与洞察',                                                'rows' => 1),
+            array('key' => 'field_hero_subtitle_zh',        'label' => '页眉副标题',               'name' => 'hero_subtitle_zh',        'type' => 'textarea', 'default_value' => '见证数字员工如何改变企业的运营方式，洞察 AI 行业的深层趋势。',     'rows' => 2),
 
-        /* ★ v3.5.5 新增：CI archive 全字段 ACF 化（对齐 v2.2.6 硬编码默认值） */
-        ['name' => 'ci_hero_kicker', 'label' => 'CI · Hero 眉题', 'type' => 'text', 'zh' => '智慧工坊', 'en' => 'THE ATELIER OF INTELLIGENCE'],
-        ['name' => 'ci_hero_h1_pre_zh', 'label' => 'CI · Hero h1 前缀（em 之前）', 'type' => 'text', 'zh' => '打造数字 ', 'en' => 'Crafting Digital '],
-        ['name' => 'ci_hero_h1_em_zh', 'label' => 'CI · Hero h1 em（斜体强调）', 'type' => 'text', 'zh' => '人文', 'en' => 'Humanity'],
-        ['name' => 'ci_hero_p_zh', 'label' => 'CI · Hero 副文', 'type' => 'textarea', 'zh' => '技术精度与传承美学的交汇之处。', 'en' => 'Where technical precision meets heritage aesthetic.', 'extra' => ['rows' => 2]],
+            /* 案例区 */
+            array('key' => 'field_cases_kicker_zh',         'label' => '案例 · 眉题',              'name' => 'cases_kicker_zh',         'type' => 'text',     'default_value' => '案例'),
+            array('key' => 'field_cases_title_zh',          'label' => '案例 · 标题',              'name' => 'cases_title_zh',          'type' => 'textarea', 'default_value' => '精选案例',                                                  'rows' => 1),
+            array('key' => 'field_cases_subtitle_zh',       'label' => '案例 · 副标题',            'name' => 'cases_subtitle_zh',       'type' => 'textarea', 'default_value' => '真实客户如何借助数字员工实现增长。',                              'rows' => 2),
+            array('key' => 'field_cases_cta_url_zh',        'label' => '案例 · 链接',              'name' => 'cases_cta_url_zh',        'type' => 'text',     'default_value' => '/category/cases/'),
+            array('key' => 'field_cases_cta_title_zh',      'label' => '案例 · 按钮文字',          'name' => 'cases_cta_title_zh',      'type' => 'text',     'default_value' => '查看全部案例'),
 
-        ['name' => 'ci_sec_h2_zh', 'label' => 'CI · 案例区 h2', 'type' => 'text', 'zh' => '卓越案例', 'en' => 'Collaborative Excellence'],
+            /* 洞察区 */
+            array('key' => 'field_insights_kicker_zh',      'label' => '洞察 · 眉题',              'name' => 'insights_kicker_zh',      'type' => 'text',     'default_value' => '洞察'),
+            array('key' => 'field_insights_title_zh',       'label' => '洞察 · 标题',              'name' => 'insights_title_zh',       'type' => 'textarea', 'default_value' => '前沿洞察',                                                  'rows' => 1),
+            array('key' => 'field_insights_subtitle_zh',    'label' => '洞察 · 副标题',            'name' => 'insights_subtitle_zh',    'type' => 'textarea', 'default_value' => '关于 AI 行业与数字员工的深度思考。',                              'rows' => 2),
+            array('key' => 'field_insights_cta_url_zh',     'label' => '洞察 · 链接',              'name' => 'insights_cta_url_zh',     'type' => 'text',     'default_value' => '/category/insights/'),
+            array('key' => 'field_insights_cta_title_zh',   'label' => '洞察 · 按钮文字',          'name' => 'insights_cta_title_zh',   'type' => 'text',     'default_value' => '更多洞察'),
 
-        ['name' => 'ci_case1_badge', 'label' => 'CI · 案例 1 徽章', 'type' => 'text', 'zh' => '+42% 留存', 'en' => '+42% Retention'],
-        ['name' => 'ci_case1_title_zh', 'label' => 'CI · 案例 1 标题', 'type' => 'text', 'zh' => '数字礼宾：高定精品馆', 'en' => 'Aurelian Prime for Private Banking'],
-        ['name' => 'ci_case1_desc_zh', 'label' => 'CI · 案例 1 描述', 'type' => 'textarea', 'zh' => '为高净值客户打造超写实数字人，引领其在元宇宙私密展厅中探索收藏系列。', 'en' => 'Reimagining wealth management through a hyper-realistic digital concierge.', 'extra' => ['rows' => 2]],
-        ['name' => 'ci_case1_image', 'label' => 'CI · 案例 1 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+            /* CI archive（v3.5.5 引入：页眉 + h1 + 副文） */
+            array('key' => 'field_ci_hero_kicker_zh',       'label' => 'CI · Hero 眉题',           'name' => 'ci_hero_kicker_zh',       'type' => 'text',     'default_value' => '智慧工坊'),
+            array('key' => 'field_ci_hero_h1_pre_zh',      'label' => 'CI · Hero h1 前缀',        'name' => 'ci_hero_h1_pre_zh',      'type' => 'text',     'default_value' => '打造数字 '),
+            array('key' => 'field_ci_hero_h1_em_zh',       'label' => 'CI · Hero h1 em',          'name' => 'ci_hero_h1_em_zh',       'type' => 'text',     'default_value' => '人文'),
+            array('key' => 'field_ci_hero_p_zh',           'label' => 'CI · Hero 副文',           'name' => 'ci_hero_p_zh',           'type' => 'textarea', 'default_value' => '技术精度与传承美学的交汇之处。',                                  'rows' => 2),
+            array('key' => 'field_ci_sec_h2_zh',           'label' => 'CI · 案例区 h2',           'name' => 'ci_sec_h2_zh',           'type' => 'text',     'default_value' => '卓越案例'),
 
-        ['name' => 'ci_case2_badge', 'label' => 'CI · 案例 2 徽章', 'type' => 'text', 'zh' => 'AI 艺术整合', 'en' => 'AI Art Integration'],
-        ['name' => 'ci_case2_title_zh', 'label' => 'CI · 案例 2 标题', 'type' => 'text', 'zh' => 'Lumina NFT 系列', 'en' => 'Lumina NFT Series'],
-        ['name' => 'ci_case2_desc_zh', 'label' => 'CI · 案例 2 描述', 'type' => 'textarea', 'zh' => '独家 IP 合作，将生成算法与传统工艺融合。', 'en' => 'Exclusive IP collaboration merging generative algorithms with heritage craft.', 'extra' => ['rows' => 2]],
-        ['name' => 'ci_case2_image', 'label' => 'CI · 案例 2 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+            /* 案例 1-4（badge / title / desc / image） */
+            array('key' => 'field_ci_case1_badge_zh',      'label' => 'CI · 案例 1 徽章',         'name' => 'ci_case1_badge_zh',      'type' => 'text',     'default_value' => '+42% 留存'),
+            array('key' => 'field_ci_case1_title_zh',      'label' => 'CI · 案例 1 标题',         'name' => 'ci_case1_title_zh',      'type' => 'text',     'default_value' => '数字礼宾：高定精品馆'),
+            array('key' => 'field_ci_case1_desc_zh',       'label' => 'CI · 案例 1 描述',         'name' => 'ci_case1_desc_zh',       'type' => 'textarea', 'default_value' => '为高净值客户打造超写实数字人，引领其在元宇宙私密展厅中探索收藏系列。', 'rows' => 2),
+            array('key' => 'field_ci_case1_image_zh',      'label' => 'CI · 案例 1 图片',         'name' => 'ci_case1_image_zh',      'type' => 'image',    'default_value' => '', 'return_format' => 'url', 'preview_size' => 'medium'),
 
-        ['name' => 'ci_case3_badge', 'label' => 'CI · 案例 3 徽章', 'type' => 'text', 'zh' => '3.4 倍转化', 'en' => '3.4x Conversion'],
-        ['name' => 'ci_case3_title_zh', 'label' => 'CI · 案例 3 标题', 'type' => 'text', 'zh' => '电商进化论', 'en' => 'E-commerce Evolution'],
-        ['name' => 'ci_case3_desc_zh', 'label' => 'CI · 案例 3 描述', 'type' => 'textarea', 'zh' => '将浏览转化为沉浸式策展体验。', 'en' => 'Luxury retail performance scaling through personalized digital twin advisors.', 'extra' => ['rows' => 2]],
-        ['name' => 'ci_case3_image', 'label' => 'CI · 案例 3 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+            array('key' => 'field_ci_case2_badge_zh',      'label' => 'CI · 案例 2 徽章',         'name' => 'ci_case2_badge_zh',      'type' => 'text',     'default_value' => 'AI 艺术整合'),
+            array('key' => 'field_ci_case2_title_zh',      'label' => 'CI · 案例 2 标题',         'name' => 'ci_case2_title_zh',      'type' => 'text',     'default_value' => 'Lumina NFT 系列'),
+            array('key' => 'field_ci_case2_desc_zh',       'label' => 'CI · 案例 2 描述',         'name' => 'ci_case2_desc_zh',       'type' => 'textarea', 'default_value' => '独家 IP 合作，将生成算法与传统工艺融合。',                          'rows' => 2),
+            array('key' => 'field_ci_case2_image_zh',      'label' => 'CI · 案例 2 图片',         'name' => 'ci_case2_image_zh',      'type' => 'image',    'default_value' => '', 'return_format' => 'url', 'preview_size' => 'medium'),
 
-        ['name' => 'ci_case4_badge', 'label' => 'CI · 案例 4 徽章', 'type' => 'text', 'zh' => 'IP 保护 100%', 'en' => 'IP Protection 100%'],
-        ['name' => 'ci_case4_title_zh', 'label' => 'CI · 案例 4 标题', 'type' => 'text', 'zh' => '数字 IP 金库', 'en' => 'The Digital IP Vault'],
-        ['name' => 'ci_case4_desc_zh', 'label' => 'CI · 案例 4 描述', 'type' => 'textarea', 'zh' => 'AI 集成奢侈房产的全球 PR 审计与声誉管理。', 'en' => 'Global PR audit and reputation management for AI-integrated luxury estates.', 'extra' => ['rows' => 2]],
-        ['name' => 'ci_case4_image', 'label' => 'CI · 案例 4 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+            array('key' => 'field_ci_case3_badge_zh',      'label' => 'CI · 案例 3 徽章',         'name' => 'ci_case3_badge_zh',      'type' => 'text',     'default_value' => '3.4 倍转化'),
+            array('key' => 'field_ci_case3_title_zh',      'label' => 'CI · 案例 3 标题',         'name' => 'ci_case3_title_zh',      'type' => 'text',     'default_value' => '电商进化论'),
+            array('key' => 'field_ci_case3_desc_zh',       'label' => 'CI · 案例 3 描述',         'name' => 'ci_case3_desc_zh',       'type' => 'textarea', 'default_value' => '将浏览转化为沉浸式策展体验。',                                    'rows' => 2),
+            array('key' => 'field_ci_case3_image_zh',      'label' => 'CI · 案例 3 图片',         'name' => 'ci_case3_image_zh',      'type' => 'image',    'default_value' => '', 'return_format' => 'url', 'preview_size' => 'medium'),
 
-        ['name' => 'ci_insights_h2_zh', 'label' => 'CI · 洞察区 h2', 'type' => 'text', 'zh' => '前沿洞察', 'en' => 'The Intelligence Journal'],
-        ['name' => 'ci_insights_subtitle_zh', 'label' => 'CI · 洞察区副标题', 'type' => 'text', 'zh' => '行业洞察与思想领导力', 'en' => 'INDUSTRY INSIGHTS & THOUGHT LEADERSHIP'],
+            array('key' => 'field_ci_case4_badge_zh',      'label' => 'CI · 案例 4 徽章',         'name' => 'ci_case4_badge_zh',      'type' => 'text',     'default_value' => 'IP 保护 100%'),
+            array('key' => 'field_ci_case4_title_zh',      'label' => 'CI · 案例 4 标题',         'name' => 'ci_case4_title_zh',      'type' => 'text',     'default_value' => '数字 IP 金库'),
+            array('key' => 'field_ci_case4_desc_zh',       'label' => 'CI · 案例 4 描述',         'name' => 'ci_case4_desc_zh',       'type' => 'textarea', 'default_value' => 'AI 集成奢侈房产的全球 PR 审计与声誉管理。',                          'rows' => 2),
+            array('key' => 'field_ci_case4_image_zh',      'label' => 'CI · 案例 4 图片',         'name' => 'ci_case4_image_zh',      'type' => 'image',    'default_value' => '', 'return_format' => 'url', 'preview_size' => 'medium'),
 
-        ['name' => 'ci_art1_cat', 'label' => 'CI · 文章 1 分类', 'type' => 'text', 'zh' => 'Aesthetics', 'en' => 'Aesthetics'],
-        ['name' => 'ci_art1_title_pre_zh', 'label' => 'CI · 文章 1 标题前缀', 'type' => 'text', 'zh' => '机器中的幽灵：', 'en' => 'The Ghost in the Machine: '],
-        ['name' => 'ci_art1_title_em_zh', 'label' => 'CI · 文章 1 标题 em', 'type' => 'text', 'zh' => '定义', 'en' => 'Defining'],
-        ['name' => 'ci_art1_title_post_zh', 'label' => 'CI · 文章 1 标题后缀', 'type' => 'text', 'zh' => ' AI 之美', 'en' => ' AI Beauty'],
-        ['name' => 'ci_art1_desc_zh', 'label' => 'CI · 文章 1 描述', 'type' => 'textarea', 'zh' => '为何传统品牌正走向超风格化的数字表达。', 'en' => 'Moving beyond uncanny valley into hyper-stylized digital.', 'extra' => ['rows' => 2]],
-        ['name' => 'ci_art1_rt', 'label' => 'CI · 文章 1 阅读时长', 'type' => 'text', 'zh' => '8 分钟阅读', 'en' => '8 MIN READ'],
+            /* 洞察区 h2 + 副标题 */
+            array('key' => 'field_ci_insights_h2_zh',       'label' => 'CI · 洞察区 h2',           'name' => 'ci_insights_h2_zh',       'type' => 'text', 'default_value' => '前沿洞察'),
+            array('key' => 'field_ci_insights_subtitle_zh', 'label' => 'CI · 洞察区副标题',       'name' => 'ci_insights_subtitle_zh', 'type' => 'text', 'default_value' => '行业洞察与思想领导力'),
 
-        ['name' => 'ci_art2_cat', 'label' => 'CI · 文章 2 分类', 'type' => 'text', 'zh' => 'Technology', 'en' => 'Technology'],
-        ['name' => 'ci_art2_title_pre_zh', 'label' => 'CI · 文章 2 标题前缀', 'type' => 'text', 'zh' => '神经网络与丝绸：', 'en' => 'Neural Networks & Silk: '],
-        ['name' => 'ci_art2_title_em_zh', 'label' => 'CI · 文章 2 标题 em', 'type' => 'text', 'zh' => '未来', 'en' => 'Future'],
-        ['name' => 'ci_art2_title_post_zh', 'label' => 'CI · 文章 2 标题后缀', 'type' => 'text', 'zh' => ' 服务的织物', 'en' => ' Service'],
-        ['name' => 'ci_art2_desc_zh', 'label' => 'CI · 文章 2 描述', 'type' => 'textarea', 'zh' => '在不失去专属触感的前提下扩展个性化关怀。', 'en' => 'Scaling personalized attention without losing human touch.', 'extra' => ['rows' => 2]],
-        ['name' => 'ci_art2_rt', 'label' => 'CI · 文章 2 阅读时长', 'type' => 'text', 'zh' => '12 分钟阅读', 'en' => '12 MIN READ'],
+            /* 文章 1-3（cat / title_pre / title_em / title_post / desc / rt） */
+            array('key' => 'field_ci_art1_cat_zh',         'label' => 'CI · 文章 1 分类',         'name' => 'ci_art1_cat_zh',         'type' => 'text',     'default_value' => 'Aesthetics'),
+            array('key' => 'field_ci_art1_title_pre_zh',   'label' => 'CI · 文章 1 标题前缀',     'name' => 'ci_art1_title_pre_zh',   'type' => 'text',     'default_value' => '机器中的幽灵：'),
+            array('key' => 'field_ci_art1_title_em_zh',    'label' => 'CI · 文章 1 标题 em',      'name' => 'ci_art1_title_em_zh',    'type' => 'text',     'default_value' => '定义'),
+            array('key' => 'field_ci_art1_title_post_zh',  'label' => 'CI · 文章 1 标题后缀',     'name' => 'ci_art1_title_post_zh',  'type' => 'text',     'default_value' => ' AI 之美'),
+            array('key' => 'field_ci_art1_desc_zh',        'label' => 'CI · 文章 1 描述',         'name' => 'ci_art1_desc_zh',        'type' => 'textarea', 'default_value' => '为何传统品牌正走向超风格化的数字表达。',                            'rows' => 2),
+            array('key' => 'field_ci_art1_rt_zh',          'label' => 'CI · 文章 1 阅读时长',     'name' => 'ci_art1_rt_zh',          'type' => 'text',     'default_value' => '8 分钟阅读'),
 
-        ['name' => 'ci_art3_cat', 'label' => 'CI · 文章 3 分类', 'type' => 'text', 'zh' => 'Strategy', 'en' => 'Strategy'],
-        ['name' => 'ci_art3_title_pre_zh', 'label' => 'CI · 文章 3 标题前缀', 'type' => 'text', 'zh' => '新白手套：', 'en' => 'The New White Glove: '],
-        ['name' => 'ci_art3_title_em_zh', 'label' => 'CI · 文章 3 标题 em', 'type' => 'text', 'zh' => 'AI', 'en' => 'AI'],
-        ['name' => 'ci_art3_title_post_zh', 'label' => 'CI · 文章 3 标题后缀', 'type' => 'text', 'zh' => ' 作为终极礼宾', 'en' => ' as Ultimate Concierge'],
-        ['name' => 'ci_art3_desc_zh', 'label' => 'CI · 文章 3 描述', 'type' => 'textarea', 'zh' => '审视自动化高端体验时代中忠诚度的演变。', 'en' => 'Loyalty evolution in automated high-end experiences.', 'extra' => ['rows' => 2]],
-        ['name' => 'ci_art3_rt', 'label' => 'CI · 文章 3 阅读时长', 'type' => 'text', 'zh' => '6 分钟阅读', 'en' => '6 MIN READ'],
+            array('key' => 'field_ci_art2_cat_zh',         'label' => 'CI · 文章 2 分类',         'name' => 'ci_art2_cat_zh',         'type' => 'text',     'default_value' => 'Technology'),
+            array('key' => 'field_ci_art2_title_pre_zh',   'label' => 'CI · 文章 2 标题前缀',     'name' => 'ci_art2_title_pre_zh',   'type' => 'text',     'default_value' => '神经网络与丝绸：'),
+            array('key' => 'field_ci_art2_title_em_zh',    'label' => 'CI · 文章 2 标题 em',      'name' => 'ci_art2_title_em_zh',    'type' => 'text',     'default_value' => '未来'),
+            array('key' => 'field_ci_art2_title_post_zh',  'label' => 'CI · 文章 2 标题后缀',     'name' => 'ci_art2_title_post_zh',  'type' => 'text',     'default_value' => ' 服务的织物'),
+            array('key' => 'field_ci_art2_desc_zh',        'label' => 'CI · 文章 2 描述',         'name' => 'ci_art2_desc_zh',        'type' => 'textarea', 'default_value' => '在不失去专属触感的前提下扩展个性化关怀。',                          'rows' => 2),
+            array('key' => 'field_ci_art2_rt_zh',          'label' => 'CI · 文章 2 阅读时长',     'name' => 'ci_art2_rt_zh',          'type' => 'text',     'default_value' => '12 分钟阅读'),
 
-        ['name' => 'ci_consult_h2_zh', 'label' => 'CI · 咨询区 h2', 'type' => 'text', 'zh' => '准备好定义您的传承了吗？', 'en' => 'Ready to define your legacy?'],
-        ['name' => 'ci_consult_p_zh', 'label' => 'CI · 咨询区副文', 'type' => 'textarea', 'zh' => '加入全球领先的品牌 AI 数字员工计划。迈出第一步。', 'en' => 'Join the world\'s leading brands in the new era of digital human excellence.', 'extra' => ['rows' => 2]],
-        ['name' => 'ci_consult_btn_zh', 'label' => 'CI · 咨询按钮', 'type' => 'text', 'zh' => '立即咨询', 'en' => 'Initiate Consultation'],
+            array('key' => 'field_ci_art3_cat_zh',         'label' => 'CI · 文章 3 分类',         'name' => 'ci_art3_cat_zh',         'type' => 'text',     'default_value' => 'Strategy'),
+            array('key' => 'field_ci_art3_title_pre_zh',   'label' => 'CI · 文章 3 标题前缀',     'name' => 'ci_art3_title_pre_zh',   'type' => 'text',     'default_value' => '新白手套：'),
+            array('key' => 'field_ci_art3_title_em_zh',    'label' => 'CI · 文章 3 标题 em',      'name' => 'ci_art3_title_em_zh',    'type' => 'text',     'default_value' => 'AI'),
+            array('key' => 'field_ci_art3_title_post_zh',  'label' => 'CI · 文章 3 标题后缀',     'name' => 'ci_art3_title_post_zh',  'type' => 'text',     'default_value' => ' 作为终极礼宾'),
+            array('key' => 'field_ci_art3_desc_zh',        'label' => 'CI · 文章 3 描述',         'name' => 'ci_art3_desc_zh',        'type' => 'textarea', 'default_value' => '审视自动化高端体验时代中忠诚度的演变。',                            'rows' => 2),
+            array('key' => 'field_ci_art3_rt_zh',          'label' => 'CI · 文章 3 阅读时长',     'name' => 'ci_art3_rt_zh',          'type' => 'text',     'default_value' => '6 分钟阅读'),
 
-        ['name' => 'card_cta_text', 'label' => '卡片按钮文字', 'type' => 'text', 'zh' => '阅读更多', 'en' => 'Read More'],
-    ], array(
-        array(array('param' => 'page_template', 'operator' => '==', 'value' => 'page-cases-insights.php')),
-    )));
+            /* 咨询区 */
+            array('key' => 'field_ci_consult_h2_zh',       'label' => 'CI · 咨询区 h2',           'name' => 'ci_consult_h2_zh',       'type' => 'text',     'default_value' => '准备好定义您的传承了吗？'),
+            array('key' => 'field_ci_consult_p_zh',        'label' => 'CI · 咨询区副文',         'name' => 'ci_consult_p_zh',        'type' => 'textarea', 'default_value' => '加入全球领先的品牌 AI 数字员工计划。迈出第一步。',                    'rows' => 2),
+            array('key' => 'field_ci_consult_btn_zh',      'label' => 'CI · 咨询按钮',           'name' => 'ci_consult_btn_zh',      'type' => 'text',     'default_value' => '立即咨询'),
+
+            /* 卡片按钮文字 */
+            array('key' => 'field_card_cta_text_zh',       'label' => '卡片按钮文字',            'name' => 'card_cta_text_zh',       'type' => 'text',     'default_value' => '阅读更多'),
+
+            /* === English Tab === */
+            array('key' => 'group_page_cases_insights_tab_en', 'label' => 'English Content', 'type' => 'tab'),
+
+            /* 页眉 EN */
+            array('key' => 'field_hero_kicker_en',          'label' => 'Eyebrow',         'name' => 'hero_kicker_en',          'type' => 'text',     'default_value' => 'CASES & INSIGHTS'),
+            array('key' => 'field_hero_title_en',           'label' => 'Page Title',      'name' => 'hero_title_en',           'type' => 'textarea', 'default_value' => 'Cases & Insights',                                               'rows' => 1),
+            array('key' => 'field_hero_subtitle_en',        'label' => 'Page Subtitle',   'name' => 'hero_subtitle_en',        'type' => 'textarea', 'default_value' => 'See how digital employees transform operations and explore the deeper currents of AI.', 'rows' => 2),
+
+            /* 案例 EN */
+            array('key' => 'field_cases_kicker_en',         'label' => 'Cases · Eyebrow',    'name' => 'cases_kicker_en',         'type' => 'text',     'default_value' => 'CASES'),
+            array('key' => 'field_cases_title_en',          'label' => 'Cases · Title',      'name' => 'cases_title_en',          'type' => 'textarea', 'default_value' => 'Selected Cases',                                                 'rows' => 1),
+            array('key' => 'field_cases_subtitle_en',       'label' => 'Cases · Subtitle',   'name' => 'cases_subtitle_en',       'type' => 'textarea', 'default_value' => 'How real clients grow with digital employees.',                   'rows' => 2),
+            array('key' => 'field_cases_cta_url_en',        'label' => 'Cases · Link',       'name' => 'cases_cta_url_en',        'type' => 'text',     'default_value' => '/category/cases/'),
+            array('key' => 'field_cases_cta_title_en',      'label' => 'Cases · Button',     'name' => 'cases_cta_title_en',      'type' => 'text',     'default_value' => 'All Cases'),
+
+            /* 洞察 EN */
+            array('key' => 'field_insights_kicker_en',      'label' => 'Insights · Eyebrow',  'name' => 'insights_kicker_en',      'type' => 'text',     'default_value' => 'INSIGHTS'),
+            array('key' => 'field_insights_title_en',       'label' => 'Insights · Title',   'name' => 'insights_title_en',       'type' => 'textarea', 'default_value' => 'Frontier Insights',                                              'rows' => 1),
+            array('key' => 'field_insights_subtitle_en',    'label' => 'Insights · Subtitle', 'name' => 'insights_subtitle_en',    'type' => 'textarea', 'default_value' => 'Deep thinking on AI and the digital workforce.',                 'rows' => 2),
+            array('key' => 'field_insights_cta_url_en',     'label' => 'Insights · Link',     'name' => 'insights_cta_url_en',     'type' => 'text',     'default_value' => '/category/insights/'),
+            array('key' => 'field_insights_cta_title_en',   'label' => 'Insights · Button',   'name' => 'insights_cta_title_en',   'type' => 'text',     'default_value' => 'More Insights'),
+
+            /* CI archive EN */
+            array('key' => 'field_ci_hero_kicker_en',       'label' => 'CI · Hero Eyebrow',     'name' => 'ci_hero_kicker_en',       'type' => 'text',     'default_value' => 'THE ATELIER OF INTELLIGENCE'),
+            array('key' => 'field_ci_hero_h1_pre_en',      'label' => 'CI · Hero h1 Prefix',    'name' => 'ci_hero_h1_pre_en',      'type' => 'text',     'default_value' => 'Crafting Digital '),
+            array('key' => 'field_ci_hero_h1_em_en',       'label' => 'CI · Hero h1 em',        'name' => 'ci_hero_h1_em_en',       'type' => 'text',     'default_value' => 'Humanity'),
+            array('key' => 'field_ci_hero_p_en',           'label' => 'CI · Hero Paragraph',    'name' => 'ci_hero_p_en',           'type' => 'textarea', 'default_value' => 'Where technical precision meets heritage aesthetic.',            'rows' => 2),
+            array('key' => 'field_ci_sec_h2_en',           'label' => 'CI · Cases h2',          'name' => 'ci_sec_h2_en',           'type' => 'text',     'default_value' => 'Collaborative Excellence'),
+
+            /* 案例 1-4 EN */
+            array('key' => 'field_ci_case1_badge_en',      'label' => 'CI · Case 1 Badge',      'name' => 'ci_case1_badge_en',      'type' => 'text',     'default_value' => '+42% Retention'),
+            array('key' => 'field_ci_case1_title_en',      'label' => 'CI · Case 1 Title',      'name' => 'ci_case1_title_en',      'type' => 'text',     'default_value' => 'Aurelian Prime for Private Banking'),
+            array('key' => 'field_ci_case1_desc_en',       'label' => 'CI · Case 1 Description', 'name' => 'ci_case1_desc_en',       'type' => 'textarea', 'default_value' => 'Reimagining wealth management through a hyper-realistic digital concierge.', 'rows' => 2),
+            array('key' => 'field_ci_case1_image_en',      'label' => 'CI · Case 1 Image',      'name' => 'ci_case1_image_en',      'type' => 'image',    'default_value' => '', 'return_format' => 'url', 'preview_size' => 'medium'),
+
+            array('key' => 'field_ci_case2_badge_en',      'label' => 'CI · Case 2 Badge',      'name' => 'ci_case2_badge_en',      'type' => 'text',     'default_value' => 'AI Art Integration'),
+            array('key' => 'field_ci_case2_title_en',      'label' => 'CI · Case 2 Title',      'name' => 'ci_case2_title_en',      'type' => 'text',     'default_value' => 'Lumina NFT Series'),
+            array('key' => 'field_ci_case2_desc_en',       'label' => 'CI · Case 2 Description', 'name' => 'ci_case2_desc_en',       'type' => 'textarea', 'default_value' => 'Exclusive IP collaboration merging generative algorithms with heritage craft.', 'rows' => 2),
+            array('key' => 'field_ci_case2_image_en',      'label' => 'CI · Case 2 Image',      'name' => 'ci_case2_image_en',      'type' => 'image',    'default_value' => '', 'return_format' => 'url', 'preview_size' => 'medium'),
+
+            array('key' => 'field_ci_case3_badge_en',      'label' => 'CI · Case 3 Badge',      'name' => 'ci_case3_badge_en',      'type' => 'text',     'default_value' => '3.4x Conversion'),
+            array('key' => 'field_ci_case3_title_en',      'label' => 'CI · Case 3 Title',      'name' => 'ci_case3_title_en',      'type' => 'text',     'default_value' => 'E-commerce Evolution'),
+            array('key' => 'field_ci_case3_desc_en',       'label' => 'CI · Case 3 Description', 'name' => 'ci_case3_desc_en',       'type' => 'textarea', 'default_value' => 'Luxury retail performance scaling through personalized digital twin advisors.', 'rows' => 2),
+            array('key' => 'field_ci_case3_image_en',      'label' => 'CI · Case 3 Image',      'name' => 'ci_case3_image_en',      'type' => 'image',    'default_value' => '', 'return_format' => 'url', 'preview_size' => 'medium'),
+
+            array('key' => 'field_ci_case4_badge_en',      'label' => 'CI · Case 4 Badge',      'name' => 'ci_case4_badge_en',      'type' => 'text',     'default_value' => 'IP Protection 100%'),
+            array('key' => 'field_ci_case4_title_en',      'label' => 'CI · Case 4 Title',      'name' => 'ci_case4_title_en',      'type' => 'text',     'default_value' => 'The Digital IP Vault'),
+            array('key' => 'field_ci_case4_desc_en',       'label' => 'CI · Case 4 Description', 'name' => 'ci_case4_desc_en',       'type' => 'textarea', 'default_value' => 'Global PR audit and reputation management for AI-integrated luxury estates.', 'rows' => 2),
+            array('key' => 'field_ci_case4_image_en',      'label' => 'CI · Case 4 Image',      'name' => 'ci_case4_image_en',      'type' => 'image',    'default_value' => '', 'return_format' => 'url', 'preview_size' => 'medium'),
+
+            /* 洞察 EN */
+            array('key' => 'field_ci_insights_h2_en',       'label' => 'CI · Insights h2',       'name' => 'ci_insights_h2_en',       'type' => 'text', 'default_value' => 'The Intelligence Journal'),
+            array('key' => 'field_ci_insights_subtitle_en', 'label' => 'CI · Insights Subtitle', 'name' => 'ci_insights_subtitle_en', 'type' => 'text', 'default_value' => 'INDUSTRY INSIGHTS & THOUGHT LEADERSHIP'),
+
+            /* 文章 1-3 EN */
+            array('key' => 'field_ci_art1_cat_en',         'label' => 'CI · Article 1 Cat',         'name' => 'ci_art1_cat_en',         'type' => 'text',     'default_value' => 'Aesthetics'),
+            array('key' => 'field_ci_art1_title_pre_en',   'label' => 'CI · Article 1 Title Prefix', 'name' => 'ci_art1_title_pre_en',   'type' => 'text',     'default_value' => 'The Ghost in the Machine: '),
+            array('key' => 'field_ci_art1_title_em_en',    'label' => 'CI · Article 1 Title em',    'name' => 'ci_art1_title_em_en',    'type' => 'text',     'default_value' => 'Defining'),
+            array('key' => 'field_ci_art1_title_post_en',  'label' => 'CI · Article 1 Title Postfix', 'name' => 'ci_art1_title_post_en',  'type' => 'text',     'default_value' => ' AI Beauty'),
+            array('key' => 'field_ci_art1_desc_en',        'label' => 'CI · Article 1 Description', 'name' => 'ci_art1_desc_en',        'type' => 'textarea', 'default_value' => 'Moving beyond uncanny valley into hyper-stylized digital.',         'rows' => 2),
+            array('key' => 'field_ci_art1_rt_en',          'label' => 'CI · Article 1 Read Time',   'name' => 'ci_art1_rt_en',          'type' => 'text',     'default_value' => '8 MIN READ'),
+
+            array('key' => 'field_ci_art2_cat_en',         'label' => 'CI · Article 2 Cat',         'name' => 'ci_art2_cat_en',         'type' => 'text',     'default_value' => 'Technology'),
+            array('key' => 'field_ci_art2_title_pre_en',   'label' => 'CI · Article 2 Title Prefix', 'name' => 'ci_art2_title_pre_en',   'type' => 'text',     'default_value' => 'Neural Networks & Silk: '),
+            array('key' => 'field_ci_art2_title_em_en',    'label' => 'CI · Article 2 Title em',    'name' => 'ci_art2_title_em_en',    'type' => 'text',     'default_value' => 'Future'),
+            array('key' => 'field_ci_art2_title_post_en',  'label' => 'CI · Article 2 Title Postfix', 'name' => 'ci_art2_title_post_en',  'type' => 'text',     'default_value' => ' Service'),
+            array('key' => 'field_ci_art2_desc_en',        'label' => 'CI · Article 2 Description', 'name' => 'ci_art2_desc_en',        'type' => 'textarea', 'default_value' => 'Scaling personalized attention without losing human touch.',          'rows' => 2),
+            array('key' => 'field_ci_art2_rt_en',          'label' => 'CI · Article 2 Read Time',   'name' => 'ci_art2_rt_en',          'type' => 'text',     'default_value' => '12 MIN READ'),
+
+            array('key' => 'field_ci_art3_cat_en',         'label' => 'CI · Article 3 Cat',         'name' => 'ci_art3_cat_en',         'type' => 'text',     'default_value' => 'Strategy'),
+            array('key' => 'field_ci_art3_title_pre_en',   'label' => 'CI · Article 3 Title Prefix', 'name' => 'ci_art3_title_pre_en',   'type' => 'text',     'default_value' => 'The New White Glove: '),
+            array('key' => 'field_ci_art3_title_em_en',    'label' => 'CI · Article 3 Title em',    'name' => 'ci_art3_title_em_en',    'type' => 'text',     'default_value' => 'AI'),
+            array('key' => 'field_ci_art3_title_post_en',  'label' => 'CI · Article 3 Title Postfix', 'name' => 'ci_art3_title_post_en',  'type' => 'text',     'default_value' => ' as Ultimate Concierge'),
+            array('key' => 'field_ci_art3_desc_en',        'label' => 'CI · Article 3 Description', 'name' => 'ci_art3_desc_en',        'type' => 'textarea', 'default_value' => 'Loyalty evolution in automated high-end experiences.',               'rows' => 2),
+            array('key' => 'field_ci_art3_rt_en',          'label' => 'CI · Article 3 Read Time',   'name' => 'ci_art3_rt_en',          'type' => 'text',     'default_value' => '6 MIN READ'),
+
+            /* 咨询 EN */
+            array('key' => 'field_ci_consult_h2_en',       'label' => 'CI · Consult h2',           'name' => 'ci_consult_h2_en',       'type' => 'text',     'default_value' => 'Ready to define your legacy?'),
+            array('key' => 'field_ci_consult_p_en',        'label' => 'CI · Consult Paragraph',    'name' => 'ci_consult_p_en',        'type' => 'textarea', 'default_value' => "Join the world's leading brands in the new era of digital human excellence.", 'rows' => 2),
+            array('key' => 'field_ci_consult_btn_en',      'label' => 'CI · Consult Button',       'name' => 'ci_consult_btn_en',      'type' => 'text',     'default_value' => 'Initiate Consultation'),
+
+            /* 卡片 EN */
+            array('key' => 'field_card_cta_text_en',       'label' => 'Card CTA Text',             'name' => 'card_cta_text_en',       'type' => 'text',     'default_value' => 'Read More'),
+        ),
+        'location' => array(
+            array(array('param' => 'page_template', 'operator' => '==', 'value' => 'page-cases-insights.php')),
+        ),
+    ));
 
 });
 
