@@ -264,7 +264,6 @@ add_action('acf/save_post', function ($post_id) {
     }
 }, 20);
 
-
 /* -------------------------------------------------------------------------
  * 0. 辅助函数（带默认值回退，ACF 未装时优雅降级）
  * ---------------------------------------------------------------------- */
@@ -463,8 +462,6 @@ function site_image_url_resolve($v, $default = '') {
     return $default;
 }
 
-
-
 /**
  * v3.0.8 hotfix — 兼容层：v3.0.8 commit 不小心删了 hireai_image()，导致 Fatal error。
  * 加回原函数（与 v3.0.7 完全一致），保持所有调用点工作。
@@ -534,7 +531,6 @@ function hireai_bilingual($zh, $en, $tag = 'span') {
     $close= '</' . $tag . '>';
     return $open . esc_html((string) $zh) . $mid . esc_html((string) $en) . $close;
 }
-
 
 /**
  * 本地 SVG 图标（避免任何外部字体/图标 CDN 依赖）
@@ -1295,7 +1291,6 @@ add_action('wp_footer', function () {
     <?php
 });
 
-
 /* -------------------------------------------------------------------------
  * 1. 资源加载：父主题 + 子主题样式（自托管字体）+ 脚本
  * ---------------------------------------------------------------------- */
@@ -1453,8 +1448,6 @@ function hireai_fallback_nav() {
     }
     echo '</ul>';
 }
-
-
 
 /**
  * v3.5.7：主导航已由 WordPress 菜单初始化时，覆盖其菜单标题。
@@ -1656,22 +1649,27 @@ if (!function_exists('hireai_make_bilingual_group')) {
 }
 
 /* -------------------------------------------------------------------------
- * 9.1 v3.7.2 直接同步注册 6 个核心 group（AllScented 模式）
- *    - 不依赖 acf/init hook（hook 在 Sasha 站点不可靠）
- *    - 用 function_exists('acf_add_local_field_group') 单层兜底
- *    - 字段 key/name 仍由 hireai_make_bilingual_group 生成 → 与 v3.7.1 完全一致
+ * 9.1 v3.7.3 ACF 6.x 兼容注册（add_action('acf/init') 回调 + function_exists 双保险）
+ *    - v3.7.2 顶层 if 守卫在 ACF 6.x 下永远 false（acf_add_local_field_group 延迟到 acf/init 注册）
+ *    - v3.7.3 把整段代码包成 add_action('acf/init', ...) 回调，确保 ACF 函数就绪后再注册
+ *    - 保留 hireai_make_bilingual_group() 函数定义（line 1607 顶层），避免循环依赖
+ *    - 字段 key/name 仍由 hireai_make_bilingual_group 生成 → 与 v3.7.1/v3.7.2 完全一致
  *    - location 用 AllScented 同款 4 条 OR 规则（page_type + page_template + page=home + page=front-page）
  * ---------------------------------------------------------------------- */
-if (function_exists('acf_add_local_field_group')) {
+add_action('acf/init', function () {
+    if (!function_exists('acf_add_local_field_group')) {
+        return;
+    }
 
-    /* ---- 1. 首页 Hero（字段名与 front-page.php 读取的 fp_* 一一对应） ---- */
-    $GLOBALS['_hireai_front_loc'] = array(
+    /* ---- 共享 location（首页 4 条 OR 规则，对齐 AllScented） ---- */
+    $hireai_front_loc = array(
         array(array('param' => 'page_type', 'operator' => '==', 'value' => 'front_page')),
         array(array('param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php')),
         array(array('param' => 'page', 'operator' => '==', 'value' => 'home')),
         array(array('param' => 'page', 'operator' => '==', 'value' => 'front-page')),
     );
 
+    /* ---- 1. 首页 Hero（字段名与 front-page.php 读取的 fp_* 一一对应） ---- */
     acf_add_local_field_group(hireai_make_bilingual_group('group_front_hero', '首页 — Hero 区域', [
         ['name' => 'fp_hero_kicker', 'label' => '眉题（kicker）', 'type' => 'text', 'zh' => '工匠精神与算法', 'en' => 'Prestige Digital Labor'],
         ['name' => 'fp_hero_static', 'label' => '主标题（常亮大字）', 'type' => 'text', 'zh' => '重新定义', 'en' => 'Redefine'],
@@ -1682,7 +1680,7 @@ if (function_exists('acf_add_local_field_group')) {
         ['name' => 'fp_hero_cta_2_url', 'label' => '次按钮 · 链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
         ['name' => 'fp_hero_cta_2_title', 'label' => '次按钮 · 文字', 'type' => 'text', 'zh' => '定制咨询', 'en' => 'CONSULTATION'],
         ['name' => 'fp_hero_image', 'label' => 'Hero 背景图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
-    ], $GLOBALS['_hireai_front_loc']));
+    ], $hireai_front_loc));
 
     /* ---- 2. 首页各模块（字段名与 front-page.php 读取的 fp_* 一一对应） ---- */
     acf_add_local_field_group(hireai_make_bilingual_group('group_front_modules', '首页 — 各模块', [
@@ -1781,7 +1779,7 @@ if (function_exists('acf_add_local_field_group')) {
         ['name' => 'fp_cta_desc', 'label' => 'CTA · 描述', 'type' => 'textarea', 'zh' => '与我们的团队对话，打造专属您的数字员工阵容。', 'en' => 'Speak with our team and craft a digital workforce made for you.', 'extra' => ['rows' => 2]],
         ['name' => 'fp_cta_btn_title', 'label' => 'CTA · 按钮文字', 'type' => 'text', 'zh' => '联系我们', 'en' => 'Contact Us'],
         ['name' => 'fp_cta_btn_url', 'label' => 'CTA · 按钮地址', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
-    ], $GLOBALS['_hireai_front_loc']));
+    ], $hireai_front_loc));
 
     /* ---- 3. 案例文章 ACF：category=cases 文章的卡片覆盖字段 ---- */
     acf_add_local_field_group(hireai_make_bilingual_group('group_case_meta', '案例 — 卡片', [
@@ -1881,14 +1879,14 @@ if (function_exists('acf_add_local_field_group')) {
         array(array('param' => 'page_template', 'operator' => '==', 'value' => 'page-cases-insights.php')),
     )));
 
-    unset($GLOBALS['_hireai_front_loc']);
-}
+});
 
 /* -------------------------------------------------------------------------
  * 9.2 ACF 字段注册（acf/init + function_exists 双重保护）
  *    双语方案 B：每个内容块 xxx_zh + xxx_en，两组 Tab。
- *    v3.7.2：闭包已上提为 hireai_make_bilingual_group()，此处复用同一函数。
- *    v3.7.2：以下 group 暂保留 acf/init 注册（不在本批次 6 个核心内）。
+ *    v3.7.3：闭包已上提为 hireai_make_bilingual_group()，此处复用同一函数。
+ *    v3.7.3：以下 group 暂保留 acf/init 注册（不在本批次 5 个核心内）。
+ *    v3.7.3：section 9.1 也已迁移到 acf/init 回调里（修复 ACF 6.x 注册失败问题）。
  * ---------------------------------------------------------------------- */
 add_action('acf/init', function () {
     if (!function_exists('acf_add_local_field_group')) {
@@ -2084,7 +2082,6 @@ add_action('acf/init', function () {
         ],
     ]);
 
-
     acf_add_local_field_group(hireai_make_bilingual_group('group_page_faq', '常见问题页', [
         ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => 'THE ATELIER', 'en' => 'THE ATELIER'],
         ['name' => 'header_title', 'label' => '页眉标题（金色渐变大字）', 'type' => 'textarea', 'zh' => '常见问题', 'en' => 'Frequently Asked', 'extra' => ['rows' => 1]],
@@ -2271,16 +2268,6 @@ add_action('acf/init', function () {
         ],
     ]);
 
-
-
-    acf_add_local_field_group(hireai_make_bilingual_group('group_insight_meta', '洞察 — 卡片', [
-        ['name' => 'insight_cat',      'label' => '洞察 · 分类标签（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
-        ['name' => 'insight_read_time', 'label' => '洞察 · 阅读时长（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
-        ['name' => 'insight_cover_image', 'label' => '洞察 · 封面图片（覆盖 WP 特色图，空白则回退 featured image）', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
-    ], [
-        [['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:insights']],
-    ]));
-
     /* ---- 9.5 商品 ACF：解决方案卡片 / 单产品页卖点 ---- */
     acf_add_local_field_group(hireai_make_bilingual_group('group_product_meta', 'AI 解决方案 — 卡片与详情', [
         ['name' => 'product_operative', 'label' => '执行智能体', 'type' => 'text', 'zh' => '执行智能体：聘AI', 'en' => 'OPERATIVE: HIREAI'],
@@ -2292,7 +2279,6 @@ add_action('acf/init', function () {
     ], [
         [['param' => 'post_type', 'operator' => '==', 'value' => 'product']],
     ]));
-
 
       /* ====================================================================
        * v3.6.0 新增 - 2 个 ACF Field Group:
@@ -2803,7 +2789,6 @@ add_action('init', function () {
     }
     set_transient('hireai_p18_product_cat_seeded', 1, DAY_IN_SECONDS);
 }, 20);
-
 
 /* -------------------------------------------------------------------------
  * v3.5.7-p21: 注册 category taxonomy 到 product CPT + 6 个数字人 chip 配置
