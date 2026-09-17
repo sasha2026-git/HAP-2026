@@ -1084,13 +1084,17 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
         return array_map('intval', $cached);
     }
 
-    // 1. 基础 tax_query:排除 catalog-visibility=hidden / search-excluded
-    $tax_query = [[
-        'taxonomy' => 'product_visibility',
-        'field'    => 'name',
-        'terms'    => ['exclude-from-catalog', 'exclude-from-search'],
-        'operator' => 'NOT IN',
+    // 1. v3.7.0 紧急修复:基础可见性过滤改走 meta_query _visibility != 'hidden'
+    //    之前 tax_query 用 'product_visibility' + field 'name' + terms 'exclude-from-catalog' / 'exclude-from-search'
+    //    在某些 WP/WC 版本下 product_visibility 是 internal taxonomy,name 字段匹配不上 term_id -> 0 product
+    //    改用 meta_query _visibility (WC 内部统一 post meta) 更稳,覆盖 catalog/search hidden
+    $meta_query = [[
+        'key'     => '_visibility',
+        'value'   => 'hidden',
+        'compare' => '!=',
     ]];
+    //    cat / persona 仍走 tax_query(下面 append),初始空数组
+    $tax_query = [];
 
     // 2. 场景分类筛选(可选)
     if (!empty($category_slug)) {
@@ -1159,6 +1163,7 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
         'no_found_rows'  => true,
         'fields'         => 'ids',
         'tax_query'      => $tax_query,
+        'meta_query'     => $meta_query,
     ]);
     $ids = is_array($q->posts) ? array_map('intval', $q->posts) : [];
     wp_reset_postdata();
@@ -2862,3 +2867,48 @@ function hireai_digital_human_full_slug($slug) {
  *   - 单语站点(本案)不需要 sync,无副作用
  */
 add_filter('pll_sync_taxonomy_terms', '__return_false', 10, 1);
+
+/* -------------------------------------------------------------------------
+ * v3.7.0 紧急修复:文章正文末尾追加「相关服务」CTA
+ *   - Echo 9/15 映射表:特定 post ID 在正文末尾追加链接到 hireai 服务/数字人页
+ *   - 815/787 -> 小关 AI 公关危机顾问 (335) + AI 公关服务方案 (793)
+ *   - 813 -> 迈克 AI 视觉创意 (630)
+ *   - 539 -> 迈克 AI 视觉创意 (630) + AI 潮联社 (632)
+ *   - 仅 is_singular('post') 触发,其他页面 (page/product/...) 不影响
+ *   - 渲染 .related-services 容器,样式由 style.css v3.7.0 段补 (card-grid)
+ * ---------------------------------------------------------------------- */
+add_filter('the_content', function ($content) {
+    if (!is_singular('post') || !in_the_loop() || !is_main_query()) return $content;
+    $map = [
+        815 => [
+            ['id' => 335, 'label' => '小关 · AI 公关危机顾问'],
+            ['id' => 793, 'label' => 'AI 公关服务方案'],
+        ],
+        813 => [
+            ['id' => 630, 'label' => '迈克 · AI 视觉创意'],
+        ],
+        787 => [
+            ['id' => 335, 'label' => '小关 · AI 公关危机顾问'],
+            ['id' => 793, 'label' => 'AI 公关服务方案'],
+        ],
+        539 => [
+            ['id' => 630, 'label' => '迈克 · AI 视觉创意'],
+            ['id' => 632, 'label' => 'AI 潮联社'],
+        ],
+    ];
+    $pid = get_the_ID();
+    if (!isset($map[$pid]) || empty($map[$pid])) return $content;
+    $links  = '<div class="related-services"><h4 class="related-services__title">相关服务</h4><ul class="related-services__list">';
+    foreach ($map[$pid] as $svc) {
+        $url = get_permalink((int) $svc['id']);
+        if (!$url) continue;
+        $links .= sprintf(
+            '<li><a class="related-services__link" href="%s">%s</a></li>',
+            esc_url($url),
+            esc_html($svc['label'])
+        );
+    }
+    $links .= '</ul></div>';
+    return $content . $links;
+}, 20);
+

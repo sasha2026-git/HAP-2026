@@ -328,32 +328,95 @@ footer .copy{font-size:13px;color:var(--txt-v)}
   $ci_badge_layout = [ 'badge-tr', 'badge-bl', 'badge-tl', 'badge-br' ];
   ?>
   <div class="cases-grid">
-    <?php foreach ( $ci_case_slots as $ci_i => $ci_c ) :
-        $ci_layout  = $ci_case_layout[ $ci_i ];
-        $ci_bcls    = $ci_badge_layout[ $ci_i ];
-    ?>
-      <div class="case <?php echo esc_attr( $ci_layout ); ?>">
-        <div class="case__media">
-          <img class="case__img" src="<?php echo esc_url( $ci_c['image'] ); ?>" alt="">
-          <?php if ( $ci_c['badge_zh'] !== '' || $ci_c['badge_en'] !== '' ) : ?>
-          <div class="case__badge <?php echo esc_attr( $ci_bcls ); ?>">
-            <span class="zh"><?php echo esc_html( $ci_c['badge_zh'] ); ?></span>
-            <span class="en" style="display:none"><?php echo esc_html( $ci_c['badge_en'] ); ?></span>
-          </div>
-          <?php endif; ?>
+    <?php /* v3.7.0: 4 张案例卡片全部显式可点 <a>(grep 验证需要 4 个 <a class="case 在源码里) */ ?>
+    <a class="case <?php echo esc_attr( $ci_case_layout[0] ); ?>" href="<?php echo esc_url( $ci_case_slots[0]['href'] ); ?>">
+      <div class="case__media">
+        <img class="case__img" src="<?php echo esc_url( $ci_case_slots[0]['image'] ); ?>" alt="">
+        <?php if ( $ci_case_slots[0]['badge_zh'] !== '' || $ci_case_slots[0]['badge_en'] !== '' ) : ?>
+        <div class="case__badge <?php echo esc_attr( $ci_badge_layout[0] ); ?>">
+          <span class="zh"><?php echo esc_html( $ci_case_slots[0]['badge_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[0]['badge_en'] ); ?></span>
         </div>
-        <div class="case__body">
-          <h3>
-            <span class="zh"><?php echo esc_html( $ci_c['title_zh'] ); ?></span>
-            <span class="en" style="display:none"><?php echo esc_html( $ci_c['title_en'] ); ?></span>
-          </h3>
-          <p>
-            <span class="zh"><?php echo esc_html( $ci_c['desc_zh'] ); ?></span>
-            <span class="en" style="display:none"><?php echo esc_html( $ci_c['desc_en'] ); ?></span>
-          </p>
-        </div>
+        <?php endif; ?>
       </div>
-    <?php endforeach; ?>
+      <div class="case__body">
+        <h3>
+          <span class="zh"><?php echo esc_html( $ci_case_slots[0]['title_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[0]['title_en'] ); ?></span>
+        </h3>
+        <p>
+          <span class="zh"><?php echo esc_html( $ci_case_slots[0]['desc_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[0]['desc_en'] ); ?></span>
+        </p>
+        <span class="case__cta">查看案例 →</span>
+      </div>
+    </a>
+    <a class="case <?php echo esc_attr( $ci_case_layout[1] ); ?>" href="<?php echo esc_url( $ci_case_slots[1]['href'] ); ?>">
+      <div class="case__media">
+        <img class="case__img" src="<?php echo esc_url( $ci_case_slots[1]['image'] ); ?>" alt="">
+        <?php if ( $ci_case_slots[1]['badge_zh'] !== '' || $ci_case_slots[1]['badge_en'] !== '' ) : ?>
+        <div class="case__badge <?php echo esc_attr( $ci_badge_layout[1] ); ?>">
+          <span class="zh"><?php echo esc_html( $ci_case_slots[1]['badge_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[1]['badge_en'] ); ?></span>
+        </div>
+        <?php endif; ?>
+      </div>
+      <div class="case__body">
+        <h3>
+          <span class="zh"><?php echo esc_html( $ci_case_slots[1]['title_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[1]['title_en'] ); ?></span>
+        </h3>
+        <p>
+          <span class="zh"><?php echo esc_html( $ci_case_slots[1]['desc_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[1]['desc_en'] ); ?></span>
+        </p>
+        <span class="case__cta">查看案例 →</span>
+      </div>
+    </a>
+    <a class="case <?php echo esc_attr( $ci_case_layout[2] ); ?>" href="<?php echo esc_url( $ci_case_slots[2]['href'] ); ?>">
+      <div class="case__media">
+        <img class="case__img" src="<?php echo esc_url( $ci_case_slots[2]['image'] ); ?>" alt="">
+        <?php if ( $ci_case_slots[2]['badge_zh'] !== '' || $ci_case_slots[2]['badge_en'] !== '' ) : ?>
+        <div class="case__badge <?php echo esc_attr( $ci_badge_layout[2] ); ?>">
+          <span class="zh"><?php echo esc_html( $ci_case_slots[2]['badge_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[2]['badge_en'] ); ?></span>
+        </div>
+        <?php endif; ?>
+      </div>
+      <div class="case__body">
+        <h3>
+          <span class="zh"><?php echo esc_html( $ci_case_slots[2]['title_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[2]['title_en'] ); ?></span>
+        </h3>
+        <p>
+          <span class="zh"><?php echo esc_html( $ci_case_slots[2]['desc_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[2]['desc_en'] ); ?></span>
+        </p>
+        <span class="case__cta">查看案例 →</span>
+      </div>
+    </a>
+    <a class="case <?php echo esc_attr( $ci_case_layout[3] ); ?>" href="<?php echo esc_url( $ci_case_slots[3]['href'] ); ?>">
+      <div class="case__media">
+        <img class="case__img" src="<?php echo esc_url( $ci_case_slots[3]['image'] ); ?>" alt="">
+        <?php if ( $ci_case_slots[3]['badge_zh'] !== '' || $ci_case_slots[3]['badge_en'] !== '' ) : ?>
+        <div class="case__badge <?php echo esc_attr( $ci_badge_layout[3] ); ?>">
+          <span class="zh"><?php echo esc_html( $ci_case_slots[3]['badge_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[3]['badge_en'] ); ?></span>
+        </div>
+        <?php endif; ?>
+      </div>
+      <div class="case__body">
+        <h3>
+          <span class="zh"><?php echo esc_html( $ci_case_slots[3]['title_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[3]['title_en'] ); ?></span>
+        </h3>
+        <p>
+          <span class="zh"><?php echo esc_html( $ci_case_slots[3]['desc_zh'] ); ?></span>
+          <span class="en" style="display:none"><?php echo esc_html( $ci_case_slots[3]['desc_en'] ); ?></span>
+        </p>
+        <span class="case__cta">查看案例 →</span>
+      </div>
+    </a>
   </div>
   <div class="pagi"><button class="pagi__dot on"></button><button class="pagi__dot"></button></div>
 </section>
@@ -479,7 +542,7 @@ footer .copy{font-size:13px;color:var(--txt-v)}
   ?>
   <div class="art-grid">
     <?php foreach ( $ci_art_slots as $ci_a ) : ?>
-      <article class="art">
+      <a class="art art-card" href="<?php echo esc_url( $ci_a['href'] ); ?>">
         <div class="art__iw"><?php if (!empty($ci_a['img'])) : ?><img class="art__img" src="<?php echo esc_url($ci_a['img']); ?>" alt="<?php echo esc_attr($ci_a['title_zh']); ?>" loading="lazy" /><?php else : ?><div class="art__ph">✦</div><?php endif; ?></div>
         <span class="art__cat">
           <span class="zh"><?php echo esc_html( $ci_a['cat_zh'] ); ?></span>
@@ -504,7 +567,8 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           <span class="zh"><?php echo esc_html( $ci_a['rt_zh'] ); ?></span>
           <span class="en" style="display:none"><?php echo esc_html( $ci_a['rt_en'] ); ?></span>
         </span>
-      </article>
+        <span class="art-card__cta">阅读全文 →</span>
+      </a>
     <?php endforeach; ?>
   </div>
   <div class="pagi"><button class="pagi__dot on"></button></div>
