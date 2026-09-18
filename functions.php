@@ -839,6 +839,13 @@ function hireai_build_solution_cards_from_ids($ids) {
         $GLOBALS['post'] = $wc_post_obj;
         setup_postdata($wc_post_obj);
         $wc_obj  = wc_get_product($pid);
+        /* v3.7.6: WC 目录可见性兜底（product_visibility taxonomy 判定，兼容 WC 3.0+。
+         *   查询层的 tax_query 之外再加一道，防止历史脏数据/特殊可见性商品混进商城） */
+        if (is_object($wc_obj) && method_exists($wc_obj, 'is_visible') && ! $wc_obj->is_visible()) {
+            wp_reset_postdata();
+            if (!empty($wc_prev_post)) { $GLOBALS['post'] = $wc_prev_post; setup_postdata($wc_prev_post); }
+            continue;
+        }
         $price_html = '';
         $stock      = 'instock';
         if (is_object($wc_obj)) {
@@ -883,6 +890,15 @@ function hireai_build_solution_cards_from_ids($ids) {
                 } elseif (isset($dh_full_to_short[$slug])) {
                     $short = $dh_full_to_short[$slug];
                     if (!in_array($short, $persona_slugs, true)) { $persona_slugs[] = $short; }
+                } else {
+                    /* v3.7.6: 前缀归并 —— 新增数字人的 full slug（如 victoria-sales，不在静态映射表里）
+                     * 自动归到对应短名 chip，保证"商品打新标签 → 商城分类自动可用" */
+                    foreach ($dh_short_set as $short) {
+                        if (strpos((string) $slug, $short . '-') === 0) {
+                            if (!in_array($short, $persona_slugs, true)) { $persona_slugs[] = $short; }
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -1087,17 +1103,22 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
         return array_map('intval', $cached);
     }
 
-    // 1. v3.7.0 紧急修复:基础可见性过滤改走 meta_query _visibility != 'hidden'
-    //    之前 tax_query 用 'product_visibility' + field 'name' + terms 'exclude-from-catalog' / 'exclude-from-search'
-    //    在某些 WP/WC 版本下 product_visibility 是 internal taxonomy,name 字段匹配不上 term_id -> 0 product
-    //    改用 meta_query _visibility (WC 内部统一 post meta) 更稳,覆盖 catalog/search hidden
-    $meta_query = [[
-        'key'     => '_visibility',
-        'value'   => 'hidden',
-        'compare' => '!=',
+    // 1. v3.7.6 修复:废弃 _visibility meta_query（商城拉不到任何商品的根因）
+    //    WC 3.0+（2017 起）已移除 _visibility post meta，改用 product_visibility taxonomy。
+    //    旧写法 meta_query '_visibility' != 'hidden' 对"没有该 meta"的现代商品一律排除
+    //    （SQL != 不匹配缺失行）→ 后台新建的所有 WC 商品都进不了商城 = "和 WooCommerce 没打通"。
+    //    现代正确做法:tax_query 排除 exclude-from-catalog term；term 不存在时 NOT IN 天然放行全部。
+    //    （v3.7.0 注释里"field 'name' 匹配不上"的真因:'exclude-from-catalog' 是 term slug，
+    //      而 field 'name' 匹配的是 term 名 "Exclude From Catalog" —— 应当用 field 'slug'。）
+    //    兜底:hireai_build_solution_cards_from_ids() 里再用 wc_get_product()->is_visible() 过滤一次。
+    $meta_query = [];
+    //    cat / persona 仍走 tax_query(下面 append),初始含可见性排除
+    $tax_query = [[
+        'taxonomy' => 'product_visibility',
+        'field'    => 'slug',
+        'terms'    => ['exclude-from-catalog'],
+        'operator' => 'NOT IN',
     ]];
-    //    cat / persona 仍走 tax_query(下面 append),初始空数组
-    $tax_query = [];
 
     // 2. 场景分类筛选(可选)
     if (!empty($category_slug)) {
@@ -1725,24 +1746,12 @@ add_action('acf/init', function () {
             /* === 中文 Tab === */
             array('key' => 'group_page_cases_insights_tab_zh', 'label' => '中文内容', 'type' => 'tab'),
 
-            /* 页眉 */
-            array('key' => 'field_hero_kicker_zh',          'label' => '页眉眉题',                 'name' => 'hero_kicker_zh',          'type' => 'text',     'default_value' => '案例与洞察'),
-            array('key' => 'field_hero_title_zh',           'label' => '页眉标题',                 'name' => 'hero_title_zh',           'type' => 'textarea', 'default_value' => '案例与洞察',                                                'rows' => 1),
-            array('key' => 'field_hero_subtitle_zh',        'label' => '页眉副标题',               'name' => 'hero_subtitle_zh',        'type' => 'textarea', 'default_value' => '见证数字员工如何改变企业的运营方式，洞察 AI 行业的深层趋势。',     'rows' => 2),
-
-            /* 案例区 */
-            array('key' => 'field_cases_kicker_zh',         'label' => '案例 · 眉题',              'name' => 'cases_kicker_zh',         'type' => 'text',     'default_value' => '案例'),
-            array('key' => 'field_cases_title_zh',          'label' => '案例 · 标题',              'name' => 'cases_title_zh',          'type' => 'textarea', 'default_value' => '精选案例',                                                  'rows' => 1),
-            array('key' => 'field_cases_subtitle_zh',       'label' => '案例 · 副标题',            'name' => 'cases_subtitle_zh',       'type' => 'textarea', 'default_value' => '真实客户如何借助数字员工实现增长。',                              'rows' => 2),
-            array('key' => 'field_cases_cta_url_zh',        'label' => '案例 · 链接',              'name' => 'cases_cta_url_zh',        'type' => 'text',     'default_value' => '/category/cases/'),
-            array('key' => 'field_cases_cta_title_zh',      'label' => '案例 · 按钮文字',          'name' => 'cases_cta_title_zh',      'type' => 'text',     'default_value' => '查看全部案例'),
-
-            /* 洞察区 */
-            array('key' => 'field_insights_kicker_zh',      'label' => '洞察 · 眉题',              'name' => 'insights_kicker_zh',      'type' => 'text',     'default_value' => '洞察'),
-            array('key' => 'field_insights_title_zh',       'label' => '洞察 · 标题',              'name' => 'insights_title_zh',       'type' => 'textarea', 'default_value' => '前沿洞察',                                                  'rows' => 1),
-            array('key' => 'field_insights_subtitle_zh',    'label' => '洞察 · 副标题',            'name' => 'insights_subtitle_zh',    'type' => 'textarea', 'default_value' => '关于 AI 行业与数字员工的深度思考。',                              'rows' => 2),
-            array('key' => 'field_insights_cta_url_zh',     'label' => '洞察 · 链接',              'name' => 'insights_cta_url_zh',     'type' => 'text',     'default_value' => '/category/insights/'),
-            array('key' => 'field_insights_cta_title_zh',   'label' => '洞察 · 按钮文字',          'name' => 'insights_cta_title_zh',   'type' => 'text',     'default_value' => '更多洞察'),
+            /* v3.7.6: 删除旧版布局遗留的 14 个死字段（hero_*、cases_*、insights_* 页眉与区块头、
+             *   card_cta_text）—— 杂志版模板从未渲染它们，后台填了不生效，是"对不上"的主要来源。
+             *   前台实际渲染的是下方 ci_* 字段（页眉/案例/洞察/咨询全部走 ci_* 前缀）。 */
+            array('key' => 'field_ci_note_zh', 'label' => '使用说明', 'name' => '', 'type' => 'message',
+                  'message' => '案例区/洞察区的卡片优先显示真实的「案例/洞察」文章；下方 CI · 兜底字段仅在对应文章数量不足时补位显示。',
+                  'esc_html' => true),
 
             /* CI archive（v3.5.5 引入：页眉 + h1 + 副文） */
             array('key' => 'field_ci_hero_kicker_zh',       'label' => 'CI · Hero 眉题',           'name' => 'ci_hero_kicker_zh',       'type' => 'text',     'default_value' => '智慧工坊'),
@@ -1803,30 +1812,15 @@ add_action('acf/init', function () {
             array('key' => 'field_ci_consult_p_zh',        'label' => 'CI · 咨询区副文',         'name' => 'ci_consult_p_zh',        'type' => 'textarea', 'default_value' => '加入全球领先的品牌 AI 数字员工计划。迈出第一步。',                    'rows' => 2),
             array('key' => 'field_ci_consult_btn_zh',      'label' => 'CI · 咨询按钮',           'name' => 'ci_consult_btn_zh',      'type' => 'text',     'default_value' => '立即咨询'),
 
-            /* 卡片按钮文字 */
-            array('key' => 'field_card_cta_text_zh',       'label' => '卡片按钮文字',            'name' => 'card_cta_text_zh',       'type' => 'text',     'default_value' => '阅读更多'),
+            /* v3.7.6: card_cta_text 为旧版死字段已删除（卡片按钮文字由文章/兜底数据自身决定） */
 
             /* === English Tab === */
             array('key' => 'group_page_cases_insights_tab_en', 'label' => 'English Content', 'type' => 'tab'),
 
-            /* 页眉 EN */
-            array('key' => 'field_hero_kicker_en',          'label' => 'Eyebrow',         'name' => 'hero_kicker_en',          'type' => 'text',     'default_value' => 'CASES & INSIGHTS'),
-            array('key' => 'field_hero_title_en',           'label' => 'Page Title',      'name' => 'hero_title_en',           'type' => 'textarea', 'default_value' => 'Cases & Insights',                                               'rows' => 1),
-            array('key' => 'field_hero_subtitle_en',        'label' => 'Page Subtitle',   'name' => 'hero_subtitle_en',        'type' => 'textarea', 'default_value' => 'See how digital employees transform operations and explore the deeper currents of AI.', 'rows' => 2),
-
-            /* 案例 EN */
-            array('key' => 'field_cases_kicker_en',         'label' => 'Cases · Eyebrow',    'name' => 'cases_kicker_en',         'type' => 'text',     'default_value' => 'CASES'),
-            array('key' => 'field_cases_title_en',          'label' => 'Cases · Title',      'name' => 'cases_title_en',          'type' => 'textarea', 'default_value' => 'Selected Cases',                                                 'rows' => 1),
-            array('key' => 'field_cases_subtitle_en',       'label' => 'Cases · Subtitle',   'name' => 'cases_subtitle_en',       'type' => 'textarea', 'default_value' => 'How real clients grow with digital employees.',                   'rows' => 2),
-            array('key' => 'field_cases_cta_url_en',        'label' => 'Cases · Link',       'name' => 'cases_cta_url_en',        'type' => 'text',     'default_value' => '/category/cases/'),
-            array('key' => 'field_cases_cta_title_en',      'label' => 'Cases · Button',     'name' => 'cases_cta_title_en',      'type' => 'text',     'default_value' => 'All Cases'),
-
-            /* 洞察 EN */
-            array('key' => 'field_insights_kicker_en',      'label' => 'Insights · Eyebrow',  'name' => 'insights_kicker_en',      'type' => 'text',     'default_value' => 'INSIGHTS'),
-            array('key' => 'field_insights_title_en',       'label' => 'Insights · Title',   'name' => 'insights_title_en',       'type' => 'textarea', 'default_value' => 'Frontier Insights',                                              'rows' => 1),
-            array('key' => 'field_insights_subtitle_en',    'label' => 'Insights · Subtitle', 'name' => 'insights_subtitle_en',    'type' => 'textarea', 'default_value' => 'Deep thinking on AI and the digital workforce.',                 'rows' => 2),
-            array('key' => 'field_insights_cta_url_en',     'label' => 'Insights · Link',     'name' => 'insights_cta_url_en',     'type' => 'text',     'default_value' => '/category/insights/'),
-            array('key' => 'field_insights_cta_title_en',   'label' => 'Insights · Button',   'name' => 'insights_cta_title_en',   'type' => 'text',     'default_value' => 'More Insights'),
+            /* v3.7.6: EN 侧同步删除旧版死字段（见中文 Tab 说明） */
+            array('key' => 'field_ci_note_en', 'label' => 'Instructions', 'name' => '', 'type' => 'message',
+                  'message' => 'Case/Insight sections show real posts first; the CI fallback fields below only fill in when there are not enough posts.',
+                  'esc_html' => true),
 
             /* CI archive EN */
             array('key' => 'field_ci_hero_kicker_en',       'label' => 'CI · Hero Eyebrow',     'name' => 'ci_hero_kicker_en',       'type' => 'text',     'default_value' => 'THE ATELIER OF INTELLIGENCE'),
@@ -1887,8 +1881,7 @@ add_action('acf/init', function () {
             array('key' => 'field_ci_consult_p_en',        'label' => 'CI · Consult Paragraph',    'name' => 'ci_consult_p_en',        'type' => 'textarea', 'default_value' => "Join the world's leading brands in the new era of digital human excellence.", 'rows' => 2),
             array('key' => 'field_ci_consult_btn_en',      'label' => 'CI · Consult Button',       'name' => 'ci_consult_btn_en',      'type' => 'text',     'default_value' => 'Initiate Consultation'),
 
-            /* 卡片 EN */
-            array('key' => 'field_card_cta_text_en',       'label' => 'Card CTA Text',             'name' => 'card_cta_text_en',       'type' => 'text',     'default_value' => 'Read More'),
+            /* v3.7.6: EN card_cta_text 死字段已删除 */
         ),
         'location' => array(
             array(array('param' => 'page_template', 'operator' => '==', 'value' => 'page-cases-insights.php')),
@@ -2068,7 +2061,7 @@ add_action('acf/init', function () {
                 'label'     => '场景筛选',
                 'name'      => 'solutions_filters',
                 'type'      => 'repeater',
-                'instructions' => '每行一个筛选场景：中英文标签 + 对应的商品分类 slug（如 marketing / ecommerce / design / pr）。',
+                'instructions' => '可选。每行一个筛选 chip：中英文标签 + 数字人标签 slug（victoria / adrian / iris / kai / evan）。留空 = 自动按商品已有标签生成（推荐，商品新增标签会自动出现在筛选栏）。',
                 'layout'    => 'table',
                 'button_label' => '添加场景',
                 'sub_fields' => [

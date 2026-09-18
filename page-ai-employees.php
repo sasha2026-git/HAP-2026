@@ -58,44 +58,55 @@ $cta_url         = hireai_field('lookbook_cta_url',         '/case-insights/');
  * -------------------------------------------------------------------- */
 $raw_rows = [];
 
-/* v3.4.0: 回归 v3.0.0 设计意图 — ACF Repeater 唯一数据源（跟 AllScented 一致）*/
+/* v3.7.6: 中英 repeater 各自读取；当前语言为空时镜像另一语言。
+ *   此前 EN 视图在 EN repeater 未填时直接跳到硬编码兜底 5 行 —— 与后台填的中文内容
+ *   完全不同，是"页面对不上 ACF"的来源之一。镜像后：只要任一语言填了行，
+ *   两种语言都显示同一份自定义内容（英文可在 EN repeater 里逐行覆盖）。 */
 if (function_exists('have_rows')) {
-    $repeater_name = $is_en ? 'lookbook_employees_en' : 'lookbook_employees';
-    if (have_rows($repeater_name)) {
-        while (have_rows($repeater_name)) {
-            the_row();
-            $row = [
-                'kicker' => trim((string) get_sub_field('emp_row_kicker')),
-                'title'  => trim((string) get_sub_field('emp_row_title')),
-                'desc'   => trim((string) get_sub_field('emp_row_desc')),
-                'button' => trim((string) get_sub_field('emp_row_button')),
-                'url'    => trim((string) get_sub_field('emp_row_url')),
-                'image'  => '',
-            ];
-            $img = get_sub_field('emp_row_image');
-            if (is_array($img) && !empty($img['url'])) {
-                $row['image'] = $img['url'];
-            } elseif (is_string($img) && $img !== '') {
-                $row['image'] = $img;
+    $read_emp_rows = function ($repeater_name) use ($is_en) {
+        $rows = [];
+        if (have_rows($repeater_name)) {
+            while (have_rows($repeater_name)) {
+                the_row();
+                $row = [
+                    'kicker' => trim((string) get_sub_field('emp_row_kicker')),
+                    'title'  => trim((string) get_sub_field('emp_row_title')),
+                    'desc'   => trim((string) get_sub_field('emp_row_desc')),
+                    'button' => trim((string) get_sub_field('emp_row_button')),
+                    'url'    => trim((string) get_sub_field('emp_row_url')),
+                    'image'  => '',
+                ];
+                $img = get_sub_field('emp_row_image');
+                if (is_array($img) && !empty($img['url'])) {
+                    $row['image'] = $img['url'];
+                } elseif (is_string($img) && $img !== '') {
+                    $row['image'] = $img;
+                }
+                // Fallback for empty fields
+                if ($row['button'] === '') {
+                    $row['button'] = $is_en ? 'Learn More' : '了解详情';
+                }
+                if ($row['url'] === '') {
+                    /* v3.4.0: 保持 helper 自动探测 fallback（v3.0.7 教训——函数定义保留不动） */
+                    static $emp_idx_v307 = 0;
+                    $row['url'] = function_exists('hireai_resolve_employee_url')
+                        ? hireai_resolve_employee_url($emp_idx_v307, home_url('/ai-employees/'))
+                        : home_url('/ai-employees/');
+                    $emp_idx_v307++;
+                }
+                $rows[] = $row;
             }
-            // Fallback for empty fields
-            if ($row['button'] === '') {
-                $row['button'] = $is_en ? 'Learn More' : '了解详情';
-            }
-            if ($row['url'] === '') {
-                /* v3.4.0: 保持 helper 自动探测 fallback（v3.0.7 教训——函数定义保留不动） */
-                static $emp_idx_v307 = 0;
-                $row['url'] = function_exists('hireai_resolve_employee_url')
-                    ? hireai_resolve_employee_url($emp_idx_v307, home_url('/ai-employees/'))
-                    : home_url('/ai-employees/');
-                $emp_idx_v307++;
-            }
-            $raw_rows[] = $row;
         }
-    }
+        return $rows;
+    };
+    $rows_zh = $read_emp_rows('lookbook_employees');
+    $rows_en = $read_emp_rows('lookbook_employees_en');
+    $raw_rows = $is_en
+        ? ($rows_en !== [] ? $rows_en : $rows_zh)
+        : ($rows_zh !== [] ? $rows_zh : $rows_en);
 }
 
-/* v3.4.0: fallback 数据兜底（ACF Repeater 完全为空时） */
+/* v3.4.0: fallback 数据兜底（两种语言的 ACF Repeater 都为空时） */
 if (empty($raw_rows) && function_exists('lookbook_fallback_employees')) {
     $raw_rows = lookbook_fallback_employees();
 }
@@ -288,6 +299,11 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
     margin: 0;
 }
 
+/* v3.7.6: 恢复的筛选区 + 服务流程区容器 */
+.lb-att-filtersec { padding: 0 var(--side, 24px); margin-bottom: clamp(56px, 8vw, 96px); }
+.lb-att-processsec { max-width: 1280px; margin: 0 auto; padding: clamp(60px, 8vw, 120px) var(--side, 24px) 0; }
+.lb-att-process__note { margin: 28px 0 0; text-align: center; font-family: var(--font-body, 'Inter'), sans-serif; font-size: 15px; line-height: 1.6; color: var(--lb-att-mid); }
+
 /* Responsive overrides */
 @media (max-width: 960px) {
     .lb-att-process { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -330,6 +346,29 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
         <p class="lb-hero__subtitle"><?php echo esc_html($hero_subtitle); ?></p>
         <div class="lb-hero__divider" aria-hidden="true"></div>
     </section>
+
+    <!-- ─────────── 筛选 tabs（v3.7.6 恢复渲染：lookbook_filter_* 字段此前在后台可填但前台从未输出） ─────────── -->
+    <?php
+    $lb_cats = [];
+    foreach ($raw_rows as $r) {
+        $k = trim((string) ($r['kicker'] ?? ''));
+        if ($k !== '' && !in_array($k, $lb_cats, true)) { $lb_cats[] = $k; }
+    }
+    ?>
+    <?php if (!empty($lb_cats)) : ?>
+    <section class="lb-att-filtersec">
+        <div class="lb-att-head">
+            <span class="lb-att-head__kicker"><?php echo esc_html(hireai_field('lookbook_filter_kicker', $is_en ? 'BROWSE BY CRAFT' : '分类浏览')); ?></span>
+            <h2 class="lb-att-head__title"><?php echo esc_html(hireai_field('lookbook_filter_title', $is_en ? 'Discover your digital employee by role and craft.' : '按角色与场景，发现属于你的数字员工。')); ?></h2>
+        </div>
+        <div class="lb-att-tabs" role="tablist" id="lb-att-tabs">
+            <button type="button" class="lb-att-tab is-active" data-cat="all" aria-selected="true"><?php echo esc_html(hireai_field('lookbook_filter_all', $is_en ? 'All' : '全部')); ?></button>
+            <?php foreach ($lb_cats as $lb_cat) : ?>
+                <button type="button" class="lb-att-tab" data-cat="<?php echo esc_attr($lb_cat); ?>" aria-selected="false"><?php echo esc_html($lb_cat); ?></button>
+            <?php endforeach; ?>
+        </div>
+    </section>
+    <?php endif; ?>
 
     <div class="lb-container">
         <!-- ─────────── Employee Rows ─────────── -->
@@ -390,6 +429,34 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
         <?php endif; ?>
     </div>
 
+    <!-- ─────────── 服务流程（v3.7.6 恢复渲染：lookbook_process_* 共 10 个字段此前在后台可填但前台从未输出） ─────────── -->
+    <?php
+    $lb_process_d = [
+        1 => ['t' => $is_en ? 'Discovery'   : '需求洞察', 'd' => $is_en ? 'Our consultants map your business context and KPIs.' : '我们的顾问与您一起梳理业务场景与核心指标。'],
+        2 => ['t' => $is_en ? 'Curation'    : '方案设计', 'd' => $is_en ? 'Pick an archetype from our atelier and weave in your brand DNA.' : '从精品模板库中挑选角色底座，并融入品牌基因。'],
+        3 => ['t' => $is_en ? 'Calibration' : '训练调优', 'd' => $is_en ? 'We fine-tune the model on your proprietary corpus to match tone and judgement.' : '以专属语料微调模型，确保语调与判断契合业务。'],
+        4 => ['t' => $is_en ? 'Co-pilot'    : '上线陪跑', 'd' => $is_en ? 'After deployment, your dedicated concierge reviews and iterates monthly.' : '交付上线后由专属管家持续陪跑，按月复盘迭代。'],
+    ];
+    ?>
+    <section class="lb-att-processsec">
+        <div class="lb-att-head">
+            <span class="lb-att-head__kicker"><?php echo esc_html(hireai_field('lookbook_process_kicker', $is_en ? 'OUR PROCESS' : '服务流程')); ?></span>
+            <h2 class="lb-att-head__title"><?php echo esc_html(hireai_field('lookbook_process_title', $is_en ? 'Four steps from discovery to deployment.' : '从了解到上线，四步即可拥有专属数字员工。')); ?></h2>
+        </div>
+        <div class="lb-att-process">
+            <?php for ($lb_i = 1; $lb_i <= 4; $lb_i++) : ?>
+                <div class="lb-att-step">
+                    <h3 class="lb-att-step__title"><?php echo esc_html(hireai_field("lookbook_process_step{$lb_i}_title", $lb_process_d[$lb_i]['t'])); ?></h3>
+                    <p class="lb-att-step__desc"><?php echo esc_html(hireai_field("lookbook_process_step{$lb_i}_desc", $lb_process_d[$lb_i]['d'])); ?></p>
+                </div>
+            <?php endfor; ?>
+        </div>
+        <?php $lb_process_note = hireai_field('lookbook_process_note', $is_en ? 'Average delivery in 4–6 weeks, with a dedicated concierge throughout.' : '平均 4–6 周即可交付；全程由资深管家陪跑。'); ?>
+        <?php if ($lb_process_note !== '') : ?>
+            <p class="lb-att-process__note"><?php echo esc_html($lb_process_note); ?></p>
+        <?php endif; ?>
+    </section>
+
     <!-- ─────────── CTA ─────────── -->
     <section class="lb-cta">
         <div class="lb-cta__inner">
@@ -424,6 +491,25 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
         document.querySelectorAll('[data-lb-reveal]').forEach(function (el) { io.observe(el); });
     } else {
         document.querySelectorAll('[data-lb-reveal]').forEach(function (el) { el.classList.add('is-visible'); });
+    }
+
+    /* v3.7.6: 分类 tabs 客户端过滤（筛选 lb-row，data-category = 行 kicker） */
+    var lbTabs = document.querySelectorAll('#lb-att-tabs .lb-att-tab');
+    if (lbTabs.length) {
+        lbTabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                var cat = tab.getAttribute('data-cat');
+                lbTabs.forEach(function (t) {
+                    var on = t === tab;
+                    t.classList.toggle('is-active', on);
+                    t.setAttribute('aria-selected', on ? 'true' : 'false');
+                });
+                document.querySelectorAll('#lb-att-rows > .lb-row').forEach(function (row) {
+                    var show = cat === 'all' || row.getAttribute('data-category') === cat;
+                    row.style.display = show ? '' : 'none';
+                });
+            });
+        });
     }
 })();
 </script>

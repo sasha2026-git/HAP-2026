@@ -152,6 +152,45 @@ if (post_type_exists('product') && function_exists('wc_get_product')) {
 $cards = $cards_all;
 /* v3.5.7-p21: 保留 $cards_by_tab key='all' 让旧 panel 渲染回退路径不报错(虽然不再使用) */
 $cards_by_tab = ['all' => $cards_all];
+
+/* ====== v3.7.6: chips 与商品标签自动打通 ======
+ *   此前 chips 只来自 ACF repeater / 硬编码，商品新增标签后 chips 永远不变（"标签分类"失效）。
+ *   现在：以 ACF repeater 为准，把商品实际挂的数字人标签里"repeater 没覆盖的"自动补进 chips，
+ *   并保证「全部」chip 恒在第一位 —— 商品打新标签 → 商城分类立即可用，无需后台维护。 */
+$dh_map_auto = function_exists('hireai_digital_humans') ? hireai_digital_humans() : [];
+$auto_chips  = [];
+foreach ($cards_all as $_c) {
+    if (empty($_c['personas']) || !is_array($_c['personas'])) continue;
+    foreach ($_c['personas'] as $_ps) {
+        $_ps = (string) $_ps;
+        if ($_ps === '' || isset($auto_chips[strtolower($_ps)])) continue;
+        if (isset($dh_map_auto[$_ps])) {
+            $auto_chips[strtolower($_ps)] = [
+                'label_zh' => $dh_map_auto[$_ps]['label_zh'],
+                'label_en' => $dh_map_auto[$_ps]['label_en'],
+                'slug'     => $_ps,
+            ];
+        } else {
+            $auto_chips[strtolower($_ps)] = ['label_zh' => $_ps, 'label_en' => $_ps, 'slug' => $_ps];
+        }
+    }
+}
+if (!empty($auto_chips)) {
+    $have_slugs = [];
+    foreach ($filters as $_f) {
+        $have_slugs[strtolower((string) (isset($_f['slug']) ? $_f['slug'] : ''))] = true;
+    }
+    if (!isset($have_slugs['all'])) {
+        array_unshift($filters, ['label_zh' => '全部', 'label_en' => 'All', 'slug' => 'all']);
+        $have_slugs['all'] = true;
+    }
+    foreach ($auto_chips as $_chip) {
+        if (!isset($have_slugs[strtolower($_chip['slug'])])) {
+            $filters[] = $_chip;
+            $have_slugs[strtolower($_chip['slug'])] = true;
+        }
+    }
+}
 ?>
 <style>
 /* ============== 页面专有样式（仅本模板生效） ============== */
