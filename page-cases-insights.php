@@ -19,10 +19,14 @@ $ci_lang = function_exists('hireai_lang_suffix') ? (hireai_lang_suffix() === '_e
  * 强制读取指定语言的 ACF 字段值（不受当前 $ci_lang 影响）
  * 用法：$ci_field_lang('ci_hero_kicker', '智慧工坊', 'THE ATELIER OF INTELLIGENCE', 'zh')
  */
-$ci_field_lang_force = function ($name, $zh_default, $en_default, $lang) use ($ci_page_id) {
+$ci_field_lang_force = function ($name, $zh_default, $en_default, $lang, $pid = null) use ($ci_page_id) {
     $def = ($lang === 'en') ? $en_default : $zh_default;
+    /* v3.7.5 fix: 部分调用方传入的字段名已带 _zh/_en 后缀，旧代码会再拼一次
+     * 后缀（如 ci_consult_btn_zh → ci_consult_btn_zh_zh），永远读不到注册字段，
+     * 页面一直显示硬编码默认值 —— 这里统一剥离末尾后缀再读取 */
+    $base = preg_replace('/_(zh|en)$/i', '', (string) $name);
     if (function_exists('hireai_field_lang')) {
-        return hireai_field_lang($name, $lang, $def, $ci_page_id);
+        return hireai_field_lang($base, $lang, $def, $pid ? (int) $pid : $ci_page_id);
     }
     return $def;
 };
@@ -299,8 +303,8 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           $ci_case_slots[] = [
               'source'   => 'post',
               'image'    => $ci_post_img ?: $_ci_case_default_imgs[count($ci_case_slots)],
-              'badge_zh' => (string) $ci_field_lang_force( 'case_badge', '', '', 'zh' ),
-              'badge_en' => (string) $ci_field_lang_force( 'case_badge', '', '', 'en' ),
+              'badge_zh' => (string) $ci_field_lang_force( 'case_badge', '', '', 'zh', $ci_pid ),
+              'badge_en' => (string) $ci_field_lang_force( 'case_badge', '', '', 'en', $ci_pid ),
               'title_zh' => $ci_post_title,
               'title_en' => $ci_post_title,
               'desc_zh'  => $ci_post_excerpt,
@@ -496,10 +500,10 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           $ci_post_date    = get_the_date( 'Y.m.d' );
           $ci_post_permalink = get_permalink( $ci_pid );
           /* insight_cat / insight_read_time 覆盖优先；否则用 WP 分类 / 日期 */
-          $ci_cat_zh  = (string) $ci_field_lang_force( 'insight_cat', $ci_cat_name, $ci_cat_name, 'zh' );
-          $ci_cat_en  = (string) $ci_field_lang_force( 'insight_cat', $ci_cat_name, $ci_cat_name, 'en' );
-          $ci_rt_zh   = (string) $ci_field_lang_force( 'insight_read_time', $ci_post_date, $ci_post_date, 'zh' );
-          $ci_rt_en   = (string) $ci_field_lang_force( 'insight_read_time', $ci_post_date, $ci_post_date, 'en' );
+          $ci_cat_zh  = (string) $ci_field_lang_force( 'insight_cat', $ci_cat_name, $ci_cat_name, 'zh', $ci_pid );
+          $ci_cat_en  = (string) $ci_field_lang_force( 'insight_cat', $ci_cat_name, $ci_cat_name, 'en', $ci_pid );
+          $ci_rt_zh   = (string) $ci_field_lang_force( 'insight_read_time', $ci_post_date, $ci_post_date, 'zh', $ci_pid );
+          $ci_rt_en   = (string) $ci_field_lang_force( 'insight_read_time', $ci_post_date, $ci_post_date, 'en', $ci_pid );
           // v3.5.7-p17 Bug 2 修复：洞察文章优先用 ACF insight_cover_image,fallback 到 WP 特色图
           $ci_art_img = function_exists('get_field') ? get_field('insight_cover_image', $ci_pid) : '';
           if (empty($ci_art_img)) {

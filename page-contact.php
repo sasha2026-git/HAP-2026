@@ -37,7 +37,7 @@ $is_en  = ($suffix === '_en');
 /* --------------------------------------------------------------------
  * 2. HERO FIELDS  (ACF group_page_contact)
  * -------------------------------------------------------------------- */
-$hero_kicker   = hireai_field('header_kicker',  'THE ATELIER');
+$hero_kicker   = hireai_field('header_kicker',  $is_en ? 'CONTACT' : '联系');
 // Bilingual title — admin controls each half independently.
 $title_zh = function_exists('hireai_field_lang')
     ? hireai_field_lang('header_title', 'zh', '联络')
@@ -53,9 +53,9 @@ $hero_subtitle = hireai_field(
         : '与我们的管家联系，定制属于您的 AI 数字员工。'
 );
 
-// Decorative hero image — falls back to hero-home.jpg if ACF has no upload.
-$hero_image = function_exists('hireai_default_image')
-    ? hireai_default_image('hero-home.jpg')
+// Decorative banner image — v3.7.5: 新增 ACF 字段 contact_hero_image，空白回退内置图
+$hero_image = function_exists('hireai_image')
+    ? hireai_image('contact_hero_image', get_stylesheet_directory_uri() . '/assets/img/defaults/hero-home.jpg')
     : get_stylesheet_directory_uri() . '/assets/img/defaults/hero-home.jpg';
 
 /* --------------------------------------------------------------------
@@ -66,6 +66,25 @@ $contact_wechat = hireai_field('contact_wechat', 'hireai-official');
 $contact_addr   = hireai_field('contact_address', $is_en ? 'Shanghai, China' : '中国 · 上海');
 $map_label      = hireai_field('contact_map_label', $is_en ? 'View Map' : '查看地图');
 $map_url        = hireai_field('contact_map_url', 'https://uri.amap.com/search?keyword=Shanghai%2C%20China');
+
+/* v3.7.5: 新增可视化编辑字段 —— 表单标题/电话/微信标签、管家区、社交链接、底部 CTA */
+$form_heading   = hireai_field('form_heading',   $is_en ? 'Inquiry Form' : '咨询表单');
+$label_phone    = hireai_field('form_phone_label', $is_en ? 'Phone' : '电话');
+$label_wechat   = hireai_field('form_wechat_label', $is_en ? 'WeChat' : '微信');
+$concierge_head = hireai_field('concierge_heading', 'Direct Concierge');
+$concierge_desc = hireai_field('concierge_desc', $is_en
+    ? 'For immediate assistance or bespoke inquiries.'
+    : '如有即时需求或定制咨询，请直接联系专属管家。');
+$social_xhs_url = hireai_field('social_xhs_url', '');
+$social_ins_url = hireai_field('social_ins_url', '');
+$social_fb_url  = hireai_field('social_fb_url', '');
+$cta_title_c    = hireai_field('cta_title', $is_en
+    ? 'Ready to Redefine Humanity?'
+    : '准备好重新定义服务了吗？');
+$cta_desc_c     = hireai_field('cta_desc', $is_en
+    ? 'Step into the future of luxury service with our bespoke digital workforce.'
+    : '与我们的专属数字员工一同，迈入奢华服务的未来。');
+$cta_btn_c      = hireai_field('cta_btn_label', $is_en ? 'Begin Consultation' : '开始咨询');
 
 // WeChat QR (admin upload) — fallback empty box if not set.
 $qr_image = hireai_image('wechat_qr', '');
@@ -220,7 +239,7 @@ $form_action = esc_url(admin_url('admin-post.php'));
 
       <!-- LEFT: Inquiry Form -->
       <div class="hireai-c-form-card">
-        <h2><?php echo esc_html($is_en ? 'Inquiry Form' : '咨询表单'); ?></h2>
+        <h2><?php echo esc_html($form_heading); ?></h2>
 
         <?php if ($sent_status === 'success') : ?>
           <div class="hireai-c-alert hireai-c-alert--ok" role="status">
@@ -278,7 +297,7 @@ $form_action = esc_url(admin_url('admin-post.php'));
 
           <div class="hireai-c-form__row">
             <div class="hp-form-group">
-              <label class="hp-form-label" for="hireai-c-phone">PHONE (电话)</label>
+              <label class="hp-form-label" for="hireai-c-phone"><?php echo esc_html($label_phone); ?></label>
               <input id="hireai-c-phone"
                      class="hp-form-input"
                      type="tel"
@@ -287,7 +306,7 @@ $form_action = esc_url(admin_url('admin-post.php'));
                      autocomplete="tel">
             </div>
             <div class="hp-form-group">
-              <label class="hp-form-label" for="hireai-c-wechat">WECHAT (微信)</label>
+              <label class="hp-form-label" for="hireai-c-wechat"><?php echo esc_html($label_wechat); ?></label>
               <input id="hireai-c-wechat"
                      class="hp-form-input"
                      type="text"
@@ -319,11 +338,9 @@ $form_action = esc_url(admin_url('admin-post.php'));
 
       <!-- RIGHT: Direct Concierge -->
       <aside class="hireai-c-concierge" aria-label="<?php echo esc_attr($is_en ? 'Direct concierge' : '专属管家'); ?>">
-        <h3>Direct Concierge</h3>
+        <h3><?php echo esc_html($concierge_head); ?></h3>
         <p class="hireai-c-concierge__desc">
-          <?php echo esc_html($is_en
-              ? 'For immediate assistance or bespoke inquiries.'
-              : '如有即时需求或定制咨询，请直接联系专属管家。'); ?>
+          <?php echo esc_html($concierge_desc); ?>
         </p>
 
         <a class="hireai-c-email" href="mailto:<?php echo esc_attr($contact_email); ?>">
@@ -357,9 +374,9 @@ $form_action = esc_url(admin_url('admin-post.php'));
         <div class="hireai-c-connect">
           <h4>Connect</h4>
           <div class="hireai-c-social">
-            <a href="#" title="Xiaohongshu" aria-label="Xiaohongshu">小红书</a>
-            <a href="#" title="Instagram" aria-label="Instagram">Ins</a>
-            <a href="#" title="Facebook" aria-label="Facebook">FB</a>
+            <a href="<?php echo esc_url($social_xhs_url !== '' ? $social_xhs_url : '#'); ?>" title="Xiaohongshu" aria-label="Xiaohongshu"<?php echo ($social_xhs_url !== '' ? ' target="_blank" rel="noopener noreferrer"' : ''); ?>>小红书</a>
+            <a href="<?php echo esc_url($social_ins_url !== '' ? $social_ins_url : '#'); ?>" title="Instagram" aria-label="Instagram"<?php echo ($social_ins_url !== '' ? ' target="_blank" rel="noopener noreferrer"' : ''); ?>>Ins</a>
+            <a href="<?php echo esc_url($social_fb_url !== '' ? $social_fb_url : '#'); ?>" title="Facebook" aria-label="Facebook"<?php echo ($social_fb_url !== '' ? ' target="_blank" rel="noopener noreferrer"' : ''); ?>>FB</a>
           </div>
         </div>
 
@@ -386,17 +403,13 @@ $form_action = esc_url(admin_url('admin-post.php'));
   <section class="hireai-c-cta" aria-labelledby="hireai-c-cta-title">
     <div class="hireai-c-cta__card">
       <h2 id="hireai-c-cta-title" class="hireai-c-cta__title">
-        <?php echo esc_html($is_en
-            ? 'Ready to Redefine Humanity?'
-            : '准备好重新定义服务了吗？'); ?>
+        <?php echo esc_html($cta_title_c); ?>
       </h2>
       <p class="hireai-c-cta__desc">
-        <?php echo esc_html($is_en
-            ? 'Step into the future of luxury service with our bespoke digital workforce.'
-            : '与我们的专属数字员工一同，迈入奢华服务的未来。'); ?>
+        <?php echo esc_html($cta_desc_c); ?>
       </p>
       <a class="hp-btn hp-btn--primary" href="#hireai-c-title">
-        <?php echo esc_html($is_en ? 'Begin Consultation' : '开始咨询'); ?>
+        <?php echo esc_html($cta_btn_c); ?>
       </a>
     </div>
   </section>

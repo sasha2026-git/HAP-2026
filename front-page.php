@@ -128,14 +128,14 @@ $hireai_v360_image_url = function ($base) {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   ① Hero 区域 — 优先 NEW ACF → fallback p27 旧字段
+   ① Hero 区域 — v3.7.5 修复
+   字段组已合并为唯一一套 group_front_page_v375（functions.php）。
+   HTML 实际渲染的是第 34-42 行读取的 $hero_kicker / $hero_static /
+   $hero_accent / $hero_subtitle / $hero_cta_1_* / $hero_cta_2_*；
+   v3.6.0 曾在这里把 $hireai_v360('fp_hero_title'/'fp_hero_cta_label'/
+   'fp_hero_cta_url') 读进从未被渲染的死变量，导致后台改 v3.6.0 的
+   Hero 字段前台毫无变化 —— 这些死读取已删除。
    ═══════════════════════════════════════════════════════════════════════ */
-$hero_kicker      = $hireai_v360('fp_hero_kicker',   $lang) ?: hireai_field_lang('fp_hero_kicker',   $lang, $is_en ? '工匠精神与算法 / Prestige Digital Labor' : '工匠精神与算法');
-$hero_title       = $hireai_v360('fp_hero_title',    $lang) ?: hireai_field_lang('fp_hero_static',   $lang, $is_en ? 'Redefining' : '重新定义');
-$hero_subtitle    = $hireai_v360('fp_hero_subtitle', $lang) ?: hireai_field_lang('fp_hero_subtitle', $lang, $is_en ? 'Fusing cutting-edge technology with a luxurious aesthetic to craft your bespoke digital workforce.' : '融合尖端科技与奢华质感，为您打造专属的数字员工矩阵。');
-$hero_cta_label   = $hireai_v360('fp_hero_cta_label',$lang) ?: hireai_field_lang('fp_hero_cta_1_title', $lang, $is_en ? 'Explore Series' : '探索系列');
-$hero_cta_url     = $hireai_v360_url('fp_hero_cta_url') ?: hireai_field('fp_hero_cta_1_url', home_url('/ai-employees/'));
-/* fp_hero_accent 在 NEW 组里没有独立字段(只有 fp_hero_title) — 保留旧 group_front_hero 的 fp_hero_accent 作为金色斜体 */
 $hero_accent      = hireai_field_lang('fp_hero_accent', $lang, $is_en ? 'Digital Labor' : '数字劳动力');
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -332,7 +332,7 @@ if (count($side_cases) < 2) {
    ═══════════════════════════════════════════════════════════════════════ */
 $faq_kicker        = $hireai_v360('fp_faq_kicker',        $lang) ?: hireai_field_lang('fp_faq_kicker',        $lang, $is_en ? 'FAQ' : '常见问题');
 $faq_title         = $hireai_v360('fp_faq_title',         $lang) ?: hireai_field_lang('fp_faq_title',         $lang, $is_en ? 'Answers to your questions about digital employees.' : '解答关于数字员工的疑虑，开启智能新纪元。');
-$faq_sub           = $hireai_v360('fp_faq_subtitle',      $lang) ?: ($is_en ? 'Answers to your questions about digital employees.' : '解答关于数字员工的疑虑，开启智能新纪元。');
+/* v3.7.5: 删除死变量 $faq_sub（fp_faq_subtitle 从未被渲染，FAQ 副标题走 fp_faq_title） */
 $faq_explore_label = $hireai_v360('fp_faq_explore_label', $lang) ?: hireai_field_lang('fp_faq_explore_label', $lang, $is_en ? 'Explore More' : '探索更多');
 $faq_explore_url   = $hireai_v360_url('fp_faq_explore_url') ?: hireai_field('fp_faq_explore_url', home_url('/faq/'));
 

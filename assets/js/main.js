@@ -278,6 +278,18 @@
 			/* 若 localStorage 里有但 cookie 没写，同步一次（确保后续刷新一致） */
 			if (saved) setCookie(COOKIE_NAME, saved, COOKIE_DAYS);
 		}
+		/* v3.7.5: ?lang=en|zh URL 参数优先级最高（与服务端 hireai_lang_suffix 一致）。
+		 * 带语言参数的链接可分享，全页缓存也能按 URL 区分语言，绕开 cookie 冲突 */
+		try {
+			var urlLang = new URLSearchParams(window.location.search).get('lang');
+			if (urlLang === 'en' || urlLang === 'zh') {
+				if (saved !== urlLang) {
+					setCookie(COOKIE_NAME, urlLang, COOKIE_DAYS);
+					try { localStorage.setItem('hireai_lang', urlLang); } catch (e) {}
+				}
+				saved = urlLang;
+			}
+		} catch (e) {}
 		applyClientLang(saved === 'en' ? 'en' : 'zh');
 	});
 })();

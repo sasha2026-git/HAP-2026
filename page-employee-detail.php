@@ -75,11 +75,19 @@ if ($emp_post instanceof WP_Post) {
     $capabilities = array_filter(array_map('trim', preg_split('/\r?\n/', $fallback['capabilities'])));
 }
 
-/* ----- 2. 取站点级 CTA 文案 ----- */
-$site_kicker = hireai_field('lookbook_cta_heading', $is_en ? 'Ready to deploy?' : '准备好部署了吗？', 'option');
-$site_sub    = hireai_field('lookbook_cta_sub', $is_en ? 'Join the echelon of leaders using our bespoke digital employees.' : '加入正在使用我们专属数字员工的领袖行列。', 'option');
-$site_btn    = hireai_field('lookbook_cta_btn', $is_en ? 'Start The Journey' : '开启旅程', 'option');
-$site_url    = hireai_field('lookbook_cta_url', '/contact/', 'option');
+/* ----- 2. 取站点级 CTA 文案（v3.7.5 fix: lookbook_cta_* 字段注册在
+   page-ai-employees.php 模板上，此前误读 'option' 导致永远显示默认值；
+   现在从 /ai-employees/ 页面读取，页面不存在时回退默认文案） ----- */
+$_emp_cta_pid  = 0;
+$_emp_cta_page = get_page_by_path('ai-employees');
+if ($_emp_cta_page instanceof WP_Post) {
+    $_emp_cta_pid = (int) $_emp_cta_page->ID;
+}
+$_emp_cta_src = $_emp_cta_pid > 0 ? $_emp_cta_pid : false;
+$site_kicker = hireai_field('lookbook_cta_heading', $is_en ? 'Ready to deploy?' : '准备好部署了吗？', $_emp_cta_src);
+$site_sub    = hireai_field('lookbook_cta_sub', $is_en ? 'Join the echelon of leaders using our bespoke digital employees.' : '加入正在使用我们专属数字员工的领袖行列。', $_emp_cta_src);
+$site_btn    = hireai_field('lookbook_cta_btn', $is_en ? 'Start The Journey' : '开启旅程', $_emp_cta_src);
+$site_url    = hireai_field('lookbook_cta_url', '/contact/', $_emp_cta_src);
 
 /* 兜底 logo/字体 */
 $logo_url = get_theme_mod('header_logo', get_stylesheet_directory_uri() . '/assets/img/header-logo.svg');

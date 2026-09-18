@@ -272,6 +272,13 @@ add_action('acf/save_post', function ($post_id) {
  * 当前语言后缀（双语方案 B）：无 Polylang 时默认 zh
  */
 function hireai_lang_suffix() {
+    /* v3.7.5: ?lang=en|zh URL 参数优先级最高 —— 带语言参数的链接可分享、
+     * 可被全页缓存按 URL 区分语言，绕开「cookie 与页面缓存冲突」的坑。
+     * 优先级：URL 参数 > hireai_lang cookie > Polylang > 默认 zh */
+    $q_lang = isset($_GET['lang']) ? strtolower(trim((string) $_GET['lang'])) : '';
+    if ($q_lang === 'en' || $q_lang === 'zh') {
+        return '_' . $q_lang;
+    }
     /* v3.0.5 hotfix: 优先读 hireai_lang cookie（JS hireaiSwitchLang 切换后写 cookie + 刷新页面），
      * 只有 cookie 没设置时才回退到 Polylang。这样点 EN 后刷新，服务端正确返回 _en。 */
     $cookie_lang = isset($_COOKIE['hireai_lang']) ? trim((string) $_COOKIE['hireai_lang']) : '';
@@ -1551,6 +1558,9 @@ function hireai_handle_contact() {
     $name    = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
     $company = isset($_POST['company']) ? sanitize_text_field(wp_unslash($_POST['company'])) : '';
     $email   = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+    /* v3.7.5: 表单里的电话/微信一并收集进邮件正文 */
+    $phone   = isset($_POST['phone']) ? sanitize_text_field(wp_unslash($_POST['phone'])) : '';
+    $wechat  = isset($_POST['wechat']) ? sanitize_text_field(wp_unslash($_POST['wechat'])) : '';
     $message = isset($_POST['message']) ? sanitize_textarea_field(wp_unslash($_POST['message'])) : '';
 
     if ($name === '' || !is_email($email) || $message === '') {
@@ -1569,6 +1579,12 @@ function hireai_handle_contact() {
         $body .= "公司 / Company: {$company}\n";
     }
     $body   .= "邮箱 / Email: {$email}\n";
+    if ($phone !== '') {
+        $body .= "电话 / Phone: {$phone}\n";
+    }
+    if ($wechat !== '') {
+        $body .= "微信 / WeChat: {$wechat}\n";
+    }
     $body   .= "------------------------------------\n";
     $body   .= wp_strip_all_tags($message) . "\n";
     $headers = ['Reply-To: ' . $email];
@@ -1669,117 +1685,12 @@ add_action('acf/init', function () {
         array(array('param' => 'page', 'operator' => '==', 'value' => 'front-page')),
     );
 
-    /* ---- 1. 首页 Hero（字段名与 front-page.php 读取的 fp_* 一一对应） ---- */
-    acf_add_local_field_group(hireai_make_bilingual_group('group_front_hero', '首页 — Hero 区域', [
-        ['name' => 'fp_hero_kicker', 'label' => '眉题（kicker）', 'type' => 'text', 'zh' => '工匠精神与算法', 'en' => 'Prestige Digital Labor'],
-        ['name' => 'fp_hero_static', 'label' => '主标题（常亮大字）', 'type' => 'text', 'zh' => '重新定义', 'en' => 'Redefine'],
-        ['name' => 'fp_hero_accent', 'label' => '主标题（金色斜体）', 'type' => 'text', 'zh' => '数字劳动力', 'en' => 'Digital Labor'],
-        ['name' => 'fp_hero_subtitle', 'label' => '副标题', 'type' => 'textarea', 'zh' => '融合尖端科技与奢华质感，为您打造专属数字员工。', 'en' => 'Fusing cutting-edge technology with a luxurious aesthetic to craft your exclusive digital employees.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_hero_cta_1_url', 'label' => '主按钮 · 链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
-        ['name' => 'fp_hero_cta_1_title', 'label' => '主按钮 · 文字', 'type' => 'text', 'zh' => '探索系列', 'en' => 'EXPLORE SERIES'],
-        ['name' => 'fp_hero_cta_2_url', 'label' => '次按钮 · 链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
-        ['name' => 'fp_hero_cta_2_title', 'label' => '次按钮 · 文字', 'type' => 'text', 'zh' => '定制咨询', 'en' => 'CONSULTATION'],
-        ['name' => 'fp_hero_image', 'label' => 'Hero 背景图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
-    ], $hireai_front_loc));
-
-    /* ---- 2. 首页各模块（字段名与 front-page.php 读取的 fp_* 一一对应） ---- */
-    acf_add_local_field_group(hireai_make_bilingual_group('group_front_modules', '首页 — 各模块', [
-        ['name' => 'fp_intro_kicker', 'label' => '引言 · 眉题', 'type' => 'text', 'zh' => '工匠精神与算法', 'en' => 'Craftsmanship Meets Algorithm'],
-        ['name' => 'fp_intro_title', 'label' => '引言 · 标题', 'type' => 'textarea', 'zh' => '塑造超越物理边界的存在。', 'en' => 'Shaping existence beyond physical boundaries.', 'extra' => ['rows' => 2]],
-        ['name' => 'fp_intro_desc', 'label' => '引言 · 描述', 'type' => 'textarea', 'zh' => '我们结合传统奢华的严谨工艺与神经网络的无限可能。每一位数字员工都是独一无二的杰作，专为优雅、智慧与共鸣而设计。', 'en' => 'We combine the rigor of traditional luxury with the infinite potential of neural networks. Every digital employee is a one-of-a-kind masterpiece, designed for elegance, intelligence, and resonance.', 'extra' => ['rows' => 4]],
-        ['name' => 'fp_intro_cta_title', 'label' => '引言 · 链接文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
-        ['name' => 'fp_intro_cta_url', 'label' => '引言 · 链接地址', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
-
-        ['name' => 'fp_products_kicker', 'label' => '数字员工 · 眉题', 'type' => 'text', 'zh' => '限量神经元系列', 'en' => 'Limited Neural Series'],
-        ['name' => 'fp_products_title', 'label' => '数字员工 · 标题', 'type' => 'textarea', 'zh' => 'AI 数字员工', 'en' => 'AI Digital Employees', 'extra' => ['rows' => 1]],
-        ['name' => 'fp_products_subtitle', 'label' => '数字员工 · 副标题', 'type' => 'textarea', 'zh' => '每一位数字员工都拥有独特的灵魂、技能与能力，随时加入您的团队。', 'en' => 'Each digital employee brings a unique soul, refined skills, and unmatched capabilities.', 'extra' => ['rows' => 2]],
-        ['name' => 'fp_products_explore_label', 'label' => '数字员工 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
-        ['name' => 'fp_products_explore_url', 'label' => '数字员工 · 按钮链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
-
-        ['name' => 'fp_prod1_title', 'label' => '数字员工 1 · 标题', 'type' => 'text', 'zh' => 'Aurelian Prime', 'en' => 'Aurelian Prime'],
-        ['name' => 'fp_prod1_desc', 'label' => '数字员工 1 · 描述', 'type' => 'text', 'zh' => '精英女性数字分身', 'en' => 'Elite female digital avatar'],
-        ['name' => 'fp_prod1_badge', 'label' => '数字员工 1 · 徽标', 'type' => 'text', 'zh' => '限量 01/50', 'en' => 'Edition 01/50'],
-        ['name' => 'fp_prod1_image', 'label' => '数字员工 1 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
-        ['name' => 'fp_prod1_url', 'label' => '数字员工 1 · 链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
-        ['name' => 'fp_prod1_btn', 'label' => '数字员工 1 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
-
-        ['name' => 'fp_prod2_title', 'label' => '数字员工 2 · 标题', 'type' => 'text', 'zh' => 'Aurelian Executive', 'en' => 'Aurelian Executive'],
-        ['name' => 'fp_prod2_desc', 'label' => '数字员工 2 · 描述', 'type' => 'text', 'zh' => '权威与外交协议', 'en' => 'Authority & diplomacy protocol'],
-        ['name' => 'fp_prod2_badge', 'label' => '数字员工 2 · 徽标', 'type' => 'text', 'zh' => 'Executive Series', 'en' => 'Executive Series'],
-        ['name' => 'fp_prod2_image', 'label' => '数字员工 2 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
-        ['name' => 'fp_prod2_url', 'label' => '数字员工 2 · 链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
-        ['name' => 'fp_prod2_btn', 'label' => '数字员工 2 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
-
-        ['name' => 'fp_prod3_title', 'label' => '数字员工 3 · 标题', 'type' => 'text', 'zh' => 'Neural Sales Core', 'en' => 'Neural Sales Core'],
-        ['name' => 'fp_prod3_desc', 'label' => '数字员工 3 · 描述', 'type' => 'text', 'zh' => '企业级AI优化', 'en' => 'Enterprise-grade AI optimization'],
-        ['name' => 'fp_prod3_badge', 'label' => '数字员工 3 · 徽标', 'type' => 'text', 'zh' => 'Neural Series', 'en' => 'Neural Series'],
-        ['name' => 'fp_prod3_image', 'label' => '数字员工 3 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
-        ['name' => 'fp_prod3_url', 'label' => '数字员工 3 · 链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
-        ['name' => 'fp_prod3_btn', 'label' => '数字员工 3 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
-
-        ['name' => 'fp_solutions_kicker', 'label' => '解决方案 · 眉题', 'type' => 'text', 'zh' => '行业赋能', 'en' => 'Industry Empowerment'],
-        ['name' => 'fp_solutions_title', 'label' => '解决方案 · 标题', 'type' => 'textarea', 'zh' => 'AI 解决方案', 'en' => 'AI Solutions', 'extra' => ['rows' => 1]],
-        ['name' => 'fp_solutions_subtitle', 'label' => '解决方案 · 副标题', 'type' => 'textarea', 'zh' => '面向多个行业的量身定制智能方案。', 'en' => 'Bespoke intelligent solutions across industries.', 'extra' => ['rows' => 2]],
-        ['name' => 'fp_solutions_explore_label', 'label' => '解决方案 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
-        ['name' => 'fp_solutions_explore_url', 'label' => '解决方案 · 按钮链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
-
-        ['name' => 'fp_sol1_title', 'label' => '方案 1 · 标题', 'type' => 'text', 'zh' => '金融与财富管理', 'en' => 'Finance & Wealth Management'],
-        ['name' => 'fp_sol1_desc', 'label' => '方案 1 · 描述', 'type' => 'textarea', 'zh' => '智能顾问与客户关系维护的数字化重塑。', 'en' => 'Digital reshaping of intelligent advisors and client relationship management.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_sol1_tag', 'label' => '方案 1 · 标签', 'type' => 'text', 'zh' => '金融', 'en' => 'Finance'],
-        ['name' => 'fp_sol1_image', 'label' => '方案 1 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
-
-        ['name' => 'fp_sol2_title', 'label' => '方案 2 · 标题', 'type' => 'text', 'zh' => '高端零售与电商', 'en' => 'Premium Retail & E-commerce'],
-        ['name' => 'fp_sol2_desc', 'label' => '方案 2 · 描述', 'type' => 'textarea', 'zh' => '24/7全天候奢华购物体验升级。', 'en' => '24/7 all-day luxury shopping experience upgrade.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_sol2_tag', 'label' => '方案 2 · 标签', 'type' => 'text', 'zh' => '零售', 'en' => 'Retail'],
-        ['name' => 'fp_sol2_image', 'label' => '方案 2 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
-
-        ['name' => 'fp_sol3_title', 'label' => '方案 3 · 标题', 'type' => 'text', 'zh' => '医疗健康与陪伴', 'en' => 'Healthcare & Companionship'],
-        ['name' => 'fp_sol3_desc', 'label' => '方案 3 · 描述', 'type' => 'textarea', 'zh' => '充满同理心的智能关怀与健康咨询。', 'en' => 'Empathetic intelligent care and health consultation.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_sol3_tag', 'label' => '方案 3 · 标签', 'type' => 'text', 'zh' => '健康', 'en' => 'Health'],
-        ['name' => 'fp_sol3_image', 'label' => '方案 3 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
-
-        ['name' => 'fp_sol4_title', 'label' => '方案 4 · 标题', 'type' => 'text', 'zh' => '泛娱乐与虚拟偶像', 'en' => 'Entertainment & Virtual Idols'],
-        ['name' => 'fp_sol4_desc', 'label' => '方案 4 · 描述', 'type' => 'textarea', 'zh' => '打造永不塌房的超级IP与互动体验。', 'en' => 'Build the ultimate never-fail super IP and interactive experience.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_sol4_tag', 'label' => '方案 4 · 标签', 'type' => 'text', 'zh' => '娱乐', 'en' => 'Entertainment'],
-        ['name' => 'fp_sol4_image', 'label' => '方案 4 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
-
-        ['name' => 'fp_cases_kicker', 'label' => '案例 · 眉题', 'type' => 'text', 'zh' => '前沿视野', 'en' => 'Frontier Vision'],
-        ['name' => 'fp_cases_title', 'label' => '案例 · 标题', 'type' => 'textarea', 'zh' => '案例 & 洞察', 'en' => 'Cases & Insights', 'extra' => ['rows' => 1]],
-        ['name' => 'fp_cases_subtitle', 'label' => '案例 · 副标题', 'type' => 'textarea', 'zh' => '见证数字员工如何改变企业的运营方式。', 'en' => 'See how digital employees transform operations.', 'extra' => ['rows' => 2]],
-        ['name' => 'fp_cases_explore_label', 'label' => '案例 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
-        ['name' => 'fp_cases_explore_url', 'label' => '案例 · 按钮链接', 'type' => 'text', 'zh' => '/cases-insights/', 'en' => '/cases-insights/'],
-
-        ['name' => 'fp_case_major_label', 'label' => '主案例 · 标签', 'type' => 'text', 'zh' => '案例研究', 'en' => 'CASE STUDY'],
-        ['name' => 'fp_case_major_title', 'label' => '主案例 · 标题', 'type' => 'textarea', 'zh' => 'Aurelian Prime 在私人银行的应用', 'en' => 'Aurelian Prime in Private Banking', 'extra' => ['rows' => 2]],
-        ['name' => 'fp_case_major_desc', 'label' => '主案例 · 描述', 'type' => 'textarea', 'zh' => '了解我们的顶级数字员工如何提升高净值客户的留存率与满意度。', 'en' => 'Learn how our top digital employee boosts retention and satisfaction for high-net-worth clients.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_case_major_image', 'label' => '主案例 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
-
-        ['name' => 'fp_case1_tag', 'label' => '案例 1 · 标签', 'type' => 'text', 'zh' => '案例研究', 'en' => 'CASE STUDY'],
-        ['name' => 'fp_case1_title', 'label' => '案例 1 · 标题', 'type' => 'textarea', 'zh' => '电商视觉革命：转化率提升55%', 'en' => 'E-commerce Visual Revolution: +55% Conversion', 'extra' => ['rows' => 2]],
-        ['name' => 'fp_case1_desc', 'label' => '案例 1 · 描述', 'type' => 'textarea', 'zh' => '重塑线上购物体验，结合虚拟试穿与个性化推荐带来的商业增长。', 'en' => 'Reshaping online shopping with virtual try-on and personalized recommendations.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_case1_image', 'label' => '案例 1 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
-
-        ['name' => 'fp_case2_tag', 'label' => '案例 2 · 标签', 'type' => 'text', 'zh' => '深度洞察', 'en' => 'DEEP INSIGHT'],
-        ['name' => 'fp_case2_title', 'label' => '案例 2 · 标题', 'type' => 'textarea', 'zh' => '"未来不再仅仅是代码，更是交响乐。"', 'en' => '"The future is no longer just code, but a symphony."', 'extra' => ['rows' => 2]],
-        ['name' => 'fp_case2_desc', 'label' => '案例 2 · 描述', 'type' => 'textarea', 'zh' => '探讨数字人性化的趋势，以及我们在构建有温度的AI方面的思考与实践。', 'en' => 'Exploring the trend of humanized digital beings and our approach to building warm AI.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_case2_image', 'label' => '案例 2 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
-
-        ['name' => 'fp_faq_kicker', 'label' => 'FAQ · 眉题', 'type' => 'text', 'zh' => '常见问题', 'en' => 'FAQ'],
-        ['name' => 'fp_faq_title', 'label' => 'FAQ · 标题', 'type' => 'textarea', 'zh' => '解答关于数字员工的疑虑，开启智能新纪元。', 'en' => 'Answers to your questions about digital employees.', 'extra' => ['rows' => 2]],
-        ['name' => 'fp_faq_explore_label', 'label' => 'FAQ · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
-        ['name' => 'fp_faq_explore_url', 'label' => 'FAQ · 按钮链接', 'type' => 'text', 'zh' => '/faq/', 'en' => '/faq/'],
-        ['name' => 'fp_faq1_q', 'label' => 'FAQ 1 · 问题', 'type' => 'text', 'zh' => '定制一位数字员工需要多长时间？', 'en' => 'How long does it take to customize a digital employee?'],
-        ['name' => 'fp_faq1_a', 'label' => 'FAQ 1 · 回答', 'type' => 'textarea', 'zh' => '这取决于定制的复杂程度。基础模型微调通常需要2-4周，而完全定制化可能需要8-12周。', 'en' => 'This depends on the complexity of the customization. Basic model fine-tuning typically takes 2-4 weeks, while full customization may require 8-12 weeks.', 'extra' => ['rows' => 4]],
-        ['name' => 'fp_faq2_q', 'label' => 'FAQ 2 · 问题', 'type' => 'text', 'zh' => '数字员工的知识库可以实时更新吗？', 'en' => "Can a digital employee's knowledge base be updated in real-time?"],
-        ['name' => 'fp_faq2_a', 'label' => 'FAQ 2 · 回答', 'type' => 'textarea', 'zh' => '是的，我们的系统支持通过API进行实时知识库更新。', 'en' => 'Yes, our system supports real-time knowledge base updates via API.', 'extra' => ['rows' => 4]],
-        ['name' => 'fp_faq3_q', 'label' => 'FAQ 3 · 问题', 'type' => 'text', 'zh' => '如何保障数据隐私与安全？', 'en' => 'How do you ensure data privacy and security?'],
-        ['name' => 'fp_faq3_a', 'label' => 'FAQ 3 · 回答', 'type' => 'textarea', 'zh' => '我们采用企业级加密标准，所有交互数据均在本地或专属私有云中处理。', 'en' => 'We employ enterprise-grade encryption standards. All interaction data is processed in local or dedicated private clouds.', 'extra' => ['rows' => 4]],
-
-        ['name' => 'fp_cta_title', 'label' => 'CTA · 标题', 'type' => 'textarea', 'zh' => '开启您的 AI 雇佣之旅', 'en' => 'Begin Your AI Hiring Journey', 'extra' => ['rows' => 1]],
-        ['name' => 'fp_cta_desc', 'label' => 'CTA · 描述', 'type' => 'textarea', 'zh' => '与我们的团队对话，打造专属您的数字员工阵容。', 'en' => 'Speak with our team and craft a digital workforce made for you.', 'extra' => ['rows' => 2]],
-        ['name' => 'fp_cta_btn_title', 'label' => 'CTA · 按钮文字', 'type' => 'text', 'zh' => '联系我们', 'en' => 'Contact Us'],
-        ['name' => 'fp_cta_btn_url', 'label' => 'CTA · 按钮地址', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
-    ], $hireai_front_loc));
+    /* ---- 1/2. 首页 Hero + 各模块：v3.7.5 起已合并进第二个 acf/init 回调里的
+     *   group_front_page_v375（首页唯一一套双语字段组）。
+     *   原因：group_front_hero / group_front_modules / group_frontpage_v360 三套组
+     *   同页并存、字段名互相竞争，前台渲染链"v360 非空则旧字段永远不看"，
+     *   造成"后台改了 A 处、前台显示 B 处 / 改了不生效"。
+     *   字段名与已填数据全部保留（同名 post meta 兼容），见合并组注释。 ---- */
 
     /* ---- 3. 案例文章 ACF：category=cases 文章的卡片覆盖字段 ---- */
     acf_add_local_field_group(hireai_make_bilingual_group('group_case_meta', '案例 — 卡片', [
@@ -2319,6 +2230,18 @@ add_action('acf/init', function () {
         ['name' => 'form_success', 'label' => '表单 · 成功提示', 'type' => 'textarea', 'zh' => '您的咨询已发送，我们将尽快与您联系。', 'en' => "Your inquiry has been sent. We'll be in touch shortly.", 'extra' => ['rows' => 2]],
         ['name' => 'form_invalid', 'label' => '表单 · 校验失败提示', 'type' => 'textarea', 'zh' => '请填写正确的姓名、邮箱与需求描述。', 'en' => 'Please provide a valid name, email, and message.', 'extra' => ['rows' => 2]],
         ['name' => 'form_error', 'label' => '表单 · 发送失败提示', 'type' => 'textarea', 'zh' => '发送失败，请稍后重试或直接邮件联系我们。', 'en' => 'Something went wrong. Please retry or email us directly.', 'extra' => ['rows' => 2]],
+        ['name' => 'contact_hero_image', 'label' => 'Banner · 装饰图', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'form_heading', 'label' => '表单 · 区块标题', 'type' => 'text', 'zh' => '咨询表单', 'en' => 'Inquiry Form'],
+        ['name' => 'form_phone_label', 'label' => '表单 · 电话标签', 'type' => 'text', 'zh' => '电话', 'en' => 'Phone'],
+        ['name' => 'form_wechat_label', 'label' => '表单 · 微信标签', 'type' => 'text', 'zh' => '微信', 'en' => 'WeChat'],
+        ['name' => 'concierge_heading', 'label' => '管家 · 区块标题', 'type' => 'text', 'zh' => 'Direct Concierge', 'en' => 'Direct Concierge'],
+        ['name' => 'concierge_desc', 'label' => '管家 · 描述', 'type' => 'textarea', 'zh' => '如有即时需求或定制咨询，请直接联系专属管家。', 'en' => 'For immediate assistance or bespoke inquiries.', 'extra' => ['rows' => 2]],
+        ['name' => 'social_xhs_url', 'label' => '社交 · 小红书链接', 'type' => 'text', 'zh' => '', 'en' => ''],
+        ['name' => 'social_ins_url', 'label' => '社交 · Instagram 链接', 'type' => 'text', 'zh' => '', 'en' => ''],
+        ['name' => 'social_fb_url', 'label' => '社交 · Facebook 链接', 'type' => 'text', 'zh' => '', 'en' => ''],
+        ['name' => 'cta_title', 'label' => 'CTA · 标题', 'type' => 'textarea', 'zh' => '准备好重新定义服务了吗？', 'en' => 'Ready to Redefine Humanity?', 'extra' => ['rows' => 1]],
+        ['name' => 'cta_desc', 'label' => 'CTA · 描述', 'type' => 'textarea', 'zh' => '与我们的专属数字员工一同，迈入奢华服务的未来。', 'en' => 'Step into the future of luxury service with our bespoke digital workforce.', 'extra' => ['rows' => 2]],
+        ['name' => 'cta_btn_label', 'label' => 'CTA · 按钮文字', 'type' => 'text', 'zh' => '开始咨询', 'en' => 'Begin Consultation'],
     ], [
         [['param' => 'page_template', 'operator' => '==', 'value' => 'page-contact.php']],
     ]));
@@ -2386,150 +2309,205 @@ add_action('acf/init', function () {
     ]));
 
       /* ====================================================================
-       * v3.6.0 新增 - 2 个 ACF Field Group:
-       *   ① group_frontpage_v360     首页 5 Section 全双语可视化编辑（5 Tab × 中英）
-       *   ② group_product_featured_v360  商品双语 + 首页推荐开关
-       *
-       * 设计原则:
-       *   - 与现有 group_front_hero / group_front_modules / group_product_meta 并存不互斥
-       *     (ACF 允许同名 name 跨组共存;WP 后台显示两份,值共享一份 meta)
-       *   - 字段 name 显式带 _zh / _en 后缀(由 front-page.php 用 get_field 直接读,不依赖 lang_suffix 自动追加)
-       *   - 解决方案/案例/FAQ 三大区域用 repeater 实现「C: 可选哪些上首页」+「ACF 双 fallback」
-       *   - 商品组新增 sol_featured_on_home + sol_featured_order,默认全部 false / 99
-       *     (用户自己到 WP 后台勾选,不需要 Codex 写入 product 数据)
+       * v3.7.5 — 首页字段组大合并（唯一一套，取代以下 3 个互相竞争的组）
+       *   - group_front_hero / group_front_modules（v3.7.3 直接注册，已删除）
+       *   - group_frontpage_v360（v3.6.0，已删除）
+       *   根因：同一前台元素存在多个字段名（如主标题 fp_hero_static 与
+       *         fp_hero_title），前台渲染链「v360 非空则旧字段永远不看」，
+       *         在旧组里改内容永远不生效；而后台两三套 UI 并存，无法分辨。
+       *   规则：
+       *     1. 只注册 front-page.php 实际渲染的字段名（v3.6.0 里从未被
+       *        渲染的 fp_hero_title / fp_hero_cta_label / fp_hero_cta_url /
+       *        fp_faq_subtitle / fp_cta_desc 等死字段不再注册）。
+       *     2. 旧字段的历史数据仍在 post meta 中，模板兜底链继续兼容，
+       *        已填内容不会丢；在新组里保存一次即自然接管。
+       *     3. 3 个 repeater 的 field key 与 v3.6.0 完全一致
+       *        （repeater 行数据以 key 存储，key 变更会丢数据）。
        * ==================================================================== */
+      $_front_fields = [
+        /* ── ① Hero ── */
+        ['name' => 'fp_hero_kicker', 'label' => '① Hero · 眉题', 'type' => 'text', 'zh' => '工匠精神与算法', 'en' => 'Prestige Digital Labor'],
+        ['name' => 'fp_hero_static', 'label' => '① Hero · 主标题（常亮行）', 'type' => 'text', 'zh' => '重新定义', 'en' => 'Redefine'],
+        ['name' => 'fp_hero_accent', 'label' => '① Hero · 主标题（金色斜体行）', 'type' => 'text', 'zh' => '数字劳动力', 'en' => 'Digital Labor'],
+        ['name' => 'fp_hero_subtitle', 'label' => '① Hero · 副标题', 'type' => 'textarea', 'zh' => '融合尖端科技与奢华质感，为您打造专属的数字员工矩阵。', 'en' => 'Fusing cutting-edge technology with a luxurious aesthetic to craft your bespoke digital workforce.', 'extra' => ['rows' => 3]],
+        ['name' => 'fp_hero_image', 'label' => '① Hero · 背景图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
+        ['name' => 'fp_hero_cta_1_url', 'label' => '① Hero · 主按钮 · 链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
+        ['name' => 'fp_hero_cta_1_title', 'label' => '① Hero · 主按钮 · 文字', 'type' => 'text', 'zh' => '探索系列', 'en' => 'EXPLORE SERIES'],
+        ['name' => 'fp_hero_cta_2_url', 'label' => '① Hero · 次按钮 · 链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
+        ['name' => 'fp_hero_cta_2_title', 'label' => '① Hero · 次按钮 · 文字', 'type' => 'text', 'zh' => '定制咨询', 'en' => 'CONSULTATION'],
 
-      /* ---- v3.6.0-A: 首页 5 Section 双语 ---- */
-      acf_add_local_field_group([
-          'key'      => 'group_frontpage_v360',
-          'title'    => '首页 v3.6.0 — 全部 Section 双语',
-          'fields'   => [
-              /* ===== Tab ① Hero ===== */
-              ['key' => 'field_fp_hero_tab',              'label' => '① Hero 区域',              'type' => 'tab'],
-              ['key' => 'field_fp_hero_kicker_zh',       'label' => '眉题 · 中',                 'name' => 'fp_hero_kicker_zh',     'type' => 'text'],
-              ['key' => 'field_fp_hero_kicker_en',       'label' => 'Eyebrow · EN',              'name' => 'fp_hero_kicker_en',     'type' => 'text'],
-              ['key' => 'field_fp_hero_title_zh',        'label' => '主标题 · 中',               'name' => 'fp_hero_title_zh',      'type' => 'text'],
-              ['key' => 'field_fp_hero_title_en',        'label' => 'Headline · EN',             'name' => 'fp_hero_title_en',      'type' => 'text'],
-              ['key' => 'field_fp_hero_subtitle_zh',     'label' => '副标题 · 中',               'name' => 'fp_hero_subtitle_zh',   'type' => 'textarea', 'rows' => 3],
-              ['key' => 'field_fp_hero_subtitle_en',     'label' => 'Subtitle · EN',             'name' => 'fp_hero_subtitle_en',   'type' => 'textarea', 'rows' => 3],
-              ['key' => 'field_fp_hero_cta_label_zh',    'label' => 'CTA 按钮文字 · 中',         'name' => 'fp_hero_cta_label_zh',  'type' => 'text'],
-              ['key' => 'field_fp_hero_cta_label_en',    'label' => 'CTA Label · EN',            'name' => 'fp_hero_cta_label_en',  'type' => 'text'],
-              ['key' => 'field_fp_hero_cta_url',         'label' => 'CTA 链接 (中英共用)',       'name' => 'fp_hero_cta_url',       'type' => 'url'],
+        /* ── ② 引言 ── */
+        ['name' => 'fp_intro_kicker', 'label' => '② 引言 · 眉题', 'type' => 'text', 'zh' => '工匠精神与算法', 'en' => 'Craftsmanship Meets Algorithm'],
+        ['name' => 'fp_intro_title', 'label' => '② 引言 · 标题', 'type' => 'textarea', 'zh' => '塑造超越物理边界的存在。', 'en' => 'Shaping existence beyond physical boundaries.', 'extra' => ['rows' => 2]],
+        ['name' => 'fp_intro_desc', 'label' => '② 引言 · 描述', 'type' => 'textarea', 'zh' => '我们结合传统奢华的严谨工艺与神经网络的无限可能。每一位数字员工都是独一无二的杰作，专为优雅、智慧与共鸣而设计。', 'en' => 'We combine the rigor of traditional luxury with the infinite potential of neural networks. Every digital employee is a one-of-a-kind masterpiece, designed for elegance, intelligence, and resonance.', 'extra' => ['rows' => 4]],
+        ['name' => 'fp_intro_cta_title', 'label' => '② 引言 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
+        ['name' => 'fp_intro_cta_url', 'label' => '② 引言 · 按钮链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
 
-              /* ===== Tab ② Solutions ===== */
-              ['key' => 'field_fp_solutions_tab',                'label' => '② 解决方案区域',                                  'type' => 'tab'],
-              ['key' => 'field_fp_solutions_kicker_zh',          'label' => '眉题 · 中',                                        'name' => 'fp_solutions_kicker_zh',         'type' => 'text'],
-              ['key' => 'field_fp_solutions_kicker_en',          'label' => 'Eyebrow · EN',                                     'name' => 'fp_solutions_kicker_en',         'type' => 'text'],
-              ['key' => 'field_fp_solutions_title_zh',           'label' => '标题 · 中',                                        'name' => 'fp_solutions_title_zh',          'type' => 'text'],
-              ['key' => 'field_fp_solutions_title_en',           'label' => 'Title · EN',                                       'name' => 'fp_solutions_title_en',          'type' => 'text'],
-              ['key' => 'field_fp_solutions_subtitle_zh',        'label' => '副标题 · 中',                                      'name' => 'fp_solutions_subtitle_zh',       'type' => 'textarea', 'rows' => 2],
-              ['key' => 'field_fp_solutions_subtitle_en',        'label' => 'Subtitle · EN',                                    'name' => 'fp_solutions_subtitle_en',       'type' => 'textarea', 'rows' => 2],
-              ['key' => 'field_fp_solutions_explore_label_zh',   'label' => '「探索更多」按钮文字 · 中',                       'name' => 'fp_solutions_explore_label_zh',  'type' => 'text'],
-              ['key' => 'field_fp_solutions_explore_label_en',   'label' => 'Explore More · EN',                                'name' => 'fp_solutions_explore_label_en',  'type' => 'text'],
-              ['key' => 'field_fp_solutions_explore_url',        'label' => '「探索更多」链接 (中英共用)',                      'name' => 'fp_solutions_explore_url',       'type' => 'url'],
-              [
-                  'key'           => 'field_fp_sol_static_repeater',
-                  'label'         => '解决方案静态卡片（最多 4 张 · WC 首页推荐商品未填时回退到此）',
-                  'name'          => 'fp_sol_static_repeater',
-                  'type'          => 'repeater',
-                  'max'           => 4,
-                  'layout'        => 'row',
-                  'button_label'  => '添加一张方案卡',
-                  'sub_fields'    => [
-                      ['key' => 'field_fp_sol_static_title_zh', 'label' => '标题 · 中',    'name' => 'title_zh', 'type' => 'text'],
-                      ['key' => 'field_fp_sol_static_title_en', 'label' => 'Title · EN',   'name' => 'title_en', 'type' => 'text'],
-                      ['key' => 'field_fp_sol_static_desc_zh',  'label' => '描述 · 中',    'name' => 'desc_zh',  'type' => 'textarea', 'rows' => 2],
-                      ['key' => 'field_fp_sol_static_desc_en',  'label' => 'Description · EN', 'name' => 'desc_en', 'type' => 'textarea', 'rows' => 2],
-                      ['key' => 'field_fp_sol_static_tag_zh',   'label' => '标签 · 中',    'name' => 'tag_zh',   'type' => 'text'],
-                      ['key' => 'field_fp_sol_static_tag_en',   'label' => 'Tag · EN',     'name' => 'tag_en',   'type' => 'text'],
-                      ['key' => 'field_fp_sol_static_image',    'label' => '图片（中英共用）', 'name' => 'image',   'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
-                      ['key' => 'field_fp_sol_static_url',      'label' => '链接（中英共用）', 'name' => 'url',     'type' => 'url'],
-                  ],
-              ],
+        /* ── ③ 数字员工区块 ── */
+        ['name' => 'fp_products_kicker', 'label' => '③ 数字员工 · 眉题', 'type' => 'text', 'zh' => '限量神经元系列', 'en' => 'Limited Neural Series'],
+        ['name' => 'fp_products_title', 'label' => '③ 数字员工 · 标题', 'type' => 'textarea', 'zh' => 'AI 数字员工', 'en' => 'AI Digital Employees', 'extra' => ['rows' => 1]],
+        ['name' => 'fp_products_subtitle', 'label' => '③ 数字员工 · 副标题', 'type' => 'textarea', 'zh' => '每一位数字员工都拥有独特的灵魂、技能与能力，随时加入您的团队。', 'en' => 'Each digital employee brings a unique soul, refined skills, and unmatched capabilities.', 'extra' => ['rows' => 2]],
+        ['name' => 'fp_products_explore_label', 'label' => '③ 数字员工 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
+        ['name' => 'fp_products_explore_url', 'label' => '③ 数字员工 · 按钮链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
 
-              /* ===== Tab ③ Cases & Insights ===== */
-              ['key' => 'field_fp_cases_tab',                'label' => '③ 案例与观点',                                       'type' => 'tab'],
-              ['key' => 'field_fp_cases_kicker_zh',          'label' => '眉题 · 中',                                          'name' => 'fp_cases_kicker_zh',         'type' => 'text'],
-              ['key' => 'field_fp_cases_kicker_en',          'label' => 'Eyebrow · EN',                                       'name' => 'fp_cases_kicker_en',         'type' => 'text'],
-              ['key' => 'field_fp_cases_title_zh',           'label' => '标题 · 中',                                          'name' => 'fp_cases_title_zh',          'type' => 'text'],
-              ['key' => 'field_fp_cases_title_en',           'label' => 'Title · EN',                                         'name' => 'fp_cases_title_en',          'type' => 'text'],
-              ['key' => 'field_fp_cases_subtitle_zh',        'label' => '副标题 · 中',                                        'name' => 'fp_cases_subtitle_zh',       'type' => 'textarea', 'rows' => 2],
-              ['key' => 'field_fp_cases_subtitle_en',        'label' => 'Subtitle · EN',                                      'name' => 'fp_cases_subtitle_en',       'type' => 'textarea', 'rows' => 2],
-              ['key' => 'field_fp_cases_explore_label_zh',   'label' => '「探索更多」按钮文字 · 中',                          'name' => 'fp_cases_explore_label_zh',  'type' => 'text'],
-              ['key' => 'field_fp_cases_explore_label_en',   'label' => 'Explore More · EN',                                  'name' => 'fp_cases_explore_label_en',  'type' => 'text'],
-              ['key' => 'field_fp_cases_explore_url',        'label' => '「探索更多」链接（中英共用）',                       'name' => 'fp_cases_explore_url',       'type' => 'url'],
-              ['key' => 'field_fp_case_major_label_zh',      'label' => '大案例 · 标签 · 中',                                 'name' => 'fp_case_major_label_zh',     'type' => 'text'],
-              ['key' => 'field_fp_case_major_label_en',      'label' => '大案例 · Label · EN',                                'name' => 'fp_case_major_label_en',     'type' => 'text'],
-              ['key' => 'field_fp_case_major_title_zh',      'label' => '大案例 · 标题 · 中',                                 'name' => 'fp_case_major_title_zh',     'type' => 'text'],
-              ['key' => 'field_fp_case_major_title_en',      'label' => '大案例 · Title · EN',                                'name' => 'fp_case_major_title_en',     'type' => 'text'],
-              ['key' => 'field_fp_case_major_desc_zh',       'label' => '大案例 · 描述 · 中',                                 'name' => 'fp_case_major_desc_zh',      'type' => 'textarea', 'rows' => 3],
-              ['key' => 'field_fp_case_major_desc_en',       'label' => '大案例 · Description · EN',                          'name' => 'fp_case_major_desc_en',      'type' => 'textarea', 'rows' => 3],
-              ['key' => 'field_fp_case_major_image',         'label' => '大案例 · 图片（中英共用）',                          'name' => 'fp_case_major_image',        'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
-              [
-                  'key'           => 'field_fp_cases_minor_repeater',
-                  'label'         => '小案例列表（最多 6 张 · 与大案例对应）',
-                  'name'          => 'fp_cases_minor_repeater',
-                  'type'          => 'repeater',
-                  'max'           => 6,
-                  'layout'        => 'row',
-                  'button_label'  => '添加一张小案例',
-                  'sub_fields'    => [
-                      ['key' => 'field_fp_cases_minor_title_zh', 'label' => '标题 · 中',  'name' => 'title_zh', 'type' => 'text'],
-                      ['key' => 'field_fp_cases_minor_title_en', 'label' => 'Title · EN', 'name' => 'title_en', 'type' => 'text'],
-                      ['key' => 'field_fp_cases_minor_desc_zh',  'label' => '描述 · 中',  'name' => 'desc_zh',  'type' => 'textarea', 'rows' => 2],
-                      ['key' => 'field_fp_cases_minor_desc_en',  'label' => 'Description · EN', 'name' => 'desc_en', 'type' => 'textarea', 'rows' => 2],
-                      ['key' => 'field_fp_cases_minor_image',    'label' => '图片（中英共用）', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
-                      ['key' => 'field_fp_cases_minor_url',      'label' => '链接（中英共用）', 'name' => 'url',   'type' => 'url'],
-                  ],
-              ],
+        ['name' => 'fp_prod1_title', 'label' => '③ 员工 1 · 标题', 'type' => 'text', 'zh' => 'Aurelian Prime', 'en' => 'Aurelian Prime'],
+        ['name' => 'fp_prod1_desc', 'label' => '③ 员工 1 · 描述', 'type' => 'text', 'zh' => '精英女性数字分身', 'en' => 'Elite female digital avatar'],
+        ['name' => 'fp_prod1_badge', 'label' => '③ 员工 1 · 徽标', 'type' => 'text', 'zh' => '限量 01/50', 'en' => 'Edition 01/50'],
+        ['name' => 'fp_prod1_image', 'label' => '③ 员工 1 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'fp_prod1_url', 'label' => '③ 员工 1 · 链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
+        ['name' => 'fp_prod1_btn', 'label' => '③ 员工 1 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
 
-              /* ===== Tab ④ FAQ ===== */
-              ['key' => 'field_fp_faq_tab',     'label' => '④ FAQ 区域',                'type' => 'tab'],
-              ['key' => 'field_fp_faq_kicker_zh',     'label' => '眉题 · 中',                'name' => 'fp_faq_kicker_zh',     'type' => 'text'],
-              ['key' => 'field_fp_faq_kicker_en',     'label' => 'Eyebrow · EN',             'name' => 'fp_faq_kicker_en',     'type' => 'text'],
-              ['key' => 'field_fp_faq_title_zh',      'label' => '标题 · 中',                'name' => 'fp_faq_title_zh',      'type' => 'text'],
-              ['key' => 'field_fp_faq_title_en',      'label' => 'Title · EN',               'name' => 'fp_faq_title_en',      'type' => 'text'],
-              ['key' => 'field_fp_faq_subtitle_zh',   'label' => '副标题 · 中',              'name' => 'fp_faq_subtitle_zh',   'type' => 'textarea', 'rows' => 2],
-              ['key' => 'field_fp_faq_subtitle_en',   'label' => 'Subtitle · EN',            'name' => 'fp_faq_subtitle_en',   'type' => 'textarea', 'rows' => 2],
-              [
-                  'key'           => 'field_fp_faq_repeater',
-                  'label'         => 'FAQ 问答列表（最多 10 题）',
-                  'name'          => 'fp_faq_repeater',
-                  'type'          => 'repeater',
-                  'max'           => 10,
-                  'layout'        => 'row',
-                  'button_label'  => '添加一道 FAQ',
-                  'sub_fields'    => [
-                      ['key' => 'field_fp_faq_question_zh', 'label' => '问题 · 中',  'name' => 'question_zh', 'type' => 'text'],
-                      ['key' => 'field_fp_faq_question_en', 'label' => 'Question · EN', 'name' => 'question_en', 'type' => 'text'],
-                      ['key' => 'field_fp_faq_answer_zh',   'label' => '回答 · 中',  'name' => 'answer_zh',   'type' => 'textarea', 'rows' => 3],
-                      ['key' => 'field_fp_faq_answer_en',   'label' => 'Answer · EN', 'name' => 'answer_en',   'type' => 'textarea', 'rows' => 3],
-                  ],
-              ],
+        ['name' => 'fp_prod2_title', 'label' => '③ 员工 2 · 标题', 'type' => 'text', 'zh' => 'Aurelian Executive', 'en' => 'Aurelian Executive'],
+        ['name' => 'fp_prod2_desc', 'label' => '③ 员工 2 · 描述', 'type' => 'text', 'zh' => '权威与外交协议', 'en' => 'Authority & diplomacy protocol'],
+        ['name' => 'fp_prod2_badge', 'label' => '③ 员工 2 · 徽标', 'type' => 'text', 'zh' => 'Executive Series', 'en' => 'Executive Series'],
+        ['name' => 'fp_prod2_image', 'label' => '③ 员工 2 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'fp_prod2_url', 'label' => '③ 员工 2 · 链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
+        ['name' => 'fp_prod2_btn', 'label' => '③ 员工 2 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
 
-              /* ===== Tab ⑤ CTA ===== */
-              ['key' => 'field_fp_cta_tab',             'label' => '⑤ CTA 区域',           'type' => 'tab'],
-              ['key' => 'field_fp_cta_kicker_zh',       'label' => '眉题 · 中',            'name' => 'fp_cta_kicker_zh',       'type' => 'text'],
-              ['key' => 'field_fp_cta_kicker_en',       'label' => 'Eyebrow · EN',         'name' => 'fp_cta_kicker_en',       'type' => 'text'],
-              ['key' => 'field_fp_cta_title_zh',        'label' => '标题 · 中',            'name' => 'fp_cta_title_zh',        'type' => 'text'],
-              ['key' => 'field_fp_cta_title_en',        'label' => 'Title · EN',           'name' => 'fp_cta_title_en',        'type' => 'text'],
-              ['key' => 'field_fp_cta_subtitle_zh',     'label' => '副标题 · 中',          'name' => 'fp_cta_subtitle_zh',     'type' => 'textarea', 'rows' => 2],
-              ['key' => 'field_fp_cta_subtitle_en',     'label' => 'Subtitle · EN',        'name' => 'fp_cta_subtitle_en',     'type' => 'textarea', 'rows' => 2],
-              ['key' => 'field_fp_cta_button_label_zh', 'label' => '按钮文字 · 中',        'name' => 'fp_cta_button_label_zh', 'type' => 'text'],
-              ['key' => 'field_fp_cta_button_label_en', 'label' => 'Button Label · EN',    'name' => 'fp_cta_button_label_en', 'type' => 'text'],
-              ['key' => 'field_fp_cta_button_url',      'label' => '按钮链接（中英共用）', 'name' => 'fp_cta_button_url',      'type' => 'url'],
-          ],
-          'location' => [
-              [['param' => 'page_type',      'operator' => '==', 'value' => 'front_page']],
-              [['param' => 'page_template',  'operator' => '==', 'value' => 'front-page.php']],
-          ],
-          'menu_order'            => 5,
-          'position'              => 'normal',
-          'style'                 => 'default',
-          'label_placement'       => 'top',
-          'instruction_placement' => 'label',
-          'hide_on_screen'        => ['the_content', 'excerpt', 'discussion', 'comments', 'revisions', 'author', 'format', 'page_attributes'],
+        ['name' => 'fp_prod3_title', 'label' => '③ 员工 3 · 标题', 'type' => 'text', 'zh' => 'Neural Sales Core', 'en' => 'Neural Sales Core'],
+        ['name' => 'fp_prod3_desc', 'label' => '③ 员工 3 · 描述', 'type' => 'text', 'zh' => '企业级AI优化', 'en' => 'Enterprise-grade AI optimization'],
+        ['name' => 'fp_prod3_badge', 'label' => '③ 员工 3 · 徽标', 'type' => 'text', 'zh' => 'Neural Series', 'en' => 'Neural Series'],
+        ['name' => 'fp_prod3_image', 'label' => '③ 员工 3 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'fp_prod3_url', 'label' => '③ 员工 3 · 链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
+        ['name' => 'fp_prod3_btn', 'label' => '③ 员工 3 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
+
+        /* ── ④ 解决方案区块 ── */
+        ['name' => 'fp_solutions_kicker', 'label' => '④ 解决方案 · 眉题', 'type' => 'text', 'zh' => '行业赋能', 'en' => 'Industry Empowerment'],
+        ['name' => 'fp_solutions_title', 'label' => '④ 解决方案 · 标题', 'type' => 'textarea', 'zh' => 'AI 解决方案', 'en' => 'AI Solutions', 'extra' => ['rows' => 1]],
+        ['name' => 'fp_solutions_subtitle', 'label' => '④ 解决方案 · 副标题', 'type' => 'textarea', 'zh' => '面向多元行业，打造量身定制的智能解决方案。', 'en' => 'Bespoke intelligent solutions across industries.', 'extra' => ['rows' => 2]],
+        ['name' => 'fp_solutions_explore_label', 'label' => '④ 解决方案 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
+        ['name' => 'fp_solutions_explore_url', 'label' => '④ 解决方案 · 按钮链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
+
+        /* 兜底静态方案卡 1-4（repeater 未填或未满 4 张时显示） */
+        ['name' => 'fp_sol1_title', 'label' => '④ 兜底方案 1 · 标题', 'type' => 'text', 'zh' => '金融与财富管理', 'en' => 'Finance & Wealth Management'],
+        ['name' => 'fp_sol1_desc', 'label' => '④ 兜底方案 1 · 描述', 'type' => 'textarea', 'zh' => '智能顾问与客户关系维护的数字化重塑。', 'en' => 'Digital reshaping of intelligent advisors and client relationship management.', 'extra' => ['rows' => 3]],
+        ['name' => 'fp_sol1_tag', 'label' => '④ 兜底方案 1 · 标签', 'type' => 'text', 'zh' => '金融', 'en' => 'Finance'],
+        ['name' => 'fp_sol1_image', 'label' => '④ 兜底方案 1 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+
+        ['name' => 'fp_sol2_title', 'label' => '④ 兜底方案 2 · 标题', 'type' => 'text', 'zh' => '高端零售与电商', 'en' => 'Premium Retail & E-commerce'],
+        ['name' => 'fp_sol2_desc', 'label' => '④ 兜底方案 2 · 描述', 'type' => 'textarea', 'zh' => '24/7全天候奢华购物体验升级。', 'en' => '24/7 all-day luxury shopping experience upgrade.', 'extra' => ['rows' => 3]],
+        ['name' => 'fp_sol2_tag', 'label' => '④ 兜底方案 2 · 标签', 'type' => 'text', 'zh' => '零售', 'en' => 'Retail'],
+        ['name' => 'fp_sol2_image', 'label' => '④ 兜底方案 2 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+
+        ['name' => 'fp_sol3_title', 'label' => '④ 兜底方案 3 · 标题', 'type' => 'text', 'zh' => '医疗健康与陪伴', 'en' => 'Healthcare & Companionship'],
+        ['name' => 'fp_sol3_desc', 'label' => '④ 兜底方案 3 · 描述', 'type' => 'textarea', 'zh' => '充满同理心的智能关怀与健康咨询。', 'en' => 'Empathetic intelligent care and health consultation.', 'extra' => ['rows' => 3]],
+        ['name' => 'fp_sol3_tag', 'label' => '④ 兜底方案 3 · 标签', 'type' => 'text', 'zh' => '健康', 'en' => 'Health'],
+        ['name' => 'fp_sol3_image', 'label' => '④ 兜底方案 3 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+
+        ['name' => 'fp_sol4_title', 'label' => '④ 兜底方案 4 · 标题', 'type' => 'text', 'zh' => '泛娱乐与虚拟偶像', 'en' => 'Entertainment & Virtual Idols'],
+        ['name' => 'fp_sol4_desc', 'label' => '④ 兜底方案 4 · 描述', 'type' => 'textarea', 'zh' => '打造永不塌房的超级IP与互动体验。', 'en' => 'Build the ultimate never-fail super IP and interactive experience.', 'extra' => ['rows' => 3]],
+        ['name' => 'fp_sol4_tag', 'label' => '④ 兜底方案 4 · 标签', 'type' => 'text', 'zh' => '娱乐', 'en' => 'Entertainment'],
+        ['name' => 'fp_sol4_image', 'label' => '④ 兜底方案 4 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+
+        /* ── ⑤ 案例与洞察区块 ── */
+        ['name' => 'fp_cases_kicker', 'label' => '⑤ 案例 · 眉题', 'type' => 'text', 'zh' => '前沿视野', 'en' => 'Frontier Vision'],
+        ['name' => 'fp_cases_title', 'label' => '⑤ 案例 · 标题', 'type' => 'textarea', 'zh' => '案例 & 洞察', 'en' => 'Cases & Insights', 'extra' => ['rows' => 1]],
+        ['name' => 'fp_cases_subtitle', 'label' => '⑤ 案例 · 副标题', 'type' => 'textarea', 'zh' => '见证数字员工如何改变企业的运营方式。', 'en' => 'See how digital employees transform operations.', 'extra' => ['rows' => 2]],
+        ['name' => 'fp_cases_explore_label', 'label' => '⑤ 案例 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
+        ['name' => 'fp_cases_explore_url', 'label' => '⑤ 案例 · 按钮链接', 'type' => 'text', 'zh' => '/cases-insights/', 'en' => '/cases-insights/'],
+
+        ['name' => 'fp_case_major_label', 'label' => '⑤ 主案例 · 标签', 'type' => 'text', 'zh' => '案例研究', 'en' => 'CASE STUDY'],
+        ['name' => 'fp_case_major_title', 'label' => '⑤ 主案例 · 标题', 'type' => 'textarea', 'zh' => 'Aurelian Prime 在私人银行的应用', 'en' => 'Aurelian Prime in Private Banking', 'extra' => ['rows' => 2]],
+        ['name' => 'fp_case_major_desc', 'label' => '⑤ 主案例 · 描述', 'type' => 'textarea', 'zh' => '了解我们的顶级数字员工如何提升高净值客户的留存率与满意度。', 'en' => 'Learn how our top digital employee boosts retention and satisfaction for high-net-worth clients.', 'extra' => ['rows' => 3]],
+        ['name' => 'fp_case_major_image', 'label' => '⑤ 主案例 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
+
+        ['name' => 'fp_case1_tag', 'label' => '⑤ 兜底案例 1 · 标签', 'type' => 'text', 'zh' => '案例研究', 'en' => 'CASE STUDY'],
+        ['name' => 'fp_case1_title', 'label' => '⑤ 兜底案例 1 · 标题', 'type' => 'textarea', 'zh' => '电商视觉革命：转化率提升55%', 'en' => 'E-commerce Visual Revolution: +55% Conversion', 'extra' => ['rows' => 2]],
+        ['name' => 'fp_case1_desc', 'label' => '⑤ 兜底案例 1 · 描述', 'type' => 'textarea', 'zh' => '重塑线上购物体验，结合虚拟试穿与个性化推荐带来的商业增长。', 'en' => 'Reshaping online shopping with virtual try-on and personalized recommendations.', 'extra' => ['rows' => 3]],
+        ['name' => 'fp_case1_image', 'label' => '⑤ 兜底案例 1 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+
+        ['name' => 'fp_case2_tag', 'label' => '⑤ 兜底案例 2 · 标签', 'type' => 'text', 'zh' => '深度洞察', 'en' => 'DEEP INSIGHT'],
+        ['name' => 'fp_case2_title', 'label' => '⑤ 兜底案例 2 · 标题', 'type' => 'textarea', 'zh' => '"未来不再仅仅是代码，更是交响乐。"', 'en' => '"The future is no longer just code, but a symphony."', 'extra' => ['rows' => 2]],
+        ['name' => 'fp_case2_desc', 'label' => '⑤ 兜底案例 2 · 描述', 'type' => 'textarea', 'zh' => '探讨数字人性化的趋势，以及我们在构建有温度的AI方面的思考与实践。', 'en' => 'Exploring the trend of humanized digital beings and our approach to building warm AI.', 'extra' => ['rows' => 3]],
+        ['name' => 'fp_case2_image', 'label' => '⑤ 兜底案例 2 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+
+        /* ── ⑥ FAQ 区块 ── */
+        ['name' => 'fp_faq_kicker', 'label' => '⑥ FAQ · 标题', 'type' => 'text', 'zh' => '常见问题', 'en' => 'FAQ'],
+        ['name' => 'fp_faq_title', 'label' => '⑥ FAQ · 副标题', 'type' => 'textarea', 'zh' => '解答关于数字员工的疑虑，开启智能新纪元。', 'en' => 'Answers to your questions about digital employees.', 'extra' => ['rows' => 2]],
+        ['name' => 'fp_faq_explore_label', 'label' => '⑥ FAQ · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
+        ['name' => 'fp_faq_explore_url', 'label' => '⑥ FAQ · 按钮链接', 'type' => 'text', 'zh' => '/faq/', 'en' => '/faq/'],
+
+        ['name' => 'fp_faq1_q', 'label' => '⑥ 兜底问答 1 · 问题', 'type' => 'text', 'zh' => '定制一位数字员工需要多长时间？', 'en' => 'How long does it take to customize a digital employee?'],
+        ['name' => 'fp_faq1_a', 'label' => '⑥ 兜底问答 1 · 回答', 'type' => 'textarea', 'zh' => '这取决于定制的复杂程度。基础模型微调通常需要2-4周，而完全定制化可能需要8-12周。', 'en' => 'This depends on the complexity of the customization. Basic model fine-tuning typically takes 2-4 weeks, while full customization may require 8-12 weeks.', 'extra' => ['rows' => 4]],
+        ['name' => 'fp_faq2_q', 'label' => '⑥ 兜底问答 2 · 问题', 'type' => 'text', 'zh' => '数字员工的知识库可以实时更新吗？', 'en' => "Can a digital employee's knowledge base be updated in real-time?"],
+        ['name' => 'fp_faq2_a', 'label' => '⑥ 兜底问答 2 · 回答', 'type' => 'textarea', 'zh' => '是的，我们的系统支持通过API进行实时知识库更新。', 'en' => 'Yes, our system supports real-time knowledge base updates via API.', 'extra' => ['rows' => 4]],
+        ['name' => 'fp_faq3_q', 'label' => '⑥ 兜底问答 3 · 问题', 'type' => 'text', 'zh' => '如何保障数据隐私与安全？', 'en' => 'How do you ensure data privacy and security?'],
+        ['name' => 'fp_faq3_a', 'label' => '⑥ 兜底问答 3 · 回答', 'type' => 'textarea', 'zh' => '我们采用企业级加密标准，所有交互数据均在本地或专属私有云中处理。', 'en' => 'We employ enterprise-grade encryption standards. All interaction data is processed in local or dedicated private clouds.', 'extra' => ['rows' => 4]],
+
+        /* ── ⑦ CTA 区块 ── */
+        ['name' => 'fp_cta_kicker', 'label' => '⑦ CTA · 眉题', 'type' => 'text', 'zh' => '开启旅程', 'en' => 'NEXT STEP'],
+        ['name' => 'fp_cta_title', 'label' => '⑦ CTA · 标题', 'type' => 'textarea', 'zh' => '开启您的 AI 雇佣之旅', 'en' => 'Begin Your AI Hiring Journey', 'extra' => ['rows' => 1]],
+        ['name' => 'fp_cta_subtitle', 'label' => '⑦ CTA · 描述', 'type' => 'textarea', 'zh' => '与我们的团队对话，打造专属您的数字员工阵容。', 'en' => 'Speak with our team and craft a digital workforce made for you.', 'extra' => ['rows' => 2]],
+        ['name' => 'fp_cta_button_label', 'label' => '⑦ CTA · 按钮文字', 'type' => 'text', 'zh' => '联系我们', 'en' => 'Contact Us'],
+        ['name' => 'fp_cta_button_url', 'label' => '⑦ CTA · 按钮链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
+      ];
+
+      $_front_group = hireai_make_bilingual_group('group_front_page_v375', '首页 — 全部内容（双语）', $_front_fields, [
+          [['param' => 'page_type', 'operator' => '==', 'value' => 'front_page']],
+          [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
       ]);
+
+      /* ── 3 个 repeater 原样并入（field key 必须与 v3.6.0 一致，行数据以 key 存储） ── */
+      $_front_group['fields'][] = [
+          'key'           => 'field_fp_sol_static_repeater',
+          'label'         => '④ 解决方案静态卡片（最多 4 张 · 未填时回退到兜底方案 1-4）',
+          'name'          => 'fp_sol_static_repeater',
+          'type'          => 'repeater',
+          'max'           => 4,
+          'layout'        => 'row',
+          'button_label'  => '添加一张方案卡',
+          'sub_fields'    => [
+              ['key' => 'field_fp_sol_static_title_zh', 'label' => '标题 · 中',    'name' => 'title_zh', 'type' => 'text'],
+              ['key' => 'field_fp_sol_static_title_en', 'label' => 'Title · EN',   'name' => 'title_en', 'type' => 'text'],
+              ['key' => 'field_fp_sol_static_desc_zh',  'label' => '描述 · 中',    'name' => 'desc_zh',  'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_sol_static_desc_en',  'label' => 'Description · EN', 'name' => 'desc_en', 'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_sol_static_tag_zh',   'label' => '标签 · 中',    'name' => 'tag_zh',   'type' => 'text'],
+              ['key' => 'field_fp_sol_static_tag_en',   'label' => 'Tag · EN',     'name' => 'tag_en',   'type' => 'text'],
+              ['key' => 'field_fp_sol_static_image',    'label' => '图片（中英共用）', 'name' => 'image',   'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
+              ['key' => 'field_fp_sol_static_url',      'label' => '链接（中英共用）', 'name' => 'url',     'type' => 'url'],
+          ],
+      ];
+      $_front_group['fields'][] = [
+          'key'           => 'field_fp_cases_minor_repeater',
+          'label'         => '⑤ 小案例列表（最多 6 张 · 未填时回退到兜底案例 1-2）',
+          'name'          => 'fp_cases_minor_repeater',
+          'type'          => 'repeater',
+          'max'           => 6,
+          'layout'        => 'row',
+          'button_label'  => '添加一张小案例',
+          'sub_fields'    => [
+              ['key' => 'field_fp_cases_minor_title_zh', 'label' => '标题 · 中',  'name' => 'title_zh', 'type' => 'text'],
+              ['key' => 'field_fp_cases_minor_title_en', 'label' => 'Title · EN', 'name' => 'title_en', 'type' => 'text'],
+              ['key' => 'field_fp_cases_minor_desc_zh',  'label' => '描述 · 中',  'name' => 'desc_zh',  'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_cases_minor_desc_en',  'label' => 'Description · EN', 'name' => 'desc_en', 'type' => 'textarea', 'rows' => 2],
+              ['key' => 'field_fp_cases_minor_image',    'label' => '图片（中英共用）', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
+              ['key' => 'field_fp_cases_minor_url',      'label' => '链接（中英共用）', 'name' => 'url',   'type' => 'url'],
+          ],
+      ];
+      $_front_group['fields'][] = [
+          'key'           => 'field_fp_faq_repeater',
+          'label'         => '⑥ FAQ 问答列表（最多 10 题 · 未填时回退到兜底问答 1-3）',
+          'name'          => 'fp_faq_repeater',
+          'type'          => 'repeater',
+          'max'           => 10,
+          'layout'        => 'row',
+          'button_label'  => '添加一道 FAQ',
+          'sub_fields'    => [
+              ['key' => 'field_fp_faq_question_zh', 'label' => '问题 · 中',  'name' => 'question_zh', 'type' => 'text'],
+              ['key' => 'field_fp_faq_question_en', 'label' => 'Question · EN', 'name' => 'question_en', 'type' => 'text'],
+              ['key' => 'field_fp_faq_answer_zh',   'label' => '回答 · 中',  'name' => 'answer_zh',   'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_fp_faq_answer_en',   'label' => 'Answer · EN', 'name' => 'answer_en',   'type' => 'textarea', 'rows' => 3],
+          ],
+      ];
+
+      $_front_group['menu_order'] = 5;
+      $_front_group['position'] = 'normal';
+      $_front_group['style'] = 'default';
+      $_front_group['label_placement'] = 'top';
+      $_front_group['instruction_placement'] = 'label';
+      $_front_group['hide_on_screen'] = ['the_content', 'excerpt', 'discussion', 'comments', 'revisions', 'author', 'format', 'page_attributes'];
+
+      acf_add_local_field_group($_front_group);
 
       /* ---- v3.6.0-B: 商品双语 + 首页推荐 ---- */
       acf_add_local_field_group([
@@ -2824,6 +2802,35 @@ add_action('save_post', function ($post_id, $post) {
     /* v3.5.7-p18: 文章保存时强制下次 wp_loaded 重新检测版本（避免后台编辑时不刷新缓存） */
     delete_option('hireai_last_seen_version');
 }, 20, 2);
+
+/* -------------------------------------------------------------------------
+ * v3.7.5 — 内容保存即清全页缓存（修复「后台改了图文、前台不生效」）
+ *   之前只在 主题更新 / 商品保存 / 案例文章保存 时清 LiteSpeed；
+ *   页面（page）保存、ACF 字段保存、站点设置保存都不触发缓存失效，
+ *   LiteSpeed 会继续输出旧 HTML。现在统一在内容保存后清所有页面缓存。
+ *   注：LiteSpeed 默认不缓存已登录用户，后台预览不受影响。
+ * ---------------------------------------------------------------------- */
+function hireai_purge_front_cache($reason = '') {
+    if (class_exists('\LiteSpeed\Purge')) {
+        \LiteSpeed\Purge::purge_all($reason !== '' ? $reason : 'hireai content saved');
+    }
+    if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
+    if (function_exists('rocket_clean_domain')) { rocket_clean_domain(); }
+    if (function_exists('w3tc_flush_all')) { w3tc_flush_all(); }
+    if (function_exists('autoptimize_cache_clear')) { autoptimize_cache_clear(); }
+}
+
+/* 任何 ACF 表单保存（页面字段 / 商品字段 / 「站点设置」选项页）→ 清缓存 */
+add_action('acf/save_post', function ($post_id) {
+    $what = is_string($post_id) ? $post_id : (string) get_post_type($post_id);
+    hireai_purge_front_cache('hireai acf saved: ' . $what);
+}, 20);
+
+/* 页面本体保存（标题/内容/模板变更）→ 清缓存 */
+add_action('save_post_page', function ($post_id) {
+    if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) return;
+    hireai_purge_front_cache('hireai page saved #' . (int) $post_id);
+}, 20);
 
 /* -------------------------------------------------------------------------
  * v3.5.7-p18 Task A: page header 缓存 hotfix —— wp_loaded + after_switch_theme
