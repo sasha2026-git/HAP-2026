@@ -1320,6 +1320,76 @@ add_action('wp_footer', function () {
 });
 
 /* -------------------------------------------------------------------------
+ * v3.7.7 — 自定义模板页面的「规范页」解析 + 编辑提示
+ *   问题背景：站点可能存在多个使用同一自定义模板的页面（自动创建 + 手工新建），
+ *   ACF 字段组按 page_template 挂载会同时出现在所有这些页面上 →
+ *   后台在 A 页填字段、前台渲染 B 页 → "ACF 编辑和前台内容毫无关系"。
+ *   统一规则：每个自定义模板有一个规范页（按约定 slug 查找，否则取 ID 最小的），
+ *   前台读取统一指向规范页；编辑非规范页时后台给出醒目提示。
+ * ---------------------------------------------------------------------- */
+function hireai_custom_template_canonical_id($template) {
+    static $cache = [];
+    $template = (string) $template;
+    if ($template === '') return 0;
+    if (isset($cache[$template])) return $cache[$template];
+    $id = 0;
+    $slug_map = [
+        'front-page.php'           => 'home',
+        'page-ai-employees.php'    => 'ai-employees',
+        'page-ai-solutions.php'    => 'ai-solutions',
+        'page-cases-insights.php'  => 'cases-insights',
+        'page-contact.php'         => 'contact',
+        'page-faq.php'             => 'faq',
+        'page-employee-detail.php' => 'employee',
+    ];
+    if (isset($slug_map[$template])) {
+        $by_slug = get_page_by_path($slug_map[$template]);
+        if ($by_slug instanceof WP_Post && get_post_meta($by_slug->ID, '_wp_page_template', true) === $template) {
+            $id = (int) $by_slug->ID;
+        }
+    }
+    if (!$id) {
+        $pages = get_pages([
+            'meta_key'    => '_wp_page_template',
+            'meta_value'  => $template,
+            'number'      => 1,
+            'sort_column' => 'ID',
+        ]);
+        if (!empty($pages) && $pages[0] instanceof WP_Post) {
+            $id = (int) $pages[0]->ID;
+        }
+    }
+    $cache[$template] = $id;
+    return $id;
+}
+
+function hireai_ai_employees_page_id() {
+    return hireai_custom_template_canonical_id('page-ai-employees.php');
+}
+
+/* 后台提示：编辑「非规范页」时告知真实数据源（覆盖全部 6 个自定义模板） */
+add_action('admin_notices', function () {
+    if (!function_exists('get_current_screen')) return;
+    $screen = get_current_screen();
+    if (!$screen || empty($screen->post_type) || $screen->post_type !== 'page') return;
+    $post_id = isset($_GET['post']) ? (int) $_GET['post'] : 0;
+    if (!$post_id || !current_user_can('edit_pages')) return;
+    $known = ['front-page.php', 'page-ai-employees.php', 'page-ai-solutions.php', 'page-cases-insights.php', 'page-contact.php', 'page-faq.php'];
+    $tpl = (string) get_post_meta($post_id, '_wp_page_template', true);
+    if (!in_array($tpl, $known, true)) return;
+    $canonical = hireai_custom_template_canonical_id($tpl);
+    if (!$canonical || $canonical === $post_id) return;
+    $edit_link = (string) get_edit_post_link($canonical);
+    printf(
+        '<div class="notice notice-warning"><p><strong>聘AI 提示：</strong>前台使用「%1$s」模板的页面统一从规范页 %2$s（ID %3$d）读取 ACF 字段。在当前页面填写的字段<strong>不会显示在前台</strong>，请到规范页编辑。%4$s</p></div>',
+        esc_html($tpl),
+        $edit_link !== '' ? '<a href="' . esc_url($edit_link) . '">' . esc_html((string) get_the_title($canonical)) . '</a>' : esc_html((string) get_the_title($canonical)),
+        (int) $canonical,
+        $tpl === 'page-ai-employees.php' ? ' 员工卡片内容另见下方「AI 数字员工页 · 员工行（Repeater）」区块——Repeater 为空时前台显示内置兜底 5 行。' : ''
+    );
+});
+
+/* -------------------------------------------------------------------------
  * 1. 资源加载：父主题 + 子主题样式（自托管字体）+ 脚本
  * ---------------------------------------------------------------------- */
 
