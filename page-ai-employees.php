@@ -93,11 +93,9 @@ if (function_exists('have_rows')) {
                 }
                 if ($row['url'] === '') {
                     /* v3.4.0: 保持 helper 自动探测 fallback（v3.0.7 教训——函数定义保留不动） */
-                    static $emp_idx_v307 = 0;
                     $row['url'] = function_exists('hireai_resolve_employee_url')
-                        ? hireai_resolve_employee_url($emp_idx_v307, home_url('/ai-employees/'))
+                        ? hireai_resolve_employee_url(count($rows), home_url('/ai-employees/'))
                         : home_url('/ai-employees/');
-                    $emp_idx_v307++;
                 }
                 $rows[] = $row;
             }
@@ -308,7 +306,6 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 
 /* v3.7.6: 恢复的筛选区 + 服务流程区容器 */
 .lb-att-filtersec { padding: 0 var(--side, 24px); margin-bottom: clamp(56px, 8vw, 96px); }
-.lb-att-devhint { max-width: 1280px; margin: 0 auto clamp(32px, 5vw, 48px); padding: 14px 20px; border: 1px dashed var(--lb-att-gold, #775a19); border-radius: 8px; background: rgba(233,193,118,.08); font-family: var(--font-body, 'Inter'), sans-serif; font-size: 14px; line-height: 1.7; color: var(--lb-att-mid, #444748); }
 .lb-att-processsec { max-width: 1280px; margin: 0 auto; padding: clamp(60px, 8vw, 120px) var(--side, 24px) 0; }
 .lb-att-process__note { margin: 28px 0 0; text-align: center; font-family: var(--font-body, 'Inter'), sans-serif; font-size: 15px; line-height: 1.6; color: var(--lb-att-mid); }
 
@@ -379,11 +376,6 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
     <?php endif; ?>
 
     <div class="lb-container">
-        <?php if ($lb_rows_from_fallback && current_user_can('edit_pages')) : ?>
-        <div class="lb-att-devhint">
-            <strong>编辑者提示（访客不可见）：</strong>下面 5 张员工卡片是<strong>内置兜底内容</strong>，不来自任何 ACF 字段。要自定义卡片，请在后台「AI数字员工」页面编辑器下方找到 <strong>「AI 数字员工页 · 员工行（Repeater）」</strong>区块 → 添加行（每行一张卡，中文 / English 两个 Tab 独立填写；当前语言未填时前台自动显示另一语言的行）。
-        </div>
-        <?php endif; ?>
         <!-- ─────────── Employee Rows ─────────── -->
         <div class="lb-att-rows" id="lb-att-rows">
             <?php

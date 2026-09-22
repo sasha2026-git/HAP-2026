@@ -1389,6 +1389,24 @@ add_action('admin_notices', function () {
     );
 });
 
+/* 后台提示：编辑「规范页本身」且 Repeater 均为空时，告知前台正显示兜底数据 */
+add_action('admin_notices', function () {
+    if (!function_exists('get_current_screen')) return;
+    $screen = get_current_screen();
+    if (!$screen || empty($screen->post_type) || $screen->post_type !== 'page') return;
+    $post_id = isset($_GET['post']) ? (int) $_GET['post'] : 0;
+    if (!$post_id || !current_user_can('edit_pages')) return;
+    $tpl = (string) get_post_meta($post_id, '_wp_page_template', true);
+    if ($tpl !== 'page-ai-employees.php') return;
+    $canonical = hireai_custom_template_canonical_id('page-ai-employees.php');
+    if (!$canonical || $canonical !== $post_id) return;
+    if (!function_exists('have_rows')) return;
+    $zh_empty = !have_rows('lookbook_employees', $post_id);
+    $en_empty = !have_rows('lookbook_employees_en', $post_id);
+    if (!$zh_empty || !$en_empty) return;
+    echo '<div class="notice notice-warning"><p><strong>聘AI 提示：</strong>员工行为空：前台当前显示内置兜底 5 行卡片。请在下方「AI 数字员工页 · 员工行（Repeater）」添加行来自定义。</p></div>';
+});
+
 /* -------------------------------------------------------------------------
  * 1. 资源加载：父主题 + 子主题样式（自托管字体）+ 脚本
  * ---------------------------------------------------------------------- */
@@ -2023,7 +2041,7 @@ add_action('acf/init', function () {
                 'label' => '员工行（最多 12 行）',
                 'name'  => 'lookbook_employees',
                 'type'  => 'repeater',
-                'instructions' => '每行对应一个数字员工展示卡（与 fallback 数据互补，缺少时自动用兜底 5 行）。',
+                'instructions' => '每行对应一个数字员工展示卡。中文与英文行为空时，前台才显示内置兜底 5 行。',
                 'layout' => 'row',
                 'max'    => 12,
                 'button_label' => '添加一行',
@@ -2046,7 +2064,7 @@ add_action('acf/init', function () {
                 'label' => 'Employee Rows (Repeater, EN)',
                 'name'  => 'lookbook_employees_en',
                 'type'  => 'repeater',
-                'instructions' => 'Mirror of the Chinese repeater; rows should align 1:1 with the 中文 repeater above.',
+                'instructions' => 'One row per employee card. The built-in 5 fallback cards show only when both the Chinese and English repeaters are empty.',
                 'layout' => 'row',
                 'max'    => 12,
                 'button_label' => 'Add Row',
@@ -2055,6 +2073,7 @@ add_action('acf/init', function () {
                     ['key' => 'field_emp_row_title_en',     'label' => 'Title (EN)',     'name' => 'emp_row_title',     'type' => 'text'],
                     ['key' => 'field_emp_row_desc_en',      'label' => 'Description (EN)','name' => 'emp_row_desc',      'type' => 'textarea', 'rows' => 3],
                     ['key' => 'field_emp_row_button_en',    'label' => 'Button (EN)',    'name' => 'emp_row_button',    'type' => 'text'],
+                    ['key' => 'field_emp_row_image_en',   'label' => 'Image',          'name' => 'emp_row_image',     'type' => 'image', 'return_format' => 'url'],
                     ['key' => 'field_emp_row_url_en',       'label' => 'Link URL',       'name' => 'emp_row_url',       'type' => 'text'],
                 ],
             ],
