@@ -642,8 +642,8 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
    ═══════════════════════════════════════════════════════════════════════ */
 @media(max-width:767px){
     .hireai-fp-hero{min-height:calc(100dvh - 72px);}
-    .hireai-fp-hero__bg img{object-position:center 28%;}
-    .hireai-fp-hero__inner{padding:calc(18vh + 72px) var(--side) 80px;}
+    .hireai-fp-hero__bg img{object-position:center 78%;transform:scale(1.3);transform-origin:center 72%;}
+    .hireai-fp-hero__inner{padding:calc(12vh + 72px) var(--side) 80px;}
     .hireai-fp-hero__title{font-size:clamp(32px,8vw,48px);}
     .hireai-fp-products__head,.hireai-fp-solutions__head,.hireai-fp-cases__head{flex-direction:column;align-items:flex-start;}
     .hireai-fp-products__nav,.hireai-fp-cases__nav{display:none;}
