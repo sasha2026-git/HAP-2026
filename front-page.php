@@ -641,10 +641,20 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
    Responsive fine-tune
    ═══════════════════════════════════════════════════════════════════════ */
 @media(max-width:767px){
-    .hireai-fp-hero{min-height:calc(100dvh - 72px);}
-    .hireai-fp-hero__bg img{object-position:center 78%;transform:scale(1.3);transform-origin:center 72%;}
-    .hireai-fp-hero__inner{padding:calc(12vh + 72px) var(--side) 80px;}
+    .hireai-fp-hero{min-height:min(86vh,calc(100dvh - 50px));}
+    .hireai-fp-hero__bg img{object-position:38% 60%;transform:scale(1.06);transform-origin:center 45%;}
+    .hireai-fp-hero__shade{background:linear-gradient(180deg,rgba(250,249,249,.12) 0%,rgba(26,28,28,.14) 48%,rgba(26,28,28,.44) 82%,rgba(250,249,249,1) 100%);}
+    .hireai-fp-hero__inner{width:100%;padding:calc(12vh + 50px) 20px 72px;}
+    .hireai-fp-hero__kicker{margin-bottom:16px;}
     .hireai-fp-hero__title{font-size:clamp(32px,8vw,48px);}
+    .hireai-fp-hero__title .hireai-fp__gold{background:linear-gradient(135deg,#f4dcac 0%,#e9c176 42%,#a9792b 100%);-webkit-background-clip:text;background-clip:text;}
+    .hireai-fp-hero__subtitle{max-width:100%;margin-bottom:24px;color:rgba(255,255,255,.88);text-shadow:0 2px 12px rgba(26,28,28,.34);}
+    .hireai-fp-hero__title{color:#fff;text-shadow:0 2px 16px rgba(26,28,28,.30);}
+    .hireai-fp-hero__kicker{color:#e9c176;text-shadow:0 1px 8px rgba(26,28,28,.36);}
+    .hireai-fp-hero__actions{gap:12px;}
+    .hireai-fp-hero__actions .hireai-fp__btn{min-height:48px;padding:14px 22px;font-size:13px;}
+    .hireai-fp-hero__actions .hireai-fp__btn--outline{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.44);color:#fff!important;}
+    .hireai-fp-hero__scroll{bottom:18px;color:#fff;}
     .hireai-fp-products__head,.hireai-fp-solutions__head,.hireai-fp-cases__head{flex-direction:column;align-items:flex-start;}
     .hireai-fp-products__nav,.hireai-fp-cases__nav{display:none;}
     .hireai-fp-faq__list{padding-inline:0;}

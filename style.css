@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.7.10
+Version: 3.7.11
 Text Domain:  hireaipeople
 */
 
@@ -630,12 +630,62 @@ h4 {
     display: none !important;
   }
 }
-/* v3.5.7-p13b (header layout fix, narrow viewport specificity fix):
-   hide Account button at <480px so logo + Lang + hamburger fit.
-   !important needed because later .hai-header__account { display: inline-flex }
-   has same specificity + later source order. */
-@media (max-width: 479px) {
-  .hai-header__account { display: none !important; }
+/* v3.8.0 (allscented mobile icon bar): portrait + language + hamburger stay
+   visible below the desktop breakpoint. Desktop keeps the original text button. */
+@media (max-width: 1023px) {
+  .hai-header__inner {
+    min-height: 50px;
+    padding-inline: 16px;
+  }
+
+  .hai-header__actions {
+    gap: 16px;
+    padding-right: 0;
+  }
+
+  .hai-header__account {
+    display: inline-flex;
+    font-size: 0;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--hai-primary, #000);
+    box-shadow: none;
+  }
+
+  .hai-header__account .hai-header__icon {
+    font-size: 24px;
+  }
+
+  .hai-header__account:hover,
+  .hai-header__account:focus-visible {
+    background: none;
+    color: var(--hai-secondary, #775a19);
+  }
+
+  .hai-header__lang {
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--hai-primary, #000);
+    font-size: 12px;
+  }
+
+  .hai-header__lang:hover,
+  .hai-header__lang:focus-visible,
+  .hai-header__lang.is-en,
+  .hai-header__lang.is-zh {
+    background: none;
+    color: var(--hai-secondary, #775a19);
+  }
+
+  .hai-header__logo {
+    height: 36px;
+  }
 }
 
 /* Mobile drawer overlay */
@@ -660,10 +710,10 @@ h4 {
   top: 0;
   right: 0;
   z-index: 90;
-  width: min(86vw, 420px);
+  width: 100vw;
   height: 100dvh;
   overflow-y: auto;
-  padding: clamp(20px, 5vw, 32px);
+  padding: 24px 20px;
   border-left: 1px solid var(--outline-variant);
   background: var(--surface-container-lowest);
   box-shadow: var(--shadow-card);
@@ -751,21 +801,22 @@ h4 {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   margin-top: auto;
-  padding-top: 24px;
+  padding-top: 20px;
   border-top: 1px solid var(--outline-variant);
 }
 
 .mobile-drawer__account {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 44px;
+  gap: 10px;
   color: var(--on-surface);
   text-decoration: none;
   font-family: var(--font-label, Inter), sans-serif;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -778,7 +829,23 @@ h4 {
 }
 
 .mobile-drawer .hai-header__lang {
+  justify-self: end;
   width: auto;
+  min-height: 38px;
+  padding: 8px 16px;
+  border: 1px solid rgba(119, 90, 25, 0.4);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(233, 193, 118, 0.2), rgba(119, 90, 25, 0.08));
+  color: #1a1c1c;
+  font-size: 12px;
+}
+
+.mobile-drawer .hai-header__lang:hover,
+.mobile-drawer .hai-header__lang:focus-visible,
+.mobile-drawer .hai-header__lang.is-en,
+.mobile-drawer .hai-header__lang.is-zh {
+  background: linear-gradient(135deg, #e9c176 0%, #775a19 100%);
+  color: #fff;
 }
 
 .mobile-drawer__cta {
@@ -815,14 +882,6 @@ h4 {
   white-space: normal;
   text-decoration: none;
   border-bottom: none;
-}
-
-/* v3.5.7-p13b (header layout fix, narrow viewport specificity fix):
-   hide Account button at <480px so logo + Lang + hamburger fit.
-   !important needed because later .hai-header__account { display: inline-flex }
-   at line ~4180 has same specificity + later source order. */
-@media (max-width: 479px) {
-  .hai-header__account { display: none !important; }
 }
 
 /* ==========================================================================
@@ -4260,6 +4319,24 @@ main,
   letter-spacing: 0.08em;
 }
 
+/* v3.8.0: allscented-style mobile icon bar wins over the late text-button reset. */
+@media (max-width: 1023px) {
+  .hai-header__account.hai-header__account {
+    display: inline-flex;
+    font-size: 0;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--hai-primary, #000);
+  }
+
+  .hai-header__account.hai-header__account .hai-header__icon {
+    font-size: 24px;
+  }
+}
+
 .hai-header__lang {
   /* v3.5.7-p12 (header layout fix): neutralize earlier 14px bump. */
   font-size: 11px;
@@ -4440,7 +4517,7 @@ html[lang="en"] h2 {
     gap: 8px;
     margin: 0 0 18px;
 }
-.sols-tab {
+.sols-tab.sols-tab {
     padding: 10px 22px;
     border: 1px solid var(--gold-leaf, #775a19);
     border-radius: 9999px;

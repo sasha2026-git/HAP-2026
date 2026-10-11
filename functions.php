@@ -577,6 +577,7 @@ function hireai_svg($name = 'arrow', $size = 16, $class = 'hireai-icon') {
     $icons = [
         'menu'   => '<path d="M4 7h16M4 12h16M4 17h16"/>',
         'close'  => '<path d="M6 6l12 12M18 6L6 18"/>',
+        'account' => '<circle cx="12" cy="8" r="3.5"/><path d="M5.5 19.5a6.5 6.5 0 0113 0"/>',
         'arrow'  => '<path d="M5 12h14M13 6l6 6-6 6"/>',
         'east'   => '<path d="M5 12h14M13 6l6 6-6 6"/>',
         'west'   => '<path d="M19 12H5M11 6l-6 6 6 6"/>',
@@ -3087,4 +3088,3 @@ add_filter('the_content', function ($content) {
     $links .= '</ul></div>';
     return $content . $links;
 }, 20);
-
