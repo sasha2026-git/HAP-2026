@@ -117,10 +117,10 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
 <!-- Mobile drawer -->
 <aside class="mobile-drawer" id="mobile-drawer" data-mobile-drawer aria-hidden="true">
   <div class="mobile-drawer__head">
-    <a class="site-brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="<?php echo esc_attr($brand_label); ?>">
+    <a class="hai-header__brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="<?php echo esc_attr($brand_label); ?>">
       <img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="<?php echo esc_attr($logo_alt); ?>">
     </a>
-    <button class="mobile-drawer__close" type="button" data-drawer-close aria-label="<?php echo esc_attr($menu_close_aria); ?>">
+      <button class="mobile-drawer__close hai-header__menu-toggle" type="button" data-drawer-close aria-label="<?php echo esc_attr($menu_close_aria); ?>">
       <?php echo hireai_svg("close", 24, "hai-header__icon"); ?>
     </button>
   </div>
@@ -135,6 +135,15 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
     ]);
     ?>
   </nav>
+  <div class="mobile-drawer__actions">
+    <a class="mobile-drawer__account"
+       href="<?php echo esc_url(home_url('/my-account/')); ?>">
+      <?php echo esc_html($account_label); ?>
+    </a>
+    <button class="hai-header__lang" type="button" onclick="hireaiSwitchLang((localStorage.getItem('hireai_lang') || 'zh') === 'zh' ? 'en' : 'zh')">
+      <?php echo esc_html($lang_label); ?>
+    </button>
+  </div>
 </aside>
 
 <main id="content" class="site-main">

@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.7.8
+Version: 3.7.9
 Text Domain:  hireaipeople
 */
 
@@ -587,14 +587,17 @@ h4 {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 6px 12px;
-  border: 1px solid rgba(115, 92, 0, 0.3);
+  border: 1px solid rgba(119, 90, 25, 0.35);
   border-radius: var(--radius-full, 9999px);
-  background: rgba(115, 92, 0, 0.05);
+  background: linear-gradient(135deg, rgba(233, 193, 118, 0.18), rgba(119, 90, 25, 0.06));
   color: #1a1c1c;
   cursor: pointer;
   transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
-.hai-header__lang:hover {
+.hai-header__lang:hover,
+.hai-header__lang:focus-visible,
+.hai-header__lang.is-en,
+.hai-header__lang.is-zh {
   background: linear-gradient(135deg, #e9c176 0%, #775a19 100%);
   color: #fff;
   border-color: transparent;
@@ -674,6 +677,13 @@ h4 {
   transform: translateX(0);
   visibility: visible;
   pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-drawer__nav {
+  flex: 1 1 auto;
+  overflow-y: auto;
 }
 
 .mobile-drawer__head {
@@ -697,19 +707,67 @@ h4 {
 .mobile-drawer__menu {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   min-width: 0;
-  gap: 22px;
-  padding-block: 36px;
+  list-style: none;
+  margin: 0;
+  gap: 18px;
+  padding: 36px 0 0;
+}
+
+.mobile-drawer__menu li {
+  display: block;
+  width: 100%;
 }
 
 .mobile-drawer__menu a {
-  display: inline-block;
-  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 2px;
+  white-space: normal;
+  text-decoration: none;
 }
 
 .mobile-drawer__menu a:hover,
+.mobile-drawer__menu a:focus-visible,
 .mobile-drawer__menu .current-menu-item > a {
   color: var(--primary);
+}
+
+.mobile-drawer__actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.mobile-drawer__account {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  color: var(--on-surface);
+  text-decoration: none;
+  font-family: var(--font-label, Inter), sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.mobile-drawer__account:hover,
+.mobile-drawer__account:focus-visible {
+  color: var(--primary);
+}
+
+.mobile-drawer .hai-header__lang {
+  width: auto;
 }
 
 .mobile-drawer__cta {
@@ -2695,8 +2753,10 @@ html.js [data-reveal].is-visible {
     padding-inline: 0;
   }
 
-  .site-brand img {
-    max-height: 46px;
+  .hai-header__logo,
+  .header-logo-img {
+    height: 44px;
+    max-height: 44px;
   }
 
   .hai-header__inner {
@@ -4178,11 +4238,9 @@ main,
        4 / 4b above; only the drawer keeps a dedicated size here).
    ========================================================================== */
 .header-logo-img {
-  display: block;
-  width: auto !important;
-  max-width: 100% !important;
-  height: 52px !important;
-  max-height: 52px !important;
+  height: 44px;
+  width: auto;
+  max-width: 100%;
   object-fit: contain;
 }
 
@@ -4439,4 +4497,3 @@ html[lang="en"] h2 {
         font-size: 12px;
     }
 }
-

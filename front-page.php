@@ -35,7 +35,7 @@ $hero_kicker   = hireai_field_lang('fp_hero_kicker',   $lang, $is_en ? 'AETHER L
 $hero_static   = hireai_field_lang('fp_hero_static',   $lang, $is_en ? 'Redefining' : '重新定义');
 $hero_accent   = hireai_field_lang('fp_hero_accent',   $lang, $is_en ? 'Digital Labor' : '数字劳动力');
 $hero_subtitle = hireai_field_lang('fp_hero_subtitle', $lang, $is_en ? 'Fusing cutting-edge technology with a luxurious aesthetic to craft your bespoke digital workforce.' : '融合尖端科技与奢华质感，为您打造专属的数字员工矩阵。');
-$hero_image    = hireai_image('fp_hero_image', $home . '/assets/img/home/hero.png');
+$hero_image    = hireai_image('fp_hero_image', $home . '/assets/img/defaults/hero-home.jpg');
 $hero_cta_1_url   = hireai_field('fp_hero_cta_1_url',   home_url('/ai-employees/'));
 $hero_cta_1_title = hireai_field_lang('fp_hero_cta_1_title', $lang, $is_en ? 'Explore Series' : '探索系列');
 $hero_cta_2_url   = hireai_field('fp_hero_cta_2_url',   home_url('/contact/'));
@@ -395,6 +395,7 @@ $t = [
 .hireai-fp{box-sizing:border-box;margin:0;padding:0;background:var(--surface,#faf9f9);color:#1a1c1c;font-family:'Inter','Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;overflow-x:hidden;}
 .hireai-fp *,.hireai-fp *::before,.hireai-fp *::after{box-sizing:border-box;}
 .hireai-fp img{display:block;max-width:100%;height:auto;}
+.hireai-fp-hero__bg img{height:100%;}
 .hireai-fp a:not([class*="hireai-fp__btn"]):not(.hireai-fp-products__explore){text-decoration:none;color:inherit;}
 .hireai-fp button{font-family:inherit;cursor:pointer;border:0;background:none;}
 
@@ -475,8 +476,8 @@ $t = [
    1) HERO  ── Stitch code.html Hero (满屏 / 背景图 / 双按钮 / 滚动指示)
    ═══════════════════════════════════════════════════════════════════════ */
 .hireai-fp-hero{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--surface,#faf9f9);}
-.hireai-fp-hero__bg{position:absolute;inset:0;z-index:0;}
-.hireai-fp-hero__bg img{width:100%;height:100%;object-fit:cover;}
+.hireai-fp-hero__bg{position:absolute;inset:0;z-index:0;overflow:hidden;}
+.hireai-fp-hero__bg img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 35%;}
 .hireai-fp-hero__shade{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(249,249,249,.55) 0%,rgba(249,249,249,.20) 45%,var(--surface,#faf9f9) 100%);}
 .hireai-fp-hero__inner{position:relative;z-index:2;text-align:center;width:min(100%,920px);padding:14vh var(--side) 80px;}
 .hireai-fp-hero__kicker{margin-bottom:24px;}
@@ -640,7 +641,9 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
    Responsive fine-tune
    ═══════════════════════════════════════════════════════════════════════ */
 @media(max-width:767px){
-    .hireai-fp-hero__inner{padding:18vh var(--side) 80px;}
+    .hireai-fp-hero{min-height:calc(100dvh - 72px);}
+    .hireai-fp-hero__bg img{object-position:center 28%;}
+    .hireai-fp-hero__inner{padding:calc(18vh + 72px) var(--side) 80px;}
     .hireai-fp-hero__title{font-size:clamp(32px,8vw,48px);}
     .hireai-fp-products__head,.hireai-fp-solutions__head,.hireai-fp-cases__head{flex-direction:column;align-items:flex-start;}
     .hireai-fp-products__nav,.hireai-fp-cases__nav{display:none;}
@@ -656,7 +659,15 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 <section class="hireai-fp hireai-fp-hero" aria-label="<?php echo esc_attr($is_en ? 'Hero' : '首页主视觉'); ?>">
     <div class="hireai-fp-hero__bg" aria-hidden="true">
         <?php if ($hero_image) : ?>
-        <img src="<?php echo esc_url($hero_image); ?>" alt="" loading="eager" decoding="async">
+        <img
+            src="<?php echo esc_url($hero_image); ?>"
+            alt=""
+            width="1920"
+            height="1080"
+            sizes="100vw"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async">
         <?php endif; ?>
     </div>
     <div class="hireai-fp-hero__shade" aria-hidden="true"></div>
