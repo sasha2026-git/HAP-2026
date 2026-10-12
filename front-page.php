@@ -657,12 +657,12 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
    Responsive fine-tune
    ═══════════════════════════════════════════════════════════════════════ */
 @media(max-width:767px){
-    .hireai-fp-hero{height:auto;min-height:calc(100vh - 64px);min-height:calc(100svh - 64px);display:flex;align-items:flex-end;}
-    .hireai-fp-hero__bg{position:absolute;inset:0;width:100%;height:100%;}
-    .hireai-fp-hero__bg img{width:100%;height:100%;object-fit:cover;object-position:center bottom;}
-    .hireai-fp-hero__shade{background:linear-gradient(180deg,rgba(250,249,249,.12) 0%,rgba(26,28,28,.14) 42%,rgba(26,28,28,.58) 76%,rgba(250,249,249,1) 100%);}
+    .hireai-fp-hero{height:auto;min-height:0;display:block;background:#17191b;}
+    .hireai-fp-hero__bg{position:relative;inset:auto;width:100%;height:auto;overflow:hidden;}
+    .hireai-fp-hero__bg img{display:block;width:100%;height:auto;object-fit:contain;object-position:center;}
+    .hireai-fp-hero__shade{display:none;}
     .hireai-fp-hero__inner,
-    html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{position:relative;inset:auto;width:100%;min-width:0;padding:96px 20px 72px;}
+    html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{position:relative;inset:auto;width:100%;min-width:0;padding:48px 20px 72px;}
     .hireai-fp-hero__kicker{margin-bottom:16px;}
     .hireai-fp-hero__title{font-size:clamp(32px,8vw,48px);}
     .hireai-fp-hero__title .hireai-fp__gold{background:linear-gradient(135deg,#f4dcac 0%,#e9c176 42%,#a9792b 100%);-webkit-background-clip:text;background-clip:text;}
