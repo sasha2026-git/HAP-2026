@@ -475,11 +475,11 @@ $t = [
 /* ═══════════════════════════════════════════════════════════════════════
    1) HERO  ── Stitch code.html Hero (满屏 / 背景图 / 双按钮 / 滚动指示)
    ═══════════════════════════════════════════════════════════════════════ */
-.hireai-fp-hero{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--surface,#faf9f9);}
-.hireai-fp-hero__bg{position:absolute;inset:0;z-index:0;overflow:hidden;}
-.hireai-fp-hero__bg img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 35%;}
+.hireai-fp-hero{position:relative;width:100%;display:block;overflow:hidden;background:var(--surface,#faf9f9);}
+.hireai-fp-hero__bg{position:relative;inset:auto;width:100%;overflow:hidden;}
+.hireai-fp-hero__bg img{display:block;width:100%;height:auto;max-height:min(80vh,860px);object-fit:cover;object-position:center 35%;}
 .hireai-fp-hero__shade{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(249,249,249,.55) 0%,rgba(249,249,249,.20) 45%,var(--surface,#faf9f9) 100%);}
-.hireai-fp-hero__inner{position:relative;z-index:2;text-align:center;width:min(100%,920px);padding:14vh var(--side) 80px;}
+.hireai-fp-hero__inner{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;text-align:center;width:min(100%,920px);padding:14vh var(--side) 80px;}
 .hireai-fp-hero__kicker{margin-bottom:24px;}
 .hireai-fp-hero__title{font-family:var(--f-display);font-size:var(--sz-d);font-weight:700;line-height:1.1;letter-spacing:-.02em;color:#000;margin:0 0 24px;}
 .hireai-fp-hero__title-line{display:block;}
@@ -641,10 +641,9 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
    Responsive fine-tune
    ═══════════════════════════════════════════════════════════════════════ */
 @media(max-width:767px){
-    .hireai-fp-hero{min-height:min(86vh,calc(100dvh - 50px));}
-    .hireai-fp-hero__bg img{object-position:38% 60%;transform:scale(1.06);transform-origin:center 45%;}
+    .hireai-fp-hero__bg img{min-height:86vh;min-height:min(86vh,calc(100dvh - 50px));object-position:center 42%;}
     .hireai-fp-hero__shade{background:linear-gradient(180deg,rgba(250,249,249,.12) 0%,rgba(26,28,28,.14) 48%,rgba(26,28,28,.44) 82%,rgba(250,249,249,1) 100%);}
-    .hireai-fp-hero__inner{width:100%;padding:calc(12vh + 50px) 20px 72px;}
+    .hireai-fp-hero__inner{width:100%;padding:40px 20px 72px;}
     .hireai-fp-hero__kicker{margin-bottom:16px;}
     .hireai-fp-hero__title{font-size:clamp(32px,8vw,48px);}
     .hireai-fp-hero__title .hireai-fp__gold{background:linear-gradient(135deg,#f4dcac 0%,#e9c176 42%,#a9792b 100%);-webkit-background-clip:text;background-clip:text;}

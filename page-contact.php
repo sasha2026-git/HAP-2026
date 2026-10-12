@@ -162,7 +162,7 @@ $form_action = esc_url(admin_url('admin-post.php'));
 /* Inline alert */
 .hireai-c-alert{margin:0 0 28px;padding:14px 20px;border-radius:8px;font-family:var(--hp-font-body);font-size:14px;line-height:1.55;}
 .hireai-c-alert--ok{background:rgba(119,90,25,.07);border:1px solid rgba(119,90,25,.25);color:var(--hp-secondary,#775a19);}
-.hireai-c-alert--err{background:rgba(186,26,26,.06);border:1px solid rgba(186,26,26,.2);color:#8a1010;}
+.hireai-c-alert--err{background:rgba(119,90,25,.07);border:1px solid rgba(119,90,25,.25);color:#1a1c1c;}
 
 /* Submit row alignment */
 .hireai-c-form__actions{display:flex;justify-content:flex-end;margin-top:8px;padding-top:32px;border-top:1px solid rgba(196,199,199,.5);}

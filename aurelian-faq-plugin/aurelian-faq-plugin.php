@@ -387,42 +387,7 @@ function afaq_render() {
     <!-- ===== Skip Navigation (WCAG) ===== -->
     <a href="#afaq-content-start" class="afaq-skip-link">跳转到主要内容</a>
 
-    <!-- Tailwind CDN (轻量) -->
-    <script>
-    (function(){
-        if (document.getElementById('afaq-tw')) return;
-        var s = document.createElement('script');
-        s.id = 'afaq-tw';
-        s.src = 'https://cdn.tailwindcss.com?plugins=forms,container-queries';
-        document.head.appendChild(s);
-    })();
-    </script>
-    <script>
-    tailwind.config = {
-      corePlugins: { preflight: false },
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#000000",
-            "secondary": "#775a19",
-            "surface": "#faf9f9",
-            "background": "#faf9f9",
-            "on-surface-variant": "#444748",
-            "on-surface": "#1a1c1c",
-            "on-secondary-container": "#785a1a",
-            "surface-container-low": "#f4f3f3",
-            "secondary-fixed-dim": "#e9c176",
-            "outline-variant": "#c4c7c7"
-          },
-          fontFamily: {
-            'display': ["'Playfair Display'", 'serif'],
-            'body': ['Inter', 'sans-serif'],
-          }
-        }
-      }
-    };
-    </script>
+    <!-- Local custom styles only; third-party runtime styling is not injected. -->
     <!-- Google Fonts preconnect removed -->
     <!-- Google Fonts stylesheet removed - system font fallback -->
 

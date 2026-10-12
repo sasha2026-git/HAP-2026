@@ -555,7 +555,7 @@ function ahai_blog_default_footer_links() {
 }
 
 /* ============================================================
-   3. Shared Assets — Tailwind CDN + Fonts + Base CSS
+   3. Shared Assets — Base CSS
    ============================================================ */
 add_action('wp_footer', 'ahai_blog_shared_assets');
 function ahai_blog_shared_assets() {
@@ -563,85 +563,6 @@ function ahai_blog_shared_assets() {
     if ($done) return;
     $done = true;
     ?>
-<script>
-(function(){
-  if(!document.getElementById('ahai-tw')){
-    var s=document.createElement('script');s.id='ahai-tw';
-    s.src='https://cdn.tailwindcss.com?plugins=forms,container-queries';
-    document.head.appendChild(s);
-    s.onload=function(){
-      tailwind.config={
-        darkMode:"class",
-        corePlugins:{preflight:false},
-        theme:{extend:{
-          colors:{
-            "surface":"#faf9f9","on-tertiary":"#ffffff","secondary":"#775a19",
-            "on-primary-fixed-variant":"#474746","tertiary-fixed":"#e3e3de",
-            "on-tertiary-fixed-variant":"#464744","outline-variant":"#c4c7c7",
-            "error":"#ba1a1a","primary-fixed":"#e5e2e1","on-primary-container":"#858383",
-            "tertiary-fixed-dim":"#c7c7c2","surface-variant":"#e2e2e2",
-            "on-primary-fixed":"#1c1b1b","secondary-fixed":"#ffdea5",
-            "on-surface":"#1a1c1c","on-tertiary-fixed":"#1b1c19",
-            "on-error":"#ffffff","background":"#faf9f9","on-surface-variant":"#444748",
-            "on-secondary":"#ffffff","on-primary":"#ffffff","on-secondary-fixed":"#261900",
-            "on-secondary-container":"#785a1a","on-error-container":"#93000a",
-            "primary":"#000000","primary-fixed-dim":"#c8c6c5",
-            "secondary-fixed-dim":"#e9c176","surface-container":"#eeeeee",
-            "tertiary-container":"#1b1c19","inverse-surface":"#2f3131",
-            "inverse-primary":"#c8c6c5","surface-tint":"#5f5e5e","outline":"#747878",
-            "surface-container-lowest":"#ffffff","surface-container-low":"#f4f3f3",
-            "surface-container-highest":"#e2e2e2","tertiary":"#000000",
-            "on-tertiary-container":"#848480","surface-bright":"#faf9f9",
-            "primary-container":"#1c1b1b","error-container":"#ffdad6",
-            "surface-dim":"#dadada","surface-container-high":"#e8e8e8",
-            "secondary-container":"#fed488","on-secondary-fixed-variant":"#5d4201",
-            "inverse-on-surface":"#f1f1f0","on-background":"#1a1c1c"
-          },
-          fontFamily:{
-            "display-lg":["Playfair Display","serif"],
-            "headline-lg":["Playfair Display","serif"],
-            "headline-lg-mobile":["Playfair Display","serif"],
-            "headline-md":["Playfair Display","serif"],
-            "body-lg":["Inter","sans-serif"],
-            "body-md":["Inter","sans-serif"],
-            "label-md":["Inter","sans-serif"],
-            "label-sm":["Inter","sans-serif"]
-          },
-          fontSize:{
-            "display-lg":["72px",{lineHeight:"1.1",letterSpacing:"-0.02em",fontWeight:"700"}],
-            "headline-lg":["48px",{lineHeight:"1.2",fontWeight:"600"}],
-            "headline-lg-mobile":["32px",{lineHeight:"1.2",fontWeight:"600"}],
-            "headline-md":["32px",{lineHeight:"1.3",fontWeight:"500"}],
-            "body-lg":["18px",{lineHeight:"1.6",fontWeight:"400"}],
-            "body-md":["16px",{lineHeight:"1.6",fontWeight:"400"}],
-            "label-md":["14px",{lineHeight:"1.2",letterSpacing:"0.1em",fontWeight:"600"}],
-            "label-sm":["12px",{lineHeight:"1.2",letterSpacing:"0.05em",fontWeight:"500"}]
-          },
-          spacing:{
-            "margin-mobile":"20px","margin-tablet":"40px","gutter":"24px",
-            "container-max":"1440px","base":"8px","section-gap":"120px","margin-desktop":"80px"
-          },
-          borderRadius:{
-            "DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"
-          }
-        }}
-      };
-    };
-  }
-  if(!document.getElementById('ahai-gf')){
-    var l=document.createElement('link');l.id='ahai-gf';
-    l.rel='stylesheet';
-    // Google Fonts CDN removed - typography fallback uses system fonts (ui-serif, ui-sans-serif)
-    document.head.appendChild(l);
-  }
-  if(!document.getElementById('ahai-ms')){
-    var l2=document.createElement('link');l2.id='ahai-ms';
-    l2.rel='stylesheet';
-    // Material Symbols CDN removed (v3.0.3) - icons now inline
-    document.head.appendChild(l2);
-  }
-})();
-</script>
 <style id="ahai-blog-base-css">
 /* ── Astra Theme Reset ── */
 #aurelian-blog a,

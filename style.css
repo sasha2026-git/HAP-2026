@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.7.11
+Version: 3.7.12
 Text Domain:  hireaipeople
 */
 
@@ -108,7 +108,7 @@ Text Domain:  hireaipeople
   --ivory-white: #ffffff;
   --ink-charcoal: #1a1a1a;
   --surface-cream: #f9f9f9;
-  --error: #ba1a1a;
+  --error: #1a1a1a;
 
   /* Typography */
   --font-serif: 'Playfair Display', 'Noto Serif SC', 'Noto Serif CJK SC', 'Songti SC', 'SimSun', serif;
@@ -189,6 +189,8 @@ Text Domain:  hireaipeople
   --shadow-hover: 0 32px 60px rgba(212, 175, 55, 0.07), 0 16px 40px rgba(26, 26, 26, 0.04);
 
   --transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  color-scheme: light;
+  accent-color: var(--primary);
 }
 
 /* ==========================================================================
@@ -279,6 +281,40 @@ button {
   border: 0;
   background: transparent;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  min-height: 44px;
+  padding: 12px 36px 12px 12px;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-container-lowest);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23775a19' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  color: var(--on-surface);
+}
+
+select:focus,
+select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+select option,
+select optgroup {
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+}
+
+select option:checked,
+select option:hover {
+  background: linear-gradient(0deg, var(--primary-container), var(--primary-container));
+  color: var(--ink-charcoal);
 }
 
 ::selection {
@@ -618,6 +654,22 @@ h4 {
   color: var(--hai-primary, #000);
   cursor: pointer;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hai-header__account.hai-header__account,
+.hai-header__lang.hai-header__lang,
+.hai-header__menu-toggle.hai-header__menu-toggle {
+  color: var(--hai-primary, #000);
+  background: none;
+  border: none;
+}
+
+.hai-header__account.hai-header__account:hover,
+.hai-header__account.hai-header__account:focus-visible,
+.hai-header__menu-toggle.hai-header__menu-toggle:hover,
+.hai-header__menu-toggle.hai-header__menu-toggle:focus-visible {
+  color: var(--hai-secondary, #775a19);
 }
 /* v3.5.7-p22 (header layout fix): single breakpoint at 1024px.
    - >=1024px viewport: nav visible, hamburger hidden.
@@ -757,12 +809,23 @@ h4 {
   padding: 0;
 }
 
-/* Parent reset loads after child styles and recolors plain buttons (#c36),
+/* Parent reset loads after child styles and recolors plain buttons crimson,
    so drawer controls need this scoped reset to keep the theme token color. */
 .mobile-drawer__close.mobile-drawer__close {
   color: var(--on-surface);
   background: none;
   border: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body .mobile-drawer .mobile-drawer__menu a {
+  color: var(--on-surface);
+}
+
+body .mobile-drawer .mobile-drawer__menu a:hover,
+body .mobile-drawer .mobile-drawer__menu a:focus-visible,
+body .mobile-drawer .mobile-drawer__menu .current-menu-item > a {
+  color: var(--primary);
 }
 
 .mobile-drawer__menu {
@@ -2079,7 +2142,7 @@ mark {
 }
 
 .form-message--error {
-  border-color: rgba(186, 26, 26, 0.4);
+  border-color: rgba(119, 90, 25, 0.4);
   color: var(--error);
 }
 
@@ -2937,6 +3000,39 @@ button[aria-label*="menu" i][aria-expanded] {
   background: rgba(212, 175, 55, 0.08) !important;
   color: var(--on-surface) !important;
   border-radius: 12px !important;
+}
+
+/* v3.7.12: last-resort color containment. Load-order wars with Elementor and
+   cached mobile styles were resetting the header toggle back to crimson. */
+body .hai-header__menu-toggle,
+body button[aria-label="Toggle menu"][aria-expanded],
+body button[aria-label="Close menu"] {
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  color: var(--ink-charcoal, #1a1a1a) !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body .hai-header__menu-toggle:hover,
+body .hai-header__menu-toggle:focus-visible,
+body .hai-header__menu-toggle:active,
+body button[aria-label="Toggle menu"][aria-expanded]:hover,
+body button[aria-label="Toggle menu"][aria-expanded]:focus-visible,
+body button[aria-label="Toggle menu"][aria-expanded]:active,
+body button[aria-label="Close menu"]:hover,
+body button[aria-label="Close menu"]:focus-visible,
+body button[aria-label="Close menu"]:active {
+  background-color: rgba(233, 193, 118, 0.12) !important;
+  border-color: rgba(233, 193, 118, 0.55) !important;
+  color: var(--hai-secondary, #775a19) !important;
+  outline-color: var(--primary, #735c00);
+}
+
+body .hai-header__menu-toggle svg {
+  color: inherit !important;
+  fill: none !important;
+  stroke: currentColor !important;
 }
 
 
