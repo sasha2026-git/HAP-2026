@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.7.15
+Version: 3.7.16
 Text Domain:  hireaipeople
 */
 
@@ -351,6 +351,91 @@ select option:hover {
   background: var(--surface-container-lowest);
   color: var(--primary);
   clip: auto;
+}
+
+/* v3.7.16: keep archive, list, and single templates inside the black-gold system.
+   Higher specificity prevents Elementor or cached page styles from re-linking
+   titles and CTAs with any non-brand accent in any link state. */
+html body .archive-header__title,
+html body .post-card__title,
+html body .post-card__title a:link,
+html body .post-card__title a:visited,
+html body .post-card__title a:hover,
+html body .post-card__title a:active,
+html body .post-card__title a:focus-visible,
+html body .post-card:hover .post-card__title,
+html body .post-card:hover .post-card__title a:link,
+html body .post-card:hover .post-card__title a:visited,
+html body .post-card:hover .post-card__title a:hover,
+html body .post-card:hover .post-card__title a:active,
+html body .post-card:hover .post-card__title a:focus-visible,
+html body .insight-row__title,
+html body .insight-row__title a:link,
+html body .insight-row__title a:visited,
+html body .insight-row__title a:hover,
+html body .insight-row__title a:active,
+html body .insight-row__title a:focus-visible,
+html body .insight-row:hover .insight-row__title,
+html body .insight-row:hover .insight-row__title a:link,
+html body .insight-row:hover .insight-row__title a:visited,
+html body .insight-row:hover .insight-row__title a:hover,
+html body .insight-row:hover .insight-row__title a:active,
+html body .insight-row:hover .insight-row__title a:focus-visible {
+  color: var(--ink-charcoal, #1a1c1c);
+  -webkit-text-fill-color: var(--ink-charcoal, #1a1c1c);
+}
+
+html body .btn-ghost:link,
+html body .btn-ghost:visited,
+html body .post-card__cta:link,
+html body .post-card__cta:visited,
+html body .post-card__cta:hover,
+html body .post-card__cta:active,
+html body .post-card__cta:focus-visible,
+html body .insight-row__cta:link,
+html body .insight-row__cta:visited,
+html body .insight-row__cta:hover,
+html body .insight-row__cta:active,
+html body .insight-row__cta:focus-visible,
+html body .archive-header__description a:link,
+html body .archive-header__description a:visited,
+html body .archive-header__description a:hover,
+html body .archive-header__description a:active,
+html body .archive-header__description a:focus-visible,
+html body .hireai-link--ghost:link,
+html body .hireai-link--ghost:visited,
+html body .hireai-link--ghost:hover,
+html body .hireai-link--ghost:active,
+html body .hireai-link--ghost:focus-visible,
+html body .hireai-prose a:link,
+html body .hireai-prose a:visited,
+html body .hireai-prose a:hover,
+html body .hireai-prose a:active,
+html body .hireai-prose a:focus-visible {
+  color: #775a19;
+  border-bottom-color: #775a19;
+}
+
+html body .btn-ghost:hover,
+html body .btn-ghost:active,
+html body .btn-ghost:focus-visible,
+html body .post-card__cta:hover,
+html body .post-card__cta:active,
+html body .post-card__cta:focus-visible,
+html body .insight-row__cta:hover,
+html body .insight-row__cta:active,
+html body .insight-row__cta:focus-visible,
+html body .archive-header__description a:hover,
+html body .archive-header__description a:active,
+html body .archive-header__description a:focus-visible,
+html body .hireai-link--ghost:hover,
+html body .hireai-link--ghost:active,
+html body .hireai-link--ghost:focus-visible,
+html body .hireai-prose a:hover,
+html body .hireai-prose a:active,
+html body .hireai-prose a:focus-visible {
+  color: #e9c176;
+  border-bottom-color: #e9c176;
 }
 
 /* ==========================================================================
@@ -810,7 +895,7 @@ h4 {
   padding: 0;
 }
 
-/* Parent reset loads after child styles and recolors plain buttons crimson,
+/* Parent reset loads after child styles and recolors plain buttons off-brand,
    so drawer controls need this scoped reset to keep the theme token color. */
 .mobile-drawer__close.mobile-drawer__close {
   color: var(--on-surface);
@@ -3004,7 +3089,7 @@ button[aria-label*="menu" i][aria-expanded] {
 }
 
 /* v3.7.12: last-resort color containment. Load-order wars with Elementor and
-   cached mobile styles were resetting the header toggle back to crimson. */
+   cached mobile styles were resetting the header toggle off-brand. */
 body .hai-header__menu-toggle,
 body button[aria-label="Toggle menu"][aria-expanded],
 body button[aria-label="Close menu"] {

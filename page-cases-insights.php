@@ -142,6 +142,12 @@ body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-sm
 .case__body{padding:20px 0 0}
 .case__body h3{font-family:var(--fd);font-size:20px;margin:0 0 6px}
 .case__body p{font-size:14px;line-height:1.5;color:var(--txt-v)}
+/* v3.7.16: block inherited Elementor link colors for every case-card state. */
+html body .case,html body .case:link,html body .case:visited,html body .case:hover,html body .case:active,html body .case:focus-visible{color:var(--txt)}
+html body .case__body h3,html body .case:hover .case__body h3{color:var(--txt);-webkit-text-fill-color:var(--txt)}
+html body .case__body p,html body .case:hover .case__body p,html body .case:active .case__body p,html body .case:focus-visible .case__body p{color:var(--txt-v);-webkit-text-fill-color:var(--txt-v)}
+html body .case__badge,html body .case:hover .case__badge,html body .case:active .case__badge,html body .case:focus-visible .case__badge{color:var(--gold);-webkit-text-fill-color:var(--gold)}
+html body .case__cta,html body .case:hover .case__cta,html body .case:active .case__cta,html body .case:focus-visible .case__cta{color:var(--gold);-webkit-text-fill-color:var(--gold)}
 
 /* ★ Grid 列跨度（v2.2.6 原版） */
 .case-1{grid-column: span 8}
@@ -162,6 +168,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-sm
 .insights-hdr p{font-size:12px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--txt-v)}
 .art-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;max-width:1200px;margin:0 auto}
 .art{cursor:pointer}
+html body .art-card__cta,html body .art:hover .art-card__cta,html body .art:active .art-card__cta,html body .art:focus-visible .art-card__cta{color:var(--gold);-webkit-text-fill-color:var(--gold)}
 .art__iw{aspect-ratio:4/5;border-radius:8px;overflow:hidden;margin-bottom:16px}
 .art__ph{width:100%;height:100%;background:linear-gradient(135deg,var(--bg),#e8e5df);display:flex;align-items:center;justify-content:center;font-size:48px;color:#747878;transition:transform .7s}
 /* v3.5.7-p17 Bug 2 修复：洞察 ACF 配图样式 */
@@ -172,6 +179,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-sm
 .art h4{font-family:var(--fd);font-size:18px;line-height:1.3;margin:0 0 8px}
 .art h4 em{font-style:italic}
 .art:hover h4{color:var(--gold)}
+.art h4,.art:hover h4,.art:active h4,.art:focus-visible h4{color:var(--txt);-webkit-text-fill-color:var(--txt)}
 .art p{font-size:13px;line-height:1.5;color:var(--txt-v);margin:0 0 12px}
 .art__rt{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-v)}
 
