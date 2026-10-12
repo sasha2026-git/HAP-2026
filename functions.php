@@ -2411,7 +2411,9 @@ add_action('acf/init', function () {
         /* ── ① Hero ── */
         ['name' => 'fp_hero_kicker', 'label' => '① Hero · 眉题', 'type' => 'text', 'zh' => '工匠精神与算法', 'en' => 'Prestige Digital Labor'],
         ['name' => 'fp_hero_static', 'label' => '① Hero · 主标题（常亮行）', 'type' => 'text', 'zh' => '重新定义', 'en' => 'Redefine'],
-        ['name' => 'fp_hero_accent', 'label' => '① Hero · 主标题（金色斜体行）', 'type' => 'text', 'zh' => '数字劳动力', 'en' => 'Digital Labor'],
+        ['name' => 'fp_hero_accent_primary', 'label' => '① Hero · 主标题第二行（金色）', 'type' => 'text', 'zh' => '数字', 'en' => 'Digital'],
+        ['name' => 'fp_hero_accent_secondary', 'label' => '① Hero · 主标题第三行（金色）', 'type' => 'text', 'zh' => '生产力', 'en' => 'Productivity'],
+        ['name' => 'fp_hero_accent', 'label' => '① Hero · 旧版金色标题（兼容）', 'type' => 'text', 'zh' => '数字生产力', 'en' => 'Digital Productivity'],
         ['name' => 'fp_hero_subtitle', 'label' => '① Hero · 副标题', 'type' => 'textarea', 'zh' => '融合尖端科技与奢华质感，为您打造专属的数字员工矩阵。', 'en' => 'Fusing cutting-edge technology with a luxurious aesthetic to craft your bespoke digital workforce.', 'extra' => ['rows' => 3]],
         ['name' => 'fp_hero_image', 'label' => '① Hero · 背景图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
         ['name' => 'fp_hero_cta_1_url', 'label' => '① Hero · 主按钮 · 链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],

@@ -33,7 +33,17 @@ $home   = get_stylesheet_directory_uri();
 /* Hero */
 $hero_kicker   = hireai_field_lang('fp_hero_kicker',   $lang, $is_en ? 'AETHER LUXE AI' : '工匠精神与算法');
 $hero_static   = hireai_field_lang('fp_hero_static',   $lang, $is_en ? 'Redefining' : '重新定义');
-$hero_accent   = hireai_field_lang('fp_hero_accent',   $lang, $is_en ? 'Digital Labor' : '数字劳动力');
+$hero_accent_primary   = hireai_field_lang('fp_hero_accent_primary', $lang, $is_en ? 'Digital' : '');
+$hero_accent_secondary = hireai_field_lang('fp_hero_accent_secondary', $lang, $is_en ? 'Productivity' : '');
+if ('' === $hero_accent_primary && '' === $hero_accent_secondary) {
+    $hero_accent = hireai_field_lang('fp_hero_accent', $lang, $is_en ? 'Digital Productivity' : '数字生产力');
+    if (preg_match('/^(\p{Han}{2})(\p{Han}+)$/u', $hero_accent, $hero_accent_parts)) {
+        $hero_accent_primary   = $hero_accent_parts[1];
+        $hero_accent_secondary = $hero_accent_parts[2];
+    } else {
+        $hero_accent_primary = $hero_accent;
+    }
+}
 $hero_subtitle = hireai_field_lang('fp_hero_subtitle', $lang, $is_en ? 'Fusing cutting-edge technology with a luxurious aesthetic to craft your bespoke digital workforce.' : '融合尖端科技与奢华质感，为您打造专属的数字员工矩阵。');
 $hero_image    = hireai_image('fp_hero_image', $home . '/assets/img/defaults/hero-home.jpg');
 $hero_cta_1_url   = hireai_field('fp_hero_cta_1_url',   home_url('/ai-employees/'));
@@ -475,15 +485,21 @@ $t = [
 /* ═══════════════════════════════════════════════════════════════════════
    1) HERO  ── Stitch code.html Hero (满屏 / 背景图 / 双按钮 / 滚动指示)
    ═══════════════════════════════════════════════════════════════════════ */
-.hireai-fp-hero{position:relative;width:100%;display:block;overflow:hidden;background:var(--surface,#faf9f9);}
-.hireai-fp-hero__bg{position:relative;inset:auto;width:100%;overflow:hidden;}
-.hireai-fp-hero__bg img{display:block;width:100%;height:auto;max-height:min(80vh,860px);object-fit:cover;object-position:center 35%;}
-.hireai-fp-hero__shade{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(249,249,249,.55) 0%,rgba(249,249,249,.20) 45%,var(--surface,#faf9f9) 100%);}
-.hireai-fp-hero__inner{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;text-align:center;width:min(100%,920px);padding:14vh var(--side) 80px;}
+.hireai-fp-hero{position:relative;width:100%;height:min(56.25vw,860px);display:block;overflow:hidden;background:var(--surface,#faf9f9);}
+.hireai-fp-hero__bg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:hidden;}
+.hireai-fp-hero__bg img{display:block;width:100%;height:100%;object-fit:cover;object-position:center bottom;}
+.hireai-fp-hero__shade{position:absolute;left:0;top:0;right:0;bottom:0;z-index:1;background:linear-gradient(180deg,rgba(249,249,249,.55) 0%,rgba(249,249,249,.20) 45%,var(--surface,#faf9f9) 100%);}
+.hireai-fp-hero__inner,
+html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{position:absolute;inset:auto 0 0 0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;width:min(100%,920px);min-width:min(100%,920px);margin-inline:auto;padding:0 var(--side) 80px;writing-mode:horizontal-tb;}
+.hireai-fp-hero__inner > *,
+html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner > *{min-width:0;max-width:100%;}
 .hireai-fp-hero__kicker{margin-bottom:24px;}
 .hireai-fp-hero__title{font-family:var(--f-display);font-size:var(--sz-d);font-weight:700;line-height:1.1;letter-spacing:-.02em;color:#000;margin:0 0 24px;}
-.hireai-fp-hero__title-line{display:block;}
-.hireai-fp-hero__subtitle{font-family:var(--f-body);font-size:var(--sz-bl);font-weight:400;line-height:1.6;color:rgba(26,28,28,.80);margin:0 auto 36px;max-width:680px;}
+.hireai-fp-hero__title,
+html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__title{display:grid;width:100%;max-width:none;justify-items:center;}
+.hireai-fp-hero__title-line,
+html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__title-line{display:block;width:100%;max-width:100%;overflow-wrap:break-word;writing-mode:horizontal-tb;}
+.hireai-fp-hero__subtitle{font-family:var(--f-body);font-size:var(--sz-bl);font-weight:400;line-height:1.6;color:rgba(26,28,28,.80);margin:0 auto 36px;width:min(100%,680px);max-width:680px;overflow-wrap:break-word;}
 /* v3.3.0: spec §4 Hero 副标题 = body-lg italic (en only); zh keeps upright */
 html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 .hireai-fp-hero__actions{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;}
@@ -641,9 +657,11 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
    Responsive fine-tune
    ═══════════════════════════════════════════════════════════════════════ */
 @media(max-width:767px){
-    .hireai-fp-hero__bg img{min-height:86vh;min-height:min(86vh,calc(100dvh - 50px));object-position:center 42%;}
-    .hireai-fp-hero__shade{background:linear-gradient(180deg,rgba(250,249,249,.12) 0%,rgba(26,28,28,.14) 48%,rgba(26,28,28,.44) 82%,rgba(250,249,249,1) 100%);}
-    .hireai-fp-hero__inner{width:100%;padding:40px 20px 72px;}
+    .hireai-fp-hero{height:auto;min-height:86vh;height:86vh;}
+    .hireai-fp-hero__bg img{min-height:86vh;min-height:min(86vh,calc(100dvh - 50px));object-position:center bottom;}
+    .hireai-fp-hero__shade{background:linear-gradient(180deg,rgba(250,249,249,.12) 0%,rgba(26,28,28,.14) 42%,rgba(26,28,28,.58) 76%,rgba(250,249,249,1) 100%);}
+    .hireai-fp-hero__inner,
+    html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{width:100%;padding:96px 20px 72px;}
     .hireai-fp-hero__kicker{margin-bottom:16px;}
     .hireai-fp-hero__title{font-size:clamp(32px,8vw,48px);}
     .hireai-fp-hero__title .hireai-fp__gold{background:linear-gradient(135deg,#f4dcac 0%,#e9c176 42%,#a9792b 100%);-webkit-background-clip:text;background-clip:text;}
@@ -686,7 +704,12 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
         <?php endif; ?>
         <h1 class="hireai-fp-hero__title">
             <span class="hireai-fp-hero__title-line"><?php echo esc_html($hero_static); ?></span>
-            <span class="hireai-fp-hero__title-line hireai-fp__gold"><?php echo esc_html($hero_accent); ?></span>
+            <?php if ('' !== $hero_accent_primary) : ?>
+            <span class="hireai-fp-hero__title-line hireai-fp__gold"><?php echo esc_html($hero_accent_primary); ?></span>
+            <?php endif; ?>
+            <?php if ('' !== $hero_accent_secondary) : ?>
+            <span class="hireai-fp-hero__title-line hireai-fp__gold"><?php echo esc_html($hero_accent_secondary); ?></span>
+            <?php endif; ?>
         </h1>
         <?php if ($hero_subtitle) : ?>
         <p class="hireai-fp-hero__subtitle"><?php echo esc_html($hero_subtitle); ?></p>
