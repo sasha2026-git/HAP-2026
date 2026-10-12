@@ -405,7 +405,6 @@ $t = [
 .hireai-fp{box-sizing:border-box;margin:0;padding:0;background:var(--surface,#faf9f9);color:#1a1c1c;font-family:'Inter','Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;overflow-x:hidden;}
 .hireai-fp *,.hireai-fp *::before,.hireai-fp *::after{box-sizing:border-box;}
 .hireai-fp img{display:block;max-width:100%;height:auto;}
-.hireai-fp-hero__bg img{height:100%;}
 .hireai-fp a:not([class*="hireai-fp__btn"]):not(.hireai-fp-products__explore){text-decoration:none;color:inherit;}
 .hireai-fp button{font-family:inherit;cursor:pointer;border:0;background:none;}
 
@@ -482,15 +481,14 @@ $t = [
 .hireai-fp__btn.hireai-fp__btn--gold, .hireai-fp__btn--gold.hireai-fp__btn--gold{background:linear-gradient(135deg,#e9c176 0%,#775a19 100%);color:#fff!important;border-color:transparent;}
 .hireai-fp__btn.hireai-fp__btn--gold:hover, .hireai-fp__btn--gold.hireai-fp__btn--gold:hover{box-shadow:0 0 32px rgba(233,193,118,.45);transform:translateY(-1px);}
 
-/* ═══════════════════════════════════════════════════════════════════════
-   1) HERO  ── Stitch code.html Hero (满屏 / 背景图 / 双按钮 / 滚动指示)
-   ═══════════════════════════════════════════════════════════════════════ */
-.hireai-fp-hero{position:relative;width:100%;height:min(56.25vw,860px);display:block;overflow:hidden;background:var(--surface,#faf9f9);}
-.hireai-fp-hero__bg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:hidden;}
-.hireai-fp-hero__bg img{display:block;width:100%;height:100%;object-fit:cover;object-position:center bottom;}
-.hireai-fp-hero__shade{position:absolute;left:0;top:0;right:0;bottom:0;z-index:1;background:linear-gradient(180deg,rgba(249,249,249,.55) 0%,rgba(249,249,249,.20) 45%,var(--surface,#faf9f9) 100%);}
+/* 1) HERO — image banner follows page-contact.php: natural height inside a
+   centered 1200px container, with the same radius, border, shadow and cap. */
+.hireai-fp-hero{position:relative;width:100%;height:auto;min-height:0;display:block;overflow:visible;padding:clamp(72px,9vw,128px) clamp(20px,5vw,80px) clamp(40px,5vw,72px);background:var(--surface,#faf9f9);text-align:center;}
+.hireai-fp-hero__bg{position:relative;left:auto;top:auto;width:100%;max-width:1200px;height:auto;margin:0 auto;overflow:hidden;border:1px solid rgba(119,90,25,.12);border-radius:var(--hp-radius-md,.75rem);box-shadow:0 30px 80px rgba(0,0,0,.07);}
+.hireai-fp-hero__bg img{display:block;width:100%;height:auto;object-fit:cover;max-height:480px;object-position:center;}
+.hireai-fp-hero__shade{display:none;}
 .hireai-fp-hero__inner,
-html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{position:absolute;inset:auto 0 0 0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;width:min(100%,920px);min-width:min(100%,920px);margin-inline:auto;padding:0 var(--side) 80px;writing-mode:horizontal-tb;}
+html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{position:relative;inset:auto;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;width:100%;min-width:0;max-width:none;margin:0;padding:0;writing-mode:horizontal-tb;}
 .hireai-fp-hero__inner > *,
 html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner > *{min-width:0;max-width:100%;}
 .hireai-fp-hero__kicker{margin-bottom:24px;}
@@ -503,7 +501,7 @@ html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__title-line{display:block;w
 /* v3.3.0: spec §4 Hero 副标题 = body-lg italic (en only); zh keeps upright */
 html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 .hireai-fp-hero__actions{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;}
-.hireai-fp-hero__scroll{position:absolute;left:50%;bottom:32px;transform:translateX(-50%);z-index:3;color:rgba(0,0,0,.45);display:inline-flex;animation:hireai-fp-bounce 2.2s ease-in-out infinite;}
+.hireai-fp-hero__scroll{display:none;}
 .hireai-fp-hero__scroll svg{width:36px;height:36px;}
 @keyframes hireai-fp-bounce{0%,100%{transform:translate(-50%,0);}50%{transform:translate(-50%,8px);}}
 
@@ -657,11 +655,8 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
    Responsive fine-tune
    ═══════════════════════════════════════════════════════════════════════ */
 @media(max-width:767px){
-    .hireai-fp-hero{height:auto;min-height:86vh;height:86vh;}
-    .hireai-fp-hero__bg img{min-height:86vh;min-height:min(86vh,calc(100dvh - 50px));object-position:center bottom;}
-    .hireai-fp-hero__shade{background:linear-gradient(180deg,rgba(250,249,249,.12) 0%,rgba(26,28,28,.14) 42%,rgba(26,28,28,.58) 76%,rgba(250,249,249,1) 100%);}
     .hireai-fp-hero__inner,
-    html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{width:100%;padding:96px 20px 72px;}
+    html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{padding:0;}
     .hireai-fp-hero__kicker{margin-bottom:16px;}
     .hireai-fp-hero__title{font-size:clamp(32px,8vw,48px);}
     .hireai-fp-hero__title .hireai-fp__gold{background:linear-gradient(135deg,#f4dcac 0%,#e9c176 42%,#a9792b 100%);-webkit-background-clip:text;background-clip:text;}
@@ -684,20 +679,6 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
      1) HERO  ── 满屏 / 背景图 / 渐变遮罩 / 双按钮 / 向下滚动指示
      ═══════════════════════════════════════════════════════════════════════ -->
 <section class="hireai-fp hireai-fp-hero" aria-label="<?php echo esc_attr($is_en ? 'Hero' : '首页主视觉'); ?>">
-    <div class="hireai-fp-hero__bg" aria-hidden="true">
-        <?php if ($hero_image) : ?>
-        <img
-            src="<?php echo esc_url($hero_image); ?>"
-            alt=""
-            width="1920"
-            height="1080"
-            sizes="100vw"
-            loading="eager"
-            fetchpriority="high"
-            decoding="async">
-        <?php endif; ?>
-    </div>
-    <div class="hireai-fp-hero__shade" aria-hidden="true"></div>
     <div class="hireai-fp-hero__inner">
         <?php if ($hero_kicker) : ?>
         <p class="hireai-fp__kicker hireai-fp-hero__kicker"><?php echo esc_html($hero_kicker); ?></p>
@@ -799,6 +780,15 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
             <?php endforeach; ?>
         </div>
     </div>
+    <?php if ($hero_image) : ?>
+    <div class="hireai-fp-hero__bg" aria-hidden="true">
+        <img
+            src="<?php echo esc_url($hero_image); ?>"
+            alt=""
+            loading="lazy"
+            decoding="async">
+    </div>
+    <?php endif; ?>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════

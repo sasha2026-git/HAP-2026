@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.7.13
+Version: 3.7.14
 Text Domain:  hireaipeople
 */
 
@@ -4717,11 +4717,129 @@ html[lang="en"] h2 {
 
 /* v3.7.13: keep the language control brand-colored through the active state
    and suppress Chromium/WebKit touch highlighting. */
-html body button.hai-header__lang:active,
-html body .mobile-drawer button.hai-header__lang:active {
-  background: #e9c176 !important;
-  border-color: rgba(119, 90, 25, 0.35) !important;
-  color: #1a1c1c !important;
+/* v3.7.14: Elementor injects generic button interaction styles after the child
+   stylesheet. Isolate every paint channel of the control, including child nodes
+   and pseudo-elements, so a later generic :active rule cannot recolor it. */
+html body button.hai-header__lang.hai-header__lang.hai-header__lang,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang {
+  appearance: none;
+  background: linear-gradient(135deg, rgba(233, 193, 118, 0.2), rgba(119, 90, 25, 0.08)) !important;
+  background-color: rgba(233, 193, 118, 0.2) !important;
+  background-image: linear-gradient(135deg, rgba(233, 193, 118, 0.2), rgba(119, 90, 25, 0.08)) !important;
+  border: 1px solid rgba(119, 90, 25, 0.4) !important;
+  border-radius: 999px;
   box-shadow: none !important;
+  color: #1a1c1c !important;
+  cursor: pointer;
+  filter: none !important;
+  outline-color: rgba(119, 90, 25, 0.4) !important;
+}
+
+html body button.hai-header__lang.hai-header__lang.hai-header__lang:hover,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang:focus-visible,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang.is-en,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang.is-zh,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang:hover,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang:focus-visible,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang.is-en,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang.is-zh {
+  background: linear-gradient(135deg, #e9c176 0%, #775a19 100%) !important;
+  background-color: #e9c176 !important;
+  background-image: linear-gradient(135deg, #e9c176 0%, #775a19 100%) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  outline-color: #775a19 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
   -webkit-tap-highlight-color: transparent !important;
+}
+
+html body button.hai-header__lang.hai-header__lang.hai-header__lang:active,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang:active {
+  background: #e9c176 !important;
+  background-color: #e9c176 !important;
+  background-image: none !important;
+  border-color: rgba(119, 90, 25, 0.35) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  outline-color: #775a19 !important;
+  color: #1a1c1c !important;
+  -webkit-text-fill-color: #1a1c1c !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+@media (max-width: 1023px) {
+  html body .hai-header button.hai-header__lang.hai-header__lang.hai-header__lang {
+    background: none !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: #1a1c1c !important;
+    -webkit-text-fill-color: #1a1c1c !important;
+  }
+
+  html body .hai-header button.hai-header__lang.hai-header__lang.hai-header__lang:hover,
+  html body .hai-header button.hai-header__lang.hai-header__lang.hai-header__lang:focus-visible,
+  html body .hai-header button.hai-header__lang.hai-header__lang.hai-header__lang.is-en,
+  html body .hai-header button.hai-header__lang.hai-header__lang.hai-header__lang.is-zh {
+    background: none !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    color: #775a19 !important;
+    -webkit-text-fill-color: #775a19 !important;
+  }
+
+  html body .hai-header button.hai-header__lang.hai-header__lang.hai-header__lang:active {
+    background: #e9c176 !important;
+    background-color: #e9c176 !important;
+    background-image: none !important;
+    border-color: rgba(119, 90, 25, 0.35) !important;
+    box-shadow: none !important;
+    color: #1a1c1c !important;
+    -webkit-text-fill-color: #1a1c1c !important;
+  }
+}
+
+html body button.hai-header__lang.hai-header__lang.hai-header__lang *,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang:active *,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang *,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang:active * {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+html body button.hai-header__lang.hai-header__lang.hai-header__lang::before,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang::after,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang:active::before,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang:active::after,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang:hover::before,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang:hover::after,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang:focus-visible::before,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang:focus-visible::after,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang::before,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang::after,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang:active::before,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang:active::after {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  content: none !important;
+}
+
+html body button.hai-header__lang.hai-header__lang.hai-header__lang ::selection,
+html body button.hai-header__lang.hai-header__lang.hai-header__lang:active ::selection,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang ::selection,
+html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang:active ::selection {
+  background: #e9c176 !important;
+  color: #1a1c1c !important;
 }
