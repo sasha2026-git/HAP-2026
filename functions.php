@@ -326,7 +326,12 @@ function site_field($name, $default = '', $post_id = false) {
  * 取语言化字段：site_field( $name . hireai_lang_suffix(), ... )
  */
 function hireai_field($name, $default = '', $post_id = false) {
-    return site_field($name . hireai_lang_suffix(), $default, $post_id);
+    $localized_value = site_field($name . hireai_lang_suffix(), '__hireai_missing__');
+    if ($localized_value !== '__hireai_missing__') {
+        return $localized_value;
+    }
+
+    return site_field($name, $default, $post_id);
 }
 
 /**
@@ -1328,7 +1333,7 @@ add_action('wp_footer', function () {
  *   统一规则：每个自定义模板有一个规范页（按约定 slug 查找，否则取 ID 最小的），
  *   前台读取统一指向规范页；编辑非规范页时后台给出醒目提示。
  * ---------------------------------------------------------------------- */
-function hireai_custom_template_canonical_id($template) {
+function hireai_custom_template_canonical_id($template, $post_id = 0) {
     static $cache = [];
     $template = (string) $template;
     if ($template === '') return 0;
@@ -1360,12 +1365,27 @@ function hireai_custom_template_canonical_id($template) {
             $id = (int) $pages[0]->ID;
         }
     }
+
+    if (
+        $id
+        && $post_id
+        && $post_id !== $id
+        && get_post_meta($post_id, '_wp_page_template', true) === $template
+        && function_exists('pll_get_post_language')
+        && function_exists('pll_get_post')
+    ) {
+        $language = pll_get_post_language($post_id);
+        if ($language && (int) pll_get_post($id, $language) === (int) $post_id) {
+            return (int) $post_id;
+        }
+    }
+
     $cache[$template] = $id;
     return $id;
 }
 
-function hireai_ai_employees_page_id() {
-    return hireai_custom_template_canonical_id('page-ai-employees.php');
+function hireai_ai_employees_page_id($post_id = 0) {
+    return hireai_custom_template_canonical_id('page-ai-employees.php', $post_id);
 }
 
 /* 后台提示：编辑「非规范页」时告知真实数据源（覆盖全部 6 个自定义模板） */
@@ -1378,7 +1398,7 @@ add_action('admin_notices', function () {
     $known = ['front-page.php', 'page-ai-employees.php', 'page-ai-solutions.php', 'page-cases-insights.php', 'page-contact.php', 'page-faq.php'];
     $tpl = (string) get_post_meta($post_id, '_wp_page_template', true);
     if (!in_array($tpl, $known, true)) return;
-    $canonical = hireai_custom_template_canonical_id($tpl);
+    $canonical = hireai_custom_template_canonical_id($tpl, $post_id);
     if (!$canonical || $canonical === $post_id) return;
     $edit_link = (string) get_edit_post_link($canonical);
     printf(
@@ -1399,7 +1419,7 @@ add_action('admin_notices', function () {
     if (!$post_id || !current_user_can('edit_pages')) return;
     $tpl = (string) get_post_meta($post_id, '_wp_page_template', true);
     if ($tpl !== 'page-ai-employees.php') return;
-    $canonical = hireai_custom_template_canonical_id('page-ai-employees.php');
+    $canonical = hireai_custom_template_canonical_id('page-ai-employees.php', $post_id);
     if (!$canonical || $canonical !== $post_id) return;
     if (!function_exists('have_rows')) return;
     $zh_empty = !have_rows('lookbook_employees', $post_id);

@@ -30,7 +30,9 @@ $is_en  = ($suffix === '_en');
 
 /* v3.7.7: 统一从「规范页」读取 —— 站点存在多个同模板页面时，
  *   杜绝"后台在 A 页填字段、前台渲染 B 页 → 编辑与内容毫无关系" */
-$lb_page_id = function_exists('hireai_ai_employees_page_id') ? hireai_ai_employees_page_id() : 0;
+$lb_page_id = function_exists('hireai_ai_employees_page_id')
+    ? hireai_ai_employees_page_id(get_the_ID())
+    : 0;
 $lb_pid     = $lb_page_id > 0 ? $lb_page_id : (get_the_ID() ?: false);
 
 /* --------------------------------------------------------------------

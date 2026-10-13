@@ -20,16 +20,22 @@ $emp_slug = get_query_var('hireai_emp_slug');
 $emp_post = null;
 
 if ($emp_slug) {
+    $employee_category_id = function_exists('hireai_find_category_id')
+        ? hireai_find_category_id([
+            'ai-employee', 'ai-employees', 'digital-employees',
+            'employee', 'employees', 'AI数字员工', '数字员工',
+        ])
+        : 0;
     $candidates = get_posts([
         'name'        => $emp_slug,
         'post_type'   => 'post',
         'post_status' => 'publish',
         'numberposts' => 1,
-        'tax_query'   => [[
+        'tax_query'   => $employee_category_id > 0 ? [[
             'taxonomy' => 'category',
-            'field'    => 'slug',
-            'terms'    => 'ai-employee',
-        ]],
+            'field'    => 'term_id',
+            'terms'    => $employee_category_id,
+        ]] : [],
     ]);
     if (!empty($candidates)) {
         $emp_post = $candidates[0];
@@ -79,9 +85,8 @@ if ($emp_post instanceof WP_Post) {
    page-ai-employees.php 模板上，此前误读 'option' 导致永远显示默认值；
    现在从 /ai-employees/ 页面读取，页面不存在时回退默认文案） ----- */
 $_emp_cta_pid  = 0;
-$_emp_cta_page = get_page_by_path('ai-employees');
-if ($_emp_cta_page instanceof WP_Post) {
-    $_emp_cta_pid = (int) $_emp_cta_page->ID;
+if (function_exists('hireai_ai_employees_page_id')) {
+    $_emp_cta_pid = hireai_ai_employees_page_id(get_the_ID());
 }
 $_emp_cta_src = $_emp_cta_pid > 0 ? $_emp_cta_pid : false;
 $site_kicker = hireai_field('lookbook_cta_heading', $is_en ? 'Ready to deploy?' : '准备好部署了吗？', $_emp_cta_src);
