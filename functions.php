@@ -665,7 +665,7 @@ function hireai_legacy_repeater_rows($repeater_name, $sub_names, $post_id) {
 function hireai_ai_employee_rows($post_id, $is_en) {
     $suffix = $is_en ? '_en' : '_zh';
     $mirror = $is_en ? '_zh' : '_en';
-    $parts = ['kicker', 'title', 'description', 'cta_label', 'image', 'url', 'image_alt'];
+    $parts = ['kicker', 'title', 'desc', 'button', 'image', 'url', 'image_alt'];
     $rows = [];
 
     for ($number = 1; $number <= 12; $number++) {
@@ -680,12 +680,12 @@ function hireai_ai_employee_rows($post_id, $is_en) {
                 "employees_row_{$number_name}_title",
                 "lookbook_employee_{$number_name}_title",
             ],
-            'description' => [
+            'desc' => [
                 "employees_row_{$number_name}_description",
                 "lookbook_employee_{$number_name}_description",
                 "lookbook_employee_{$number_name}_desc",
             ],
-            'cta_label' => [
+            'button' => [
                 "employees_row_{$number_name}_cta_label",
                 "lookbook_employee_{$number_name}_cta_label",
                 "lookbook_employee_{$number_name}_button",
@@ -743,16 +743,16 @@ function hireai_ai_employee_rows($post_id, $is_en) {
     $legacy_zh = hireai_legacy_repeater_rows('lookbook_employees', [
         'kicker' => 'emp_row_kicker',
         'title' => 'emp_row_title',
-        'description' => 'emp_row_desc',
-        'cta_label' => 'emp_row_button',
+        'desc' => 'emp_row_desc',
+        'button' => 'emp_row_button',
         'image' => 'emp_row_image',
         'url' => 'emp_row_url',
     ], $post_id);
     $legacy_en = hireai_legacy_repeater_rows('lookbook_employees_en', [
         'kicker' => 'emp_row_kicker',
         'title' => 'emp_row_title',
-        'description' => 'emp_row_desc',
-        'cta_label' => 'emp_row_button',
+        'desc' => 'emp_row_desc',
+        'button' => 'emp_row_button',
         'image' => 'emp_row_image',
         'url' => 'emp_row_url',
     ], $post_id);
