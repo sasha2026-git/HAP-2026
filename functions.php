@@ -11,6 +11,137 @@
  * ---------------------------------------------------------------------- */
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
+require_once get_stylesheet_directory() . '/inc/acf-schema.php';
+
+if (!function_exists('hireai_legacy_field_aliases')) {
+    function hireai_legacy_field_aliases() {
+        static $aliases = null;
+        if (is_array($aliases)) return $aliases;
+        $aliases = [
+            'fp_hero_kicker' => 'home_hero_kicker', 'fp_hero_static' => 'home_hero_static', 'fp_hero_accent_primary' => 'home_hero_accent_primary', 'fp_hero_accent_secondary' => 'home_hero_accent_secondary', 'fp_hero_accent' => 'home_hero_accent', 'fp_hero_subtitle' => 'home_hero_subtitle', 'fp_hero_image' => 'home_hero_image',
+            'fp_hero_cta_1_title' => 'home_hero_cta_1_label', 'fp_hero_cta_1_url' => 'home_hero_cta_1_url', 'fp_hero_cta_2_title' => 'home_hero_cta_2_label', 'fp_hero_cta_2_url' => 'home_hero_cta_2_url',
+            'fp_intro_kicker' => 'home_intro_kicker', 'fp_intro_title' => 'home_intro_title', 'fp_intro_desc' => 'home_intro_description', 'fp_intro_cta_title' => 'home_intro_cta_label', 'fp_intro_cta_url' => 'home_intro_cta_url',
+            'fp_products_kicker' => 'home_products_heading_kicker', 'fp_products_title' => 'home_products_heading_title', 'fp_products_subtitle' => 'home_products_heading_subtitle', 'fp_products_explore_label' => 'home_products_cta_label', 'fp_products_explore_url' => 'home_products_cta_url',
+            'fp_solutions_kicker' => 'home_solutions_heading_kicker', 'fp_solutions_title' => 'home_solutions_heading_title', 'fp_solutions_subtitle' => 'home_solutions_heading_subtitle', 'fp_solutions_explore_label' => 'home_solutions_cta_label', 'fp_solutions_explore_url' => 'home_solutions_cta_url',
+            'fp_cases_kicker' => 'home_cases_heading_kicker', 'fp_cases_title' => 'home_cases_heading_title', 'fp_cases_subtitle' => 'home_cases_heading_subtitle', 'fp_cases_explore_label' => 'home_cases_cta_label', 'fp_cases_explore_url' => 'home_cases_cta_url',
+            'fp_case_major_label' => 'home_case_major_label', 'fp_case_major_title' => 'home_case_major_title', 'fp_case_major_desc' => 'home_case_major_description', 'fp_case_major_image' => 'home_case_major_image', 'fp_case_major_url' => 'home_case_major_url',
+            'fp_faq_kicker' => 'home_faq_heading_kicker', 'fp_faq_title' => 'home_faq_heading_title', 'fp_faq_explore_label' => 'home_faq_cta_label', 'fp_faq_explore_url' => 'home_faq_cta_url',
+            'fp_cta_kicker' => 'home_cta_kicker', 'fp_cta_title' => 'home_cta_title', 'fp_cta_subtitle' => 'home_cta_description', 'fp_cta_desc' => 'home_cta_description', 'fp_cta_btn_title' => 'home_cta_primary_label', 'fp_cta_btn_url' => 'home_cta_primary_url', 'fp_cta_button_label' => 'home_cta_primary_label', 'fp_cta_button_url' => 'home_cta_primary_url',
+            'lookbook_hero_note' => 'employees_hero_note', 'lookbook_hero_kicker' => 'employees_hero_kicker', 'lookbook_hero_title' => 'employees_hero_title', 'lookbook_hero_subtitle' => 'employees_hero_subtitle', 'lookbook_hero_image' => 'employees_hero_image',
+            'lookbook_filter_kicker' => 'employees_filter_kicker', 'lookbook_filter_title' => 'employees_filter_title', 'lookbook_filter_all' => 'employees_filter_all_label',
+            'lookbook_process_kicker' => 'employees_process_kicker', 'lookbook_process_title' => 'employees_process_title', 'lookbook_process_note' => 'employees_process_note',
+            'lookbook_cta_heading' => 'employees_cta_heading', 'lookbook_cta_sub' => 'employees_cta_subtitle', 'lookbook_cta_btn' => 'employees_cta_primary_label', 'lookbook_cta_url' => 'employees_cta_primary_url', 'lookbook_cta_link' => 'employees_cta_secondary_label',
+            'header_kicker' => 'solutions_hero_kicker', 'header_title' => 'solutions_hero_title', 'header_subtitle' => 'solutions_hero_subtitle', 'header_hero_image' => 'faq_hero_image',
+            'hero_cta_primary_text' => 'solutions_hero_primary_label', 'hero_cta_primary_link' => 'solutions_hero_primary_url', 'hero_cta_secondary_text' => 'solutions_hero_secondary_label', 'hero_cta_secondary_link' => 'solutions_hero_secondary_url',
+            'card_cta_text' => 'solutions_card_cta_label', 'empty_text' => 'solutions_empty_message',
+            'invite_kicker' => 'solutions_invite_kicker', 'invite_title' => 'solutions_invite_title', 'invite_subtitle' => 'solutions_invite_subtitle', 'invite_code' => 'solutions_invite_code', 'invite_copy_text' => 'solutions_invite_copy_label', 'invite_reward_amount' => 'solutions_invite_reward_amount', 'invite_reward_label' => 'solutions_invite_reward_description', 'invite_steps_label' => 'solutions_invite_steps_heading',
+            'filter_tab_scene_label' => 'solutions_filter_01_label', 'filter_tab_employee_label' => 'solutions_filter_02_label',
+            'final_cta_kicker' => 'solutions_cta_kicker', 'final_cta_title' => 'solutions_cta_title', 'final_cta_subtitle' => 'solutions_cta_subtitle', 'final_cta_primary_text' => 'solutions_cta_primary_label', 'final_cta_primary_link' => 'solutions_cta_primary_url', 'final_cta_secondary_text' => 'solutions_cta_secondary_label', 'final_cta_secondary_link' => 'solutions_cta_secondary_url',
+            'ci_hero_kicker' => 'cases_hero_kicker', 'ci_hero_title' => 'cases_hero_title', 'ci_hero_subtitle' => 'cases_hero_subtitle', 'ci_hero_image' => 'cases_hero_image', 'ci_hero_caption' => 'cases_hero_caption',
+            'ci_tab_cases' => 'cases_tab_cases_label', 'ci_tab_insights' => 'cases_tab_insights_label', 'ci_cases_empty' => 'cases_empty_message', 'ci_cases_more' => 'cases_more_label', 'ci_cases_more_url' => 'cases_more_url',
+            'ci_insights_kicker' => 'cases_insights_kicker', 'ci_insights_h2' => 'cases_insights_title', 'ci_insights_subtitle' => 'cases_insights_description', 'ci_insights_more' => 'cases_insights_more_label', 'ci_insights_more_url' => 'cases_insights_more_url', 'ci_insights_empty' => 'cases_insights_empty_message',
+            'ci_consult_kicker' => 'cases_cta_kicker', 'ci_consult_title' => 'cases_cta_title', 'ci_consult_desc' => 'cases_cta_description', 'ci_consult_btn' => 'cases_cta_primary_label', 'ci_consult_url' => 'cases_cta_primary_url',
+            'search_placeholder' => 'faq_search_placeholder', 'header_hero_caption' => 'faq_hero_caption', 'faq_group_1_label' => 'faq_group_01_label', 'faq_group_2_label' => 'faq_group_02_label', 'faq_group_3_label' => 'faq_group_03_label', 'faq_group_4_label' => 'faq_group_04_label',
+            'cta_kicker' => 'faq_cta_kicker', 'cta_title' => 'faq_cta_title', 'cta_sub' => 'faq_cta_subtitle', 'cta_btn_label' => 'faq_cta_primary_label', 'cta_btn_url' => 'faq_cta_primary_url', 'cta_link_label' => 'faq_cta_secondary_label', 'cta_link_url' => 'faq_cta_secondary_url', 'faq_hero_caption' => 'faq_hero_caption',
+            'contact_email' => 'contact_email', 'contact_wechat' => 'contact_wechat', 'contact_address' => 'contact_address', 'contact_map_label' => 'contact_map_label', 'contact_map_url' => 'contact_map_url', 'contact_hero_image' => 'contact_hero_image', 'wechat_qr' => 'contact_wechat_qr',
+            'form_heading' => 'contact_form_heading', 'form_name_label' => 'contact_form_name_label', 'form_email_label' => 'contact_form_email_label', 'form_phone_label' => 'contact_form_phone_label', 'form_wechat_label' => 'contact_form_wechat_label', 'form_message_label' => 'contact_form_message_label', 'form_submit_label' => 'contact_form_submit_label', 'form_success' => 'contact_form_success_message', 'form_invalid' => 'contact_form_invalid_message', 'form_error' => 'contact_form_error_message',
+            'concierge_heading' => 'contact_concierge_heading', 'concierge_desc' => 'contact_concierge_description', 'social_xhs_url' => 'contact_social_xhs_url', 'social_ins_url' => 'contact_social_instagram_url', 'social_fb_url' => 'contact_social_facebook_url', 'cta_desc' => 'contact_cta_description',
+            'employee_role' => 'employee_single_role', 'employee_kicker' => 'employee_single_kicker', 'employee_soul' => 'employee_single_soul', 'employee_skill' => 'employee_single_skill', 'employee_capabilities' => 'employee_single_capabilities', 'employee_image' => 'employee_single_image', 'employee_button_text' => 'employee_single_button_label', 'employee_button_style' => 'employee_single_button_style',
+            'case_kicker' => 'case_card_kicker', 'case_badge' => 'case_card_badge', 'case_subtitle' => 'case_card_subtitle', 'case_cover_image' => 'case_card_cover_image',
+            'insight_cat' => 'insight_card_category', 'insight_read_time' => 'insight_card_read_time', 'insight_cover_image' => 'insight_card_cover_image',
+            'faq_group' => 'single_faq_group',
+        ];
+        return $aliases;
+    }
+}
+
+if (!function_exists('hireai_canonical_field_name')) {
+function hireai_canonical_field_name($name) {
+        $name = preg_replace('/_(zh|en)$/i', '', (string) $name);
+        if (preg_match('/^ci_case([1-4])_(.+)$/', $name, $m)) {
+            $map = ['badge' => 'badge', 'title' => 'title', 'desc' => 'description', 'image' => 'image'];
+            $parts = explode('_', $m[2], 2);
+            $field = $map[$parts[0]] ?? $parts[0];
+            return 'cases_card_' . sprintf('%02d', $m[1]) . '_' . $field;
+        }
+        if (preg_match('/^ci_art([1-3])_(.+)$/', $name, $m)) {
+            $map = ['cat' => 'category', 'title_pre' => 'title_prefix', 'title_em' => 'title_emphasis', 'title_post' => 'title_suffix', 'desc' => 'description', 'rt' => 'read_time', 'image' => 'image'];
+            $parts = explode('_', $m[2], 2);
+            $field = $map[$parts[0]] ?? $parts[0];
+            return 'cases_insight_' . sprintf('%02d', $m[1]) . '_' . $field;
+        }
+        $extra = [
+            'ci_hero_h1_pre' => 'cases_hero_title_prefix', 'ci_hero_h1_em' => 'cases_hero_title_emphasis', 'ci_hero_p' => 'cases_hero_description', 'ci_sec_h2' => 'cases_section_heading',
+            'ci_consult_h2' => 'cases_cta_title', 'ci_consult_p' => 'cases_cta_description', 'ci_consult_btn' => 'cases_cta_primary_label',
+        ];
+        if (isset($extra[$name])) return $extra[$name];
+        $aliases = hireai_legacy_field_aliases();
+        return isset($aliases[$name]) ? $aliases[$name] : $name;
+    }
+}
+
+if (!function_exists('hireai_register_field_group')) {
+    function hireai_register_field_group($group) {
+        if (!is_array($group) || empty($group['key']) || empty($group['fields']) || empty($group['location'])) {
+            update_option('hireai_acf_schema_errors', ['invalid group shape'], false);
+            return;
+        }
+        $retired_page_groups = [
+            'group_page_cases_insights', 'group_page_ai_employees', 'group_page_ai_employees_rows', 'group_page_ai_solutions',
+            'group_solutions_invite_steps', 'group_solutions_filters', 'group_page_faq', 'group_page_faq_items',
+            'group_faq_post', 'group_page_contact', 'group_employee_meta', 'group_front_page_v375',
+        ];
+        if (in_array($group['key'], $retired_page_groups, true)) {
+            return;
+        }
+        if (!function_exists('acf_add_local_field_group')) {
+            return;
+        }
+        acf_add_local_field_group($group);
+    }
+}
+
+if (!function_exists('hireai_register_schema_groups')) {
+    function hireai_register_schema_groups() {
+        if (!function_exists('acf_add_local_field_group')) return;
+        $errors = [];
+        $group_keys = [];
+        $field_keys = [];
+        $field_names = [];
+        $allowed = ['text', 'textarea', 'image', 'url', 'true_false', 'select', 'tab'];
+
+        foreach (hireai_acf_schema() as $group) {
+            if (!is_array($group) || empty($group['key']) || empty($group['fields']) || empty($group['location'])) {
+                $errors[] = 'group shape';
+                continue;
+            }
+            if (isset($group_keys[$group['key']])) $errors[] = 'duplicate group key: ' . $group['key'];
+            $group_keys[$group['key']] = true;
+
+            foreach ($group['fields'] as $field) {
+                if (empty($field['key']) || empty($field['type']) || !in_array($field['type'], $allowed, true) || (empty($field['name']) && $field['type'] !== 'tab')) {
+                    $errors[] = 'invalid field in ' . $group['key'] . ': ' . ($field['key'] ?? 'unknown');
+                    continue;
+                }
+                if (isset($field_keys[$field['key']])) $errors[] = 'duplicate field key: ' . $field['key'];
+                if (isset($field_names[$field['name']])) $errors[] = 'duplicate field name: ' . $field['name'];
+                $field_keys[$field['key']] = true;
+                $field_names[$field['name']] = true;
+            }
+            hireai_register_field_group($group);
+        }
+
+        update_option('hireai_acf_schema_errors', $errors, false);
+        if ($errors && function_exists('add_action')) {
+            add_action('admin_notices', function () use ($errors) {
+                if (!current_user_can('manage_options')) return;
+                echo '<div class="notice notice-error"><p><strong>ACF v3.8 schema error:</strong> ' . esc_html(implode('; ', array_slice($errors, 0, 5))) . '</p></div>';
+            });
+        }
+    }
+}
+add_action('acf/init', 'hireai_register_schema_groups', 5);
+
 if (!defined('HIREAI_SKIP_UPDATE_CHECKER')) {
     require_once __DIR__ . '/lib/plugin-update-checker.php';
     $hireai_update_checker = PucFactory::buildUpdateChecker(
@@ -304,7 +435,18 @@ function hireai_lang_suffix() {
  */
 function site_field($name, $default = '', $post_id = false) {
     if (function_exists('get_field')) {
-        $v = $post_id ? get_field($name, $post_id) : get_field($name);
+        $canonical = hireai_canonical_field_name($name);
+        $names = [$canonical];
+        if ($canonical !== $name) $names[] = $name;
+        $value = null;
+        foreach ($names as $field_name) {
+            $v = $post_id ? get_field($field_name, $post_id) : get_field($field_name);
+            if ($v !== null && $v !== '' && $v !== false) {
+                $value = $v;
+                break;
+            }
+        }
+        $v = $value;
         // v3.0.4 hotfix: 防御 ACF 把 text 字段错配成 link/image/repeater 时返回数组
         // ——返回数组会导致 esc_html() 输出 "Array" 或触发 PHP Warning。
         if (is_array($v)) {
@@ -326,9 +468,18 @@ function site_field($name, $default = '', $post_id = false) {
  * 取语言化字段：site_field( $name . hireai_lang_suffix(), ... )
  */
 function hireai_field($name, $default = '', $post_id = false) {
-    $localized_value = site_field($name . hireai_lang_suffix(), '__hireai_missing__');
+    $base = hireai_canonical_field_name($name);
+    $localized_value = site_field($name . hireai_lang_suffix(), '__hireai_missing__', $post_id);
     if ($localized_value !== '__hireai_missing__') {
         return $localized_value;
+    }
+    $unsuffixed = site_field($base, '__hireai_missing__', $post_id);
+    if ($unsuffixed !== '__hireai_missing__') {
+        return $unsuffixed;
+    }
+    $mirror = site_field($base . (hireai_lang_suffix() === '_en' ? '_zh' : '_en'), '__hireai_missing__', $post_id);
+    if ($mirror !== '__hireai_missing__') {
+        return $mirror;
     }
 
     return site_field($name, $default, $post_id);
@@ -410,18 +561,23 @@ function lookbook_fallback_employees() {
  */
 function site_image_url($name, $default = '', $post_id = false) {
     if (function_exists('get_field')) {
-        $v = $post_id ? get_field($name, $post_id) : get_field($name);
-        if (site_image_url_is_valid($v)) {
-            return site_image_url_resolve($v, $default);
+        $base = hireai_canonical_field_name($name);
+        $names = [$base];
+        if ($base !== $name) $names[] = $name;
+        foreach ($names as $field_name) {
+            $v = $post_id ? get_field($field_name, $post_id) : get_field($field_name);
+            if (site_image_url_is_valid($v)) {
+                return site_image_url_resolve($v, $default);
+            }
         }
         // v3.0.8: suffix fallback chain — 尝试无 suffix + 反向 suffix
-        if ($post_id === false && preg_match('/_([a-z]{2,3})$/', $name, $m)) {
+        if ($post_id === false && preg_match('/_([a-z]{2,3})$/', $base, $m)) {
             $cur_suffix = $m[1];
-            $base = substr($name, 0, -strlen($cur_suffix));
+            $unsuffixed_base = substr($base, 0, -strlen($cur_suffix));
             // 顺序：无 suffix → 反向 suffix
             $alt_suffixes = ['', ($cur_suffix === 'zh' ? '_en' : '_zh')];
             foreach ($alt_suffixes as $alt) {
-                $alt_name = $base . $alt;
+                $alt_name = $unsuffixed_base . $alt;
                 if ($alt_name === $name) continue;
                 $v2 = get_field($alt_name);
                 if (site_image_url_is_valid($v2)) {
@@ -487,16 +643,21 @@ function hireai_image($name, $default = '', $post_id = false) {
  */
 function site_link($name, $default_url = '#', $default_title = '', $post_id = false) {
     if (function_exists('get_field')) {
-        $v = $post_id ? get_field($name, $post_id) : get_field($name);
-        if (is_array($v) && !empty($v['url'])) {
-            return [
-                'url'    => $v['url'],
-                'title'  => ($v['title'] !== '' && $v['title'] !== null) ? $v['title'] : $default_title,
-                'target' => isset($v['target']) ? $v['target'] : '',
-            ];
-        }
-        if (is_string($v) && $v !== '') {
-            return ['url' => $v, 'title' => $default_title, 'target' => ''];
+        $base = hireai_canonical_field_name($name);
+        $names = [$base];
+        if ($base !== $name) $names[] = $name;
+        foreach ($names as $field_name) {
+            $v = $post_id ? get_field($field_name, $post_id) : get_field($field_name);
+            if (is_array($v) && !empty($v['url'])) {
+                return [
+                    'url'    => $v['url'],
+                    'title'  => ($v['title'] !== '' && $v['title'] !== null) ? $v['title'] : $default_title,
+                    'target' => isset($v['target']) ? $v['target'] : '',
+                ];
+            }
+            if (is_string($v) && $v !== '') {
+                return ['url' => $v, 'title' => $default_title, 'target' => ''];
+            }
         }
     }
     return ['url' => $default_url, 'title' => $default_title, 'target' => ''];
@@ -517,7 +678,15 @@ function hireai_link($name, $default_url = '#', $default_title = '', $post_id = 
  * @param mixed  $post_id  可选 post_id / 'option'
  */
 function hireai_field_lang($name, $lang, $default = '', $post_id = false) {
-    return site_field($name . (($lang === 'en') ? '_en' : '_zh'), $default, $post_id);
+    $base = hireai_canonical_field_name($name);
+    $suffix = ($lang === 'en') ? '_en' : '_zh';
+    $current = site_field($base . $suffix, '__hireai_missing__', $post_id);
+    if ($current !== '__hireai_missing__') return $current;
+    $unsuffixed = site_field($base, '__hireai_missing__', $post_id);
+    if ($unsuffixed !== '__hireai_missing__') return $unsuffixed;
+    $mirror = site_field($base . ('_en' === $suffix ? '_zh' : '_en'), '__hireai_missing__', $post_id);
+    if ($mirror !== '__hireai_missing__') return $mirror;
+    return $default;
 }
 
 /**
@@ -1410,7 +1579,63 @@ add_action('admin_notices', function () {
     );
 });
 
-/* 后台提示：编辑「规范页本身」且 Repeater 均为空时，告知前台正显示兜底数据 */
+/* ACF Free 不包含 repeater 字段类型。保留 Pro 原生体验，并为 Free 提供 12 行普通字段兜底。 */
+if (!function_exists('hireai_acf_has_repeater')) {
+    function hireai_acf_has_repeater() {
+        return function_exists('acf_get_field_type') && (bool) acf_get_field_type('repeater');
+    }
+}
+
+if (!function_exists('hireai_ai_employee_fixed_rows')) {
+    function hireai_ai_employee_fixed_rows($post_id, $is_en = false) {
+        if (!function_exists('get_field')) {
+            return [];
+        }
+
+        $rows = [];
+
+        for ($index = 1; $index <= 12; $index++) {
+            $number = sprintf('%02d', $index);
+            $values = [
+                'kicker' => trim((string) hireai_field("employees_row_{$number}_kicker", '', $post_id)),
+                'title'  => trim((string) hireai_field("employees_row_{$number}_title", '', $post_id)),
+                'desc'   => trim((string) hireai_field("employees_row_{$number}_description", '', $post_id)),
+                'button' => trim((string) hireai_field("employees_row_{$number}_cta_label", '', $post_id)),
+                'image'  => (string) hireai_image("employees_row_{$number}_image", '', $post_id),
+                'url'    => trim((string) hireai_field("employees_row_{$number}_url", '', $post_id)),
+            ];
+
+            if (implode('', $values) === '') {
+                $suffix = $is_en ? 'en' : 'zh';
+                $prefix = "lookbook_employee_{$index}_";
+                $values = [
+                    'kicker' => trim((string) get_field($prefix . 'kicker_' . $suffix, $post_id)),
+                    'title'  => trim((string) get_field($prefix . 'title_' . $suffix, $post_id)),
+                    'desc'   => trim((string) get_field($prefix . 'desc_' . $suffix, $post_id)),
+                    'button' => trim((string) get_field($prefix . 'button_' . $suffix, $post_id)),
+                    'image'  => (string) get_field($prefix . 'image_' . $suffix, $post_id),
+                    'url'    => trim((string) get_field($prefix . 'url_' . $suffix, $post_id)),
+                ];
+            }
+
+            if (implode('', $values) === '') {
+                continue;
+            }
+
+            $values['button'] = $values['button'] !== '' ? $values['button'] : ($is_en ? 'Learn More' : '了解详情');
+            $values['url'] = $values['url'] !== ''
+                ? $values['url']
+                : (function_exists('hireai_resolve_employee_url')
+                    ? hireai_resolve_employee_url(count($rows), home_url('/ai-employees/'))
+                    : home_url('/ai-employees/'));
+            $rows[] = $values;
+        }
+
+        return $rows;
+    }
+}
+
+/* 后台提示：编辑「规范页本身」且员工行均为空时，告知前台正显示兜底数据 */
 add_action('admin_notices', function () {
     if (!function_exists('get_current_screen')) return;
     $screen = get_current_screen();
@@ -1421,11 +1646,16 @@ add_action('admin_notices', function () {
     if ($tpl !== 'page-ai-employees.php') return;
     $canonical = hireai_custom_template_canonical_id('page-ai-employees.php', $post_id);
     if (!$canonical || $canonical !== $post_id) return;
-    if (!function_exists('have_rows')) return;
-    $zh_empty = !have_rows('lookbook_employees', $post_id);
-    $en_empty = !have_rows('lookbook_employees_en', $post_id);
+    if (hireai_acf_has_repeater()) {
+        if (!function_exists('have_rows')) return;
+        $zh_empty = !have_rows('lookbook_employees', $post_id);
+        $en_empty = !have_rows('lookbook_employees_en', $post_id);
+    } else {
+        $zh_empty = !hireai_ai_employee_fixed_rows($post_id, false);
+        $en_empty = !hireai_ai_employee_fixed_rows($post_id, true);
+    }
     if (!$zh_empty || !$en_empty) return;
-    echo '<div class="notice notice-warning"><p><strong>聘AI 提示：</strong>员工行为空：前台当前显示内置兜底 5 行卡片。请在下方「AI 数字员工页 · 员工行（Repeater）」添加行来自定义。</p></div>';
+    echo '<div class="notice notice-warning"><p><strong>聘AI 提示：</strong>员工行为空：前台当前显示内置兜底 5 行卡片。请在下方「AI 数字员工页 · 员工行」填写行内容来自定义。</p></div>';
 });
 
 /* -------------------------------------------------------------------------
@@ -1755,11 +1985,12 @@ if (!function_exists('hireai_make_bilingual_group')) {
         $out = [];
         $out[] = ['key' => $key . '_tab_zh', 'label' => '中文内容', 'type' => 'tab'];
 
+        $shared_types = ['image', 'url', 'true_false', 'select'];
         foreach ($fields as $f) {
             $fld = [
-                'key'           => $key . '_' . str_replace(' ', '_', $f['name']) . '_zh',
+                'key'           => $key . '_' . str_replace(' ', '_', $f['name']) . (in_array($f['type'], $shared_types, true) ? '' : '_zh'),
                 'label'         => isset($f['label_zh']) ? $f['label_zh'] : $f['label'],
-                'name'          => $f['name'] . '_zh',
+                'name'          => in_array($f['type'], $shared_types, true) ? $f['name'] : $f['name'] . '_zh',
                 'type'          => $f['type'],
                 'default_value' => isset($f['zh']) ? $f['zh'] : '',
             ];
@@ -1823,7 +2054,7 @@ add_action('acf/init', function () {
      *   字段名与已填数据全部保留（同名 post meta 兼容），见合并组注释。 ---- */
 
     /* ---- 3. 案例文章 ACF：category=cases 文章的卡片覆盖字段 ---- */
-    acf_add_local_field_group(hireai_make_bilingual_group('group_case_meta', '案例 — 卡片', [
+    hireai_register_field_group(hireai_make_bilingual_group('group_case_meta', '案例 — 卡片', [
         ['name' => 'case_kicker', 'label' => '案例卡片 · kicker（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'case_badge',  'label' => '案例卡片 · badge（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'case_subtitle', 'label' => '案例卡片 · 副标题（覆盖 excerpt）', 'type' => 'textarea', 'zh' => '', 'en' => '', 'extra' => ['rows' => 2]],
@@ -1833,7 +2064,7 @@ add_action('acf/init', function () {
     )));
 
     /* ---- 4. 洞察文章 ACF：category=insights 文章的卡片覆盖字段 ---- */
-    acf_add_local_field_group(hireai_make_bilingual_group('group_insight_meta', '洞察 — 卡片', [
+    hireai_register_field_group(hireai_make_bilingual_group('group_insight_meta', '洞察 — 卡片', [
         ['name' => 'insight_cat',      'label' => '洞察 · 分类标签（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'insight_read_time', 'label' => '洞察 · 阅读时长（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'insight_cover_image', 'label' => '洞察 · 封面图片（覆盖 WP 特色图，空白则回退 featured image）', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
@@ -1847,7 +2078,7 @@ add_action('acf/init', function () {
      *    修复：直接展开成两层 Tab（zh + en），每个字段 name 严格按 page 实际读取的格式（带单后缀 _zh / _en）。
      *          AllScented 模式 + acf/init hook 包裹（ACF 6.x 兼容）。
      * ---------------------------------------------------------------------- */
-    acf_add_local_field_group(array(
+    hireai_register_field_group(array(
         'key'    => 'group_page_cases_insights',
         'title'  => '案例 & 洞察页',
         'fields' => array(
@@ -2015,7 +2246,7 @@ add_action('acf/init', function () {
     // 下面 7 个 group 不在本批次「6 个核心」内，仍走 acf/init 注册（保持向后兼容）
 
     /* ---- 3. AI 数字员工列表页 ---- */
-    acf_add_local_field_group(hireai_make_bilingual_group('group_page_ai_employees', 'AI 数字员工页', [
+    hireai_register_field_group(hireai_make_bilingual_group('group_page_ai_employees', 'AI 数字员工页', [
         ['name' => 'lookbook_hero_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '数字工坊', 'en' => 'The Atelier'],
         ['name' => 'lookbook_hero_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '精英数字解决方案', 'en' => 'Elite Digital Solutions', 'extra' => ['rows' => 1]],
         ['name' => 'lookbook_hero_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '"AI 主导流程，人类交付成果。"', 'en' => '"AI-led process, Human-delivered results."', 'extra' => ['rows' => 2]],
@@ -2047,8 +2278,9 @@ add_action('acf/init', function () {
         [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-employees.php']],
     ]));
 
-    /* ---- 3b. 数字员工 — Repeater（每行可编辑） ---- */
-    acf_add_local_field_group([
+    /* ---- 3b. 数字员工 — Repeater（Pro）/ 12 行普通字段（Free 兜底） ---- */
+    if (hireai_acf_has_repeater()) {
+        hireai_register_field_group([
         'key'    => 'group_page_ai_employees_rows',
         'title'  => 'AI 数字员工页 · 员工行（Repeater）',
         'fields' => [
@@ -2104,8 +2336,61 @@ add_action('acf/init', function () {
         ],
     ]);
 
+        return;
+    }
+
+    $employee_sub_specs = [
+        'kicker' => ['Kicker', '眉题'],
+        'title'  => ['Title', '标题'],
+        'desc'   => ['Description', '描述'],
+        'button' => ['Button', '按钮'],
+        'image'  => ['Image', '展示图'],
+        'url'    => ['Link URL', '链接地址'],
+    ];
+    $free_employee_fields = [
+        ['key' => 'field_lookbook_employees_tab_zh', 'label' => '中文内容（每行）', 'type' => 'tab'],
+    ];
+
+    foreach ([false, true] as $is_en) {
+        if ($is_en) {
+            $free_employee_fields[] = ['key' => 'field_lookbook_employees_tab_en', 'label' => 'English Content (per row)', 'type' => 'tab'];
+        }
+
+        $suffix = $is_en ? 'en' : 'zh';
+        for ($row_number = 1; $row_number <= 12; $row_number++) {
+            foreach ($employee_sub_specs as $sub_name => [$label_en, $label_zh]) {
+                $field_type = $sub_name === 'desc' ? 'textarea' : ($sub_name === 'image' ? 'image' : 'text');
+                $field = [
+                    'key'   => sprintf('field_emp_%02d_%s_%s', $row_number, $sub_name, $suffix),
+                    'label' => sprintf('%02d · %s', $row_number, $is_en ? $label_en : $label_zh),
+                    'name'  => sprintf('lookbook_employee_%02d_%s_%s', $row_number, $sub_name, $suffix),
+                    'type'  => $field_type,
+                ];
+                if ($field_type === 'textarea') {
+                    $field['rows'] = 3;
+                }
+                if ($field_type === 'image') {
+                    $field['return_format'] = 'url';
+                }
+                if ($row_number === 1 && $sub_name === 'kicker') {
+                    $field['instructions'] = 'ACF Free 不支持原生 Repeater。可填写最多 12 行；从第 1 行起填写，空行会自动隐藏，前台按填写顺序渲染。';
+                }
+                $free_employee_fields[] = $field;
+            }
+        }
+    }
+
+    hireai_register_field_group([
+        'key'    => 'group_page_ai_employees_rows',
+        'title'  => 'AI 数字员工页 · 员工行（最多 12 行）',
+        'fields' => $free_employee_fields,
+        'location' => [
+            [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-employees.php']],
+        ],
+    ]);
+
     /* ---- 4. AI 解决方案页 ---- */
-    acf_add_local_field_group(hireai_make_bilingual_group('group_page_ai_solutions', 'AI 解决方案页', [
+    hireai_register_field_group(hireai_make_bilingual_group('group_page_ai_solutions', 'AI 解决方案页', [
         ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => 'BESPOKE SOLUTIONS', 'en' => 'BESPOKE SOLUTIONS'],
         ['name' => 'header_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => 'AI方案商城', 'en' => 'AI Solutions Marketplace', 'extra' => ['rows' => 1]],
         ['name' => 'header_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '雇佣顶尖数字智脑，赋能企业未来，探索专为高净值品牌与前瞻企业打造的专属AI解决方案。', 'en' => 'Hire elite digital minds to empower your business. Discover bespoke AI solutions tailored for premium brands and forward-looking enterprises.', 'extra' => ['rows' => 2]],
@@ -2137,7 +2422,7 @@ add_action('acf/init', function () {
     ]));
 
     /* 邀约礼遇 — 推荐步骤 repeater（中文/英文各一行） */
-    acf_add_local_field_group([
+    hireai_register_field_group([
         'key'    => 'group_solutions_invite_steps',
         'title'  => 'AI 解决方案 — 邀约礼遇 · 推荐步骤',
         'fields' => [
@@ -2162,7 +2447,7 @@ add_action('acf/init', function () {
     ]);
 
     /* 筛选配置（单一 repeater，行内含中英文标签 + 场景 slug） */
-    acf_add_local_field_group([
+    hireai_register_field_group([
         'key'    => 'group_solutions_filters',
         'title'  => 'AI 解决方案 — 筛选配置',
         'fields' => [
@@ -2201,7 +2486,7 @@ add_action('acf/init', function () {
         ],
     ]);
 
-    acf_add_local_field_group(hireai_make_bilingual_group('group_page_faq', '常见问题页', [
+    hireai_register_field_group(hireai_make_bilingual_group('group_page_faq', '常见问题页', [
         ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => 'THE ATELIER', 'en' => 'THE ATELIER'],
         ['name' => 'header_title', 'label' => '页眉标题（金色渐变大字）', 'type' => 'textarea', 'zh' => '常见问题', 'en' => 'Frequently Asked', 'extra' => ['rows' => 1]],
         ['name' => 'header_subtitle', 'label' => '页眉副标题（斜体）', 'type' => 'textarea', 'zh' => '深入了解我们的合作模式、财务结构与安全协议。', 'en' => 'Discover detailed insights into our partnership models, financial structures, and security protocols.', 'extra' => ['rows' => 2]],
@@ -2225,7 +2510,7 @@ add_action('acf/init', function () {
     ]));
 
     /* ---- 6b. 常见问题页 · 问答 Repeater（页面级，zh + en 两套平行） ---- */
-    acf_add_local_field_group([
+    hireai_register_field_group([
         'key'    => 'group_page_faq_items',
         'title'  => '常见问题页 · 问答列表（Repeater）',
         'fields' => [
@@ -2315,7 +2600,7 @@ add_action('acf/init', function () {
     ]);
 
     /* ---- 7. 联系页 ---- */
-    acf_add_local_field_group(hireai_make_bilingual_group('group_page_contact', '联系页', [
+    hireai_register_field_group(hireai_make_bilingual_group('group_page_contact', '联系页', [
         ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '联系', 'en' => 'CONTACT'],
         ['name' => 'header_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '发起联络', 'en' => 'Initiate Contact', 'extra' => ['rows' => 1]],
         ['name' => 'header_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '告诉我们您的需求，我们将在一个工作日内回复。', 'en' => "Tell us your needs and we'll respond within one business day.", 'extra' => ['rows' => 2]],
@@ -2350,7 +2635,7 @@ add_action('acf/init', function () {
     ]));
 
     /* ---- 8. 数字员工文章（category=ai-employee）---- */
-    acf_add_local_field_group(hireai_make_bilingual_group('group_employee_meta', '数字员工 — 详情', [
+    hireai_register_field_group(hireai_make_bilingual_group('group_employee_meta', '数字员工 — 详情', [
         ['name' => 'employee_role', 'label' => '职位', 'type' => 'text', 'zh' => '数字员工', 'en' => 'Digital Employee'],
         ['name' => 'employee_soul', 'label' => '灵魂（soul）', 'type' => 'textarea', 'zh' => '以逻辑为骨、以静谧为魂，被悉心培育出独一无二的心智与气质。', 'en' => 'Cultivated with a specific psychological profile—quiet, precise, and shaped by logic.', 'extra' => ['rows' => 4]],
         ['name' => 'employee_skill', 'label' => '技能（skill）', 'type' => 'textarea', 'zh' => '精通数据分析、市场策略与内容创作，可与您的团队无缝协作。', 'en' => 'Masters data analysis, market strategy, and content creation—ready to collaborate seamlessly with your team.', 'extra' => ['rows' => 4]],
@@ -2376,7 +2661,7 @@ add_action('acf/init', function () {
     ]));
 
     /* ---- 9. FAQ 文章（category=faq）分组字段 ---- */
-    acf_add_local_field_group([
+    hireai_register_field_group([
         'key'    => 'group_faq_post',
         'title'  => 'FAQ 分组',
         'fields' => [
@@ -2400,7 +2685,7 @@ add_action('acf/init', function () {
     ]);
 
     /* ---- 9.5 商品 ACF：解决方案卡片 / 单产品页卖点 ---- */
-    acf_add_local_field_group(hireai_make_bilingual_group('group_product_meta', 'AI 解决方案 — 卡片与详情', [
+    hireai_register_field_group(hireai_make_bilingual_group('group_product_meta', 'AI 解决方案 — 卡片与详情', [
         ['name' => 'product_operative', 'label' => '执行智能体', 'type' => 'text', 'zh' => '执行智能体：聘AI', 'en' => 'OPERATIVE: HIREAI'],
         ['name' => 'product_retainer_label', 'label' => '收费档位标签', 'type' => 'text', 'zh' => '起步档', 'en' => 'Starting Retainer'],
         ['name' => 'product_feature_1_title', 'label' => '卖点 1 · 标题', 'type' => 'text', 'zh' => '降低品牌曝光风险', 'en' => 'Mitigating Brand Exposure'],
@@ -2612,10 +2897,10 @@ add_action('acf/init', function () {
       $_front_group['instruction_placement'] = 'label';
       $_front_group['hide_on_screen'] = ['the_content', 'excerpt', 'discussion', 'comments', 'revisions', 'author', 'format', 'page_attributes'];
 
-      acf_add_local_field_group($_front_group);
+      hireai_register_field_group($_front_group);
 
       /* ---- v3.6.0-B: 商品双语 + 首页推荐 ---- */
-      acf_add_local_field_group([
+      hireai_register_field_group([
           'key'      => 'group_product_featured_v360',
           'title'    => 'AI 解决方案商品 · v3.6.0 双语 + 首页推荐',
           'fields'   => [
@@ -2668,7 +2953,7 @@ add_action('acf/init', function () {
         ]);
     }
 
-    acf_add_local_field_group(hireai_make_bilingual_group('group_site_options', '站点设置 — 页脚', [
+    hireai_register_field_group(hireai_make_bilingual_group('group_site_options', '站点设置 — 页脚', [
         ['name' => 'header_logo', 'label' => '页眉 Logo', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
         ['name' => 'header_brand_label', 'label' => '页眉 · 品牌 aria-label（Logo 链接）', 'type' => 'text', 'zh' => '聘AI（Hire AI People）', 'en' => 'Hire AI People'],
         ['name' => 'header_logo_alt', 'label' => '页眉 · Logo alt 文本', 'type' => 'text', 'zh' => '聘AI（Hire AI People）', 'en' => 'Hire AI People'],

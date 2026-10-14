@@ -37,88 +37,38 @@ $is_en  = ($suffix === '_en');
 /* --------------------------------------------------------------------
  * 2. HERO FIELDS  (ACF group_page_contact)
  * -------------------------------------------------------------------- */
-$hero_kicker   = hireai_field('header_kicker',  $is_en ? 'CONTACT' : '联系');
-// Bilingual title — admin controls each half independently.
-$title_zh = function_exists('hireai_field_lang')
-    ? hireai_field_lang('header_title', 'zh', '联络')
-    : hireai_field('header_title_zh', '联络');
-$title_en = function_exists('hireai_field_lang')
-    ? hireai_field_lang('header_title', 'en', 'Contact')
-    : hireai_field('header_title_en', 'Contact');
+$contact_page_id = get_the_ID();
+$hero_kicker   = hireai_field('contact_hero_kicker', '', $contact_page_id);
+$title_zh = hireai_field_lang('contact_hero_title', 'zh', '', $contact_page_id);
+$title_en = hireai_field_lang('contact_hero_title', 'en', '', $contact_page_id);
+$hero_subtitle = hireai_field('contact_hero_subtitle', '', $contact_page_id);
+$hero_image = hireai_image('contact_hero_image', '', $contact_page_id);
+$contact_email  = hireai_field('contact_email', '', $contact_page_id);
+$contact_wechat = hireai_field('contact_wechat', '', $contact_page_id);
+$contact_addr   = hireai_field('contact_address', '', $contact_page_id);
+$map_label      = hireai_field('contact_map_label', '', $contact_page_id);
+$map_url        = hireai_field('contact_map_url', '', $contact_page_id);
+$form_heading   = hireai_field('contact_form_heading', '', $contact_page_id);
+$label_phone    = hireai_field('contact_form_phone_label', '', $contact_page_id);
+$label_wechat   = hireai_field('contact_form_wechat_label', '', $contact_page_id);
+$concierge_head = hireai_field('contact_concierge_heading', '', $contact_page_id);
+$concierge_desc = hireai_field('contact_concierge_description', '', $contact_page_id);
+$social_xhs_url = hireai_field('contact_social_xhs_url', '', $contact_page_id);
+$social_ins_url = hireai_field('contact_social_instagram_url', '', $contact_page_id);
+$social_fb_url  = hireai_field('contact_social_facebook_url', '', $contact_page_id);
+$cta_title_c    = hireai_field('contact_cta_title', '', $contact_page_id);
+$cta_desc_c     = hireai_field('contact_cta_description', '', $contact_page_id);
+$cta_btn_c      = hireai_field('contact_cta_button_label', '', $contact_page_id);
+$cta_btn_url_c  = hireai_field('contact_cta_button_url', home_url('/contact/'), $contact_page_id);
+$qr_image = hireai_image('contact_wechat_qr', '', $contact_page_id);
+$label_name    = hireai_field('contact_form_name_label', '', $contact_page_id);
+$label_email   = hireai_field('contact_form_email_label', '', $contact_page_id);
+$label_msg     = hireai_field('contact_form_message_label', '', $contact_page_id);
+$label_submit  = hireai_field('contact_form_submit_label', '', $contact_page_id);
+$msg_success = hireai_field('contact_form_success_message', '', $contact_page_id);
+$msg_invalid = hireai_field('contact_form_invalid_message', '', $contact_page_id);
+$msg_error   = hireai_field('contact_form_error_message', '', $contact_page_id);
 
-$hero_subtitle = hireai_field(
-    'header_subtitle',
-    $is_en
-        ? 'Connect with our concierges to curate your bespoke AI workforce.'
-        : '与我们的管家联系，定制属于您的 AI 数字员工。'
-);
-
-// Decorative banner image — v3.7.5: 新增 ACF 字段 contact_hero_image，空白回退内置图
-$hero_image = function_exists('hireai_image')
-    ? hireai_image('contact_hero_image', get_stylesheet_directory_uri() . '/assets/img/defaults/hero-home.jpg')
-    : get_stylesheet_directory_uri() . '/assets/img/defaults/hero-home.jpg';
-
-/* --------------------------------------------------------------------
- * 3. DIRECT CONCIERGE FIELDS
- * -------------------------------------------------------------------- */
-$contact_email  = hireai_field('contact_email', 'concierge@hireaipeople.com');
-$contact_wechat = hireai_field('contact_wechat', 'hireai-official');
-$contact_addr   = hireai_field('contact_address', $is_en ? 'Shanghai, China' : '中国 · 上海');
-$map_label      = hireai_field('contact_map_label', $is_en ? 'View Map' : '查看地图');
-$map_url        = hireai_field('contact_map_url', 'https://uri.amap.com/search?keyword=Shanghai%2C%20China');
-
-/* v3.7.5: 新增可视化编辑字段 —— 表单标题/电话/微信标签、管家区、社交链接、底部 CTA */
-$form_heading   = hireai_field('form_heading',   $is_en ? 'Inquiry Form' : '咨询表单');
-$label_phone    = hireai_field('form_phone_label', $is_en ? 'Phone' : '电话');
-$label_wechat   = hireai_field('form_wechat_label', $is_en ? 'WeChat' : '微信');
-$concierge_head = hireai_field('concierge_heading', 'Direct Concierge');
-$concierge_desc = hireai_field('concierge_desc', $is_en
-    ? 'For immediate assistance or bespoke inquiries.'
-    : '如有即时需求或定制咨询，请直接联系专属管家。');
-$social_xhs_url = hireai_field('social_xhs_url', '');
-$social_ins_url = hireai_field('social_ins_url', '');
-$social_fb_url  = hireai_field('social_fb_url', '');
-$cta_title_c    = hireai_field('cta_title', $is_en
-    ? 'Ready to Redefine Humanity?'
-    : '准备好重新定义服务了吗？');
-$cta_desc_c     = hireai_field('cta_desc', $is_en
-    ? 'Step into the future of luxury service with our bespoke digital workforce.'
-    : '与我们的专属数字员工一同，迈入奢华服务的未来。');
-$cta_btn_c      = hireai_field('cta_btn_label', $is_en ? 'Begin Consultation' : '开始咨询');
-
-// WeChat QR (admin upload) — fallback empty box if not set.
-$qr_image = hireai_image('wechat_qr', '');
-
-/* --------------------------------------------------------------------
- * 4. FORM LABELS & MESSAGES
- * -------------------------------------------------------------------- */
-$label_name    = hireai_field('form_name_label',    $is_en ? 'Name' : '姓名');
-$label_email   = hireai_field('form_email_label',   $is_en ? 'Email' : '邮箱');
-$label_msg     = hireai_field('form_message_label', $is_en ? 'Inquiry Details' : '需求描述');
-$label_submit  = hireai_field('form_submit_label',  $is_en ? 'Send Inquiry' : '提交咨询');
-
-$msg_success = hireai_field(
-    'form_success',
-    $is_en
-        ? "Your inquiry has been sent. We'll be in touch shortly."
-        : '您的咨询已发送，我们将尽快与您联系。'
-);
-$msg_invalid = hireai_field(
-    'form_invalid',
-    $is_en
-        ? 'Please provide a valid name, email, and message.'
-        : '请填写正确的姓名、邮箱与需求描述。'
-);
-$msg_error = hireai_field(
-    'form_error',
-    $is_en
-        ? 'Something went wrong. Please retry or email us directly.'
-        : '发送失败，请稍后重试或直接邮件联系我们。'
-);
-
-/* --------------------------------------------------------------------
- * 5. FORM SUBMISSION FEEDBACK (sent=success|invalid|error)
- * -------------------------------------------------------------------- */
 $sent_status = isset($_GET['sent']) ? sanitize_text_field(wp_unslash($_GET['sent'])) : '';
 $form_action = esc_url(admin_url('admin-post.php'));
 

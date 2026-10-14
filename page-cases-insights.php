@@ -323,27 +323,19 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           if ( $ci_prev_post ) { $GLOBALS['post'] = $ci_prev_post; setup_postdata( $ci_prev_post ); }
       }
   }
-  /* v3.5.5 静态兜底默认值（与硬编码一一对应） */
-  $ci_case_defaults = [
-      1 => [ 'img' => $DEF_IMG_C1, 'title_zh' => '数字礼宾：高定精品馆', 'title_en' => 'Aurelian Prime for Private Banking', 'desc_zh' => '为高净值客户打造超写实数字人，引领其在元宇宙私密展厅中探索收藏系列。', 'desc_en' => 'Reimagining wealth management through a hyper-realistic digital concierge.', 'badge_zh' => '+42% 留存', 'badge_en' => '+42% Retention' ],
-      2 => [ 'img' => $DEF_IMG_C2, 'title_zh' => 'Lumina NFT 系列',        'title_en' => 'Lumina NFT Series',                  'desc_zh' => '独家 IP 合作，将生成算法与传统工艺融合。', 'desc_en' => 'Exclusive IP collaboration merging generative algorithms with heritage craft.', 'badge_zh' => 'AI 艺术整合', 'badge_en' => 'AI Art Integration' ],
-      3 => [ 'img' => $DEF_IMG_C3, 'title_zh' => '电商进化论',              'title_en' => 'E-commerce Evolution',                'desc_zh' => '将浏览转化为沉浸式策展体验。', 'desc_en' => 'Luxury retail performance scaling through personalized digital twin advisors.', 'badge_zh' => '3.4 倍转化', 'badge_en' => '3.4x Conversion' ],
-      4 => [ 'img' => $DEF_IMG_C4, 'title_zh' => '数字 IP 金库',            'title_en' => 'The Digital IP Vault',                'desc_zh' => 'AI 集成奢侈房产的全球 PR 审计与声誉管理。', 'desc_en' => 'Global PR audit and reputation management for AI-integrated luxury estates.', 'badge_zh' => 'IP 保护 100%', 'badge_en' => 'IP Protection 100%' ],
-  ];
+  /* 案例卡固定字段：ACF Free 4 组普通字段。 */
   while ( count( $ci_case_slots ) < 4 ) {
-      $ci_i = count( $ci_case_slots );
-      $ci_idx = $ci_i + 1;
-      $ci_d = $ci_case_defaults[ $ci_idx ];
+      $ci_number = sprintf('%02d', count( $ci_case_slots ) + 1);
       $ci_case_slots[] = [
-          'source'   => 'static',
-          'image'    => $ci_img( 'ci_case' . $ci_idx . '_image', $ci_d['img'] ),
-          'badge_zh' => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_badge', $ci_d['badge_zh'], $ci_d['badge_en'], 'zh' ),
-          'badge_en' => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_badge', $ci_d['badge_zh'], $ci_d['badge_en'], 'en' ),
-          'title_zh' => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_title_zh', $ci_d['title_zh'], $ci_d['title_en'], 'zh' ),
-          'title_en' => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_title_zh', $ci_d['title_zh'], $ci_d['title_en'], 'en' ),
-          'desc_zh'  => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_desc_zh',  $ci_d['desc_zh'],  $ci_d['desc_en'],  'zh' ),
-          'desc_en'  => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_desc_zh',  $ci_d['desc_zh'],  $ci_d['desc_en'],  'en' ),
-          'href'     => home_url( '/category/cases/' ),
+          'source'   => 'acf',
+          'image'    => $ci_img( 'cases_card_' . $ci_number . '_image', '' ),
+          'badge_zh' => (string) $ci_field_lang_force( 'cases_card_' . $ci_number . '_badge', '', '', 'zh' ),
+          'badge_en' => (string) $ci_field_lang_force( 'cases_card_' . $ci_number . '_badge', '', '', 'en' ),
+          'title_zh' => (string) $ci_field_lang_force( 'cases_card_' . $ci_number . '_title', '', '', 'zh' ),
+          'title_en' => (string) $ci_field_lang_force( 'cases_card_' . $ci_number . '_title', '', '', 'en' ),
+          'desc_zh'  => (string) $ci_field_lang_force( 'cases_card_' . $ci_number . '_description', '', '', 'zh' ),
+          'desc_en'  => (string) $ci_field_lang_force( 'cases_card_' . $ci_number . '_description', '', '', 'en' ),
+          'href'     => (string) hireai_field( 'cases_card_' . $ci_number . '_url', home_url( '/category/cases/' ) ),
       ];
   }
   $ci_case_layout  = [ 'case-1', 'case-2', 'case-3', 'case-4' ];
@@ -534,31 +526,26 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           if ( $ci_prev_post ) { $GLOBALS['post'] = $ci_prev_post; setup_postdata( $ci_prev_post ); }
       }
   }
-  /* v3.5.5 静态兜底默认值 */
-  $ci_art_defaults = [
-      1 => [ 'cat_zh' => 'Aesthetics', 'cat_en' => 'Aesthetics', 'title_zh' => '机器中的幽灵：', 'em_zh' => '定义', 'post_zh' => ' AI 之美', 'title_en' => 'The Ghost in the Machine: ', 'em_en' => 'Defining', 'post_en' => ' AI Beauty', 'desc_zh' => '为何传统品牌正走向超风格化的数字表达。', 'desc_en' => 'Moving beyond uncanny valley into hyper-stylized digital.', 'rt_zh' => '8 分钟阅读', 'rt_en' => '8 MIN READ' ],
-      2 => [ 'cat_zh' => 'Technology', 'cat_en' => 'Technology', 'title_zh' => '神经网络与丝绸：', 'em_zh' => '未来', 'post_zh' => ' 服务的织物', 'title_en' => 'Neural Networks & Silk: ', 'em_en' => 'Future', 'post_en' => ' Service', 'desc_zh' => '在不失去专属触感的前提下扩展个性化关怀。', 'desc_en' => 'Scaling personalized attention without losing human touch.', 'rt_zh' => '12 分钟阅读', 'rt_en' => '12 MIN READ' ],
-      3 => [ 'cat_zh' => 'Strategy',   'cat_en' => 'Strategy',   'title_zh' => '新白手套：',       'em_zh' => 'AI',     'post_zh' => ' 作为终极礼宾', 'title_en' => 'The New White Glove: ',         'em_en' => 'AI',       'post_en' => ' as Ultimate Concierge', 'desc_zh' => '审视自动化高端体验时代中忠诚度的演变。', 'desc_en' => 'Loyalty evolution in automated high-end experiences.', 'rt_zh' => '6 分钟阅读', 'rt_en' => '6 MIN READ' ],
-  ];
+  /* 洞察卡固定字段：ACF Free 3 组普通字段。 */
   while ( count( $ci_art_slots ) < 3 ) {
-      $ci_i = count( $ci_art_slots );
-      $ci_idx = $ci_i + 1;
-      $ci_d = $ci_art_defaults[ $ci_idx ];
+      $ci_number = sprintf('%02d', count( $ci_art_slots ) + 1);
+      $base = 'cases_insight_' . $ci_number;
       $ci_art_slots[] = [
-          'source'   => 'static',
-          'cat_zh'   => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_cat', $ci_d['cat_zh'], $ci_d['cat_en'], 'zh' ),
-          'cat_en'   => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_cat', $ci_d['cat_zh'], $ci_d['cat_en'], 'en' ),
-          'title_zh' => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_pre_zh', $ci_d['title_zh'], $ci_d['title_en'], 'zh' ),
-          'em_zh'    => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_em_zh',  $ci_d['em_zh'],    $ci_d['em_en'],    'zh' ),
-          'post_zh'  => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_post_zh', $ci_d['post_zh'], $ci_d['post_en'],  'zh' ),
-          'title_en' => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_pre_zh', $ci_d['title_zh'], $ci_d['title_en'], 'en' ),
-          'em_en'    => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_em_zh',  $ci_d['em_zh'],    $ci_d['em_en'],    'en' ),
-          'post_en'  => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_title_post_zh', $ci_d['post_zh'], $ci_d['post_en'],  'en' ),
-          'desc_zh'  => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_desc_zh', $ci_d['desc_zh'], $ci_d['desc_en'], 'zh' ),
-          'desc_en'  => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_desc_zh', $ci_d['desc_zh'], $ci_d['desc_en'], 'en' ),
-          'rt_zh'    => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_rt', $ci_d['rt_zh'], $ci_d['rt_en'], 'zh' ),
-          'rt_en'    => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_rt', $ci_d['rt_zh'], $ci_d['rt_en'], 'en' ),
-          'href'     => home_url( '/category/insights/' ),
+          'source'   => 'acf',
+          'img'      => $ci_img( $base . '_image', '' ),
+          'cat_zh'   => (string) $ci_field_lang_force( $base . '_category', '', '', 'zh' ),
+          'cat_en'   => (string) $ci_field_lang_force( $base . '_category', '', '', 'en' ),
+          'title_zh' => (string) $ci_field_lang_force( $base . '_title_prefix', '', '', 'zh' ),
+          'em_zh'    => (string) $ci_field_lang_force( $base . '_title_emphasis', '', '', 'zh' ),
+          'post_zh'  => (string) $ci_field_lang_force( $base . '_title_suffix', '', '', 'zh' ),
+          'title_en' => (string) $ci_field_lang_force( $base . '_title_prefix', '', '', 'en' ),
+          'em_en'    => (string) $ci_field_lang_force( $base . '_title_emphasis', '', '', 'en' ),
+          'post_en'  => (string) $ci_field_lang_force( $base . '_title_suffix', '', '', 'en' ),
+          'desc_zh'  => (string) $ci_field_lang_force( $base . '_description', '', '', 'zh' ),
+          'desc_en'  => (string) $ci_field_lang_force( $base . '_description', '', '', 'en' ),
+          'rt_zh'    => (string) $ci_field_lang_force( $base . '_read_time', '', '', 'zh' ),
+          'rt_en'    => (string) $ci_field_lang_force( $base . '_read_time', '', '', 'en' ),
+          'href'     => (string) hireai_field( $base . '_url', home_url( '/category/insights/' ) ),
       ];
   }
   ?>
@@ -604,9 +591,9 @@ footer .copy{font-size:13px;color:var(--txt-v)}
   <p>
     <?php echo $ci_bi('ci_consult_p_zh', '加入全球领先的品牌 AI 数字员工计划。迈出第一步。', "Join the world's leading brands in the new era of digital human excellence."); ?>
   </p>
-  <button class="consult__btn">
+  <a class="consult__btn" href="<?php echo esc_url(hireai_field('cases_cta_primary_url', home_url('/contact/'))); ?>">
     <?php echo $ci_bi('ci_consult_btn_zh', '立即咨询', 'Initiate Consultation'); ?>
-  </button>
+  </a>
 </section>
 
 <?php get_footer(); ?>

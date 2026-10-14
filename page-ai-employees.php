@@ -49,74 +49,11 @@ $cta_btn         = hireai_field('lookbook_cta_btn',         $is_en ? 'Start The 
 $cta_link_lbl    = hireai_field('lookbook_cta_link',        $is_en ? 'Download Brand Book' : '下载品牌手册', $lb_pid);
 $cta_url         = hireai_field('lookbook_cta_url',         '/case-insights/', $lb_pid);
 
-/* --------------------------------------------------------------------
- * 2. EMPLOYEE ROWS — ACF repeater (唯一数据源) → lookbook_fallback_employees()
- *
- *   v3.4.0 回归 v3.0.0 设计意图：删除 v3.0.7 临时补丁 hireai_resolve_employees() 调用
- *     - v3.0.7 错误地引入 WP_Query 抢占 ACF Repeater（站点后台没有 ai-employee 文章，
- *       但临时补丁让优先级变最高 → ACF Repeater 完全失效）
- *     - v3.0.9 进一步把 WP_Query 设为优先级 1，URL fixup 也依赖它
- *     - v3.4.0 彻底删除所有 hireai_resolve_employees() 调用，回到 v3.0.0 纯 ACF 模式
- *     - hireai_resolve_employee_url() 仍保留（row 循环内单点探测 fallback URL）
- *     - 当 ACF Repeater 完全为空时，回退到 lookbook_fallback_employees() 静态兜底
- *
- *   数据源优先级：ACF Repeater (lookbook_employees / lookbook_employees_en) > fallback
- *   严禁：再用 WordPress 文章 (WP_Query) 拉数据（v3.0.7 教训）
- * -------------------------------------------------------------------- */
+/* 员工行唯一数据源：ACF Free 12 行普通字段；旧 Pro Repeater 数据经兼容读取。 */
 $raw_rows = [];
-
-/* v3.7.6: 中英 repeater 各自读取；当前语言为空时镜像另一语言。
- *   此前 EN 视图在 EN repeater 未填时直接跳到硬编码兜底 5 行 —— 与后台填的中文内容
- *   完全不同，是"页面对不上 ACF"的来源之一。镜像后：只要任一语言填了行，
- *   两种语言都显示同一份自定义内容（英文可在 EN repeater 里逐行覆盖）。 */
-if (function_exists('have_rows')) {
-    $read_emp_rows = function ($repeater_name) use ($is_en, $lb_pid) {
-        $rows = [];
-        if (have_rows($repeater_name, $lb_pid)) {
-            while (have_rows($repeater_name)) {
-                the_row();
-                $row = [
-                    'kicker' => trim((string) get_sub_field('emp_row_kicker')),
-                    'title'  => trim((string) get_sub_field('emp_row_title')),
-                    'desc'   => trim((string) get_sub_field('emp_row_desc')),
-                    'button' => trim((string) get_sub_field('emp_row_button')),
-                    'url'    => trim((string) get_sub_field('emp_row_url')),
-                    'image'  => '',
-                ];
-                $img = get_sub_field('emp_row_image');
-                if (is_array($img) && !empty($img['url'])) {
-                    $row['image'] = $img['url'];
-                } elseif (is_string($img) && $img !== '') {
-                    $row['image'] = $img;
-                }
-                // Fallback for empty fields
-                if ($row['button'] === '') {
-                    $row['button'] = $is_en ? 'Learn More' : '了解详情';
-                }
-                if ($row['url'] === '') {
-                    /* v3.4.0: 保持 helper 自动探测 fallback（v3.0.7 教训——函数定义保留不动） */
-                    $row['url'] = function_exists('hireai_resolve_employee_url')
-                        ? hireai_resolve_employee_url(count($rows), home_url('/ai-employees/'))
-                        : home_url('/ai-employees/');
-                }
-                $rows[] = $row;
-            }
-        }
-        return $rows;
-    };
-    $rows_zh = $read_emp_rows('lookbook_employees');
-    $rows_en = $read_emp_rows('lookbook_employees_en');
-    $raw_rows = $is_en
-        ? ($rows_en !== [] ? $rows_en : $rows_zh)
-        : ($rows_zh !== [] ? $rows_zh : $rows_en);
-}
-
-/* v3.4.0: fallback 数据兜底（两种语言的 ACF Repeater 都为空时） */
-$lb_rows_from_fallback = false;
-if (empty($raw_rows) && function_exists('lookbook_fallback_employees')) {
-    $raw_rows = lookbook_fallback_employees();
-    $lb_rows_from_fallback = true;
-}
+$rows_zh = hireai_ai_employee_fixed_rows($lb_pid, false);
+$rows_en = hireai_ai_employee_fixed_rows($lb_pid, true);
+$raw_rows = $is_en ? ($rows_en ?: $rows_zh) : ($rows_zh ?: $rows_en);
 
 /* --------------------------------------------------------------------
  * 2.5 PAGINATION (v3.4.0) — 每页 5 个，超过自动加页
@@ -164,6 +101,13 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
     -webkit-text-fill-color: transparent;
     color: transparent;
     font-style: normal;
+}
+
+.lb-att .lb-hero__note {
+    margin: -18px 0 0;
+    color: var(--lb-att-mid);
+    font-size: clamp(0.8rem, 0.7rem + 0.4vw, 0.95rem);
+    letter-spacing: 0.02em;
 }
 
 /* Section divider */
@@ -348,10 +292,16 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 
     <!-- ─────────── Hero ─────────── -->
     <section class="lb-hero">
+        <?php if (!empty($employees_hero_image)) : ?>
+            <img class="lb-hero__bg" src="<?php echo esc_url($employees_hero_image); ?>" alt="">
+        <?php endif; ?>
         <span class="lb-hero__kicker"><?php echo esc_html($hero_kicker); ?></span>
         <h1 class="lb-hero__title"><?php echo esc_html($hero_title); ?></h1>
         <p class="lb-hero__subtitle"><?php echo esc_html($hero_subtitle); ?></p>
         <div class="lb-hero__divider" aria-hidden="true"></div>
+        <?php if ($hero_note !== '') : ?>
+            <p class="lb-hero__note"><?php echo esc_html($hero_note); ?></p>
+        <?php endif; ?>
     </section>
 
     <!-- ─────────── 筛选 tabs（v3.7.6 恢复渲染：lookbook_filter_* 字段此前在后台可填但前台从未输出） ─────────── -->
@@ -386,7 +336,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
                 $index++;
                 $img_url = !empty($row['image'])
                     ? (strpos($row['image'], 'http') === 0 ? $row['image'] : get_stylesheet_directory_uri() . '/assets/img/' . ltrim($row['image'], '/'))
-                    : get_stylesheet_directory_uri() . '/assets/img/lookbook/service-' . min($index, 5) . '.png';
+                    : '';
                 $kicker = trim((string) ($row['kicker'] ?? ''));
                 $cat    = $kicker !== '' ? $kicker : 'all';
                 $style  = ($index % 2 === 0) ? 'outline' : 'primary';
@@ -438,27 +388,23 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 
     <!-- ─────────── 服务流程（v3.7.6 恢复渲染：lookbook_process_* 共 10 个字段此前在后台可填但前台从未输出） ─────────── -->
     <?php
-    $lb_process_d = [
-        1 => ['t' => $is_en ? 'Discovery'   : '需求洞察', 'd' => $is_en ? 'Our consultants map your business context and KPIs.' : '我们的顾问与您一起梳理业务场景与核心指标。'],
-        2 => ['t' => $is_en ? 'Curation'    : '方案设计', 'd' => $is_en ? 'Pick an archetype from our atelier and weave in your brand DNA.' : '从精品模板库中挑选角色底座，并融入品牌基因。'],
-        3 => ['t' => $is_en ? 'Calibration' : '训练调优', 'd' => $is_en ? 'We fine-tune the model on your proprietary corpus to match tone and judgement.' : '以专属语料微调模型，确保语调与判断契合业务。'],
-        4 => ['t' => $is_en ? 'Co-pilot'    : '上线陪跑', 'd' => $is_en ? 'After deployment, your dedicated concierge reviews and iterates monthly.' : '交付上线后由专属管家持续陪跑，按月复盘迭代。'],
-    ];
+    $employees_hero_image = hireai_image('employees_hero_image', '', $lb_pid);
     ?>
     <section class="lb-att-processsec">
         <div class="lb-att-head">
-            <span class="lb-att-head__kicker"><?php echo esc_html(hireai_field('lookbook_process_kicker', $is_en ? 'OUR PROCESS' : '服务流程', $lb_pid)); ?></span>
-            <h2 class="lb-att-head__title"><?php echo esc_html(hireai_field('lookbook_process_title', $is_en ? 'Four steps from discovery to deployment.' : '从了解到上线，四步即可拥有专属数字员工。', $lb_pid)); ?></h2>
+            <span class="lb-att-head__kicker"><?php echo esc_html(hireai_field('employees_process_kicker', '', $lb_pid)); ?></span>
+            <h2 class="lb-att-head__title"><?php echo esc_html(hireai_field('employees_process_title', '', $lb_pid)); ?></h2>
         </div>
         <div class="lb-att-process">
             <?php for ($lb_i = 1; $lb_i <= 4; $lb_i++) : ?>
                 <div class="lb-att-step">
-                    <h3 class="lb-att-step__title"><?php echo esc_html(hireai_field("lookbook_process_step{$lb_i}_title", $lb_process_d[$lb_i]['t'], $lb_pid)); ?></h3>
-                    <p class="lb-att-step__desc"><?php echo esc_html(hireai_field("lookbook_process_step{$lb_i}_desc", $lb_process_d[$lb_i]['d'], $lb_pid)); ?></p>
+                    <?php $process_number = sprintf('%02d', $lb_i); ?>
+                    <h3 class="lb-att-step__title"><?php echo esc_html(hireai_field("employees_process_{$process_number}_title", '', $lb_pid)); ?></h3>
+                    <p class="lb-att-step__desc"><?php echo esc_html(hireai_field("employees_process_{$process_number}_description", '', $lb_pid)); ?></p>
                 </div>
             <?php endfor; ?>
         </div>
-        <?php $lb_process_note = hireai_field('lookbook_process_note', $is_en ? 'Average delivery in 4–6 weeks, with a dedicated concierge throughout.' : '平均 4–6 周即可交付；全程由资深管家陪跑。', $lb_pid); ?>
+        <?php $lb_process_note = hireai_field('employees_process_note', '', $lb_pid); ?>
         <?php if ($lb_process_note !== '') : ?>
             <p class="lb-att-process__note"><?php echo esc_html($lb_process_note); ?></p>
         <?php endif; ?>
@@ -470,10 +416,10 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
             <h2 class="lb-cta__heading"><?php echo esc_html($cta_heading); ?></h2>
             <p class="lb-cta__sub"><?php echo esc_html($cta_sub); ?></p>
             <div class="lb-cta__actions">
-                <a class="lb-btn lb-btn--primary" href="<?php echo esc_url(home_url('/contact/')); ?>">
+                <a class="lb-btn lb-btn--primary" href="<?php echo esc_url(hireai_field('employees_cta_primary_url', home_url('/contact/'), $lb_pid)); ?>">
                     <?php echo esc_html($cta_btn); ?>
                 </a>
-                <a class="lb-btn lb-btn--ghost" href="<?php echo esc_url($cta_url); ?>">
+                <a class="lb-btn lb-btn--ghost" href="<?php echo esc_url(hireai_field('employees_cta_secondary_url', home_url('/cases-insights/'), $lb_pid)); ?>">
                     <?php echo esc_html($cta_link_lbl); ?>
                 </a>
             </div>

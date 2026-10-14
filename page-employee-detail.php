@@ -42,43 +42,42 @@ if ($emp_slug) {
     }
 }
 
-/* ----- 1.1 兜底数据：当 slug 为空或找不到时显示 ----- */
-$fallback = [
-    'name'        => $is_en ? 'Apex Strategist' : '全国统一者',
-    'role'        => $is_en ? 'Strategic Elite' : '战略精英',
-    'soul'        => $is_en ? 'Cultivated with a precise psychological profile—quiet, sharp, and shaped by logic.' : '以逻辑为骨、以静谧为魂，被悉心培育出独一无二的心智。',
-    'skill'       => $is_en ? 'Masters data analysis, market strategy, and multilingual content creation—ready to collaborate seamlessly with your team.' : '精通数据分析、市场策略与多语言内容创作，可与您的团队无缝协作。',
-    'capabilities'=> $is_en ? "Deep market research\nReal-time data analysis\nMultilingual content creation\n24×7 availability" : "深度市场调研\n实时数据分析\n多语言内容创作\n24×7 待命服务",
-    'image'       => '',
-    'price'       => $is_en ? '¥ 60,000 / mo' : '￥60,000 /月起',
-    'retainer'    => $is_en ? 'Starting retainer' : '起步档',
-    'cta_label'   => $is_en ? 'Inquire Now' : '立即咨询',
-    'cta_url'     => '/contact/',
-    'cases_link'  => '/category/cases/',
-    'cases_label' => $is_en ? 'View Related Cases' : '查看相关案例',
-];
+/* 所有详情文案都来自 v3.8 字段；无 slug 时读取详情页规范页自身。 */
+$detail_source_id = $emp_post instanceof WP_Post ? $emp_post->ID : get_the_ID();
 
 if ($emp_post instanceof WP_Post) {
     $post_id = $emp_post->ID;
     $emp = [
         'name'        => get_the_title($post_id),
-        'role'        => hireai_field('employee_role', $fallback['role'], $post_id),
-        'soul'        => hireai_field('employee_soul', $fallback['soul'], $post_id),
-        'skill'       => hireai_field('employee_skill', $fallback['skill'], $post_id),
-        'capabilities'=> hireai_field('employee_capabilities', $fallback['capabilities'], $post_id),
+        'role'        => hireai_field('employee_detail_role', '', $post_id),
+        'soul'        => hireai_field('employee_detail_soul', '', $post_id),
+        'skill'       => hireai_field('employee_detail_skill', '', $post_id),
+        'capabilities'=> hireai_field('employee_detail_capabilities', '', $post_id),
         'image'       => get_the_post_thumbnail_url($post_id, 'full'),
-        'price'       => hireai_field('employee_price', $fallback['price'], $post_id),
-        'retainer'    => hireai_field('product_retainer_label', $fallback['retainer'], $post_id),
-        'cta_label'   => hireai_field('employee_button_text', $fallback['cta_label'], $post_id),
-        'cta_url'     => hireai_field('employee_link', $fallback['cta_url'], $post_id),
-        'cases_link'  => hireai_field('employee_cases_link', $fallback['cases_link'], $post_id),
-        'cases_label' => hireai_field('employee_cases_link_title', $fallback['cases_label'], $post_id),
+        'price'       => hireai_field('employee_detail_price', '', $post_id),
+        'retainer'    => hireai_field('employee_detail_retainer', '', $post_id),
+        'cta_label'   => hireai_field('employee_detail_cta_button_label', '', $post_id),
+        'cta_url'     => hireai_field('employee_detail_cta_button_url', '/contact/', $post_id),
+        'cases_link'  => hireai_field('employee_detail_cases_url', '/category/cases/', $post_id),
+        'cases_label' => hireai_field('employee_detail_cases_label', '', $post_id),
     ];
     $capabilities = array_filter(array_map('trim', preg_split('/\r?\n/', (string)$emp['capabilities'])));
 } else {
-    // 父页面或找不到具体员工：展示目录链接
-    $emp = $fallback;
-    $capabilities = array_filter(array_map('trim', preg_split('/\r?\n/', $fallback['capabilities'])));
+    $emp = [
+        'name'        => hireai_field('employee_detail_name', '', $detail_source_id),
+        'role'        => hireai_field('employee_detail_role', '', $detail_source_id),
+        'soul'        => hireai_field('employee_detail_soul', '', $detail_source_id),
+        'skill'       => hireai_field('employee_detail_skill', '', $detail_source_id),
+        'capabilities'=> hireai_field('employee_detail_capabilities', '', $detail_source_id),
+        'image'       => hireai_image('employee_detail_image', '', $detail_source_id),
+        'price'       => hireai_field('employee_detail_price', '', $detail_source_id),
+        'retainer'    => hireai_field('employee_detail_retainer', '', $detail_source_id),
+        'cta_label'   => hireai_field('employee_detail_cta_button_label', '', $detail_source_id),
+        'cta_url'     => hireai_field('employee_detail_cta_button_url', '/contact/', $detail_source_id),
+        'cases_link'  => hireai_field('employee_detail_cases_url', '/category/cases/', $detail_source_id),
+        'cases_label' => hireai_field('employee_detail_cases_label', '', $detail_source_id),
+    ];
+    $capabilities = array_filter(array_map('trim', preg_split('/\r?\n/', (string) $emp['capabilities'])));
 }
 
 /* ----- 2. 取站点级 CTA 文案（v3.7.5 fix: lookbook_cta_* 字段注册在
@@ -89,10 +88,10 @@ if (function_exists('hireai_ai_employees_page_id')) {
     $_emp_cta_pid = hireai_ai_employees_page_id(get_the_ID());
 }
 $_emp_cta_src = $_emp_cta_pid > 0 ? $_emp_cta_pid : false;
-$site_kicker = hireai_field('lookbook_cta_heading', $is_en ? 'Ready to deploy?' : '准备好部署了吗？', $_emp_cta_src);
-$site_sub    = hireai_field('lookbook_cta_sub', $is_en ? 'Join the echelon of leaders using our bespoke digital employees.' : '加入正在使用我们专属数字员工的领袖行列。', $_emp_cta_src);
-$site_btn    = hireai_field('lookbook_cta_btn', $is_en ? 'Start The Journey' : '开启旅程', $_emp_cta_src);
-$site_url    = hireai_field('lookbook_cta_url', '/contact/', $_emp_cta_src);
+$site_kicker = hireai_field('employee_detail_cta_heading', '', $_emp_cta_src);
+$site_sub    = hireai_field('employee_detail_cta_subtitle', '', $_emp_cta_src);
+$site_btn    = hireai_field('employee_detail_cta_button_label', '', $_emp_cta_src);
+$site_url    = hireai_field('employee_detail_cta_button_url', '/contact/', $_emp_cta_src);
 
 /* 兜底 logo/字体 */
 $logo_url = get_theme_mod('header_logo', get_stylesheet_directory_uri() . '/assets/img/header-logo.svg');
@@ -128,8 +127,8 @@ $logo_url = get_theme_mod('header_logo', get_stylesheet_directory_uri() . '/asse
   <section class="emp-prime__cap" aria-labelledby="emp-cap-head">
     <div class="emp-prime__cap-inner">
       <header class="emp-prime__section-head">
-        <p class="emp-prime__kicker"><?php echo esc_html($is_en ? 'CAPABILITIES' : '核心能力'); ?></p>
-        <h2 id="emp-cap-head" class="emp-prime__section-title"><?php echo esc_html($is_en ? 'Skill, Soul, and System' : '技能、灵魂与系统'); ?></h2>
+        <p class="emp-prime__kicker"><?php echo esc_html(hireai_field('employee_detail_kicker', '', $detail_source_id)); ?></p>
+        <h2 id="emp-cap-head" class="emp-prime__section-title"><?php echo esc_html(hireai_field('employee_detail_skill', '', $detail_source_id)); ?></h2>
       </header>
       <div class="emp-prime__cap-grid">
         <div class="emp-prime__cap-card">
@@ -156,8 +155,8 @@ $logo_url = get_theme_mod('header_logo', get_stylesheet_directory_uri() . '/asse
   <section class="emp-prime__cases" aria-labelledby="emp-cases-head">
     <div class="emp-prime__cases-inner">
       <header class="emp-prime__section-head">
-        <p class="emp-prime__kicker"><?php echo esc_html($is_en ? 'SELECTED CASES' : '精选案例'); ?></p>
-        <h2 id="emp-cases-head" class="emp-prime__section-title"><?php echo esc_html($is_en ? 'Where this employee excels' : '这位员工的擅长领域'); ?></h2>
+        <p class="emp-prime__kicker"><?php echo esc_html(hireai_field('employee_detail_cases_kicker', '', $detail_source_id)); ?></p>
+        <h2 id="emp-cases-head" class="emp-prime__section-title"><?php echo esc_html(hireai_field('employee_detail_cases_heading', '', $detail_source_id)); ?></h2>
       </header>
       <?php
       // 取分类 case 的文章，最多 3 篇
@@ -207,7 +206,7 @@ $logo_url = get_theme_mod('header_logo', get_stylesheet_directory_uri() . '/asse
           <?php endforeach; ?>
         </ul>
       <?php else: ?>
-        <p class="emp-prime__cases-empty"><?php echo esc_html($is_en ? 'Cases will be showcased here once published.' : '案例发布后将展示于此。'); ?></p>
+        <p class="emp-prime__cases-empty"><?php echo esc_html(hireai_field('employee_detail_cases_empty_message', '', $detail_source_id)); ?></p>
       <?php endif; ?>
     </div>
   </section>
@@ -216,17 +215,16 @@ $logo_url = get_theme_mod('header_logo', get_stylesheet_directory_uri() . '/asse
   <section class="emp-prime__price" aria-labelledby="emp-price-head">
     <div class="emp-prime__price-inner">
       <header class="emp-prime__section-head">
-        <p class="emp-prime__kicker"><?php echo esc_html($is_en ? 'ENGAGEMENT' : '合作模式'); ?></p>
-        <h2 id="emp-price-head" class="emp-prime__section-title"><?php echo esc_html($is_en ? 'Retainer & Terms' : '起步档与合作条款'); ?></h2>
+        <p class="emp-prime__kicker"><?php echo esc_html(hireai_field('employee_detail_retainer', '', $detail_source_id)); ?></p>
+        <h2 id="emp-price-head" class="emp-prime__section-title"><?php echo esc_html(hireai_field('employee_detail_engagement_heading', '', $detail_source_id)); ?></h2>
       </header>
       <div class="emp-prime__price-card">
         <p class="emp-prime__price-retainer"><?php echo esc_html($emp['retainer']); ?></p>
         <p class="emp-prime__price-amount"><?php echo esc_html($emp['price']); ?></p>
         <ul class="emp-prime__price-list">
-          <li><?php echo esc_html($is_en ? 'Dedicated onboarding concierge' : '专属上线陪跑'); ?></li>
-          <li><?php echo esc_html($is_en ? 'Fine-tuning on proprietary corpus' : '专属语料微调'); ?></li>
-          <li><?php echo esc_html($is_en ? 'Monthly iteration review' : '每月复盘迭代'); ?></li>
-          <li><?php echo esc_html($is_en ? '24×7 priority support' : '24×7 优先级支持'); ?></li>
+          <?php foreach ([1, 2, 3, 4] as $term_index) : $term_number = sprintf('%02d', $term_index); ?>
+            <li><?php echo esc_html(hireai_field("employee_detail_term_{$term_number}", '', $detail_source_id)); ?></li>
+          <?php endforeach; ?>
         </ul>
         <a class="emp-prime__btn emp-prime__btn--primary" href="<?php echo esc_url($emp['cta_url']); ?>"><?php echo esc_html($emp['cta_label']); ?></a>
       </div>
