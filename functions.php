@@ -570,13 +570,6 @@ function hireai_employees_page_field($name, $default = '', $post_id = false) {
     $alt_name = $aliases[$name] ?? '';
     $suffix = hireai_lang_suffix();
     $mirror = $suffix === '_en' ? '_zh' : '_en';
-    if ($post_id && function_exists('metadata_exists')) {
-        foreach (array_filter([$alt_name . $suffix, $name . $suffix]) as $meta_name) {
-            if (metadata_exists('post', (int) $post_id, $meta_name)) {
-                return get_post_meta((int) $post_id, $meta_name, true);
-            }
-        }
-    }
     $names = array_filter([
         $alt_name ? $alt_name . $suffix : '',
         $name . $suffix,
@@ -585,6 +578,17 @@ function hireai_employees_page_field($name, $default = '', $post_id = false) {
         $alt_name ? $alt_name . $mirror : '',
         $name . $mirror,
     ]);
+    if ($post_id && function_exists('metadata_exists')) {
+        foreach ($names as $meta_name) {
+            if (!metadata_exists('post', (int) $post_id, $meta_name)) {
+                continue;
+            }
+            $saved_value = get_post_meta((int) $post_id, $meta_name, true);
+            if (is_string($saved_value) && $saved_value !== '') {
+                return $saved_value;
+            }
+        }
+    }
     foreach ($names as $candidate) {
         $value = site_field($candidate, '__hireai_missing__', $post_id);
         if ($value !== '__hireai_missing__') {
@@ -660,6 +664,7 @@ function hireai_legacy_repeater_rows($repeater_name, $sub_names, $post_id) {
 
 function hireai_ai_employee_rows($post_id, $is_en) {
     $suffix = $is_en ? '_en' : '_zh';
+    $mirror = $is_en ? '_zh' : '_en';
     $parts = ['kicker', 'title', 'description', 'cta_label', 'image', 'url', 'image_alt'];
     $rows = [];
 
@@ -700,8 +705,13 @@ function hireai_ai_employee_rows($post_id, $is_en) {
         ];
         foreach ($parts as $part) {
             $values[$part] = '';
+            $field_names = [];
             foreach ($field_bases[$part] as $field_base) {
-                $field_name = $field_base . $suffix;
+                $field_names[] = $field_base . $suffix;
+                $field_names[] = $field_base;
+                $field_names[] = $field_base . $mirror;
+            }
+            foreach (array_unique($field_names) as $field_name) {
                 if ($part === 'image') {
                     $value = site_image_url($field_name, '', $post_id);
                 } else {
