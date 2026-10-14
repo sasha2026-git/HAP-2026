@@ -27,16 +27,16 @@ while (have_posts()) :
     $is_faq      = in_array('faq', $cats, true);
 
     if ($is_employee) :
-        $role       = hireai_field('employee_single_role', '', $post_id);
-        $kicker     = hireai_field('employee_single_kicker', '', $post_id);
-        $soul       = hireai_field('employee_single_soul', '', $post_id);
-        $skill      = hireai_field('employee_single_skill', '', $post_id);
-        $caps_raw   = hireai_field('employee_single_capabilities', '', $post_id);
-        $btn_text   = hireai_field('employee_single_button_label', '', $post_id);
-        $btn_style  = hireai_field('employee_single_button_style', 'auto', $post_id);
-        $cases_link = hireai_link('employee_detail_cases_url', '/category/cases/', hireai_field('employee_detail_cases_label', '', $post_id), $post_id);
+        $role      = hireai_field('employee_role', $is_en ? 'Digital Employee' : '数字员工', $post_id);
+        $kicker    = hireai_field('employee_kicker', $is_en ? 'Strategic Elite' : '战略精英', $post_id);
+        $soul      = hireai_field('employee_soul', '', $post_id);
+        $skill     = hireai_field('employee_skill', '', $post_id);
+        $caps_raw  = hireai_field('employee_capabilities', '', $post_id);
+        $btn_text  = hireai_field('employee_button_text', $is_en ? 'Inquire' : '咨询', $post_id);
+        $btn_style = hireai_field('employee_button_style', 'auto', $post_id);
+        $cases_link = hireai_link('employee_cases_link', '/category/cases/', $is_en ? 'View Related Cases' : '查看相关案例', $post_id);
 
-        $image = hireai_image('employee_single_image', '', $post_id);
+        $image = hireai_image('employee_image', hireai_default_image('employee-1.jpg'), $post_id);
         if (!$image) {
             $image = has_post_thumbnail() ? get_the_post_thumbnail_url($post_id, 'hireai-wide') : hireai_default_image('employee-1.jpg');
         }
@@ -90,18 +90,16 @@ while (have_posts()) :
                             <?php echo esc_html($btn_text); ?>
                             <?php echo hireai_svg('arrow', 14); ?>
                         </a>
-                        <?php if (hireai_field('employee_single_cta_label', '', $post_id) !== '') : ?>
-                            <a class="hireai-link hireai-link--ghost" href="<?php echo esc_url(hireai_field('employee_single_cta_url', home_url('/contact/'), $post_id)); ?>">
-                                <?php echo esc_html(hireai_field('employee_single_cta_label', '', $post_id)); ?>
-                            </a>
-                        <?php endif; ?>
+                        <a class="hireai-link hireai-link--ghost" href="<?php echo esc_url(home_url('/contact/')); ?>">
+                            <?php echo esc_html($is_en ? 'Request Custom Build' : '请求定制'); ?>
+                        </a>
                     </div>
                 </div>
             </div>
 
             <?php if (get_the_content() !== '') : ?>
                 <section class="hireai-single-employee__content">
-                    <h2 class="hireai-headline-md"><?php echo esc_html(hireai_field('single_background_heading', '', $post_id)); ?></h2>
+                    <h2 class="hireai-headline-md"><?php echo esc_html($is_en ? 'Background' : '背景资料'); ?></h2>
                     <div class="hireai-body-md hireai-prose"><?php the_content(); ?></div>
                 </section>
             <?php endif; ?>

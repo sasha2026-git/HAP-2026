@@ -17,7 +17,6 @@ $page_id = get_the_ID();
 $hero_kicker       = hireai_field( 'header_kicker', $is_en ? 'BESPOKE SOLUTIONS' : 'BESPOKE SOLUTIONS', $page_id );
 $hero_title        = hireai_field( 'header_title', $is_en ? 'AI Solutions Marketplace' : 'AI方案商城', $page_id );
 $hero_subtitle     = hireai_field( 'header_subtitle', $is_en ? 'Hire elite digital minds to empower your business.' : '雇佣顶尖数字智脑，赋能企业未来。', $page_id );
-$hero_image        = hireai_image( 'solutions_hero_image', '', $page_id );
 $hero_cta_primary  = hireai_field( 'hero_cta_primary_text', $is_en ? 'Custom Plan' : '定制方案', $page_id );
 $hero_cta_primary_link  = hireai_field( 'hero_cta_primary_link', $is_en ? '/contact/' : '/contact/', $page_id );
 $hero_cta_secondary    = hireai_field( 'hero_cta_secondary_text', $is_en ? 'View Cases' : '查看案例', $page_id );
@@ -45,22 +44,26 @@ $final_kicker         = hireai_field( 'final_cta_kicker', $is_en ? 'NEXT STEP' :
 $final_title          = hireai_field( 'final_cta_title', $is_en ? 'Ready to Elevate Your Brand?' : '准备好为您的品牌升级了吗？', $page_id );
 $final_subtitle       = hireai_field( 'final_cta_subtitle', $is_en ? 'Tell us your ambitions and we will design a bespoke AI plan around them.' : '告诉我们您的雄心，我们将围绕它设计一套专属 AI 解决方案。', $page_id );
 $final_cta_primary    = hireai_field( 'final_cta_primary_text', $is_en ? 'Start the Conversation' : '开启对话', $page_id );
-$final_cta_primary_link = hireai_field( 'solutions_cta_primary_url', home_url( '/contact/' ), $page_id );
 $final_cta_secondary  = hireai_field( 'final_cta_secondary_text', $is_en ? 'Browse Cases' : '浏览案例', $page_id );
-$final_cta_secondary_link = hireai_field( 'solutions_cta_secondary_url', home_url( '/category/cases/' ), $page_id );
 
-/* 邀请步骤：ACF Free 普通字段，编号 01-03。 */
-$invite_steps = [];
-foreach ([1, 2, 3] as $index) {
-    $number = sprintf('%02d', $index);
-    $step_text = hireai_field("solutions_invite_step_{$number}_description", '', $page_id);
-    if ('' === trim((string) $step_text)) continue;
-        $invite_steps[] = [
-            'step_title' => hireai_field("solutions_invite_step_{$number}_title", '', $page_id),
-            'step_no' => $number,
-        'step_zh' => $step_text,
-        'step_en' => $step_text,
-    ];
+/* ====== 推荐步骤（repeater，兜底 3 步） ====== */
+$invite_steps_fallback = array(
+    array( 'step_no' => '01', 'step_zh' => '分享您的专属推荐链接。', 'step_en' => 'Share your exclusive referral link.' ),
+    array( 'step_no' => '02', 'step_zh' => '好友加入并完成首笔订阅。', 'step_en' => 'Your friend signs up and completes their first subscription.' ),
+    array( 'step_no' => '03', 'step_zh' => '双方均可获得 ' . ( $is_en ? '¥500' : '￥500' ) . ' 定制额度奖励。', 'step_en' => 'Both you and your invitee earn a ¥500 bespoke credit toward your next AI service upgrade.' ),
+);
+$invite_steps = $invite_steps_fallback;
+if ( function_exists( 'have_rows' ) && have_rows( 'solutions_invite_steps', $page_id ) ) {
+    $tmp = array();
+    while ( have_rows( 'solutions_invite_steps', $page_id ) ) {
+        the_row();
+        $tmp[] = array(
+            'step_no' => get_sub_field( 'step_no' ),
+            'step_zh' => get_sub_field( 'step_zh' ),
+            'step_en' => get_sub_field( 'step_en' ),
+        );
+    }
+    if ( ! empty( $tmp ) ) { $invite_steps = $tmp; }
 }
 
 /* ====== v3.5.7-p21.1: 6 个数字人 chip fallback(取代 7 个场景)
@@ -72,18 +75,26 @@ foreach ([1, 2, 3] as $index) {
  *  - 顺序:全部 → Victoria → Adrian → Iris → Kai → Evan (与 Echo 申请一致)
  *  - ACF repeater 'solutions_filters' 仍可用(WP 后台可覆盖)
  */
-/* 筛选 chips：ACF Free 普通字段，编号 01-06。 */
-$filters = [];
-foreach ([1, 2, 3, 4, 5, 6] as $index) {
-    $number = sprintf('%02d', $index);
-    if (!hireai_field("solutions_filter_{$number}_enabled", false, $page_id)) continue;
-    $slug = trim((string) hireai_field("solutions_filter_{$number}_slug", '', $page_id));
-    if ('' === $slug) continue;
-    $filters[] = [
-        'label_zh' => hireai_field_lang("solutions_filter_{$number}_label", 'zh', '', $page_id),
-        'label_en' => hireai_field_lang("solutions_filter_{$number}_label", 'en', '', $page_id),
-        'slug'     => $slug,
-    ];
+$filters = array();
+if ( function_exists( 'have_rows' ) && have_rows( 'solutions_filters', $page_id ) ) {
+    while ( have_rows( 'solutions_filters', $page_id ) ) {
+        the_row();
+        $filters[] = array(
+            'label_zh' => get_sub_field( 'filter_label_zh' ),
+            'label_en' => get_sub_field( 'filter_label_en' ),
+            'slug'     => get_sub_field( 'filter_slug' ),
+        );
+    }
+}
+if ( empty( $filters ) ) {
+    $filters = array(
+        array( 'label_zh' => '全部',                'label_en' => 'All',                'slug' => 'all' ),
+        array( 'label_zh' => 'Victoria · 公关',     'label_en' => 'Victoria · PR',      'slug' => 'victoria' ),
+        array( 'label_zh' => 'Adrian · 品牌IP',     'label_en' => 'Adrian · Brand-IP',  'slug' => 'adrian' ),
+        array( 'label_zh' => 'Iris · 视觉',         'label_en' => 'Iris · Visual',      'slug' => 'iris' ),
+        array( 'label_zh' => 'Kai · 电商',          'label_en' => 'Kai · E-Commerce',   'slug' => 'kai' ),
+        array( 'label_zh' => 'Evan · 文案',         'label_en' => 'Evan · Copywriting', 'slug' => 'evan' ),
+    );
 }
 
 /* v3.5.7-p18 Task B: 静态兜底 $cards 已废弃 —— 改为 WC 商品驱动
@@ -760,7 +771,6 @@ if (!empty($auto_chips)) {
             <ol class="sols-invite__steps" aria-label="<?php echo esc_attr( $invite_steps_label ); ?>">
                 <?php foreach ( $invite_steps as $step ) :
                     $step_no   = isset( $step['step_no'] ) ? $step['step_no'] : '';
-                    $step_title = isset( $step['step_title'] ) ? $step['step_title'] : '';
                     $step_text = $is_en ? ( isset( $step['step_en'] ) ? $step['step_en'] : '' ) : ( isset( $step['step_zh'] ) ? $step['step_zh'] : '' );
                     $highlight = (string) $invite_reward_amount;
                     $rendered  = str_replace(
@@ -771,7 +781,6 @@ if (!empty($auto_chips)) {
                 ?>
                     <li class="sols-invite__step">
                         <span class="sols-invite__step-no"><?php echo esc_html( $step_no ); ?></span>
-                        <?php if ($step_title !== '') : ?><strong><?php echo esc_html( $step_title ); ?></strong><?php endif; ?>
                         <p class="sols-invite__step-text"><?php echo $rendered; /* already escaped; reward span is trusted */ ?></p>
                     </li>
                 <?php endforeach; ?>
@@ -787,11 +796,11 @@ if (!empty($auto_chips)) {
         <h2 class="sols-cta__title"><?php echo esc_html( $final_title ); ?></h2>
         <p class="sols-cta__sub"><?php echo esc_html( $final_subtitle ); ?></p>
         <div class="sols-cta__actions">
-            <a class="btn btn-solid" href="<?php echo esc_url( $final_cta_primary_link ); ?>">
+            <a class="btn btn-solid" href="<?php echo esc_url( home_url( '/contact/' ) ); ?>">
                 <?php echo esc_html( $final_cta_primary ); ?>
                 <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'arrow', 14 ) : ''; ?>
             </a>
-            <a class="btn btn-outline" href="<?php echo esc_url( $final_cta_secondary_link ); ?>">
+            <a class="btn btn-outline" href="<?php echo esc_url( home_url( '/category/cases/' ) ); ?>">
                 <?php echo esc_html( $final_cta_secondary ); ?>
             </a>
         </div>
