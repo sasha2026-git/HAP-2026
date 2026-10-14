@@ -12,11 +12,9 @@
  *   5. CTA banner
  *
  * Data sources:
- *   - Hero / CTA: ACF group_page_ai_employees (single fields)
- *   - Filter labels: ACF group_page_ai_employees (lookbook_filter_*)
- *   - Process section: ACF group_page_ai_employees (lookbook_process_*)
- *   - Employee rows: ACF repeater lookbook_employees / lookbook_employees_en,
- *     falls back to lookbook_fallback_employees() when empty.
+ *   - Page fields: ACF group_page_ai_employees (employees_*_zh / employees_*_en)
+ *   - Employee rows: employees_row_* fields; legacy lookbook_* fields, old Pro
+ *     Repeater meta, then lookbook_fallback_employees() are backward-compatible.
  */
 
 if (!defined('ABSPATH')) {
@@ -38,78 +36,21 @@ $lb_pid     = $lb_page_id > 0 ? $lb_page_id : (get_the_ID() ?: false);
 /* --------------------------------------------------------------------
  * 1. PAGE FIELDS  (Hero + sections + CTA)
  * -------------------------------------------------------------------- */
-$hero_note       = hireai_field('lookbook_hero_note',       $is_en ? '— Curated roles, on call' : '——  在职数字员工 · 精英岗位', $lb_pid);
-$hero_kicker     = hireai_field('lookbook_hero_kicker',     $is_en ? 'The Atelier' : '数字工坊', $lb_pid);
-$hero_title      = hireai_field('lookbook_hero_title',      $is_en ? 'Elite Digital Solutions' : '精英数字解决方案', $lb_pid);
-$hero_subtitle   = hireai_field('lookbook_hero_subtitle',   $is_en ? '"AI-led process, Human-delivered results."' : '"AI 主导流程，人类交付成果。"', $lb_pid);
+$hero_note       = hireai_employees_page_field('lookbook_hero_note',     $is_en ? '— Curated roles, on call' : '——  在职数字员工 · 精英岗位', $lb_pid);
+$hero_kicker     = hireai_employees_page_field('lookbook_hero_kicker',   $is_en ? 'The Atelier' : '数字工坊', $lb_pid);
+$hero_title      = hireai_employees_page_field('lookbook_hero_title',    $is_en ? 'Elite Digital Solutions' : '精英数字解决方案', $lb_pid);
+$hero_subtitle   = hireai_employees_page_field('lookbook_hero_subtitle', $is_en ? '"AI-led process, Human-delivered results."' : '"AI 主导流程，人类交付成果。"', $lb_pid);
+$hero_image      = hireai_employees_page_image('lookbook_hero_image', '', $lb_pid);
 
-$cta_heading     = hireai_field('lookbook_cta_heading',     $is_en ? 'Ready to Redefine Humanity?' : '准备好重新定义人性了吗？', $lb_pid);
-$cta_sub         = hireai_field('lookbook_cta_sub',         $is_en ? "Join the exclusive echelon of leaders leveraging Aurelian AI's bespoke ecosystem." : '加入运用 Aurelian AI 专属生态的领袖精英之列。', $lb_pid);
-$cta_btn         = hireai_field('lookbook_cta_btn',         $is_en ? 'Start The Journey' : '开启旅程', $lb_pid);
-$cta_link_lbl    = hireai_field('lookbook_cta_link',        $is_en ? 'Download Brand Book' : '下载品牌手册', $lb_pid);
-$cta_url         = hireai_field('lookbook_cta_url',         '/case-insights/', $lb_pid);
+$cta_heading     = hireai_employees_page_field('lookbook_cta_heading', $is_en ? 'Ready to Redefine Humanity?' : '准备好重新定义人性了吗？', $lb_pid);
+$cta_sub         = hireai_employees_page_field('lookbook_cta_sub',     $is_en ? "Join the exclusive echelon of leaders leveraging Aurelian AI's bespoke ecosystem." : '加入运用 Aurelian AI 专属生态的领袖精英之列。', $lb_pid);
+$cta_btn         = hireai_employees_page_field('lookbook_cta_btn',     $is_en ? 'Start The Journey' : '开启旅程', $lb_pid);
+$cta_contact_url = hireai_employees_page_field('lookbook_cta_contact_url', home_url('/contact/'), $lb_pid);
+$cta_link_lbl    = hireai_employees_page_field('lookbook_cta_link',    $is_en ? 'Download Brand Book' : '下载品牌手册', $lb_pid);
+$cta_url         = hireai_employees_page_field('lookbook_cta_url',     '/case-insights/', $lb_pid);
 
-/* --------------------------------------------------------------------
- * 2. EMPLOYEE ROWS — ACF repeater (唯一数据源) → lookbook_fallback_employees()
- *
- *   v3.4.0 回归 v3.0.0 设计意图：删除 v3.0.7 临时补丁 hireai_resolve_employees() 调用
- *     - v3.0.7 错误地引入 WP_Query 抢占 ACF Repeater（站点后台没有 ai-employee 文章，
- *       但临时补丁让优先级变最高 → ACF Repeater 完全失效）
- *     - v3.0.9 进一步把 WP_Query 设为优先级 1，URL fixup 也依赖它
- *     - v3.4.0 彻底删除所有 hireai_resolve_employees() 调用，回到 v3.0.0 纯 ACF 模式
- *     - hireai_resolve_employee_url() 仍保留（row 循环内单点探测 fallback URL）
- *     - 当 ACF Repeater 完全为空时，回退到 lookbook_fallback_employees() 静态兜底
- *
- *   数据源优先级：ACF Repeater (lookbook_employees / lookbook_employees_en) > fallback
- *   严禁：再用 WordPress 文章 (WP_Query) 拉数据（v3.0.7 教训）
- * -------------------------------------------------------------------- */
-$raw_rows = [];
-
-/* v3.7.6: 中英 repeater 各自读取；当前语言为空时镜像另一语言。
- *   此前 EN 视图在 EN repeater 未填时直接跳到硬编码兜底 5 行 —— 与后台填的中文内容
- *   完全不同，是"页面对不上 ACF"的来源之一。镜像后：只要任一语言填了行，
- *   两种语言都显示同一份自定义内容（英文可在 EN repeater 里逐行覆盖）。 */
-if (function_exists('have_rows')) {
-    $read_emp_rows = function ($repeater_name) use ($is_en, $lb_pid) {
-        $rows = [];
-        if (have_rows($repeater_name, $lb_pid)) {
-            while (have_rows($repeater_name)) {
-                the_row();
-                $row = [
-                    'kicker' => trim((string) get_sub_field('emp_row_kicker')),
-                    'title'  => trim((string) get_sub_field('emp_row_title')),
-                    'desc'   => trim((string) get_sub_field('emp_row_desc')),
-                    'button' => trim((string) get_sub_field('emp_row_button')),
-                    'url'    => trim((string) get_sub_field('emp_row_url')),
-                    'image'  => '',
-                ];
-                $img = get_sub_field('emp_row_image');
-                if (is_array($img) && !empty($img['url'])) {
-                    $row['image'] = $img['url'];
-                } elseif (is_string($img) && $img !== '') {
-                    $row['image'] = $img;
-                }
-                // Fallback for empty fields
-                if ($row['button'] === '') {
-                    $row['button'] = $is_en ? 'Learn More' : '了解详情';
-                }
-                if ($row['url'] === '') {
-                    /* v3.4.0: 保持 helper 自动探测 fallback（v3.0.7 教训——函数定义保留不动） */
-                    $row['url'] = function_exists('hireai_resolve_employee_url')
-                        ? hireai_resolve_employee_url(count($rows), home_url('/ai-employees/'))
-                        : home_url('/ai-employees/');
-                }
-                $rows[] = $row;
-            }
-        }
-        return $rows;
-    };
-    $rows_zh = $read_emp_rows('lookbook_employees');
-    $rows_en = $read_emp_rows('lookbook_employees_en');
-    $raw_rows = $is_en
-        ? ($rows_en !== [] ? $rows_en : $rows_zh)
-        : ($rows_zh !== [] ? $rows_zh : $rows_en);
-}
+/* 员工行读取链：新编号字段 → 旧编号字段 → 旧 Pro Repeater meta → 兜底。 */
+$raw_rows = hireai_ai_employee_rows($lb_pid, $is_en);
 
 /* v3.4.0: fallback 数据兜底（两种语言的 ACF Repeater 都为空时） */
 $lb_rows_from_fallback = false;
@@ -164,6 +105,32 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
     -webkit-text-fill-color: transparent;
     color: transparent;
     font-style: normal;
+}
+.lb-att .lb-hero {
+    position: relative;
+    overflow: hidden;
+}
+.lb-att .lb-hero > :not(.lb-hero__bg) {
+    position: relative;
+    z-index: 1;
+}
+.lb-att .lb-hero__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.26;
+    pointer-events: none;
+}
+.lb-att .lb-hero__note {
+    display: block;
+    margin-bottom: 14px;
+    font-family: var(--font-label, 'Montserrat', 'Inter'), sans-serif;
+    font-size: var(--fs-label, 12px);
+    line-height: 1.5;
+    color: var(--lb-att-mid, #444748);
 }
 
 /* Section divider */
@@ -348,6 +315,10 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 
     <!-- ─────────── Hero ─────────── -->
     <section class="lb-hero">
+        <?php if ($hero_image !== '') : ?>
+            <img class="lb-hero__bg" src="<?php echo esc_url($hero_image); ?>" alt="" loading="eager" decoding="async" />
+        <?php endif; ?>
+        <span class="lb-hero__note"><?php echo esc_html($hero_note); ?></span>
         <span class="lb-hero__kicker"><?php echo esc_html($hero_kicker); ?></span>
         <h1 class="lb-hero__title"><?php echo esc_html($hero_title); ?></h1>
         <p class="lb-hero__subtitle"><?php echo esc_html($hero_subtitle); ?></p>
@@ -365,11 +336,11 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
     <?php if (!empty($lb_cats)) : ?>
     <section class="lb-att-filtersec">
         <div class="lb-att-head">
-            <span class="lb-att-head__kicker"><?php echo esc_html(hireai_field('lookbook_filter_kicker', $is_en ? 'BROWSE BY CRAFT' : '分类浏览', $lb_pid)); ?></span>
-            <h2 class="lb-att-head__title"><?php echo esc_html(hireai_field('lookbook_filter_title', $is_en ? 'Discover your digital employee by role and craft.' : '按角色与场景，发现属于你的数字员工。', $lb_pid)); ?></h2>
+            <span class="lb-att-head__kicker"><?php echo esc_html(hireai_employees_page_field('lookbook_filter_kicker', $is_en ? 'BROWSE BY CRAFT' : '分类浏览', $lb_pid)); ?></span>
+            <h2 class="lb-att-head__title"><?php echo esc_html(hireai_employees_page_field('lookbook_filter_title', $is_en ? 'Discover your digital employee by role and craft.' : '按角色与场景，发现属于你的数字员工。', $lb_pid)); ?></h2>
         </div>
         <div class="lb-att-tabs" role="tablist" id="lb-att-tabs">
-            <button type="button" class="lb-att-tab is-active" data-cat="all" aria-selected="true"><?php echo esc_html(hireai_field('lookbook_filter_all', $is_en ? 'All' : '全部', $lb_pid)); ?></button>
+            <button type="button" class="lb-att-tab is-active" data-cat="all" aria-selected="true"><?php echo esc_html(hireai_employees_page_field('lookbook_filter_all', $is_en ? 'All' : '全部', $lb_pid)); ?></button>
             <?php foreach ($lb_cats as $lb_cat) : ?>
                 <button type="button" class="lb-att-tab" data-cat="<?php echo esc_attr($lb_cat); ?>" aria-selected="false"><?php echo esc_html($lb_cat); ?></button>
             <?php endforeach; ?>
@@ -399,7 +370,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
                         <div class="lb-row__border" aria-hidden="true"></div>
                         <img class="lb-row__image"
                              src="<?php echo esc_url($img_url); ?>"
-                             alt="<?php echo esc_attr($row['title'] ?? ''); ?>"
+                             alt="<?php echo esc_attr(trim((string) ($row['image_alt'] ?? '')) !== '' ? $row['image_alt'] : ($row['title'] ?? '')); ?>"
                              loading="lazy"
                              decoding="async" />
                     </div>
@@ -424,7 +395,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
         <?php if ($total_pages > 1):
             $base_url = remove_query_arg('emp_page');
         ?>
-            <nav class="lb-att-pagination" aria-label="<?php echo esc_attr($is_en ? 'Employee pagination' : '员工分页'); ?>">
+            <nav class="lb-att-pagination" aria-label="<?php echo esc_attr(hireai_employees_page_field('lookbook_pagination_label', $is_en ? 'Employee pagination' : '员工分页', $lb_pid)); ?>">
                     <?php for ($p = 1; $p <= $total_pages; $p++): ?>
                         <a class="lb-att-pagination__btn <?php echo $p === $current_page ? 'is-active' : ''; ?>"
                            href="<?php echo esc_url(add_query_arg('emp_page', $p, $base_url)); ?>"
@@ -447,18 +418,18 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
     ?>
     <section class="lb-att-processsec">
         <div class="lb-att-head">
-            <span class="lb-att-head__kicker"><?php echo esc_html(hireai_field('lookbook_process_kicker', $is_en ? 'OUR PROCESS' : '服务流程', $lb_pid)); ?></span>
-            <h2 class="lb-att-head__title"><?php echo esc_html(hireai_field('lookbook_process_title', $is_en ? 'Four steps from discovery to deployment.' : '从了解到上线，四步即可拥有专属数字员工。', $lb_pid)); ?></h2>
+            <span class="lb-att-head__kicker"><?php echo esc_html(hireai_employees_page_field('lookbook_process_kicker', $is_en ? 'OUR PROCESS' : '服务流程', $lb_pid)); ?></span>
+            <h2 class="lb-att-head__title"><?php echo esc_html(hireai_employees_page_field('lookbook_process_title', $is_en ? 'Four steps from discovery to deployment.' : '从了解到上线，四步即可拥有专属数字员工。', $lb_pid)); ?></h2>
         </div>
         <div class="lb-att-process">
             <?php for ($lb_i = 1; $lb_i <= 4; $lb_i++) : ?>
                 <div class="lb-att-step">
-                    <h3 class="lb-att-step__title"><?php echo esc_html(hireai_field("lookbook_process_step{$lb_i}_title", $lb_process_d[$lb_i]['t'], $lb_pid)); ?></h3>
-                    <p class="lb-att-step__desc"><?php echo esc_html(hireai_field("lookbook_process_step{$lb_i}_desc", $lb_process_d[$lb_i]['d'], $lb_pid)); ?></p>
+                    <h3 class="lb-att-step__title"><?php echo esc_html(hireai_employees_page_field("lookbook_process_step{$lb_i}_title", $lb_process_d[$lb_i]['t'], $lb_pid)); ?></h3>
+                    <p class="lb-att-step__desc"><?php echo esc_html(hireai_employees_page_field("lookbook_process_step{$lb_i}_desc", $lb_process_d[$lb_i]['d'], $lb_pid)); ?></p>
                 </div>
             <?php endfor; ?>
         </div>
-        <?php $lb_process_note = hireai_field('lookbook_process_note', $is_en ? 'Average delivery in 4–6 weeks, with a dedicated concierge throughout.' : '平均 4–6 周即可交付；全程由资深管家陪跑。', $lb_pid); ?>
+        <?php $lb_process_note = hireai_employees_page_field('lookbook_process_note', $is_en ? 'Average delivery in 4–6 weeks, with a dedicated concierge throughout.' : '平均 4–6 周即可交付；全程由资深管家陪跑。', $lb_pid); ?>
         <?php if ($lb_process_note !== '') : ?>
             <p class="lb-att-process__note"><?php echo esc_html($lb_process_note); ?></p>
         <?php endif; ?>
@@ -470,7 +441,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
             <h2 class="lb-cta__heading"><?php echo esc_html($cta_heading); ?></h2>
             <p class="lb-cta__sub"><?php echo esc_html($cta_sub); ?></p>
             <div class="lb-cta__actions">
-                <a class="lb-btn lb-btn--primary" href="<?php echo esc_url(home_url('/contact/')); ?>">
+                <a class="lb-btn lb-btn--primary" href="<?php echo esc_url($cta_contact_url); ?>">
                     <?php echo esc_html($cta_btn); ?>
                 </a>
                 <a class="lb-btn lb-btn--ghost" href="<?php echo esc_url($cta_url); ?>">

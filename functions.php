@@ -535,6 +535,239 @@ function hireai_link_lang($name, $lang, $default_url = '#', $default_title = '',
 }
 
 /**
+ * v3.7.21 曾把页面字段从 lookbook_* 改名为 employees_*，v3.7.23 已回滚代码。
+ * 读取时保留两个 schema 的显式映射，避免旧 meta 因字段改名而丢失。
+ */
+function hireai_employees_page_field($name, $default = '', $post_id = false) {
+    $aliases = [
+        'lookbook_hero_note'          => 'employees_hero_note',
+        'lookbook_hero_kicker'        => 'employees_hero_kicker',
+        'lookbook_hero_title'         => 'employees_hero_title',
+        'lookbook_hero_subtitle'      => 'employees_hero_subtitle',
+        'lookbook_hero_image'         => 'employees_hero_image',
+        'lookbook_filter_kicker'      => 'employees_filter_kicker',
+        'lookbook_filter_title'       => 'employees_filter_title',
+        'lookbook_filter_all'         => 'employees_filter_all_label',
+        'lookbook_process_kicker'     => 'employees_process_kicker',
+        'lookbook_process_title'      => 'employees_process_title',
+        'lookbook_process_note'       => 'employees_process_note',
+        'lookbook_process_step1_title' => 'employees_process_01_title',
+        'lookbook_process_step1_desc'  => 'employees_process_01_description',
+        'lookbook_process_step2_title' => 'employees_process_02_title',
+        'lookbook_process_step2_desc'  => 'employees_process_02_description',
+        'lookbook_process_step3_title' => 'employees_process_03_title',
+        'lookbook_process_step3_desc'  => 'employees_process_03_description',
+        'lookbook_process_step4_title' => 'employees_process_04_title',
+        'lookbook_process_step4_desc'  => 'employees_process_04_description',
+        'lookbook_cta_heading'        => 'employees_cta_heading',
+        'lookbook_cta_sub'            => 'employees_cta_subtitle',
+        'lookbook_cta_btn'            => 'employees_cta_primary_label',
+        'lookbook_cta_link'           => 'employees_cta_secondary_label',
+        'lookbook_cta_contact_url'    => 'employees_cta_primary_url',
+        'lookbook_cta_url'            => 'employees_cta_secondary_url',
+        'lookbook_pagination_label'   => 'employees_pagination_label',
+    ];
+    $alt_name = $aliases[$name] ?? '';
+    $suffix = hireai_lang_suffix();
+    $mirror = $suffix === '_en' ? '_zh' : '_en';
+    if ($post_id && function_exists('metadata_exists')) {
+        foreach (array_filter([$alt_name . $suffix, $name . $suffix]) as $meta_name) {
+            if (metadata_exists('post', (int) $post_id, $meta_name)) {
+                return get_post_meta((int) $post_id, $meta_name, true);
+            }
+        }
+    }
+    $names = array_filter([
+        $alt_name ? $alt_name . $suffix : '',
+        $name . $suffix,
+        $alt_name ?: '',
+        $name,
+        $alt_name ? $alt_name . $mirror : '',
+        $name . $mirror,
+    ]);
+    foreach ($names as $candidate) {
+        $value = site_field($candidate, '__hireai_missing__', $post_id);
+        if ($value !== '__hireai_missing__') {
+            return $value;
+        }
+    }
+    return $default;
+}
+
+function hireai_employees_page_image($name, $default = '', $post_id = false) {
+    $aliases = [
+        'lookbook_hero_image' => 'employees_hero_image',
+        'lookbook_row_image'  => 'employees_row_image',
+    ];
+    $alt_name = $aliases[$name] ?? '';
+    $suffix = hireai_lang_suffix();
+    $mirror = $suffix === '_en' ? '_zh' : '_en';
+    if ($post_id && function_exists('metadata_exists')) {
+        foreach (array_filter([$alt_name . $suffix, $name . $suffix]) as $meta_name) {
+            if (metadata_exists('post', (int) $post_id, $meta_name)) {
+                return site_image_url_resolve(get_post_meta((int) $post_id, $meta_name, true), '');
+            }
+        }
+    }
+    $names = array_filter([
+        $alt_name ? $alt_name . $suffix : '',
+        $name . $suffix,
+        $alt_name ?: '',
+        $name,
+        $alt_name ? $alt_name . $mirror : '',
+        $name . $mirror,
+    ]);
+    foreach ($names as $candidate) {
+        $value = site_image_url($candidate, '__hireai_missing__', $post_id);
+        if ($value !== '__hireai_missing__') {
+            return $value;
+        }
+    }
+    return $default;
+}
+
+if (!function_exists('hireai_acf_has_repeater')) {
+    function hireai_acf_has_repeater() {
+        return function_exists('acf_get_field_type') && (bool) acf_get_field_type('repeater');
+    }
+}
+
+function hireai_legacy_repeater_rows($repeater_name, $sub_names, $post_id) {
+    if (!function_exists('get_post_meta') || !$post_id) {
+        return [];
+    }
+    $count = (int) get_post_meta($post_id, $repeater_name, true);
+    if ($count < 1) {
+        return [];
+    }
+    $rows = [];
+    for ($row_index = 0; $row_index < min($count, 12); $row_index++) {
+        $row = [];
+        foreach ($sub_names as $key => $sub_name) {
+            $value = get_post_meta($post_id, "{$repeater_name}_{$row_index}_{$sub_name}", true);
+            if ($key === 'image' && is_numeric($value) && (int) $value > 0) {
+                $value = wp_get_attachment_image_url((int) $value, 'full');
+            }
+            $row[$key] = (string) $value;
+        }
+        if (implode('', $row) === '') {
+            continue;
+        }
+        $rows[] = $row;
+    }
+    return $rows;
+}
+
+function hireai_ai_employee_rows($post_id, $is_en) {
+    $suffix = $is_en ? '_en' : '_zh';
+    $parts = ['kicker', 'title', 'description', 'cta_label', 'image', 'url', 'image_alt'];
+    $rows = [];
+
+    for ($number = 1; $number <= 12; $number++) {
+        $number_name = sprintf('%02d', $number);
+        $values = [];
+        $field_bases = [
+            'kicker' => [
+                "employees_row_{$number_name}_kicker",
+                "lookbook_employee_{$number_name}_kicker",
+            ],
+            'title' => [
+                "employees_row_{$number_name}_title",
+                "lookbook_employee_{$number_name}_title",
+            ],
+            'description' => [
+                "employees_row_{$number_name}_description",
+                "lookbook_employee_{$number_name}_description",
+                "lookbook_employee_{$number_name}_desc",
+            ],
+            'cta_label' => [
+                "employees_row_{$number_name}_cta_label",
+                "lookbook_employee_{$number_name}_cta_label",
+                "lookbook_employee_{$number_name}_button",
+            ],
+            'image' => [
+                "employees_row_{$number_name}_image",
+                "lookbook_employee_{$number_name}_image",
+            ],
+            'url' => [
+                "employees_row_{$number_name}_url",
+                "lookbook_employee_{$number_name}_url",
+            ],
+            'image_alt' => [
+                "employees_row_{$number_name}_image_alt",
+                "lookbook_employee_{$number_name}_image_alt",
+            ],
+        ];
+        foreach ($parts as $part) {
+            $values[$part] = '';
+            foreach ($field_bases[$part] as $field_base) {
+                $field_name = $field_base . $suffix;
+                if ($part === 'image') {
+                    $value = site_image_url($field_name, '', $post_id);
+                } else {
+                    $value = site_field($field_name, '', $post_id);
+                }
+                if ($value !== '' && $value !== null && $value !== false) {
+                    $values[$part] = (string) $value;
+                    break;
+                }
+            }
+        }
+        if (implode('', $values) !== '') {
+            $values['cta_label'] = $values['cta_label'] !== ''
+                ? $values['cta_label']
+                : ($is_en ? 'Learn More' : '了解详情');
+            $values['url'] = $values['url'] !== ''
+                ? $values['url']
+                : (function_exists('hireai_resolve_employee_url')
+                    ? hireai_resolve_employee_url(count($rows), home_url('/ai-employees/'))
+                    : home_url('/ai-employees/'));
+            $rows[] = $values;
+        }
+    }
+
+    if ($rows) {
+        return $rows;
+    }
+
+    $legacy_zh = hireai_legacy_repeater_rows('lookbook_employees', [
+        'kicker' => 'emp_row_kicker',
+        'title' => 'emp_row_title',
+        'description' => 'emp_row_desc',
+        'cta_label' => 'emp_row_button',
+        'image' => 'emp_row_image',
+        'url' => 'emp_row_url',
+    ], $post_id);
+    $legacy_en = hireai_legacy_repeater_rows('lookbook_employees_en', [
+        'kicker' => 'emp_row_kicker',
+        'title' => 'emp_row_title',
+        'description' => 'emp_row_desc',
+        'cta_label' => 'emp_row_button',
+        'image' => 'emp_row_image',
+        'url' => 'emp_row_url',
+    ], $post_id);
+    $legacy = $is_en ? ($legacy_en ?: $legacy_zh) : ($legacy_zh ?: $legacy_en);
+
+    foreach ($legacy as $index => $row) {
+        if ($is_en && empty($row['image']) && isset($legacy_zh[$index]['image'])) {
+            $row['image'] = $legacy_zh[$index]['image'];
+        }
+        $row['image_alt'] = $row['image_alt'] ?? '';
+        $row['cta_label'] = $row['cta_label'] !== ''
+            ? $row['cta_label']
+            : ($is_en ? 'Learn More' : '了解详情');
+        $row['url'] = $row['url'] !== ''
+            ? $row['url']
+            : (function_exists('hireai_resolve_employee_url')
+                ? hireai_resolve_employee_url(count($rows), home_url('/ai-employees/'))
+                : home_url('/ai-employees/'));
+        $rows[] = $row;
+    }
+
+    return $rows;
+}
+
+/**
  * 渲染一个双语文本块（.zh/.en，CSS/JS 负责切换显示）
  */
 function hireai_bilingual($zh, $en, $tag = 'span') {
@@ -2016,39 +2249,43 @@ add_action('acf/init', function () {
 
     /* ---- 3. AI 数字员工列表页 ---- */
     acf_add_local_field_group(hireai_make_bilingual_group('group_page_ai_employees', 'AI 数字员工页', [
-        ['name' => 'lookbook_hero_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '数字工坊', 'en' => 'The Atelier'],
-        ['name' => 'lookbook_hero_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '精英数字解决方案', 'en' => 'Elite Digital Solutions', 'extra' => ['rows' => 1]],
-        ['name' => 'lookbook_hero_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '"AI 主导流程，人类交付成果。"', 'en' => '"AI-led process, Human-delivered results."', 'extra' => ['rows' => 2]],
-        ['name' => 'lookbook_cta_heading', 'label' => 'CTA 标题', 'type' => 'text', 'zh' => '准备好重新定义人性了吗？', 'en' => 'Ready to Redefine Humanity?'],
-        ['name' => 'lookbook_cta_sub', 'label' => 'CTA 副标题', 'type' => 'textarea', 'zh' => '加入运用 Aurelian AI 专属生态的领袖精英之列。', 'en' => "Join the exclusive echelon of leaders leveraging Aurelian AI's bespoke ecosystem.", 'extra' => ['rows' => 2]],
-        ['name' => 'lookbook_cta_btn', 'label' => 'CTA 主按钮', 'type' => 'text', 'zh' => '开启旅程', 'en' => 'Start The Journey'],
-        ['name' => 'lookbook_cta_link', 'label' => 'CTA 文字链接', 'type' => 'text', 'zh' => '下载品牌手册', 'en' => 'Download Brand Book'],
-        ['name' => 'lookbook_cta_url', 'label' => 'CTA 链接地址', 'type' => 'text', 'zh' => '/case-insights/', 'en' => '/case-insights/'],
-        ['name' => 'lookbook_hero_note', 'label' => 'Hero 注脚', 'type' => 'text', 'zh' => '——  在职数字员工 · 精英岗位', 'en' => '— Curated roles, on call'],
-        ['name' => 'lookbook_process_note', 'label' => '服务流程 · 注脚', 'type' => 'textarea', 'zh' => '平均 4–6 周即可交付；全程由资深管家陪跑。', 'en' => 'Average delivery in 4–6 weeks, with a dedicated concierge throughout.', 'extra' => ['rows' => 2]],
+        ['name' => 'employees_hero_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '数字工坊', 'en' => 'The Atelier'],
+        ['name' => 'employees_hero_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '精英数字解决方案', 'en' => 'Elite Digital Solutions', 'extra' => ['rows' => 1]],
+        ['name' => 'employees_hero_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '"AI 主导流程，人类交付成果。"', 'en' => '"AI-led process, Human-delivered results."', 'extra' => ['rows' => 2]],
+        ['name' => 'employees_hero_image', 'label' => '页眉背景图', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'employees_cta_heading', 'label' => 'CTA 标题', 'type' => 'text', 'zh' => '准备好重新定义人性了吗？', 'en' => 'Ready to Redefine Humanity?'],
+        ['name' => 'employees_cta_subtitle', 'label' => 'CTA 副标题', 'type' => 'textarea', 'zh' => '加入运用 Aurelian AI 专属生态的领袖精英之列。', 'en' => "Join the exclusive echelon of leaders leveraging Aurelian AI's bespoke ecosystem.", 'extra' => ['rows' => 2]],
+        ['name' => 'employees_cta_primary_label', 'label' => 'CTA 主按钮', 'type' => 'text', 'zh' => '开启旅程', 'en' => 'Start The Journey'],
+        ['name' => 'employees_cta_secondary_label', 'label' => 'CTA 文字链接', 'type' => 'text', 'zh' => '下载品牌手册', 'en' => 'Download Brand Book'],
+        ['name' => 'employees_cta_secondary_url', 'label' => 'CTA 链接地址', 'type' => 'text', 'zh' => '/case-insights/', 'en' => '/case-insights/'],
+        ['name' => 'employees_cta_primary_url', 'label' => 'CTA 主按钮链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
+        ['name' => 'employees_hero_note', 'label' => 'Hero 注脚', 'type' => 'text', 'zh' => '——  在职数字员工 · 精英岗位', 'en' => '— Curated roles, on call'],
+        ['name' => 'employees_process_note', 'label' => '服务流程 · 注脚', 'type' => 'textarea', 'zh' => '平均 4–6 周即可交付；全程由资深管家陪跑。', 'en' => 'Average delivery in 4–6 weeks, with a dedicated concierge throughout.', 'extra' => ['rows' => 2]],
 
         /* ── 场景筛选 section ── */
-        ['name' => 'lookbook_filter_kicker', 'label' => '筛选区 · 眉题', 'type' => 'text', 'zh' => '分类浏览', 'en' => 'BROWSE BY CRAFT'],
-        ['name' => 'lookbook_filter_title', 'label' => '筛选区 · 标题', 'type' => 'textarea', 'zh' => '按角色与场景，发现属于你的数字员工。', 'en' => 'Discover your digital employee by role and craft.', 'extra' => ['rows' => 2]],
-        ['name' => 'lookbook_filter_all', 'label' => '筛选区 · 「全部」标签', 'type' => 'text', 'zh' => '全部', 'en' => 'All'],
+        ['name' => 'employees_filter_kicker', 'label' => '筛选区 · 眉题', 'type' => 'text', 'zh' => '分类浏览', 'en' => 'BROWSE BY CRAFT'],
+        ['name' => 'employees_filter_title', 'label' => '筛选区 · 标题', 'type' => 'textarea', 'zh' => '按角色与场景，发现属于你的数字员工。', 'en' => 'Discover your digital employee by role and craft.', 'extra' => ['rows' => 2]],
+        ['name' => 'employees_filter_all_label', 'label' => '筛选区 · 「全部」标签', 'type' => 'text', 'zh' => '全部', 'en' => 'All'],
 
         /* ── 服务流程 section ── */
-        ['name' => 'lookbook_process_kicker', 'label' => '服务流程 · 眉题', 'type' => 'text', 'zh' => '服务流程', 'en' => 'OUR PROCESS'],
-        ['name' => 'lookbook_process_title', 'label' => '服务流程 · 标题', 'type' => 'textarea', 'zh' => '从了解到上线，四步即可拥有专属数字员工。', 'en' => 'Four steps from discovery to deployment.', 'extra' => ['rows' => 2]],
-        ['name' => 'lookbook_process_step1_title', 'label' => '流程 1 · 标题', 'type' => 'text', 'zh' => '需求洞察', 'en' => 'Discovery'],
-        ['name' => 'lookbook_process_step1_desc', 'label' => '流程 1 · 描述', 'type' => 'textarea', 'zh' => '我们的顾问与您一起梳理业务场景与核心指标。', 'en' => 'Our consultants map your business context and KPIs.', 'extra' => ['rows' => 2]],
-        ['name' => 'lookbook_process_step2_title', 'label' => '流程 2 · 标题', 'type' => 'text', 'zh' => '方案设计', 'en' => 'Curation'],
-        ['name' => 'lookbook_process_step2_desc', 'label' => '流程 2 · 描述', 'type' => 'textarea', 'zh' => '从精品模板库中挑选角色底座，并融入品牌基因。', 'en' => 'Pick an archetype from our atelier and weave in your brand DNA.', 'extra' => ['rows' => 2]],
-        ['name' => 'lookbook_process_step3_title', 'label' => '流程 3 · 标题', 'type' => 'text', 'zh' => '训练调优', 'en' => 'Calibration'],
-        ['name' => 'lookbook_process_step3_desc', 'label' => '流程 3 · 描述', 'type' => 'textarea', 'zh' => '以专属语料微调模型，确保语调与判断契合业务。', 'en' => 'We fine-tune the model on your proprietary corpus to match tone and judgement.', 'extra' => ['rows' => 2]],
-        ['name' => 'lookbook_process_step4_title', 'label' => '流程 4 · 标题', 'type' => 'text', 'zh' => '上线陪跑', 'en' => 'Co-pilot'],
-        ['name' => 'lookbook_process_step4_desc', 'label' => '流程 4 · 描述', 'type' => 'textarea', 'zh' => '交付上线后由专属管家持续陪跑，按月复盘迭代。', 'en' => 'After deployment, your dedicated concierge reviews and iterates monthly.', 'extra' => ['rows' => 2]],
+        ['name' => 'employees_process_kicker', 'label' => '服务流程 · 眉题', 'type' => 'text', 'zh' => '服务流程', 'en' => 'OUR PROCESS'],
+        ['name' => 'employees_process_title', 'label' => '服务流程 · 标题', 'type' => 'textarea', 'zh' => '从了解到上线，四步即可拥有专属数字员工。', 'en' => 'Four steps from discovery to deployment.', 'extra' => ['rows' => 2]],
+        ['name' => 'employees_process_01_title', 'label' => '流程 01 · 标题', 'type' => 'text', 'zh' => '需求洞察', 'en' => 'Discovery'],
+        ['name' => 'employees_process_01_description', 'label' => '流程 01 · 描述', 'type' => 'textarea', 'zh' => '我们的顾问与您一起梳理业务场景与核心指标。', 'en' => 'Our consultants map your business context and KPIs.', 'extra' => ['rows' => 2]],
+        ['name' => 'employees_process_02_title', 'label' => '流程 02 · 标题', 'type' => 'text', 'zh' => '方案设计', 'en' => 'Curation'],
+        ['name' => 'employees_process_02_description', 'label' => '流程 02 · 描述', 'type' => 'textarea', 'zh' => '从精品模板库中挑选角色底座，并融入品牌基因。', 'en' => 'Pick an archetype from our atelier and weave in your brand DNA.', 'extra' => ['rows' => 2]],
+        ['name' => 'employees_process_03_title', 'label' => '流程 03 · 标题', 'type' => 'text', 'zh' => '训练调优', 'en' => 'Calibration'],
+        ['name' => 'employees_process_03_description', 'label' => '流程 03 · 描述', 'type' => 'textarea', 'zh' => '以专属语料微调模型，确保语调与判断契合业务。', 'en' => 'We fine-tune the model on your proprietary corpus to match tone and judgement.', 'extra' => ['rows' => 2]],
+        ['name' => 'employees_process_04_title', 'label' => '流程 04 · 标题', 'type' => 'text', 'zh' => '上线陪跑', 'en' => 'Co-pilot'],
+        ['name' => 'employees_process_04_description', 'label' => '流程 04 · 描述', 'type' => 'textarea', 'zh' => '交付上线后由专属管家持续陪跑，按月复盘迭代。', 'en' => 'After deployment, your dedicated concierge reviews and iterates monthly.', 'extra' => ['rows' => 2]],
+        ['name' => 'employees_pagination_label', 'label' => '分页辅助文字', 'type' => 'text', 'zh' => '员工分页', 'en' => 'Employee pagination'],
     ], [
         [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-employees.php']],
     ]));
 
-    /* ---- 3b. 数字员工 — Repeater（每行可编辑） ---- */
-    acf_add_local_field_group([
+    /* ---- 3b. 数字员工 — Repeater（Pro）/ 12 行普通字段（Free 兜底） ---- */
+    if (hireai_acf_has_repeater()) {
+        acf_add_local_field_group([
         'key'    => 'group_page_ai_employees_rows',
         'title'  => 'AI 数字员工页 · 员工行（Repeater）',
         'fields' => [
@@ -2102,7 +2339,80 @@ add_action('acf/init', function () {
         'location' => [
             [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-employees.php']],
         ],
+        ]);
+    } else {
+
+    $employee_sub_specs = [
+        'kicker'      => ['Kicker', '眉题', 'text'],
+        'title'       => ['Title', '标题', 'text'],
+        'description' => ['Description', '描述', 'textarea'],
+        'cta_label'   => ['Button', '按钮', 'text'],
+        'image'       => ['Image', '展示图', 'image'],
+        'image_alt'   => ['Image Alt Text', '图片替代文字', 'text'],
+        'url'         => ['Link URL', '链接地址', 'text'],
+    ];
+    $free_employee_fields = [
+        ['key' => 'field_lookbook_employees_tab_zh', 'label' => '中文内容（每行）', 'type' => 'tab'],
+    ];
+
+    foreach ([false, true] as $is_en) {
+        if ($is_en) {
+            $free_employee_fields[] = ['key' => 'field_lookbook_employees_tab_en', 'label' => 'English Content (per row)', 'type' => 'tab'];
+        }
+        $suffix = $is_en ? 'en' : 'zh';
+        $fallback_rows = lookbook_fallback_employees();
+        for ($row_number = 1; $row_number <= 12; $row_number++) {
+            $fallback_row = $row_number <= 5 && isset($fallback_rows[$row_number - 1])
+                ? $fallback_rows[$row_number - 1]
+                : [];
+            foreach ($employee_sub_specs as $sub_name => $spec) {
+                [$label_en, $label_zh, $field_type] = $spec;
+                $default_keys = [
+                    'kicker' => 'kicker',
+                    'title' => 'title',
+                    'description' => 'desc',
+                    'cta_label' => 'button',
+                    'image' => 'image',
+                    'image_alt' => '',
+                    'url' => 'url',
+                ];
+                $default_key = $default_keys[$sub_name];
+                $default_value = $default_key !== '' && isset($fallback_row[$default_key])
+                    ? $fallback_row[$default_key]
+                    : '';
+                $field = [
+                    'key'   => sprintf('field_employees_row_%02d_%s_%s', $row_number, $sub_name, $suffix),
+                    'label' => sprintf('%02d · %s', $row_number, $is_en ? $label_en : $label_zh),
+                    'name'  => sprintf('employees_row_%02d_%s_%s', $row_number, $sub_name, $suffix),
+                    'type'  => $field_type,
+                ];
+                if ($field_type === 'text' || $field_type === 'textarea') {
+                    $field['placeholder'] = $default_value;
+                }
+                if ($field_type === 'textarea') {
+                    $field['rows'] = 3;
+                }
+                if ($field_type === 'image') {
+                    $field['return_format'] = 'url';
+                    $field['preview_size'] = 'medium';
+                }
+                if ($row_number === 1 && $sub_name === 'kicker') {
+                    $field['instructions'] = 'ACF Free 不支持 Repeater。按 01 起连续填写；某行整行为空时自动隐藏。旧 Repeater 数据仍会在前台回退显示。';
+                }
+                $free_employee_fields[] = $field;
+            }
+        }
+    }
+
+    acf_add_local_field_group([
+        'key'       => 'group_page_ai_employees_rows',
+        'title'     => 'AI 数字员工页 · 员工行（最多 12 行）',
+        'fields'    => $free_employee_fields,
+        'location' => [
+            [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-employees.php']],
+        ],
     ]);
+    }
 
     /* ---- 4. AI 解决方案页 ---- */
     acf_add_local_field_group(hireai_make_bilingual_group('group_page_ai_solutions', 'AI 解决方案页', [
