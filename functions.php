@@ -124,9 +124,12 @@ if (!function_exists('hireai_register_schema_groups')) {
                     continue;
                 }
                 if (isset($field_keys[$field['key']])) $errors[] = 'duplicate field key: ' . $field['key'];
-                if (isset($field_names[$field['name']])) $errors[] = 'duplicate field name: ' . $field['name'];
+                if ($field['type'] !== 'tab') {
+                    $field_name = $field['name'] ?? '';
+                    if (isset($field_names[$field_name])) $errors[] = 'duplicate field name: ' . $field_name;
+                    $field_names[$field_name] = true;
+                }
                 $field_keys[$field['key']] = true;
-                $field_names[$field['name']] = true;
             }
             hireai_register_field_group($group);
         }
@@ -435,9 +438,7 @@ function hireai_lang_suffix() {
  */
 function site_field($name, $default = '', $post_id = false) {
     if (function_exists('get_field')) {
-        $canonical = hireai_canonical_field_name($name);
-        $names = [$canonical];
-        if ($canonical !== $name) $names[] = $name;
+        $names = hireai_field_lookup_names($name);
         $value = null;
         foreach ($names as $field_name) {
             $v = $post_id ? get_field($field_name, $post_id) : get_field($field_name);
@@ -462,6 +463,38 @@ function site_field($name, $default = '', $post_id = false) {
         }
     }
     return $default;
+}
+
+/**
+ * Build the meta-name fallback chain for current and retired ACF schemas.
+ * Language suffixes must survive canonicalization; otherwise a renamed
+ * bilingual field can never fall back to its legacy `_zh`/`_en` meta value.
+ */
+function hireai_field_lookup_names($name) {
+    $name = (string) $name;
+    $aliases = hireai_legacy_field_aliases();
+    if (preg_match('/_(zh|en)$/i', $name, $match)) {
+        $suffix = strtolower($match[1]);
+        $base = substr($name, 0, -3);
+        $canonical_base = hireai_canonical_field_name($base);
+        $legacy_base = array_search($canonical_base, $aliases, true) ?: $base;
+        $mirror = $suffix === 'en' ? 'zh' : 'en';
+
+        $names = array_filter([
+            $canonical_base . '_' . $suffix,
+            $legacy_base . '_' . $suffix,
+            $canonical_base,
+            $legacy_base,
+            $canonical_base . '_' . $mirror,
+            $legacy_base . '_' . $mirror,
+            $name,
+        ]);
+        return array_values(array_unique($names));
+    }
+
+    $canonical = hireai_canonical_field_name($name);
+    $legacy_base = array_search($canonical, $aliases, true);
+    return array_values(array_unique(array_filter([$canonical, $legacy_base, $name])));
 }
 
 /**
@@ -561,28 +594,11 @@ function lookbook_fallback_employees() {
  */
 function site_image_url($name, $default = '', $post_id = false) {
     if (function_exists('get_field')) {
-        $base = hireai_canonical_field_name($name);
-        $names = [$base];
-        if ($base !== $name) $names[] = $name;
+        $names = hireai_field_lookup_names($name);
         foreach ($names as $field_name) {
             $v = $post_id ? get_field($field_name, $post_id) : get_field($field_name);
             if (site_image_url_is_valid($v)) {
                 return site_image_url_resolve($v, $default);
-            }
-        }
-        // v3.0.8: suffix fallback chain — 尝试无 suffix + 反向 suffix
-        if ($post_id === false && preg_match('/_([a-z]{2,3})$/', $base, $m)) {
-            $cur_suffix = $m[1];
-            $unsuffixed_base = substr($base, 0, -strlen($cur_suffix));
-            // 顺序：无 suffix → 反向 suffix
-            $alt_suffixes = ['', ($cur_suffix === 'zh' ? '_en' : '_zh')];
-            foreach ($alt_suffixes as $alt) {
-                $alt_name = $unsuffixed_base . $alt;
-                if ($alt_name === $name) continue;
-                $v2 = get_field($alt_name);
-                if (site_image_url_is_valid($v2)) {
-                    return site_image_url_resolve($v2, $default);
-                }
             }
         }
     }
