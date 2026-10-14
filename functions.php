@@ -724,8 +724,8 @@ function hireai_ai_employee_rows($post_id, $is_en) {
             }
         }
         if (implode('', $values) !== '') {
-            $values['cta_label'] = $values['cta_label'] !== ''
-                ? $values['cta_label']
+            $values['button'] = $values['button'] !== ''
+                ? $values['button']
                 : ($is_en ? 'Learn More' : '了解详情');
             $values['url'] = $values['url'] !== ''
                 ? $values['url']
@@ -763,8 +763,8 @@ function hireai_ai_employee_rows($post_id, $is_en) {
             $row['image'] = $legacy_zh[$index]['image'];
         }
         $row['image_alt'] = $row['image_alt'] ?? '';
-        $row['cta_label'] = $row['cta_label'] !== ''
-            ? $row['cta_label']
+        $row['button'] = $row['button'] !== ''
+            ? $row['button']
             : ($is_en ? 'Learn More' : '了解详情');
         $row['url'] = $row['url'] !== ''
             ? $row['url']
