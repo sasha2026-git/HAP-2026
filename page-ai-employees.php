@@ -96,6 +96,9 @@ if (!function_exists('hireai_employee_intro_markup')) {
             $class = 'lb-row__desc-block';
             if ($label !== '') {
                 $class .= ' lb-row__desc-block--labelled';
+                if ($label === '性格' || strcasecmp($label, 'Personality') === 0) {
+                    $class .= ' lb-row__desc-block--flush';
+                }
             }
             $html .= '<p class="' . esc_attr($class) . '">';
             if ($label !== '') {
@@ -375,16 +378,16 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 /* v3.7.27: Employee introductions need editorial breathing room while the
    long-form copy keeps the page's gold-and-charcoal hierarchy readable. */
 .lb-att .lb-row__title {
-    margin-bottom: clamp(20px, 3vw, 32px);
+    margin-bottom: clamp(16px, 2vw, 24px);
 }
 
 .lb-att .lb-row__desc {
     display: grid;
-    gap: clamp(14px, 2vw, 22px);
-    max-width: 52ch;
-    margin-bottom: clamp(32px, 4vw, 48px);
-    font-size: clamp(15px, 1.2vw, 17px);
-    line-height: 1.8;
+    gap: clamp(10px, 1.2vw, 16px);
+    max-width: 56ch;
+    margin-bottom: clamp(24px, 3vw, 36px);
+    font-size: clamp(15px, 0.18vw + 13.8px, 16px);
+    line-height: 1.7;
 }
 
 .lb-att .lb-row__desc-block {
@@ -408,8 +411,8 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 }
 
 .lb-att .lb-row__desc-block--labelled {
-    margin-top: clamp(8px, 1.2vw, 12px);
-    padding-top: clamp(14px, 2vw, 20px);
+    margin-top: clamp(6px, 0.8vw, 10px);
+    padding-top: clamp(12px, 1.6vw, 18px);
     border-top: 1px solid rgba(119, 90, 25, 0.16);
 }
 
@@ -445,15 +448,37 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 }
 
 @media (min-width: 769px) {
+    .lb-att .lb-row {
+        align-items: start;
+        gap: clamp(28px, 2.5vw, 40px);
+    }
+
+    .lb-att .lb-row__text {
+        padding-left: clamp(12px, 1.5vw, 28px);
+    }
+
+    .lb-att .lb-row--reverse .lb-row__text {
+        padding-right: clamp(12px, 1.5vw, 28px);
+    }
+
     .lb-att .lb-row__desc-block--labelled {
         display: grid;
-        grid-template-columns: minmax(92px, auto) minmax(0, 1fr);
-        column-gap: 20px;
+        grid-template-columns: minmax(84px, auto) minmax(0, 1fr);
+        column-gap: 14px;
     }
 
     .lb-att .lb-row__desc-label {
         margin-bottom: 0;
         padding-top: 5px;
+    }
+
+    .lb-att .lb-row__desc-block--labelled.lb-row__desc-block--flush {
+        grid-template-columns: minmax(0, 1fr);
+        column-gap: 0;
+    }
+
+    .lb-att .lb-row__desc-block--flush .lb-row__desc-label {
+        margin-bottom: 6px;
     }
 }
 
