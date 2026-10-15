@@ -52,6 +52,56 @@ $cta_url         = hireai_employees_page_field('lookbook_cta_url',     '/case-in
 /* 员工行读取链：新编号字段 → 旧编号字段 → 旧 Pro Repeater meta → 兜底。 */
 $raw_rows = hireai_ai_employee_rows($lb_pid, $is_en);
 
+if (!function_exists('hireai_employee_intro_markup')) {
+    function hireai_employee_intro_markup($intro)
+    {
+        $intro = trim((string) $intro);
+        if ($intro === '') {
+            return '';
+        }
+
+        $blocks = preg_split('/\R+/', $intro);
+        $html = '';
+        $item_index = 0;
+        $block_count = count($blocks);
+        for ($block_index = 0; $block_index < $block_count; $block_index++) {
+            $block = trim((string) $blocks[$block_index]);
+            if ($block === '') {
+                continue;
+            }
+
+            $label = '';
+            $labels = ['核心能力', '性格', '服务范围', '擅长领域', '专业能力', 'Core Capabilities', 'Personality', 'Service Scope', 'Areas of Expertise', 'Strengths'];
+            if (preg_match('/^(' . implode('|', $labels) . ')\s*[:：]\s*(.*)$/iu', $block, $matches)) {
+                $label = $matches[1];
+                $block = trim($matches[2]);
+            } elseif (in_array($block, $labels, true) && isset($blocks[$block_index + 1])) {
+                $label = $block;
+                $block_index++;
+                $block = trim((string) $blocks[$block_index]);
+            }
+
+            $class = 'lb-row__desc-block';
+            if ($label !== '') {
+                $class .= ' lb-row__desc-block--labelled';
+            }
+            $html .= '<p class="' . esc_attr($class) . '">';
+            if ($label !== '') {
+                $html .= '<span class="lb-row__desc-label">' . esc_html($label) . '</span>';
+            }
+            $html .= '<span class="lb-row__desc-text">' . esc_html($block) . '</span>';
+            $html .= '</p>';
+            $item_index++;
+        }
+
+        if ($item_index === 0) {
+            return '<p class="lb-row__desc-block"><span class="lb-row__desc-text">' . esc_html($intro) . '</span></p>';
+        }
+
+        return $html;
+    }
+}
+
 /* v3.4.0: fallback 数据兜底（两种语言的 ACF Repeater 都为空时） */
 $lb_rows_from_fallback = false;
 if (empty($raw_rows) && function_exists('lookbook_fallback_employees')) {
@@ -309,6 +359,110 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 /* CTA tweaks: keep on cream background, not surface-low
    v3.0.8: .lb-cta__heading 保留 italic（Stitch 设计稿允许 display 用 italic） */
 .lb-att .lb-cta__heading { font-style: italic; }
+
+/* v3.7.27: Employee introductions need editorial breathing room while the
+   long-form copy keeps the page's gold-and-charcoal hierarchy readable. */
+.lb-att .lb-row__title {
+    margin-bottom: clamp(20px, 3vw, 32px);
+}
+
+.lb-att .lb-row__desc {
+    display: grid;
+    gap: clamp(14px, 2vw, 22px);
+    max-width: 52ch;
+    margin-bottom: clamp(32px, 4vw, 48px);
+    font-size: clamp(15px, 1.2vw, 17px);
+    line-height: 1.8;
+}
+
+.lb-att .lb-row__desc-block {
+    margin: 0;
+    color: #535757;
+}
+
+.lb-att .lb-row__desc-block:first-child {
+    color: var(--lb-att-mid, #444748);
+}
+
+.lb-att .lb-row__desc-label {
+    display: block;
+    margin-bottom: 8px;
+    font-family: var(--font-label, 'Inter'), sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--lb-att-gold, #775a19);
+}
+
+.lb-att .lb-row__desc-block--labelled {
+    margin-top: clamp(8px, 1.2vw, 12px);
+    padding-top: clamp(14px, 2vw, 20px);
+    border-top: 1px solid rgba(119, 90, 25, 0.16);
+}
+
+.lb-att .lb-btn {
+    transition: color 0.35s var(--lb-ease, cubic-bezier(0.22, 1, 0.36, 1)), background-color 0.35s var(--lb-ease, cubic-bezier(0.22, 1, 0.36, 1)), border-color 0.35s var(--lb-ease, cubic-bezier(0.22, 1, 0.36, 1)), box-shadow 0.35s var(--lb-ease, cubic-bezier(0.22, 1, 0.36, 1)), transform 0.35s var(--lb-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.lb-att .lb-btn--primary:hover {
+    background: linear-gradient(135deg, #775a19 0%, #a6842d 50%, #775a19 100%);
+    box-shadow: 0 14px 30px rgba(119, 90, 25, 0.22), inset 0 0 0 1px rgba(233, 193, 118, 0.38);
+}
+
+.lb-att .lb-btn--outline:hover {
+    background: linear-gradient(135deg, rgba(119, 90, 25, 0.08) 0%, rgba(233, 193, 118, 0.18) 100%);
+    border-color: #775a19;
+    box-shadow: 0 12px 26px rgba(119, 90, 25, 0.14), inset 0 0 0 1px rgba(233, 193, 118, 0.24);
+    color: #775a19;
+}
+
+.lb-att .lb-cta__heading {
+    margin-bottom: clamp(24px, 3vw, 36px);
+}
+
+.lb-att .lb-cta__sub {
+    max-width: 58ch;
+    margin: 0 auto clamp(36px, 5vw, 56px);
+    line-height: 1.8;
+    color: #535757;
+}
+
+.lb-att .lb-cta__actions {
+    gap: clamp(18px, 2.5vw, 28px);
+}
+
+@media (min-width: 769px) {
+    .lb-att .lb-row__desc-block--labelled {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        column-gap: 20px;
+    }
+
+    .lb-att .lb-row__desc-label {
+        margin-bottom: 0;
+        padding-top: 5px;
+    }
+}
+
+@media (max-width: 768px) {
+    .lb-att .lb-row__title {
+        margin-bottom: 16px;
+    }
+
+    .lb-att .lb-row__desc {
+        max-width: none;
+        gap: 12px;
+        margin-bottom: 24px;
+        font-size: 15px;
+        line-height: 1.72;
+    }
+
+    .lb-att .lb-row__desc-block--labelled {
+        margin-top: 4px;
+        padding-top: 14px;
+    }
+}
 </style>
 
 <div class="site-main lb-main lb-att" id="content">
@@ -381,7 +535,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
                             <span><?php echo esc_html($kicker); ?></span>
                         </p>
                         <h2 class="lb-row__title"><?php echo esc_html($row['title'] ?? ''); ?></h2>
-                        <p class="lb-row__desc"><?php echo esc_html($row['desc'] ?? ''); ?></p>
+                        <div class="lb-row__desc"><?php echo hireai_employee_intro_markup($row['desc'] ?? ''); ?></div>
                         <a class="lb-btn <?php echo $style === 'outline' ? 'lb-btn--outline' : 'lb-btn--primary'; ?>"
                            href="<?php echo esc_url($row['url'] ?? home_url('/contact/')); ?>">
                             <?php echo esc_html($row['button'] ?? ''); ?>

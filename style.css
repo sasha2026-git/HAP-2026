@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.7.27
+Version: 3.7.28
 Text Domain:  hireaipeople
 */
 
@@ -4927,4 +4927,47 @@ html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__la
 html body .mobile-drawer button.hai-header__lang.hai-header__lang.hai-header__lang:active ::selection {
   background: #e9c176 !important;
   color: #1a1c1c !important;
+}
+
+/* English navigation labels are wider than Chinese labels.  Compress the
+   narrow-desktop header instead of allowing non-shrinking nav items to
+   overflow into the Account control. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .hai-header__nav {
+    padding-right: 10px;
+  }
+
+  .hai-header__nav .hai-header__nav-list {
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+
+  .hai-header__nav .hai-header__nav-list li a {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    padding: 6px 0;
+  }
+
+  .hai-header__actions {
+    gap: 8px;
+    padding-right: 0;
+  }
+
+  .hai-header__account.hai-header__account {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: none;
+    border: none;
+    font-size: 0;
+  }
+
+  .hai-header__account.hai-header__account .hai-header__icon {
+    font-size: 24px;
+  }
+
+  .hai-header__lang {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
 }
