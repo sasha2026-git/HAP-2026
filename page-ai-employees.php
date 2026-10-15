@@ -154,11 +154,19 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
     --lb-att-gold:  #775a19;
     --lb-att-goldl: #e9c176;
     --lb-att-line:  rgba(196, 199, 199, 0.5);
+    --lb-desc-base: 14.4px;
+    --lb-desc-cap: 17.28px;
+    --lb-row-block-height: clamp(420px, 30vw, 470px);
     /* v3.0.8 (Bug B): section gap 160-200px（hireaipeople.txt 规范）
      *   之前 page-ai-employees.php 的 .lb-hero/.lb-container/.lb-cta padding-block
      *   仅 64-120px → section 之间没间隙 */
     --gap: clamp(160px, 18vw, 200px);
     background: var(--lb-att-cream);
+}
+
+.lb-att--en {
+    --lb-desc-base: 12.8px;
+    --lb-desc-cap: 15.36px;
 }
 
 /* Hero */
@@ -386,7 +394,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
     gap: clamp(10px, 1.2vw, 16px);
     max-width: 56ch;
     margin-bottom: clamp(24px, 3vw, 36px);
-    font-size: clamp(15px, 0.18vw + 13.8px, 16px);
+    font-size: var(--lb-desc-base);
     line-height: 1.7;
 }
 
@@ -448,12 +456,27 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 }
 
 @media (min-width: 769px) {
+    .lb-att .lb-row__desc {
+        font-size: min(var(--lb-desc-cap), calc(var(--lb-desc-base) + max(0px, 100vw - 1440px) * 0.0015));
+    }
+
     .lb-att .lb-row {
-        align-items: start;
+        align-items: center;
         gap: clamp(28px, 2.5vw, 40px);
     }
 
+    .lb-att .lb-row__media {
+        display: flex;
+    }
+
+    .lb-att .lb-row__image {
+        height: var(--lb-row-block-height);
+        aspect-ratio: auto;
+        object-fit: cover;
+    }
+
     .lb-att .lb-row__text {
+        min-height: var(--lb-row-block-height);
         padding-left: clamp(12px, 1.5vw, 28px);
     }
 
@@ -502,7 +525,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 }
 </style>
 
-<div class="site-main lb-main lb-att" id="content">
+<div class="site-main lb-main lb-att<?php echo $is_en ? ' lb-att--en' : ''; ?>" id="content">
 
     <!-- ─────────── Hero ─────────── -->
     <section class="lb-hero">
