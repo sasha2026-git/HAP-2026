@@ -460,16 +460,16 @@ function site_image_url_resolve($v, $default = '') {
             if ($url) return $url;
         }
     }
+    if (is_numeric($v) && (int) $v > 0) {
+        $url = wp_get_attachment_image_url((int) $v, 'full');
+        return $url ?: $default;
+    }
     if (is_string($v) && $v !== '') {
         // v3.0.8: 容错非标准 URL（相对路径 / 不带协议的本地路径）
         if (filter_var($v, FILTER_VALIDATE_URL)) return $v;
         // 相对路径或本地路径 → 当成 URL 返回（避免被 default 吞掉）
         if (strpos($v, '/') === 0 || strpos($v, './') === 0) return $v;
         return $v;
-    }
-    if (is_numeric($v) && intval($v) > 0) {
-        $url = wp_get_attachment_image_url(intval($v), 'full');
-        return $url ?: $default;
     }
     return $default;
 }
@@ -2279,7 +2279,7 @@ add_action('acf/init', function () {
 
         /* ── 服务流程 section ── */
         ['name' => 'employees_process_kicker', 'label' => '服务流程 · 眉题', 'type' => 'text', 'zh' => '服务流程', 'en' => 'OUR PROCESS'],
-        ['name' => 'employees_process_title', 'label' => '服务流程 · 标题', 'type' => 'textarea', 'zh' => '从了解到上线，四步即可拥有专属数字员工。', 'en' => 'Four steps from discovery to deployment.', 'extra' => ['rows' => 2]],
+        ['name' => 'employees_process_title', 'label' => '服务流程 · 标题', 'type' => 'textarea', 'zh' => '从了解到上线，三步即可拥有专属数字员工。', 'en' => 'Three steps from discovery to deployment.', 'extra' => ['rows' => 2]],
         ['name' => 'employees_process_01_title', 'label' => '流程 01 · 标题', 'type' => 'text', 'zh' => '需求洞察', 'en' => 'Discovery'],
         ['name' => 'employees_process_01_description', 'label' => '流程 01 · 描述', 'type' => 'textarea', 'zh' => '我们的顾问与您一起梳理业务场景与核心指标。', 'en' => 'Our consultants map your business context and KPIs.', 'extra' => ['rows' => 2]],
         ['name' => 'employees_process_02_title', 'label' => '流程 02 · 标题', 'type' => 'text', 'zh' => '方案设计', 'en' => 'Curation'],
