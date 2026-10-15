@@ -35,7 +35,6 @@ $lb_pid     = $lb_page_id > 0 ? $lb_page_id : (get_the_ID() ?: false);
 /* --------------------------------------------------------------------
  * 1. PAGE FIELDS  (Hero + sections + CTA)
  * -------------------------------------------------------------------- */
-$hero_note       = hireai_employees_page_field('lookbook_hero_note',     $is_en ? '— Curated roles, on call' : '——  在职数字员工 · 精英岗位', $lb_pid);
 $hero_kicker     = hireai_employees_page_field('lookbook_hero_kicker',   $is_en ? 'The Atelier' : '数字工坊', $lb_pid);
 $hero_title      = hireai_employees_page_field('lookbook_hero_title',    $is_en ? 'Elite Digital Solutions' : '精英数字解决方案', $lb_pid);
 $hero_subtitle   = hireai_employees_page_field('lookbook_hero_subtitle', $is_en ? '"AI-led process, Human-delivered results."' : '"AI 主导流程，人类交付成果。"', $lb_pid);
@@ -179,6 +178,8 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 .lb-att .lb-hero {
     position: relative;
     overflow: hidden;
+    max-width: 1200px;
+    margin-inline: auto;
 }
 .lb-att .lb-hero > :not(.lb-hero__bg) {
     position: relative;
@@ -194,13 +195,19 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
     opacity: 0.26;
     pointer-events: none;
 }
-.lb-att .lb-hero__note {
-    display: block;
-    margin-bottom: 14px;
-    font-family: var(--font-label, 'Montserrat', 'Inter'), sans-serif;
-    font-size: var(--fs-label, 12px);
-    line-height: 1.5;
-    color: var(--lb-att-mid, #444748);
+.lb-att .lb-hero__kicker {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    margin-bottom: 12px;
+}
+.lb-att .lb-hero__title {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+.lb-att .lb-hero__subtitle {
+    font-size: clamp(14px, 1.2vw, 16px);
+    color: var(--lb-att-mid);
 }
 
 /* Section divider */
@@ -361,9 +368,8 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
  * v3.5.7-p6: Hero 下 margin-bottom 砍半（用户反馈线条下还有大空白）
  * v3.5.7-p7: 再砍半（用户截图手机端还有大空白 80-100px） */
 .lb-att .lb-hero {
-    padding-block: clamp(53px, 7vw, 80px) clamp(13px, 2vw, 24px);
-    /* v3.5.7-p7: 80-100px → 40-60px（再砍半） */
-    margin-bottom: clamp(40px, 5vw, 60px);
+    padding: 24px 24px 20px;
+    margin-bottom: 40px;
 }
 .lb-att .lb-container {
     padding-bottom: var(--gap, clamp(160px, 18vw, 200px));
@@ -529,11 +535,9 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
         <?php if ($hero_image !== '') : ?>
             <img class="lb-hero__bg" src="<?php echo esc_url($hero_image); ?>" alt="" loading="eager" decoding="async" />
         <?php endif; ?>
-        <span class="lb-hero__note"><?php echo esc_html($hero_note); ?></span>
         <span class="lb-hero__kicker"><?php echo esc_html($hero_kicker); ?></span>
         <h1 class="lb-hero__title"><?php echo esc_html($hero_title); ?></h1>
         <p class="lb-hero__subtitle"><?php echo esc_html($hero_subtitle); ?></p>
-        <div class="lb-hero__divider" aria-hidden="true"></div>
     </section>
 
     <div class="lb-container">
