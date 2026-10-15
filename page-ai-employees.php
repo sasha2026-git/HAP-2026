@@ -60,7 +60,15 @@ if (!function_exists('hireai_employee_intro_markup')) {
             return '';
         }
 
-        $blocks = preg_split('/\R+/', $intro);
+        $labels = ['核心能力', '性格', '服务范围', '擅长领域', '专业能力', 'Core Capabilities', 'Personality', 'Service Scope', 'Areas of Expertise', 'Strengths'];
+        $label_pattern = implode('|', array_map(static function ($label) {
+            return preg_quote($label, '/');
+        }, $labels));
+
+        $intro = preg_replace('/<br\s*\/?>/iu', "\n", $intro);
+        $intro = wp_strip_all_tags($intro);
+        $intro = preg_replace('/(?<!^)(?<![\p{L}\p{N}])(' . $label_pattern . ')(?![\p{L}\p{N}])/u', "\n" . '$1' . "\n", $intro);
+        $blocks = preg_split('/\R+/u', trim((string) $intro));
         $html = '';
         $item_index = 0;
         $block_count = count($blocks);
@@ -71,10 +79,14 @@ if (!function_exists('hireai_employee_intro_markup')) {
             }
 
             $label = '';
-            $labels = ['核心能力', '性格', '服务范围', '擅长领域', '专业能力', 'Core Capabilities', 'Personality', 'Service Scope', 'Areas of Expertise', 'Strengths'];
-            if (preg_match('/^(' . implode('|', $labels) . ')\s*[:：]\s*(.*)$/iu', $block, $matches)) {
+            if (preg_match('/^(' . implode('|', $labels) . ')\s*(?:[:：]\s*(.*))?$/us', $block, $matches)) {
                 $label = $matches[1];
-                $block = trim($matches[2]);
+                if (isset($matches[2]) && trim((string) $matches[2]) !== '') {
+                    $block = trim((string) $matches[2]);
+                } elseif (isset($blocks[$block_index + 1])) {
+                    $block_index++;
+                    $block = trim((string) $blocks[$block_index]);
+                }
             } elseif (in_array($block, $labels, true) && isset($blocks[$block_index + 1])) {
                 $label = $block;
                 $block_index++;
@@ -435,7 +447,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 @media (min-width: 769px) {
     .lb-att .lb-row__desc-block--labelled {
         display: grid;
-        grid-template-columns: 92px minmax(0, 1fr);
+        grid-template-columns: minmax(92px, auto) minmax(0, 1fr);
         column-gap: 20px;
     }
 

@@ -41,9 +41,9 @@ else
 fi
 
 # v 前缀只用在 TAG_NAME，TARGET_VERSION 保持纯版本号
-TAG_NAME="v${TARGET_VERSION}"
-# 规范化 TARGET_VERSION（去掉前导 v，避免比较时不一致）
+# 规范化 TARGET_VERSION（去掉前导 v，避免比较时不一致）—— 必须在 TAG_NAME 之前
 TARGET_VERSION="${TARGET_VERSION#v}"
+TAG_NAME="v${TARGET_VERSION}"
 
 # ===== Step 1: 验证分支 =====
 echo ""
