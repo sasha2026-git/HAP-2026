@@ -213,12 +213,7 @@
 	}
 })();
 
-/* 7. Global language switch (header CN/EN buttons)
- * v3.0.5 hotfix: 修复点击 EN 看不到英文版（Bug 4）
- * 根因：之前的 JS 只改 localStorage + 显隐 .zh/.en 元素，但页面 HTML 里根本没有
- *       这两个 class（已验证 0 个匹配），且 hireai_lang_suffix() 只读 Polylang，
- *       所以服务端永远返回 _zh。
- * 修复：JS 切语言时写 cookie + 刷新页面；PHP hireai_lang_suffix() 优先读 cookie。 */
+/* 7. Global language switch */
 (function () {
 	'use strict';
 
@@ -245,6 +240,17 @@
 		return null;
 	}
 
+	function getExplicitUrlLang() {
+		var segments = window.location.pathname.split('/');
+		var first = (segments[1] || '').toLowerCase();
+		if (first === 'zh' || first === 'en') return first;
+		try {
+			var queryLang = new URLSearchParams(window.location.search).get('lang');
+			if (queryLang === 'zh' || queryLang === 'en') return queryLang;
+		} catch (e) {}
+		return '';
+	}
+
 	function applyClientLang(lang) {
 		/* legacy: 兼容老页面里仍存在的 .zh / .en 包裹 */
 		document.querySelectorAll('.zh').forEach(function (el) {
@@ -260,36 +266,31 @@
 		});
 	}
 
-	/* 主入口：被 header.php 里的 onclick 调用。切语言 + 写 cookie + 刷新页面 */
-	window.hireaiSwitchLang = function (lang) {
+	window.hireaiSwitchLang = function (lang, targetUrl) {
 		lang = (lang === 'en') ? 'en' : 'zh';
-		try { localStorage.setItem('hireai_lang', lang); } catch (e) {}
 		setCookie(COOKIE_NAME, lang, COOKIE_DAYS);
-		applyClientLang(lang);
-		/* 关键刷新：让服务端 hireai_lang_suffix() 读取新 cookie 返回正确后缀 */
-		window.location.reload();
+		if (targetUrl) {
+			window.location.assign(targetUrl);
+		} else {
+			window.location.reload();
+		}
 	};
 
+	document.addEventListener('click', function (event) {
+		var trigger = event.target instanceof Element
+			? event.target.closest('[data-hireai-lang-switch]')
+			: null;
+		if (!trigger) return;
+
+		event.preventDefault();
+		window.hireaiSwitchLang(
+			trigger.getAttribute('data-hireai-lang-switch'),
+			trigger.getAttribute('data-hireai-lang-url')
+		);
+	});
+
 	document.addEventListener('DOMContentLoaded', function () {
-		/* 优先 cookie（与服务端 hireai_lang_suffix 同源），fallback 到 localStorage */
-		var saved = getCookie(COOKIE_NAME);
-		if (!saved) {
-			try { saved = localStorage.getItem('hireai_lang'); } catch (e) {}
-			/* 若 localStorage 里有但 cookie 没写，同步一次（确保后续刷新一致） */
-			if (saved) setCookie(COOKIE_NAME, saved, COOKIE_DAYS);
-		}
-		/* v3.7.5: ?lang=en|zh URL 参数优先级最高（与服务端 hireai_lang_suffix 一致）。
-		 * 带语言参数的链接可分享，全页缓存也能按 URL 区分语言，绕开 cookie 冲突 */
-		try {
-			var urlLang = new URLSearchParams(window.location.search).get('lang');
-			if (urlLang === 'en' || urlLang === 'zh') {
-				if (saved !== urlLang) {
-					setCookie(COOKIE_NAME, urlLang, COOKIE_DAYS);
-					try { localStorage.setItem('hireai_lang', urlLang); } catch (e) {}
-				}
-				saved = urlLang;
-			}
-		} catch (e) {}
-		applyClientLang(saved === 'en' ? 'en' : 'zh');
+		var urlLang = getExplicitUrlLang();
+		applyClientLang(urlLang || (getCookie(COOKIE_NAME) === 'zh' ? 'zh' : 'en'));
 	});
 })();

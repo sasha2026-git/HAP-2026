@@ -269,29 +269,87 @@ add_action('acf/save_post', function ($post_id) {
  * ---------------------------------------------------------------------- */
 
 /**
- * 当前语言后缀（双语方案 B）：无 Polylang 时默认 zh
+ * 当前语言后缀（双语方案 B）：无 URL 语言标记时用 cookie 回退，否则英文
  */
+function hireai_explicit_url_lang() {
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
+    }
+
+    $home_path = trim((string) wp_parse_url(home_url('/'), PHP_URL_PATH), '/');
+    $path      = trim((string) wp_parse_url(isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/', PHP_URL_PATH), '/');
+    if ($home_path !== '' && strpos($path . '/', $home_path . '/') === 0) {
+        $path = trim(substr($path, strlen($home_path)), '/');
+    }
+
+    $segments = $path === '' ? [] : explode('/', $path);
+    $first    = strtolower((string) ($segments[0] ?? ''));
+    if (in_array($first, ['zh', 'en'], true)) {
+        $cache = $first;
+        return $cache;
+    }
+
+    $query_lang = isset($_GET['lang']) ? strtolower(trim((string) wp_unslash($_GET['lang']))) : '';
+    $cache      = in_array($query_lang, ['zh', 'en'], true) ? $query_lang : '';
+    return $cache;
+}
+
 function hireai_lang_suffix() {
-    /* v3.7.5: ?lang=en|zh URL 参数优先级最高 —— 带语言参数的链接可分享、
-     * 可被全页缓存按 URL 区分语言，绕开「cookie 与页面缓存冲突」的坑。
-     * 优先级：URL 参数 > hireai_lang cookie > Polylang > 默认 zh */
-    $q_lang = isset($_GET['lang']) ? strtolower(trim((string) $_GET['lang'])) : '';
-    if ($q_lang === 'en' || $q_lang === 'zh') {
-        return '_' . $q_lang;
+    $url_lang = hireai_explicit_url_lang();
+    if ($url_lang !== '') {
+        return '_' . $url_lang;
     }
-    /* v3.0.5 hotfix: 优先读 hireai_lang cookie（JS hireaiSwitchLang 切换后写 cookie + 刷新页面），
-     * 只有 cookie 没设置时才回退到 Polylang。这样点 EN 后刷新，服务端正确返回 _en。 */
-    $cookie_lang = isset($_COOKIE['hireai_lang']) ? trim((string) $_COOKIE['hireai_lang']) : '';
-    if ($cookie_lang === 'en') {
-        return '_en';
+
+    $cookie_lang = isset($_COOKIE['hireai_lang']) ? strtolower(trim((string) $_COOKIE['hireai_lang'])) : '';
+    if (in_array($cookie_lang, ['zh', 'en'], true)) {
+        return '_' . $cookie_lang;
     }
-    if ($cookie_lang === 'zh') {
-        return '_zh';
+
+    return '_en';
+}
+
+function hireai_language_switch_url($target_lang) {
+    $target_lang = $target_lang === 'zh' ? 'zh' : 'en';
+
+    if (function_exists('pll_the_languages')) {
+        $languages = pll_the_languages(['raw' => true]);
+        if (is_array($languages)) {
+            foreach ($languages as $language) {
+                if (($language['slug'] ?? '') === $target_lang && !empty($language['url'])) {
+                    return $language['url'];
+                }
+            }
+        }
     }
-    if (function_exists('pll_current_language') && pll_current_language() === 'en') {
-        return '_en';
+
+    $home_path = trim((string) wp_parse_url(home_url('/'), PHP_URL_PATH), '/');
+    $path      = trim((string) wp_parse_url(isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/', PHP_URL_PATH), '/');
+    if ($home_path !== '' && strpos($path . '/', $home_path . '/') === 0) {
+        $path = trim(substr($path, strlen($home_path)), '/');
     }
-    return '_zh';
+
+    $segments = $path === '' ? [] : explode('/', $path);
+    if (isset($segments[0]) && in_array(strtolower($segments[0]), ['zh', 'en'], true)) {
+        array_shift($segments);
+    }
+
+    if ($target_lang === 'zh') {
+        array_unshift($segments, 'zh');
+    }
+
+    $new_path = trim($home_path . '/' . implode('/', $segments), '/');
+    $new_url  = home_url('/' . $new_path . '/');
+    $query    = wp_parse_url(isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/', PHP_URL_QUERY);
+    if ($query) {
+        parse_str($query, $query_args);
+        unset($query_args['lang']);
+        if ($query_args) {
+            $new_url = add_query_arg($query_args, $new_url);
+        }
+    }
+
+    return $new_url;
 }
 
 /**

@@ -13,6 +13,8 @@
 <?php
 $suffix      = function_exists('hireai_lang_suffix') ? hireai_lang_suffix() : '';
 $is_en       = ($suffix === '_en');
+$switch_lang = $is_en ? 'zh' : 'en';
+$switch_url  = function_exists('hireai_language_switch_url') ? hireai_language_switch_url($switch_lang) : home_url('/');
 $logo_url    = function_exists('hireai_image')
     ? hireai_image('header_logo', get_stylesheet_directory_uri() . '/assets/img/logo.png', 'option')
     : get_stylesheet_directory_uri() . '/assets/img/logo.png';
@@ -102,7 +104,7 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
         <?php echo esc_html($account_label); ?>
       </a>
 
-      <button class="hai-header__lang" type="button" onclick="hireaiSwitchLang((localStorage.getItem('hireai_lang') || 'zh') === 'zh' ? 'en' : 'zh')">
+      <button class="hai-header__lang" type="button" data-hireai-lang-switch="<?php echo esc_attr($switch_lang); ?>" data-hireai-lang-url="<?php echo esc_url($switch_url); ?>">
         <?php echo esc_html($lang_label); ?>
       </button>
 
@@ -142,7 +144,7 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
       <?php echo hireai_svg("account", 20, "hai-header__icon"); ?>
       <?php echo esc_html($account_label); ?>
     </a>
-    <button class="hai-header__lang" type="button" onclick="hireaiSwitchLang((localStorage.getItem('hireai_lang') || 'zh') === 'zh' ? 'en' : 'zh')">
+    <button class="hai-header__lang" type="button" data-hireai-lang-switch="<?php echo esc_attr($switch_lang); ?>" data-hireai-lang-url="<?php echo esc_url($switch_url); ?>">
       <?php echo esc_html($lang_label); ?>
     </button>
   </div>
