@@ -307,7 +307,7 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           }
           $ci_post_excerpt = has_excerpt( $ci_pid ) ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( $ci_post_obj->post_content ), 32, '…' );
           $ci_post_title   = get_the_title( $ci_pid );
-          $ci_post_permalink = get_permalink( $ci_pid );
+          $ci_post_permalink = hireai_localized_url( get_permalink( $ci_pid ) );
           $ci_case_slots[] = [
               'source'   => 'post',
               'image'    => $ci_post_img ?: $_ci_case_default_imgs[count($ci_case_slots)],
@@ -343,7 +343,7 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           'title_en' => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_title_zh', $ci_d['title_zh'], $ci_d['title_en'], 'en' ),
           'desc_zh'  => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_desc_zh',  $ci_d['desc_zh'],  $ci_d['desc_en'],  'zh' ),
           'desc_en'  => (string) $ci_field_lang_force( 'ci_case' . $ci_idx . '_desc_zh',  $ci_d['desc_zh'],  $ci_d['desc_en'],  'en' ),
-          'href'     => home_url( '/category/cases/' ),
+          'href'     => hireai_localized_url( home_url( '/category/cases/' ) ),
       ];
   }
   $ci_case_layout  = [ 'case-1', 'case-2', 'case-3', 'case-4' ];
@@ -506,7 +506,7 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           $ci_post_cats    = get_the_category( $ci_pid );
           $ci_cat_name     = ! empty( $ci_post_cats ) ? $ci_post_cats[0]->name : '';
           $ci_post_date    = get_the_date( 'Y.m.d' );
-          $ci_post_permalink = get_permalink( $ci_pid );
+          $ci_post_permalink = hireai_localized_url( get_permalink( $ci_pid ) );
           /* insight_cat / insight_read_time 覆盖优先；否则用 WP 分类 / 日期 */
           $ci_cat_zh  = (string) $ci_field_lang_force( 'insight_cat', $ci_cat_name, $ci_cat_name, 'zh', $ci_pid );
           $ci_cat_en  = (string) $ci_field_lang_force( 'insight_cat', $ci_cat_name, $ci_cat_name, 'en', $ci_pid );
@@ -558,7 +558,7 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           'desc_en'  => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_desc_zh', $ci_d['desc_zh'], $ci_d['desc_en'], 'en' ),
           'rt_zh'    => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_rt', $ci_d['rt_zh'], $ci_d['rt_en'], 'zh' ),
           'rt_en'    => (string) $ci_field_lang_force( 'ci_art' . $ci_idx . '_rt', $ci_d['rt_zh'], $ci_d['rt_en'], 'en' ),
-          'href'     => home_url( '/category/insights/' ),
+          'href'     => hireai_localized_url( home_url( '/category/insights/' ) ),
       ];
   }
   ?>

@@ -218,7 +218,7 @@ if (count($solutions) < 4 && post_type_exists('product') && function_exists('get
                 'desc'  => (string) $_d,
                 'tag'   => (string) $_g,
                 'img'   => (string) get_the_post_thumbnail_url($_pid, 'large'),
-                'url'   => (string) get_permalink($_pid),
+                'url'   => hireai_localized_url(get_permalink($_pid)),
             ];
         }
         wp_reset_postdata();
@@ -238,7 +238,7 @@ if (count($solutions) < 4) {
                 if (function_exists('get_field') && get_field('sol_featured_on_home', $_fp_id)) continue;
                 $_fp_thumb   = get_the_post_thumbnail_url($_fp_id, 'large');
                 $_fp_title   = get_the_title($_fp_id);
-                $_fp_link    = get_permalink($_fp_id);
+                $_fp_link    = hireai_localized_url(get_permalink($_fp_id));
                 $_fp_excerpt = has_excerpt($_fp_id)
                     ? get_the_excerpt()
                     : wp_trim_words(wp_strip_all_tags(get_post_field('post_content', $_fp_id)), 24, '…');
@@ -270,7 +270,7 @@ if (count($solutions) < 4) {
             'desc'  => hireai_field_lang("fp_sol{$i}_desc",  $lang, $d['desc']),
             'tag'   => hireai_field_lang("fp_sol{$i}_tag",   $lang, $d['tag']),
             'img'   => hireai_image("fp_sol{$i}_image", $d['img'] ? $home . '/assets/img/home/' . $d['img'] . '.png' : ''),
-            'url'   => home_url('/ai-solutions/'),
+            'url'   => hireai_localized_url(home_url('/ai-solutions/')),
         ];
     }
 }
@@ -295,7 +295,7 @@ $major_case = [
     'title' => $major_title_v360 ?: hireai_field_lang('fp_case_major_title', $lang, $is_en ? 'Aurelian Prime in Private Banking' : 'Aurelian Prime 在私人银行的应用'),
     'desc'  => $major_desc_v360  ?: hireai_field_lang('fp_case_major_desc',  $lang, $is_en ? 'Learn how our top digital employee boosts retention and satisfaction for high-net-worth clients.' : '了解我们的顶级数字员工如何提升高净值客户的留存率与满意度。'),
     'img'   => $major_image_v360 ?: hireai_image('fp_case_major_image', $home . '/assets/img/defaults/case-1.jpg'),
-    'url'   => home_url('/cases-insights/'),
+    'url'   => hireai_localized_url(home_url('/cases-insights/')),
 ];
 
 /* Minor cases — Layer 1: NEW ACF repeater; Layer 2: 旧 fp_case1/2 + 默认值 */
@@ -315,7 +315,7 @@ if (is_array($_v360_minor) && !empty($_v360_minor)) {
             'title' => $_t,
             'desc'  => $is_en ? ($_row['desc_en'] ?? '') : ($_row['desc_zh'] ?? ''),
             'img'   => $_img,
-            'url'   => !empty($_row['url']) ? (string) $_row['url'] : home_url('/cases-insights/'),
+            'url'   => !empty($_row['url']) ? hireai_localized_url((string) $_row['url']) : hireai_localized_url(home_url('/cases-insights/')),
         ];
     }
 }
@@ -332,7 +332,7 @@ if (count($side_cases) < 2) {
             'title' => hireai_field_lang("fp_case{$i}_title", $lang, $d['title']),
             'desc'  => hireai_field_lang("fp_case{$i}_desc",  $lang, $d['desc']),
             'img'   => hireai_image("fp_case{$i}_image", $home . '/assets/img/defaults/' . $d['img'] . '.jpg'),
-            'url'   => home_url('/cases-insights/'),
+            'url'   => hireai_localized_url(home_url('/cases-insights/')),
         ];
     }
 }
@@ -384,7 +384,7 @@ $cta_desc      = $hireai_v360('fp_cta_subtitle',      $lang) ?: hireai_field_lan
 $cta_btn_title = $hireai_v360('fp_cta_button_label',  $lang) ?: hireai_field_lang('fp_cta_btn_title',$lang, $is_en ? 'Contact Us' : '联系我们');
 $cta_btn_url   = $hireai_v360_url('fp_cta_button_url') ?: hireai_field('fp_cta_btn_url', home_url('/contact/'));
 $cta_btn_2_title = $is_en ? 'Book Consultation' : '预约咨询';
-$cta_btn_2_url   = home_url('/contact/');
+$cta_btn_2_url   = hireai_localized_url(home_url('/contact/'));
 
 
 /* i18n text */

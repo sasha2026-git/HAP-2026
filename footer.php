@@ -88,7 +88,7 @@ function hireai_footer_resolve_link($slug, $fallback_url) {
         if (!empty($r['url'])) return $r['url'];
     }
     $page = get_page_by_path($slug);
-    return $page instanceof WP_Post ? get_permalink($page) : $fallback_url;
+    return $page instanceof WP_Post ? hireai_localized_url(get_permalink($page)) : $fallback_url;
 }
 ?>
 

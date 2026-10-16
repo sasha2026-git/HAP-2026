@@ -79,7 +79,7 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
 <header class="hai-header" id="site-header">
   <div class="hai-header__inner">
     <!-- Left: logo -->
-    <a class="hai-header__brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="<?php echo esc_attr($brand_label); ?>">
+    <a class="hai-header__brand" href="<?php echo esc_url(hireai_localized_url(home_url('/'))); ?>" rel="home" aria-label="<?php echo esc_attr($brand_label); ?>">
       <img class="hai-header__logo" src="<?php echo esc_url($logo_url); ?>" alt="<?php echo esc_attr($logo_alt); ?>">
     </a>
 
@@ -99,7 +99,7 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
     <!-- Right: actions -->
     <div class="hai-header__actions">
       <a class="hai-header__account"
-         href="<?php echo esc_url(home_url('/my-account/')); ?>">
+         href="<?php echo esc_url(hireai_localized_url(home_url('/my-account/'))); ?>">
         <?php echo hireai_svg("account", 24, "hai-header__icon"); ?>
         <?php echo esc_html($account_label); ?>
       </a>
@@ -120,7 +120,7 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
 <!-- Mobile drawer -->
 <aside class="mobile-drawer" id="mobile-drawer" data-mobile-drawer aria-hidden="true">
   <div class="mobile-drawer__head">
-    <a class="hai-header__brand" href="<?php echo esc_url(home_url('/')); ?>" rel="home" aria-label="<?php echo esc_attr($brand_label); ?>">
+    <a class="hai-header__brand" href="<?php echo esc_url(hireai_localized_url(home_url('/'))); ?>" rel="home" aria-label="<?php echo esc_attr($brand_label); ?>">
       <img class="header-logo-img" src="<?php echo esc_url($logo_url); ?>" alt="<?php echo esc_attr($logo_alt); ?>">
     </a>
       <button class="mobile-drawer__close hai-header__menu-toggle" type="button" data-drawer-close aria-label="<?php echo esc_attr($menu_close_aria); ?>">
@@ -140,7 +140,7 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
   </nav>
   <div class="mobile-drawer__actions">
     <a class="mobile-drawer__account"
-       href="<?php echo esc_url(home_url('/my-account/')); ?>">
+       href="<?php echo esc_url(hireai_localized_url(home_url('/my-account/'))); ?>">
       <?php echo hireai_svg("account", 20, "hai-header__icon"); ?>
       <?php echo esc_html($account_label); ?>
     </a>

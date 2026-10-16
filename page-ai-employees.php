@@ -43,7 +43,7 @@ $hero_image      = hireai_employees_page_image('lookbook_hero_image', '', $lb_pi
 $cta_heading     = hireai_employees_page_field('lookbook_cta_heading', $is_en ? 'Ready to Redefine Humanity?' : '准备好重新定义人性了吗？', $lb_pid);
 $cta_sub         = hireai_employees_page_field('lookbook_cta_sub',     $is_en ? "Join the exclusive echelon of leaders leveraging Aurelian AI's bespoke ecosystem." : '加入运用 Aurelian AI 专属生态的领袖精英之列。', $lb_pid);
 $cta_btn         = hireai_employees_page_field('lookbook_cta_btn',     $is_en ? 'Start The Journey' : '开启旅程', $lb_pid);
-$cta_contact_url = hireai_employees_page_field('lookbook_cta_contact_url', home_url('/contact/'), $lb_pid);
+$cta_contact_url = hireai_employees_page_field('lookbook_cta_contact_url', hireai_localized_url(home_url('/contact/')), $lb_pid);
 
 /* 员工行读取链：新编号字段 → 旧编号字段 → 旧 Pro Repeater meta → 兜底。 */
 $raw_rows = hireai_ai_employee_rows($lb_pid, $is_en);
@@ -575,7 +575,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
                         <h2 class="lb-row__title"><?php echo esc_html($row['title'] ?? ''); ?></h2>
                         <div class="lb-row__desc"><?php echo hireai_employee_intro_markup($row['desc'] ?? ''); ?></div>
                         <a class="lb-btn <?php echo $style === 'outline' ? 'lb-btn--outline' : 'lb-btn--primary'; ?>"
-                           href="<?php echo esc_url($row['url'] ?? home_url('/contact/')); ?>">
+                           href="<?php echo esc_url($row['url'] ?? hireai_localized_url(home_url('/contact/'))); ?>">
                             <?php echo esc_html($row['button'] ?? ''); ?>
                         </a>
                     </div>

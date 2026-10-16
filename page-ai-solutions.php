@@ -739,7 +739,7 @@ if (!empty($auto_chips)) {
                     <?php else : ?>
                         <div class="sols-empty">
                             <p><?php echo esc_html( $is_en ? 'No solutions in this category yet.' : '该数字人暂无作品' ); ?></p>
-                            <p class="sols-empty__hint"><?php echo esc_html( $is_en ? 'Contact us for bespoke solutions.' : '可联系助理定制方案' ); ?> <a href="/contact/">→ /contact/</a></p>
+                            <p class="sols-empty__hint"><?php echo esc_html( $is_en ? 'Contact us for bespoke solutions.' : '可联系助理定制方案' ); ?> <a href="<?php echo esc_url(hireai_localized_url('/contact/')); ?>">→ /contact/</a></p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -796,11 +796,11 @@ if (!empty($auto_chips)) {
         <h2 class="sols-cta__title"><?php echo esc_html( $final_title ); ?></h2>
         <p class="sols-cta__sub"><?php echo esc_html( $final_subtitle ); ?></p>
         <div class="sols-cta__actions">
-            <a class="btn btn-solid" href="<?php echo esc_url( home_url( '/contact/' ) ); ?>">
+            <a class="btn btn-solid" href="<?php echo esc_url( hireai_localized_url( home_url( '/contact/' ) ) ); ?>">
                 <?php echo esc_html( $final_cta_primary ); ?>
                 <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'arrow', 14 ) : ''; ?>
             </a>
-            <a class="btn btn-outline" href="<?php echo esc_url( home_url( '/category/cases/' ) ); ?>">
+            <a class="btn btn-outline" href="<?php echo esc_url( hireai_localized_url( home_url( '/category/cases/' ) ) ); ?>">
                 <?php echo esc_html( $final_cta_secondary ); ?>
             </a>
         </div>
