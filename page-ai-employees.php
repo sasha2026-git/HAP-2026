@@ -668,4 +668,50 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 })();
 </script>
 
+<?php if (current_user_can('manage_options')) :
+    $hireai_debug_repeater_data = [];
+    foreach (['lookbook_employees', 'lookbook_employees_en'] as $hireai_debug_repeater) {
+        $hireai_debug_has_rows = function_exists('have_rows') && have_rows($hireai_debug_repeater, $lb_pid);
+        $hireai_debug_row_count = 0;
+        $hireai_debug_titles = [];
+
+        if ($hireai_debug_has_rows) {
+            while (have_rows($hireai_debug_repeater)) {
+                the_row();
+                $hireai_debug_row_count++;
+                $hireai_debug_titles[] = trim((string) get_sub_field('emp_row_title'));
+            }
+        }
+
+        $hireai_debug_repeater_data[] = $hireai_debug_repeater . ':status=' . ($hireai_debug_has_rows ? 'true' : 'false')
+            . ';rows=' . $hireai_debug_row_count
+            . ';titles=[' . implode(' | ', $hireai_debug_titles) . ']';
+    }
+
+    $hireai_debug_legacy_status = [];
+    foreach ([
+        'employees_row_01_title',
+        'employees_row_01_title_zh',
+        'employees_row_01_title_en',
+        'lookbook_employee_01_title',
+        'lookbook_employee_01_title_zh',
+        'lookbook_employee_01_title_en',
+    ] as $hireai_debug_legacy_field) {
+        $hireai_debug_legacy_status[] = $hireai_debug_legacy_field . ':'
+            . (metadata_exists('post', (int) $lb_pid, $hireai_debug_legacy_field) ? 'present' : 'absent');
+    }
+
+    $hireai_debug_cookie = isset($_COOKIE['hireai_lang']) ? trim((string) $_COOKIE['hireai_lang']) : 'none';
+    $hireai_debug_text = 'HIREAI-DEBUG'
+        . ' post_id=' . var_export($lb_pid, true)
+        . '; current_post_id=' . var_export(get_the_ID(), true)
+        . '; canonical_page_id=' . var_export($lb_page_id, true)
+        . '; lang_suffix=' . $suffix
+        . '; lang_cookie=' . $hireai_debug_cookie
+        . '; repeaters=[' . implode('; ', $hireai_debug_repeater_data) . ']'
+        . '; legacy_fields=[' . implode('; ', $hireai_debug_legacy_status) . ']';
+?>
+<!-- <?php echo str_replace(['--', "\r", "\n"], ['- -', '', ' '], esc_html($hireai_debug_text)); ?> -->
+<?php endif; ?>
+
 <?php get_footer(); ?>
