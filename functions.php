@@ -662,11 +662,65 @@ function hireai_legacy_repeater_rows($repeater_name, $sub_names, $post_id) {
     return $rows;
 }
 
+if (!function_exists('hireai_acf_repeater_rows')) {
+    function hireai_acf_repeater_rows($post_id, $is_en) {
+        if (!function_exists('have_rows') || !function_exists('get_sub_field')) {
+            return [];
+        }
+
+        $read_repeater = static function ($repeater_name) use ($post_id) {
+            if (!have_rows($repeater_name, $post_id)) {
+                return [];
+            }
+
+            $rows = [];
+            while (have_rows($repeater_name)) {
+                the_row();
+                $image = get_sub_field('emp_row_image');
+                $rows[] = [
+                    'kicker' => (string) get_sub_field('emp_row_kicker'),
+                    'title'  => (string) get_sub_field('emp_row_title'),
+                    'desc'   => (string) get_sub_field('emp_row_desc'),
+                    'button' => (string) get_sub_field('emp_row_button'),
+                    'image'  => site_image_url_resolve($image, ''),
+                    'url'    => (string) get_sub_field('emp_row_url'),
+                    'image_alt' => '',
+                ];
+            }
+            return $rows;
+        };
+
+        $zh_rows = $read_repeater('lookbook_employees');
+        $en_rows = $read_repeater('lookbook_employees_en');
+        $rows = $is_en ? ($en_rows ?: $zh_rows) : ($zh_rows ?: $en_rows);
+
+        foreach ($rows as $index => $row) {
+            $rows[$index]['button'] = trim($row['button']) !== ''
+                ? $row['button']
+                : ($is_en ? 'Learn More' : '了解详情');
+            $rows[$index]['url'] = trim($row['url']) !== ''
+                ? $row['url']
+                : (function_exists('hireai_resolve_employee_url')
+                    ? hireai_resolve_employee_url($index, home_url('/ai-employees/'))
+                    : home_url('/ai-employees/'));
+        }
+
+        return $rows;
+    }
+}
+
 function hireai_ai_employee_rows($post_id, $is_en) {
     $suffix = $is_en ? '_en' : '_zh';
     $mirror = $is_en ? '_zh' : '_en';
     $parts = ['kicker', 'title', 'desc', 'button', 'image', 'url', 'image_alt'];
     $rows = [];
+
+    if (hireai_acf_has_repeater()) {
+        $repeater_rows = hireai_acf_repeater_rows($post_id, $is_en);
+        if ($repeater_rows) {
+            return $repeater_rows;
+        }
+    }
 
     for ($number = 1; $number <= 12; $number++) {
         $number_name = sprintf('%02d', $number);
