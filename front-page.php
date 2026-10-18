@@ -240,7 +240,7 @@ if (count($solutions) < 4) {
                 $_fp_title   = get_the_title($_fp_id);
                 $_fp_link    = hireai_localized_url(get_permalink($_fp_id));
                 $_fp_excerpt = has_excerpt($_fp_id)
-                    ? get_the_excerpt()
+                    ? get_the_excerpt($_fp_id)
                     : wp_trim_words(wp_strip_all_tags(get_post_field('post_content', $_fp_id)), 24, '…');
                 $_fp_tag     = function_exists('hireai_field_lang')
                     ? hireai_field_lang('product_retainer_label', $lang, '', $_fp_id)
