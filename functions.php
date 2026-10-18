@@ -277,7 +277,7 @@ function hireai_explicit_url_lang() {
         return $cache;
     }
 
-    $home_path = trim((string) wp_parse_url(home_url('/'), PHP_URL_PATH), '/');
+    $home_path = trim((string) wp_parse_url(hireai_site_root_url(), PHP_URL_PATH), '/');
     $path      = trim((string) wp_parse_url(isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/', PHP_URL_PATH), '/');
     if ($home_path !== '' && strpos($path . '/', $home_path . '/') === 0) {
         $path = trim(substr($path, strlen($home_path)), '/');
@@ -311,6 +311,12 @@ function hireai_lang_suffix() {
 
 function hireai_current_lang() {
     return hireai_lang_suffix() === '_en' ? 'en' : 'zh';
+}
+
+function hireai_site_root_url() {
+    $site_url = get_option('home');
+
+    return is_string($site_url) && $site_url !== '' ? untrailingslashit($site_url) : untrailingslashit(home_url('/'));
 }
 
 function hireai_translated_permalink($post_id, $lang) {
@@ -363,7 +369,7 @@ function hireai_localized_url($url, $lang = null) {
 
     $lang = $lang === 'zh' || $lang === 'en' ? $lang : hireai_current_lang();
     $parts = wp_parse_url($url);
-    $home_parts = wp_parse_url(home_url('/'));
+    $home_parts = wp_parse_url(hireai_site_root_url());
 
     if (!empty($parts['scheme']) && !in_array(strtolower((string) $parts['scheme']), ['http', 'https'], true)) {
         return $url;
@@ -387,7 +393,7 @@ function hireai_localized_url($url, $lang = null) {
         return $segment !== '';
     }));
 
-    $clean_url = home_url('/' . implode('/', $segments) . (empty($segments) ? '' : '/'));
+    $clean_url = hireai_site_root_url() . '/' . implode('/', $segments) . (empty($segments) ? '' : '/');
 
     if (function_exists('pll_translate_permalink')) {
         $translated_url = pll_translate_permalink($clean_url, $lang);
@@ -413,7 +419,7 @@ function hireai_localized_url($url, $lang = null) {
         if ($lang === 'zh') {
             array_unshift($segments, 'zh');
         }
-        $url = home_url('/' . trim($home_path . '/' . implode('/', $segments), '/') . (empty($segments) ? '' : '/'));
+        $url = hireai_site_root_url() . '/' . trim($home_path . '/' . implode('/', $segments), '/') . (empty($segments) ? '' : '/');
     }
 
     if (!empty($parts['query'])) {
@@ -463,7 +469,25 @@ function hireai_language_switch_url($target_lang) {
         }
     }
 
-    return home_url('/');
+    $home_path = trim((string) wp_parse_url(hireai_site_root_url(), PHP_URL_PATH), '/');
+    $path      = trim((string) wp_parse_url(isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/', PHP_URL_PATH), '/');
+    if ($home_path !== '' && strpos($path . '/', $home_path . '/') === 0) {
+        $path = trim(substr($path, strlen($home_path)), '/');
+    }
+
+    $segments = $path === '' ? [] : explode('/', $path);
+    if (isset($segments[0]) && in_array(strtolower((string) $segments[0]), ['zh', 'en'], true)) {
+        array_shift($segments);
+    }
+    $segments = array_values(array_filter($segments, static function ($segment) {
+        return $segment !== '';
+    }));
+
+    if ($target_lang === 'zh') {
+        array_unshift($segments, 'zh');
+    }
+
+    return hireai_site_root_url() . '/' . implode('/', $segments) . (empty($segments) ? '' : '/');
 }
 
 /**
