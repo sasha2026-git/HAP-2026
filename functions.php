@@ -285,13 +285,19 @@ function hireai_explicit_url_lang() {
 
     $segments = $path === '' ? [] : explode('/', $path);
     $first    = strtolower((string) ($segments[0] ?? ''));
+    $query_lang = isset($_GET['lang']) ? strtolower(trim((string) wp_unslash($_GET['lang']))) : '';
+
+    if (in_array($query_lang, ['zh', 'en'], true)) {
+        $cache = $query_lang;
+        return $cache;
+    }
+
     if (in_array($first, ['zh', 'en'], true)) {
         $cache = $first;
         return $cache;
     }
 
-    $query_lang = isset($_GET['lang']) ? strtolower(trim((string) wp_unslash($_GET['lang']))) : '';
-    $cache      = in_array($query_lang, ['zh', 'en'], true) ? $query_lang : '';
+    $cache = '';
     return $cache;
 }
 
@@ -399,6 +405,9 @@ function hireai_localized_url($url, $lang = null) {
         $translated_url = pll_translate_permalink($clean_url, $lang);
         if (is_string($translated_url) && $translated_url !== '') {
             $url = $translated_url;
+            if ($translated_url === $clean_url) {
+                unset($translated_url);
+            }
         }
     }
 
@@ -420,6 +429,10 @@ function hireai_localized_url($url, $lang = null) {
             array_unshift($segments, 'zh');
         }
         $url = hireai_site_root_url() . '/' . trim($home_path . '/' . implode('/', $segments), '/') . (empty($segments) ? '' : '/');
+
+        if ($lang === 'en') {
+            $url = add_query_arg(['lang' => 'en'], $url);
+        }
     }
 
     if (!empty($parts['query'])) {
@@ -487,7 +500,22 @@ function hireai_language_switch_url($target_lang) {
         array_unshift($segments, 'zh');
     }
 
-    return hireai_site_root_url() . '/' . implode('/', $segments) . (empty($segments) ? '' : '/');
+    $switch_url = hireai_site_root_url() . '/' . implode('/', $segments) . (empty($segments) ? '' : '/');
+
+    if ($target_lang === 'en') {
+        $switch_url = add_query_arg(['lang' => 'en'], $switch_url);
+    }
+
+    $query = wp_parse_url(isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/', PHP_URL_QUERY);
+    if ($query) {
+        parse_str((string) $query, $query_args);
+        unset($query_args['lang']);
+        if ($query_args) {
+            $switch_url = add_query_arg($query_args, $switch_url);
+        }
+    }
+
+    return $switch_url;
 }
 
 /**
