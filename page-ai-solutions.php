@@ -357,7 +357,7 @@ if (!empty($auto_chips)) {
 }
 .sols-card__media {
     position: relative;
-    aspect-ratio: 4/3;
+    aspect-ratio: 16/9;
     overflow: hidden;
     background: var(--surface-container, #eeeeee);
     display: block;
