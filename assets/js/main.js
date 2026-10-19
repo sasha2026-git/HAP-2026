@@ -241,13 +241,14 @@
 	}
 
 	function getExplicitUrlLang() {
-		var segments = window.location.pathname.split('/');
-		var first = (segments[1] || '').toLowerCase();
-		if (first === 'zh' || first === 'en') return first;
 		try {
 			var queryLang = new URLSearchParams(window.location.search).get('lang');
 			if (queryLang === 'zh' || queryLang === 'en') return queryLang;
 		} catch (e) {}
+
+		var segments = window.location.pathname.split('/');
+		var first = (segments[1] || '').toLowerCase();
+		if (first === 'zh' || first === 'en') return first;
 		return '';
 	}
 
