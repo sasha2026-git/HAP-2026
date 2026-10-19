@@ -384,7 +384,15 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 
 /* CTA tweaks: keep on cream background, not surface-low
    v3.0.8: .lb-cta__heading 保留 italic（Stitch 设计稿允许 display 用 italic） */
-.lb-att .lb-cta__heading { font-style: italic; }
+.lb-att .lb-cta__heading,
+.lb-att .lb-cta__heading span {
+    font-style: italic;
+    background: linear-gradient(135deg, #e9c176 0%, #775a19 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
 
 /* v3.7.27: Employee introductions need editorial breathing room while the
    long-form copy keeps the page's gold-and-charcoal hierarchy readable. */
