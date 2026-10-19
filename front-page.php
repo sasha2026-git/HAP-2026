@@ -51,13 +51,6 @@ $hero_cta_1_title = hireai_field_lang('fp_hero_cta_1_title', $lang, $is_en ? 'Ex
 $hero_cta_2_url   = hireai_field('fp_hero_cta_2_url',   home_url('/contact/'));
 $hero_cta_2_title = hireai_field_lang('fp_hero_cta_2_title', $lang, $is_en ? 'Custom Consultation' : '定制咨询');
 
-/* Intro */
-$intro_kicker    = hireai_field_lang('fp_intro_kicker', $lang, $is_en ? 'Craftsmanship Meets Algorithm' : '工匠精神与算法');
-$intro_title     = hireai_field_lang('fp_intro_title',  $lang, $is_en ? 'Shaping existence beyond physical boundaries.' : '塑造超越物理边界的存在。');
-$intro_desc      = hireai_field_lang('fp_intro_desc',   $lang, $is_en ? 'We combine the rigor of traditional luxury with the infinite potential of neural networks. Every digital employee is a one-of-a-kind masterpiece, designed for elegance, intelligence, and resonance.' : '我们结合传统奢华的严谨工艺与神经网络的无限可能。每一位数字员工都是独一无二的杰作，专为优雅、智慧与共鸣而设计。');
-$intro_cta_label = hireai_field_lang('fp_intro_cta_title', $lang, $is_en ? 'Explore More' : '探索更多');
-$intro_cta_url   = hireai_field('fp_intro_cta_url', home_url('/ai-employees/'));
-
 /* Products section header */
 $prod_section_kicker = hireai_field_lang('fp_products_kicker', $lang, $is_en ? 'Limited Neural Series' : '限量神经元系列');
 $prod_section_title  = hireai_field_lang('fp_products_title',  $lang, $is_en ? 'AI Digital Employees' : 'AI 数字员工');
@@ -207,8 +200,8 @@ if (count($solutions) < 4 && post_type_exists('product') && function_exists('get
             $_d_en = function_exists('get_field') ? get_field('sol_desc_en',  $_pid) : '';
             $_g_zh = function_exists('get_field') ? get_field('sol_tag_zh',   $_pid) : '';
             $_g_en = function_exists('get_field') ? get_field('sol_tag_en',   $_pid) : '';
-            $_t = $is_en ? (is_string($_t_en) && $_t_en !== '' ? $_t_en : $_p->post_title)
-                         : (is_string($_t_zh) && $_t_zh !== '' ? $_t_zh : $_p->post_title);
+            $_t = $is_en ? (is_string($_t_en) && $_t_en !== '' ? $_t_en : hireai_solution_product_display_title($_pid, 'en'))
+                         : (is_string($_t_zh) && $_t_zh !== '' ? $_t_zh : hireai_solution_product_display_title($_pid, 'zh'));
             $_d = $is_en ? (is_string($_d_en) && $_d_en !== '' ? $_d_en : wp_trim_words(wp_strip_all_tags($_p->post_content), 24, '…'))
                          : (is_string($_d_zh) && $_d_zh !== '' ? $_d_zh : wp_trim_words(wp_strip_all_tags($_p->post_content), 24, '…'));
             $_g = $is_en ? ($_g_en ?: ($is_en ? 'Solution' : '解决方案'))
@@ -237,7 +230,7 @@ if (count($solutions) < 4) {
                 /* v3.6.0 防御: featured 商品已被 Layer 2 用过 — 用 featured_order 排除 */
                 if (function_exists('get_field') && get_field('sol_featured_on_home', $_fp_id)) continue;
                 $_fp_thumb   = get_the_post_thumbnail_url($_fp_id, 'large');
-                $_fp_title   = get_the_title($_fp_id);
+                $_fp_title   = hireai_solution_product_display_title($_fp_id, $lang);
                 $_fp_link    = hireai_localized_url(get_permalink($_fp_id));
                 $_fp_excerpt = has_excerpt($_fp_id)
                     ? get_the_excerpt($_fp_id)
@@ -505,11 +498,6 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 /* ═══════════════════════════════════════════════════════════════════════
    2) INTRO  ── 居中：kicker + 大标题 + 描述 + ghost CTA
    ═══════════════════════════════════════════════════════════════════════ */
-.hireai-fp-intro{background:var(--surface,#faf9f9);padding-block:var(--gap);padding-inline:var(--side);text-align:center;}
-.hireai-fp-intro__inner{max-width:760px;margin:0 auto;}
-.hireai-fp-intro__title{font-family:var(--f-headline);font-size:var(--sz-h1);font-weight:600;line-height:1.2;color:#000;margin:0 0 24px;}
-.hireai-fp-intro__desc{font-family:var(--f-body);font-size:var(--sz-bl);line-height:1.7;color:var(--ink-muted);margin:0 auto 36px;max-width:680px;}
-.hireai-fp-intro__cta{display:inline-flex;}
 
 /* ═══════════════════════════════════════════════════════════════════════
    3) PRODUCTS  ── Stitch AI 数字员工 (3-col 卡片 / aspect 3:4)
@@ -716,29 +704,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
-     2) INTRO  ── 居中：kicker + 大标题 + 描述 + ghost CTA
-     ═══════════════════════════════════════════════════════════════════════ -->
-<section class="hireai-fp hireai-fp-intro" id="hireai-fp-intro" aria-labelledby="hireai-fp-intro-title">
-    <div class="hireai-fp-intro__inner">
-        <?php if ($intro_kicker) : ?>
-        <span class="hireai-fp__kicker"><?php echo esc_html($intro_kicker); ?></span>
-        <?php endif; ?>
-        <h2 class="hireai-fp-intro__title" id="hireai-fp-intro-title"><?php echo esc_html($intro_title); ?></h2>
-        <?php if ($intro_desc) : ?>
-        <p class="hireai-fp-intro__desc"><?php echo esc_html($intro_desc); ?></p>
-        <?php endif; ?>
-        <?php if ($intro_cta_label) : ?>
-        <div class="hireai-fp-intro__cta">
-            <a class="hireai-fp__btn hireai-fp__btn--ghost" href="<?php echo esc_url($intro_cta_url); ?>">
-                <?php echo esc_html($intro_cta_label); ?>
-            </a>
-        </div>
-        <?php endif; ?>
-    </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════════════════
-     3) PRODUCTS  ── Stitch AI 数字员工 (3-col / aspect 3:4 / 徽章 / outline 按钮)
+     2) PRODUCTS  ── Stitch AI 数字员工 (3-col / aspect 3:4 / 徽章 / outline 按钮)
      ═══════════════════════════════════════════════════════════════════════ -->
 <section class="hireai-fp hireai-fp-products" aria-labelledby="hireai-fp-products-title">
     <div class="hireai-fp-products__inner">
@@ -808,7 +774,8 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
             <?php foreach ($solutions as $sol) : if (empty($sol['title'])) continue; ?>
             <a class="hireai-fp-sol" href="<?php echo esc_url($sol['url']); ?>">
                 <?php if (!empty($sol['img'])) : ?>
-                <img class="hireai-fp-sol__img" src="<?php echo esc_url($sol['img']); ?>" alt="<?php echo esc_attr($sol['title']); ?>" loading="lazy" decoding="async">
+                <img class="hireai-fp-sol__img" src="<?php echo esc_url($sol['img']); ?>" alt="<?php echo esc_attr($sol['title']); ?>" loading="lazy" decoding="async"
+                     onerror="this.src='<?php echo esc_url($home . '/assets/img/defaults/solution-1.jpg'); ?>'; this.onerror=function(){ this.style.display='none'; };">
                 <?php else : ?>
                 <div class="hireai-fp-sol__placeholder" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></svg>

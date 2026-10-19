@@ -129,9 +129,9 @@ $personas_for_filter = function_exists('hireai_list_solution_personas') ? hireai
 
 if (post_type_exists('product') && function_exists('wc_get_product')) {
     try {
-        /* 单次 query:全部 publish 商品,最多 12 张(Echo 数据约 6 张,留扩展) */
+        /* 单次 query:全部目录可见 publish 商品；不设 12 张上限，商品上传后自动出现。 */
         $ids_all = function_exists('hireai_get_ai_solutions_products')
-            ? hireai_get_ai_solutions_products(1, 12, '', '')
+            ? hireai_get_ai_solutions_products(1, -1, '', '')
             : [];
         $cards_all = hireai_build_solution_cards_from_ids($ids_all);
 
@@ -704,10 +704,12 @@ if (!empty($auto_chips)) {
             }
             $img_url = function_exists('hireai_default_image') ? hireai_default_image($img) : '';
             if (!$img_url) { $img_url = get_stylesheet_directory_uri() . '/assets/img/' . $img; }
+            $fallback_img_url = get_stylesheet_directory_uri() . '/assets/img/defaults/solution-1.jpg';
             ?>
             <article class="sols-card"<?php echo $personas_attr; ?>>
                 <a class="sols-card__media" href="<?php echo esc_url($link); ?>" aria-label="<?php echo esc_attr($title); ?>">
-                    <img loading="lazy" src="<?php echo esc_url($img_url); ?>" alt="<?php echo esc_attr($title); ?>">
+                    <img loading="lazy" src="<?php echo esc_url($img_url); ?>" alt="<?php echo esc_attr($title); ?>"
+                         onerror="if (!this.dataset.imageFallback) { this.dataset.imageFallback='1'; this.src='<?php echo esc_url($fallback_img_url); ?>'; } else { this.style.display='none'; }">
                 </a>
                 <div class="sols-card__body">
                     <span class="sols-card__kicker"><?php echo esc_html($kicker); ?></span>

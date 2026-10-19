@@ -599,7 +599,7 @@ function site_field($name, $default = '', $post_id = false) {
  * 取语言化字段：site_field( $name . hireai_lang_suffix(), ... )
  */
 function hireai_field($name, $default = '', $post_id = false) {
-    $localized_value = site_field($name . hireai_lang_suffix(), '__hireai_missing__');
+    $localized_value = site_field($name . hireai_lang_suffix(), '__hireai_missing__', $post_id);
     if ($localized_value !== '__hireai_missing__') {
         return $localized_value;
     }
@@ -1508,8 +1508,8 @@ function hireai_build_solution_cards_from_ids($ids) {
         }
         $cards[] = [
             'id'          => $pid,
-            'title'       => get_the_title(),
-            'excerpt'     => get_the_excerpt() ?: wp_trim_words(strip_tags(get_the_content()), 24, '…'),
+            'title'       => hireai_solution_product_display_title($pid, hireai_current_lang()),
+            'excerpt'     => hireai_solution_product_display_excerpt($pid, hireai_current_lang()),
             'image'       => get_the_post_thumbnail_url($pid, 'medium'),
             'price'       => $price_html,
             'stock'       => $stock,
@@ -1525,6 +1525,46 @@ function hireai_build_solution_cards_from_ids($ids) {
     }
     wp_reset_postdata();
     return $cards;
+}
+
+function hireai_solution_product_display_title($pid, $lang = '') {
+    $pid = (int) $pid;
+    $lang = in_array($lang, ['zh', 'en'], true) ? $lang : hireai_current_lang();
+
+    if (function_exists('get_field')) {
+        $override = get_field('sol_title_' . $lang, $pid);
+        if (is_string($override) && trim($override) !== '') {
+            return trim($override);
+        }
+    }
+
+    $raw_title = trim((string) get_the_title($pid));
+    if ($raw_title === '') return '';
+
+    $segments = array_map('trim', explode('|', $raw_title));
+    foreach ($segments as $segment) {
+        if ($segment !== '') return $segment;
+    }
+    return $raw_title;
+}
+
+function hireai_solution_product_display_excerpt($pid, $lang = '') {
+    $pid = (int) $pid;
+    $lang = in_array($lang, ['zh', 'en'], true) ? $lang : hireai_current_lang();
+
+    if (function_exists('get_field')) {
+        $override = get_field('sol_desc_' . $lang, $pid);
+        if (is_string($override) && trim($override) !== '') {
+            return trim($override);
+        }
+    }
+
+    $raw_excerpt = get_the_excerpt($pid);
+    if (trim((string) $raw_excerpt) === '') {
+        $raw_excerpt = wp_trim_words(wp_strip_all_tags((string) get_post_field('post_content', $pid)), 24, '…');
+    }
+
+    return trim((string) $raw_excerpt);
 }
 
 /**
@@ -1674,28 +1714,16 @@ function hireai_resolve_employee_url($index = 0, $fallback_url = '') {
 function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_slug = '', $persona_slug = '') {
     if (!post_type_exists('product') || !function_exists('wc_get_product')) return [];
     $paged         = max(1, (int) $paged);
-    $per_page      = max(1, (int) $per_page);
+    $per_page      = -1 === (int) $per_page ? -1 : max(1, (int) $per_page);
     $category_slug = is_string($category_slug) ? sanitize_key($category_slug) : '';
     $persona_slug  = is_string($persona_slug)  ? sanitize_key($persona_slug)  : '';
 
-    /* v3.5.7-p18: 缓存 key 升级到 v2 + 双维度 slug 后缀(分类 + 数字人) */
-    $cache_key = 'hireai_solutions_cache_v2_p' . $paged . '_cat' . $category_slug . '_per' . $persona_slug;
-
-    $cached = get_transient($cache_key);
-    if (is_array($cached)) {
-        return array_map('intval', $cached);
-    }
-
-    // 1. v3.7.6 修复:废弃 _visibility meta_query（商城拉不到任何商品的根因）
-    //    WC 3.0+（2017 起）已移除 _visibility post meta，改用 product_visibility taxonomy。
-    //    旧写法 meta_query '_visibility' != 'hidden' 对"没有该 meta"的现代商品一律排除
-    //    （SQL != 不匹配缺失行）→ 后台新建的所有 WC 商品都进不了商城 = "和 WooCommerce 没打通"。
-    //    现代正确做法:tax_query 排除 exclude-from-catalog term；term 不存在时 NOT IN 天然放行全部。
-    //    （v3.7.0 注释里"field 'name' 匹配不上"的真因:'exclude-from-catalog' 是 term slug，
-    //      而 field 'name' 匹配的是 term 名 "Exclude From Catalog" —— 应当用 field 'slug'。）
-    //    兜底:hireai_build_solution_cards_from_ids() 里再用 wc_get_product()->is_visible() 过滤一次。
+    /*
+     * v3.7.46: 移除 language-agnostic transient。旧缓存 key 不带语言，
+     * 而 Polylang 会根据浏览语言改变 WP_Query 结果，导致一次缓存把另一语言的空结果
+     * 复用到所有语言。商品保存后商城必须立即同步，因此改为直接标准 WC 查询。
+     */
     $meta_query = [];
-    //    cat / persona 仍走 tax_query(下面 append),初始含可见性排除
     $tax_query = [[
         'taxonomy' => 'product_visibility',
         'field'    => 'slug',
@@ -1703,16 +1731,14 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
         'operator' => 'NOT IN',
     ]];
 
-    // 2. 场景分类筛选(可选)
+    // 场景分类筛选用 slug IN；同一分类在 Polylang 翻译或重命名后不再依赖单个 term_id。
     if (!empty($category_slug)) {
-        $term = get_term_by('slug', $category_slug, 'product_cat');
-        if ($term && !is_wp_error($term)) {
-            $tax_query[] = [
-                'taxonomy' => 'product_cat',
-                'field'    => 'term_id',
-                'terms'    => [(int) $term->term_id],
-            ];
-        }
+        $tax_query[] = [
+            'taxonomy' => 'product_cat',
+            'field'    => 'slug',
+            'terms'    => [(string) $category_slug],
+            'operator' => 'IN',
+        ];
     }
 
     // 3. 数字人筛选(独立维度,与场景 AND 关系)
@@ -1743,13 +1769,14 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
         if ($term && !is_wp_error($term) && $tax_used !== '') {
             $tax_query[] = [
                 'taxonomy' => $tax_used,
-                'field'    => 'term_id',
-                'terms'    => [(int) $term->term_id],
+                'field'    => 'slug',
+                'terms'    => [(string) $effective_slug],
+                'operator' => 'IN',
             ];
         }
     }
 
-    // 4. 两套筛选同时存在 → relation=AND
+    // 4. 筛选同时存在 → relation=AND
     if (count($tax_query) > 1) {
         $tax_query['relation'] = 'AND';
     }
@@ -1759,8 +1786,7 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
         ? hireai_dedupe_tax_query($tax_query)
         : $tax_query;
 
-    // 6. 拉 IDs
-    $q = new WP_Query([
+    $query_args = [
         'post_type'      => 'product',
         'post_status'    => 'publish',
         'posts_per_page' => $per_page,
@@ -1771,11 +1797,30 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
         'fields'         => 'ids',
         'tax_query'      => $tax_query,
         'meta_query'     => $meta_query,
-    ]);
+    ];
+
+    $polylang_active = function_exists('pll_current_language') && function_exists('pll_default_language');
+    $polylang_current = $polylang_active ? pll_current_language('slug') : '';
+    $current_language = $polylang_current ? $polylang_current : hireai_current_lang();
+    $default_language = $polylang_active ? pll_default_language('slug') : 'zh';
+
+    if ($polylang_active) {
+        $query_args['lang'] = implode(',', array_values(array_unique(array_filter([$current_language, $default_language]))));
+    }
+
+    $q = new WP_Query($query_args);
     $ids = is_array($q->posts) ? array_map('intval', $q->posts) : [];
     wp_reset_postdata();
 
-    set_transient($cache_key, $ids, 5 * MINUTE_IN_SECONDS);
+    // 7. 当前语言没有商品时回退默认语言，避免 Sasha 只传中文商品时英文商城显示空。
+    if (empty($ids) && $polylang_active && $default_language && $default_language !== $current_language) {
+        $query_args['lang'] = $default_language;
+
+        $q = new WP_Query($query_args);
+        $ids = is_array($q->posts) ? array_map('intval', $q->posts) : [];
+        wp_reset_postdata();
+    }
+
     return $ids;
 }
 
