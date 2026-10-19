@@ -312,7 +312,14 @@ function hireai_lang_suffix() {
         return '_' . $cookie_lang;
     }
 
-    return '_en';
+    if (function_exists('pll_current_language')) {
+        $polylang_lang = pll_current_language('slug');
+        if (in_array($polylang_lang, ['zh', 'en'], true)) {
+            return '_' . $polylang_lang;
+        }
+    }
+
+    return '_zh';
 }
 
 function hireai_current_lang() {
@@ -328,12 +335,11 @@ add_filter('request', function ($request) {
     if ($lang === '' || !pll_set_current_language($lang)) {
         return $request;
     }
-    $request['lang'] = $lang;
-
     if (!empty($request['page_id']) && function_exists('pll_get_post')) {
         $translated_id = pll_get_post((int) $request['page_id'], $lang);
         if ($translated_id) {
             $request['page_id'] = (int) $translated_id;
+            unset($request['lang']);
         }
         return $request;
     }
@@ -352,9 +358,10 @@ add_filter('request', function ($request) {
     $source_id = url_to_postid(home_url('/' . implode('/', $segments) . (empty($segments) ? '' : '/')));
     if ($source_id && function_exists('pll_get_post')) {
         $translated_id = pll_get_post((int) $source_id, $lang);
-        if ($translated_id && (int) $translated_id !== (int) $source_id) {
+        if ($translated_id) {
             $request['page_id'] = (int) $translated_id;
             unset($request['pagename'], $request['page'], $request['name'], $request['attachment']);
+            unset($request['lang']);
         }
     }
 
