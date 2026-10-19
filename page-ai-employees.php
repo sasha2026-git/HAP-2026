@@ -387,7 +387,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 .lb-att .lb-cta__heading,
 .lb-att .lb-cta__heading span {
     font-style: italic;
-    background: linear-gradient(135deg, #e9c176 0%, #775a19 100%);
+    background: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
