@@ -529,6 +529,9 @@ if ( !class_exists(UpdateChecker::class, false) ):
 		 */
 		public function triggerError($message, $errorType) {
 			if ( $this->isDebugModeEnabled() ) {
+				if ( E_USER_ERROR === $errorType ) {
+					throw new \RuntimeException(esc_html($message));
+				}
 				//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error -- Only happens in debug mode.
 				trigger_error(esc_html($message), $errorType);
 			}
