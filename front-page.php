@@ -477,26 +477,23 @@ $t = [
 /* ═══════════════════════════════════════════════════════════════════════
    1) HERO  ── 上图下文 (图片区块 / 白底文字区 / 金色衬线标题)
    ═══════════════════════════════════════════════════════════════════════ */
-.hireai-fp-hero{position:relative;display:flex;flex-direction:column;width:100%;height:auto;overflow:visible;background:var(--surface-white,#fff);}
-.hireai-fp-hero__bg{position:relative;left:auto;top:auto;width:100%;aspect-ratio:1422/423;height:auto;overflow:hidden;}
-.hireai-fp-hero__bg img{display:block;width:100%;height:100%;object-fit:cover;object-position:center top;}
+.hireai-fp-hero{display:flex;flex-direction:column;width:100%;height:auto;overflow:visible;background:var(--surface-white,#fff);}
+.hireai-fp-hero__bg{position:relative;left:auto;top:auto;width:100%;height:min(52vw,680px);overflow:hidden;}
+.hireai-fp-hero__bg img{display:block;width:100%;height:100%;object-fit:cover;object-position:center bottom;}
 .hireai-fp-hero__shade{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(23,25,27,.12) 0%,rgba(23,25,27,0) 24%,rgba(23,25,27,0) 78%,rgba(23,25,27,.22) 100%);pointer-events:none;}
-.hireai-fp-hero__panel{position:absolute;z-index:2;left:27.2%;top:22.5%;width:44.2%;height:54.6%;display:grid;align-content:center;justify-items:center;text-align:center;padding:clamp(8px,1vw,20px) clamp(10px,1.5vw,24px);border:1px solid rgba(233,193,118,.42);border-radius:clamp(10px,1.5vw,18px);background:linear-gradient(135deg,rgba(24,20,12,.68),rgba(55,41,16,.52));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 0 34px rgba(233,193,118,.10);overflow:hidden;}
-.hireai-fp-hero__kicker{margin:0 0 clamp(8px,1.2vw,18px);}
-.hireai-fp-hero__panel .hireai-fp__kicker{color:var(--gold-light);font-size:clamp(9px,.85vw,12px);}
-.hireai-fp-hero__title{font-family:var(--f-display);font-size:clamp(20px,2.55vw,34px);font-weight:700;line-height:1.14;letter-spacing:-.02em;color:#fff;margin:0 0 clamp(8px,1vw,16px);}
+.hireai-fp-hero__inner,
+html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{position:relative;inset:auto;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;width:min(100%,920px);min-width:min(100%,920px);margin-inline:auto;padding:clamp(44px,6vw,84px) var(--side) clamp(60px,7vw,96px);background:#fff;writing-mode:horizontal-tb;}
+.hireai-fp-hero__inner > *,
+html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner > *{min-width:0;max-width:100%;}
+.hireai-fp-hero__kicker{margin-bottom:24px;}
+.hireai-fp-hero__title{font-family:var(--f-display);font-size:var(--sz-d);font-weight:700;line-height:1.12;letter-spacing:-.02em;color:var(--gold);margin:0 0 24px;}
 .hireai-fp-hero__title,
 html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__title{display:grid;width:100%;max-width:none;justify-items:center;}
 .hireai-fp-hero__title-line,
 html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__title-line{display:block;width:100%;max-width:100%;overflow-wrap:break-word;writing-mode:horizontal-tb;}
-.hireai-fp-hero__panel .hireai-fp__gold{background:linear-gradient(135deg,#ffdea5 0%,#e9c176 100%);-webkit-background-clip:text;background-clip:text;}
-.hireai-fp-hero__subtitle{font-family:var(--f-body);font-size:clamp(10px,.9vw,14px);font-weight:400;line-height:1.4;color:rgba(255,255,255,.88);margin:0;width:100%;max-width:520px;overflow-wrap:break-word;}
+.hireai-fp-hero__subtitle{font-family:var(--f-body);font-size:var(--sz-bl);font-weight:400;line-height:1.6;color:rgba(26,28,28,.80);margin:0 auto 36px;width:min(100%,680px);max-width:680px;overflow-wrap:break-word;}
 /* v3.3.0: spec §4 Hero 副标题 = body-lg italic (en only); zh keeps upright */
 html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
-.hireai-fp-hero__inner,
-html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{position:relative;inset:auto;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;width:min(100%,920px);min-width:min(100%,920px);margin-inline:auto;padding:clamp(32px,4vw,56px) var(--side) clamp(44px,5vw,72px);background:#fff;writing-mode:horizontal-tb;}
-.hireai-fp-hero__inner > *,
-html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner > *{min-width:0;max-width:100%;}
 .hireai-fp-hero__actions{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;}
 /* ═══════════════════════════════════════════════════════════════════════
    2) INTRO  ── 居中：kicker + 大标题 + 描述 + ghost CTA
@@ -643,15 +640,14 @@ html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner > *{min-width:0;max-
    Responsive fine-tune
    ═══════════════════════════════════════════════════════════════════════ */
 @media(max-width:767px){
-    .hireai-fp-hero__bg{aspect-ratio:1925/1098;max-height:none;height:auto;}
-    .hireai-fp-hero__bg img{width:192.5%;max-width:none;height:100%;margin-left:-44.85%;object-fit:fill;object-position:center;}
-    .hireai-fp-hero__panel{left:7.5%;top:22%;width:87.8%;height:56%;padding:10px 14px;}
-    .hireai-fp-hero__panel .hireai-fp__kicker{font-size:9px;margin-bottom:6px;}
-    .hireai-fp-hero__title{font-size:clamp(14px,5vw,22px);margin-bottom:8px;}
-    .hireai-fp-hero__subtitle{font-size:11px;line-height:1.35;}
+    .hireai-fp-hero__bg{height:min(62svh,520px);}
+    .hireai-fp-hero__bg img{object-position:center 26%;}
     .hireai-fp-hero__inner,
-    html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{position:relative;inset:auto;width:100%;min-width:0;padding:36px 20px 48px;}
-    .hireai-fp-hero__subtitle{max-width:100%;}
+    html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{position:relative;inset:auto;width:100%;min-width:0;padding:52px 20px 68px;}
+    .hireai-fp-hero__kicker{margin-bottom:16px;}
+    .hireai-fp-hero__title{font-size:clamp(32px,8vw,48px);}
+    .hireai-fp-hero__title .hireai-fp__gold{background:linear-gradient(135deg,#e9c176 0%,#775a19 100%);-webkit-background-clip:text;background-clip:text;}
+    .hireai-fp-hero__subtitle{max-width:100%;margin-bottom:24px;color:rgba(26,28,28,.80);}
     .hireai-fp-hero__actions{gap:12px;}
     .hireai-fp-hero__actions .hireai-fp__btn{min-height:48px;padding:14px 22px;font-size:13px;}
     .hireai-fp-products__head,.hireai-fp-solutions__head,.hireai-fp-cases__head{flex-direction:column;align-items:flex-start;}
@@ -666,7 +662,7 @@ html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner > *{min-width:0;max-
      1) HERO  ── 满屏 / 背景图 / 渐变遮罩 / 双按钮 / 向下滚动指示
      ═══════════════════════════════════════════════════════════════════════ -->
 <section class="hireai-fp hireai-fp-hero" aria-label="<?php echo esc_attr($is_en ? 'Hero' : '首页主视觉'); ?>">
-    <div class="hireai-fp-hero__bg">
+    <div class="hireai-fp-hero__bg" aria-hidden="true">
         <?php if ($hero_image) : ?>
         <img
             src="<?php echo esc_url($hero_image); ?>"
@@ -679,25 +675,23 @@ html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner > *{min-width:0;max-
             decoding="async">
         <div class="hireai-fp-hero__shade" aria-hidden="true"></div>
         <?php endif; ?>
-        <div class="hireai-fp-hero__panel">
-            <?php if ($hero_kicker) : ?>
-            <p class="hireai-fp__kicker hireai-fp-hero__kicker"><?php echo esc_html($hero_kicker); ?></p>
-            <?php endif; ?>
-            <h1 class="hireai-fp-hero__title">
-                <span class="hireai-fp-hero__title-line"><?php echo esc_html($hero_static); ?></span>
-                <?php if ('' !== $hero_accent_primary) : ?>
-                <span class="hireai-fp-hero__title-line hireai-fp__gold"><?php echo esc_html($hero_accent_primary); ?></span>
-                <?php endif; ?>
-                <?php if ('' !== $hero_accent_secondary) : ?>
-                <span class="hireai-fp-hero__title-line hireai-fp__gold"><?php echo esc_html($hero_accent_secondary); ?></span>
-                <?php endif; ?>
-            </h1>
-            <?php if ($hero_subtitle) : ?>
-            <p class="hireai-fp-hero__subtitle"><?php echo esc_html($hero_subtitle); ?></p>
-            <?php endif; ?>
-        </div>
     </div>
     <div class="hireai-fp-hero__inner">
+        <?php if ($hero_kicker) : ?>
+        <p class="hireai-fp__kicker hireai-fp-hero__kicker"><?php echo esc_html($hero_kicker); ?></p>
+        <?php endif; ?>
+        <h1 class="hireai-fp-hero__title">
+            <span class="hireai-fp-hero__title-line"><?php echo esc_html($hero_static); ?></span>
+            <?php if ('' !== $hero_accent_primary) : ?>
+            <span class="hireai-fp-hero__title-line hireai-fp__gold"><?php echo esc_html($hero_accent_primary); ?></span>
+            <?php endif; ?>
+            <?php if ('' !== $hero_accent_secondary) : ?>
+            <span class="hireai-fp-hero__title-line hireai-fp__gold"><?php echo esc_html($hero_accent_secondary); ?></span>
+            <?php endif; ?>
+        </h1>
+        <?php if ($hero_subtitle) : ?>
+        <p class="hireai-fp-hero__subtitle"><?php echo esc_html($hero_subtitle); ?></p>
+        <?php endif; ?>
         <div class="hireai-fp-hero__actions">
             <a class="hireai-fp__btn hireai-fp__btn--primary" href="<?php echo esc_url($hero_cta_1_url); ?>">
                 <?php echo esc_html($hero_cta_1_title); ?>
