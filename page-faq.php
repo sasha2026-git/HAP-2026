@@ -2,7 +2,7 @@
 /**
  * Template Name: 聘AI - FAQ
  *
- * Stitch-matched v3.0.1 — 完全重写（修复 v3.0.0 文件头未识别问题）
+ * Stitch-matched v3.8.0 — 自由 FAQ 数据层
  *   1. Hero        — 居中眉题 + 金色渐变大字 + 斜体引言
  *   2. Hero Banner — 全宽圆角大图
  *   3. FAQ body    — 左侧分组导航 + 右侧手风琴（玻璃拟态卡）
@@ -10,15 +10,15 @@
  *
  * 数据源：
  *   - Hero / 分组标签 / CTA：ACF group_page_faq（hireai_field 自动按语言取 _zh/_en）
- *   - FAQ 问答：ACF repeater faq_items_zh / faq_items_en（field_faq_row_*）
- *     当 repeater 为空时自动回退到 category=faq 的 Posts 数据（兼容旧内容）。
+ *   - FAQ 分类/问答：ACF nested repeater faq_data_categories_zh / faq_data_categories_en；
+ *     为空时按当前语言回退旧 repeater、category=faq 文章和内置默认内容。
  *
  * 修复记录（v3.0.0 → v3.0.1）：
  *   v3.0.0 把 ABSPATH 守卫放在 Template Name 注释之前；这在部分 WP 版本下会让
  *   WP_File_Header::get_data 拿不到 Template Name，从而后台看不到模板。
  *   v3.0.1 把 Template Name 注释放回第一个 PHP 块的最前面，ABSPATH 守卫移至第二块。
  *
- * @version 3.0.1
+ * @version 3.8.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -86,40 +86,56 @@ if (!$hero_image) {
 }
 
 /* --------------------------------------------------------------------
- * 3. FAQ 问答 — 优先 ACF Repeater；为空时回退到 category=faq 的 Posts
+ * 3. FAQ DATA — free-form nested repeater first; legacy sources retained
  * -------------------------------------------------------------------- */
-$faq_by_group = [];
-$has_repeater = false;
+$faq_categories       = [];
+$has_faq_data_source  = false;
+$faq_repeater_name    = $is_en ? 'faq_data_categories_en' : 'faq_data_categories_zh';
+$faq_data_value       = function_exists('get_field') ? get_field($faq_repeater_name, $page_id) : null;
 
-if (function_exists('have_rows') && function_exists('get_field')) {
-    $repeater_name = $is_en ? 'faq_items_en' : 'faq_items_zh';
-    if (have_rows($repeater_name)) {
-        $has_repeater = true;
-        while (have_rows($repeater_name)) {
-            the_row();
-            $gkey = (string) get_sub_field('faq_row_group');
-            if ($gkey === '') {
-                $gkey = 'other';
-            }
-            if (!isset($faq_by_group[$gkey])) {
-                $faq_by_group[$gkey] = [];
-            }
-            $q_text = trim((string) get_sub_field('faq_row_question'));
-            $a_text = trim((string) get_sub_field('faq_row_answer'));
-            // v3.0.4 hotfix: 跳过空问答（之前会插入一条空白项，导致侧栏显示但展开无文字）
-            if ($q_text === '' && $a_text === '') {
+if (is_array($faq_data_value) && !empty($faq_data_value)) {
+    $has_faq_data_source = true;
+    foreach ($faq_data_value as $category_row) {
+        $category_label = trim((string) ($category_row['category_label'] ?? ''));
+        $category_items = [];
+
+        foreach ((array) ($category_row['faq_entries'] ?? []) as $entry) {
+            $question = trim((string) ($entry['question'] ?? ''));
+            $answer   = trim((string) ($entry['answer'] ?? ''));
+            if ($question === '' && $answer === '') {
                 continue;
             }
-            $faq_by_group[$gkey][] = [
-                'q' => $q_text,
-                'a' => $a_text,
+            $category_items[] = ['q' => $question, 'a' => $answer];
+        }
+
+        $faq_categories[] = ['label' => $category_label, 'items' => $category_items];
+    }
+}
+
+if (!$has_faq_data_source && function_exists('have_rows') && function_exists('get_field')) {
+    $legacy_repeater_name = $is_en ? 'faq_items_en' : 'faq_items_zh';
+    if (have_rows($legacy_repeater_name, $page_id)) {
+        $has_faq_data_source = true;
+        $legacy_by_group = [];
+
+        while (have_rows($legacy_repeater_name, $page_id)) {
+            the_row();
+            $legacy_by_group[(string) get_sub_field('faq_row_group')][] = [
+                'q' => trim((string) get_sub_field('faq_row_question')),
+                'a' => trim((string) get_sub_field('faq_row_answer')),
             ];
+        }
+
+        foreach ($groups as $legacy_key => $legacy_group) {
+            $items = array_values(array_filter($legacy_by_group[$legacy_key] ?? [], static function ($item) {
+                return $item['q'] !== '' || $item['a'] !== '';
+            }));
+            $faq_categories[] = ['label' => $legacy_group['label'], 'items' => $items];
         }
     }
 }
 
-// Posts fallback
-if (!$has_repeater) {
+if (!$has_faq_data_source) {
     $faq_query = new WP_Query([
         'post_type'      => 'post',
         'posts_per_page' => 60,
@@ -128,134 +144,48 @@ if (!$has_repeater) {
         'orderby'        => 'menu_order date',
         'order'          => 'ASC',
     ]);
+
     if ($faq_query->have_posts()) {
+        $has_faq_data_source = true;
+        $legacy_by_group = [];
+
         while ($faq_query->have_posts()) {
             $faq_query->the_post();
-            $gkey = function_exists('get_field') ? (string) get_field('faq_group') : '';
-            if ($gkey === '') {
-                $gkey = 'other';
-            }
-            if (!isset($faq_by_group[$gkey])) {
-                $faq_by_group[$gkey] = [];
-            }
-            $q_text = trim((string) get_the_title());
-            $a_text = trim((string) wp_strip_all_tags(get_the_content()));
-            // v3.0.4 hotfix: 跳过空问答（防止渲染空白面板）
-            if ($q_text === '' && $a_text === '') {
-                continue;
-            }
-            $faq_by_group[$gkey][] = [
-                'q' => $q_text,
-                'a' => $a_text,
+            $legacy_key = function_exists('get_field') ? (string) get_field('faq_group') : '';
+            $legacy_by_group[$legacy_key === '' ? 'other' : $legacy_key][] = [
+                'q' => trim((string) get_the_title()),
+                'a' => trim((string) wp_strip_all_tags(get_the_content())),
             ];
         }
         wp_reset_postdata();
-    }
-}
 
-// 兜底：完全无内容时，4 个分组各显示 2 条预设问答（共 8 条 ≥ 任务要求的 5 条）
-// v3.0.4 hotfix: 即使 ACF repeater + Posts 双双空，也保证 FAQ 文字内容可见
-if (empty($faq_by_group)) {
-    $fallback = [
-        'partnership' => [
-            [
-                'q' => $is_en ? 'How long does it take to deploy a digital employee?' : '上线一个数字员工需要多长时间？',
-                'a' => $is_en
-                    ? 'Standard rollout takes 4–8 weeks depending on data readiness and customization depth.'
-                    : '标准上线周期为 4 至 8 周，具体取决于数据结构与定制深度。',
-            ],
-            [
-                'q' => $is_en ? 'Do you provide ongoing support after launch?' : '上线之后是否提供持续支持？',
-                'a' => $is_en
-                    ? 'Yes. Every engagement includes a dedicated concierge and quarterly optimization reviews.'
-                    : '是的。每一段合作都会配备专属管家，并提供季度性的优化复盘。',
-            ],
-            [
-                /* v3.0.5: 每组补到 3 条（共 12 条 ≥ brief 要求的 8 条） */
-                'q' => $is_en ? 'Can the digital employee integrate with our existing tools?' : '数字员工能与我们现有的工具集成吗？',
-                'a' => $is_en
-                    ? 'Yes. We support standard APIs and connectors for CRM, ERP, and ticketing systems; bespoke integration is also available.'
-                    : '可以。我们支持 CRM、ERP、工单等标准 API 与连接器，也支持定制化集成。',
-            ],
-        ],
-        'finance' => [
-            [
-                'q' => $is_en ? 'How is your pricing structured?' : '如何收费？',
-                'a' => $is_en
-                    ? 'Pricing is tailored by scope and engagement; we provide a clear quote based on team size and use case.'
-                    : '按方案与使用周期定制。我们会根据团队规模与场景给出明确报价。',
-            ],
-            [
-                'q' => $is_en ? 'Do you offer a free pilot?' : '是否提供免费试点？',
-                'a' => $is_en
-                    ? 'For suitable scenarios we offer a time-boxed pilot with clear deliverables and evaluation criteria.'
-                    : '针对合适的场景，我们会提供限时试点，明确交付物与评估标准。',
-            ],
-            [
-                'q' => $is_en ? 'Are there long-term contracts?' : '需要长期合同吗？',
-                'a' => $is_en
-                    ? 'No. We offer monthly subscriptions with no long-term lock-in; enterprise plans can be customized to your roadmap.'
-                    : '不需要。我们提供按月订阅，不强制长期锁定；企业方案可按您的路线图定制。',
-            ],
-        ],
-        'privacy-security' => [
-            [
-                'q' => $is_en ? 'How is data privacy protected?' : '数据与隐私如何保障？',
-                'a' => $is_en
-                    ? 'Client data is only used for the agreed engagement and is never used to train other clients’ models.'
-                    : '客户数据仅在合同约定的范围内用于交付，不用于训练其他客户模型。',
-            ],
-            [
-                'q' => $is_en ? 'Where is the data stored?' : '数据存储在哪里？',
-                'a' => $is_en
-                    ? 'All data is stored in regional private clouds; you may opt for on-premise deployment for sensitive workloads.'
-                    : '所有数据存储在区域私有云；针对敏感业务，您也可选择本地化部署。',
-            ],
-            [
-                'q' => $is_en ? 'Who owns the model trained on our data?' : '用我们数据训练的模型归谁所有？',
-                'a' => $is_en
-                    ? 'You do. The bespoke model and its derivative assets belong to your organization under our standard engagement terms.'
-                    : '归您所有。按标准合作条款，专属模型及其衍生资产归贵公司所有。',
-            ],
-        ],
-        'other' => [
-            [
-                'q' => $is_en ? 'Can I try a digital employee first?' : '我可以先试用一个数字员工吗？',
-                'a' => $is_en
-                    ? 'Yes. For suitable scenarios we offer a time-boxed pilot with clear deliverables and evaluation criteria.'
-                    : '可以。我们会为合适场景提供限时试点，明确交付物与评估标准。',
-            ],
-            [
-                'q' => $is_en ? 'Which languages do digital employees speak?' : '数字员工支持哪些语言？',
-                'a' => $is_en
-                    ? 'Out of the box: Mandarin, Cantonese, and English. Additional languages can be enabled on request.'
-                    : '开箱即用支持普通话、粤语与英语；其他语言可按需启用。',
-            ],
-            [
-                'q' => $is_en ? 'How do we get started?' : '如何开始合作？',
-                'a' => $is_en
-                    ? 'Book a 30-minute consultation. We assess your goals, scope a pilot, and propose a tailored engagement plan within a week.'
-                    : '预约 30 分钟咨询。我们会评估您的目标，框定试点方案，并在 1 周内提供专属合作计划。',
-            ],
-        ],
-    ];
-    foreach ($fallback as $gkey => $items) {
-        if (!isset($faq_by_group[$gkey])) {
-            $faq_by_group[$gkey] = $items;
+        foreach ($groups as $legacy_key => $legacy_group) {
+            $faq_categories[] = [
+                'label' => $legacy_group['label'],
+                'items' => $legacy_by_group[$legacy_key] ?? [],
+            ];
         }
     }
 }
 
-/* 默认激活分组：取第一组有数据的 key */
-$active_group = '';
-foreach (array_keys($groups) as $gk) {
-    if (!empty($faq_by_group[$gk])) {
-        $active_group = $gk;
-        break;
+/* Bundled Sasha content is the default when no editable FAQ source exists. */
+if (!$has_faq_data_source) {
+    foreach (hireai_faq_default_categories($is_en ? 'en' : 'zh') as $default_category) {
+        $faq_categories[] = [
+            'label' => $default_category['category_label'],
+            'items' => array_map(static function ($entry) {
+                return ['q' => $entry['question'], 'a' => $entry['answer']];
+            }, $default_category['faq_entries']),
+        ];
     }
 }
-if ($active_group === '') {
-    $active_group = 'partnership';
+
+$active_group = 0;
+foreach ($faq_categories as $category_index => $category) {
+    if (!empty($category['items'])) {
+        $active_group = $category_index;
+        break;
+    }
 }
 
 /* --------------------------------------------------------------------
@@ -377,10 +307,19 @@ if ($active_group === '') {
     transition: color 0.25s ease, border-color 0.25s ease;
 }
 .hireai-faq-sidebar__btn:hover { color: #1a1c1c; }
+.hireai-faq-sidebar__btn:hover,
+.hireai-faq-sidebar__btn:active,
+.hireai-faq-sidebar__btn:focus-visible,
 .hireai-faq-sidebar__btn.is-active {
-    color: #775a19;
-    border-left-color: #775a19;
+    color: #ffffff;
+    background-image: linear-gradient(135deg, #e9c176 0%, #775a19 100%);
+    background-clip: padding-box;
+    border-left-color: rgba(119, 90, 25, 0.65);
     font-weight: 700;
+}
+.hireai-faq-sidebar__btn:focus-visible {
+    outline: 2px solid #775a19;
+    outline-offset: 2px;
 }
 
 /* Sidebar fallback on mobile: horizontal scroll */
@@ -406,9 +345,9 @@ if ($active_group === '') {
         white-space: nowrap;
     }
     .hireai-faq-sidebar__btn.is-active {
-        background: rgba(119, 90, 25, 0.06);
-        border-color: #775a19;
-        border-left-color: #775a19; /* keep visual consistency */
+        background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
+        border-color: rgba(119, 90, 25, 0.65);
+        border-left-color: rgba(119, 90, 25, 0.65);
     }
 }
 
@@ -432,8 +371,16 @@ if ($active_group === '') {
     transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 .hireai-faq-item:hover {
+    background-image: linear-gradient(135deg, rgba(233, 193, 118, 0.18), rgba(119, 90, 25, 0.08));
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
-    border-color: rgba(119, 90, 25, 0.25);
+    border-color: rgba(119, 90, 25, 0.45);
+}
+.hireai-faq-item:active,
+.hireai-faq-item.is-open,
+.hireai-faq-item:focus-within {
+    background-image: linear-gradient(135deg, rgba(233, 193, 118, 0.2), rgba(119, 90, 25, 0.08));
+    border-color: rgba(119, 90, 25, 0.5);
+    box-shadow: 0 8px 40px rgba(119, 90, 25, 0.12);
 }
 .hireai-faq-item__toggle {
     display: flex;
@@ -454,13 +401,26 @@ if ($active_group === '') {
     min-width: 0;
     margin: 0;
     font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
-    font-size: clamp(18px, 2.2vw, 22px);
+    font-size: var(--fs-h4, 18px);
     font-weight: 500;
     line-height: 1.35;
     color: #1a1c1c;
     overflow-wrap: anywhere;
 }
 .hireai-faq-item__toggle:hover .hireai-faq-item__q { color: #775a19; }
+.hireai-faq-item__toggle:active .hireai-faq-item__q,
+.hireai-faq-item.is-open .hireai-faq-item__q,
+.hireai-faq-item__toggle:focus-visible .hireai-faq-item__q {
+    background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+.hireai-faq-item__toggle:focus-visible {
+    outline: 2px solid #775a19;
+    outline-offset: 4px;
+}
 .hireai-faq-item__icon {
     flex: 0 0 28px;
     width: 28px;
@@ -529,9 +489,9 @@ if ($active_group === '') {
       <!-- Sidebar: group navigation -->
       <aside class="hireai-faq-sidebar" aria-label="<?php echo esc_attr($is_en ? 'FAQ categories' : 'FAQ 分类导航'); ?>">
         <ul class="hireai-faq-sidebar__list" role="tablist">
-          <?php foreach ($groups as $gkey => $g) :
+      <?php foreach ($faq_categories as $gkey => $category) :
               $is_active = ($gkey === $active_group);
-              $has_items = !empty($faq_by_group[$gkey]);
+              $has_items = !empty($category['items']);
           ?>
             <li role="presentation">
               <button type="button"
@@ -541,7 +501,7 @@ if ($active_group === '') {
                       aria-controls="hireai-faq-panel-<?php echo esc_attr($gkey); ?>"
                       data-faq-group="<?php echo esc_attr($gkey); ?>"
                       <?php echo $has_items ? '' : 'aria-disabled="true"'; ?>>
-                <?php echo esc_html($g['label']); ?>
+                <?php echo esc_html($category['label']); ?>
               </button>
             </li>
           <?php endforeach; ?>
@@ -550,8 +510,8 @@ if ($active_group === '') {
 
       <!-- Accordion panels -->
       <div class="hireai-faq-panel-wrap">
-        <?php foreach ($groups as $gkey => $g) :
-            $items = isset($faq_by_group[$gkey]) ? $faq_by_group[$gkey] : [];
+        <?php foreach ($faq_categories as $gkey => $category) :
+            $items = $category['items'];
             $is_active = ($gkey === $active_group);
         ?>
           <div class="hireai-faq-panel<?php echo $is_active ? '' : ' is-hidden'; ?>"

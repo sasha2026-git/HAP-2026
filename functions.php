@@ -3809,3 +3809,6 @@ add_filter('the_content', function ($content) {
     $links .= '</ul></div>';
     return $content . $links;
 }, 20);
+
+/* FAQ 自由分类/问答数据层（独立加载，避免改动上方既有函数） */
+require_once get_stylesheet_directory() . '/lib/faq-data.php';

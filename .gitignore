@@ -18,6 +18,7 @@ references/
 BUILD_PROMPT.md
 *.txt
 !assets/fonts/Noto-CJK-OFL.txt
+!assets/content/faq-content-*.txt
 
 # 本地预览文件（不入库）
 preview-*.html
