@@ -3812,3 +3812,489 @@ add_filter('the_content', function ($content) {
 
 /* FAQ 自由分类/问答数据层（独立加载，避免改动上方既有函数） */
 require_once get_stylesheet_directory() . '/lib/faq-data.php';
+
+/* =========================================================================
+ * v3.9.0 — About Us page fields, editable bilingual defaults, and navigation
+ * ========================================================================= */
+
+function hireai_about_default_stats($lang = 'zh') {
+    $is_en = $lang === 'en';
+    return [
+        ['value' => '0.02', 'unit' => $is_en ? 's' : '秒', 'label' => $is_en ? 'Cognitive Latency' : '认知响应'],
+        ['value' => '100', 'unit' => '%', 'label' => $is_en ? 'Dedicated Deployment' : '专属部署'],
+        ['value' => '24', 'unit' => $is_en ? 'h' : '小时', 'label' => $is_en ? 'Concierge Response' : '管家响应'],
+        ['value' => 'Tier 1', 'unit' => '', 'label' => $is_en ? 'Enterprise Security' : '企业级安全'],
+    ];
+}
+
+function hireai_about_default_process($lang = 'zh') {
+    $is_en = $lang === 'en';
+    return [
+        [
+            'number' => '01',
+            'phase' => $is_en ? 'PHASE INTAKE' : '阶段一 · 摄入',
+            'title' => $is_en ? 'Crystalline Data Intake' : '清晰数据摄入',
+            'description' => $is_en
+                ? 'Distilling brand ethos, business rules, and confidential knowledge into a governed semantic foundation.'
+                : '将品牌精神、业务规则与机密知识沉淀为受治理的语义基础。',
+            'meta' => $is_en ? 'Vault Ingestion' : '安全入库',
+        ],
+        [
+            'number' => '02',
+            'phase' => $is_en ? 'PHASE SYNTHESIS' : '阶段二 · 共创',
+            'title' => $is_en ? 'Neural Synthesis & Co-Creation' : '神经网络与共创',
+            'description' => $is_en
+                ? 'Cultivating digital temperament and skills that iterate alongside your operating team.'
+                : '培育数字员工性格与技能，并与经营团队持续迭代。',
+            'meta' => $is_en ? 'Cognitive Resonance' : '认知共振',
+        ],
+        [
+            'number' => '03',
+            'phase' => $is_en ? 'PHASE DEPLOYMENT' : '阶段三 · 部署',
+            'title' => $is_en ? 'High-Fidelity Execution' : '高保真执行',
+            'description' => $is_en
+                ? 'Embedding AI employees into mission-critical workflows with measurable precision.'
+                : '将 AI 数字员工嵌入关键流程，并保持可衡量的执行精度。',
+            'meta' => $is_en ? 'Live Ecosystem' : '实时生态',
+        ],
+    ];
+}
+
+function hireai_about_repeater_rows($field, $page_id, $lang, $defaults) {
+    if (!function_exists('get_field')) {
+        return $defaults;
+    }
+
+    $rows = get_field($field . '_' . $lang, $page_id);
+    if (!is_array($rows) || empty($rows)) {
+        return $defaults;
+    }
+
+    $clean_rows = [];
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $clean_row = [];
+        foreach (reset($defaults) as $key => $unused) {
+            $clean_row[$key] = trim((string) ($row[$key] ?? ''));
+        }
+        if (implode('', $clean_row) !== '') {
+            $clean_rows[] = $clean_row;
+        }
+    }
+
+    return $clean_rows ?: $defaults;
+}
+
+function hireai_about_stats($page_id, $lang = 'zh') {
+    $lang = $lang === 'en' ? 'en' : 'zh';
+    return hireai_about_repeater_rows('about_stats', $page_id, $lang, hireai_about_default_stats($lang));
+}
+
+function hireai_about_process_items($page_id, $lang = 'zh') {
+    $lang = $lang === 'en' ? 'en' : 'zh';
+    return hireai_about_repeater_rows('about_process', $page_id, $lang, hireai_about_default_process($lang));
+}
+
+add_action('acf/init', function () {
+    if (!function_exists('acf_add_local_field_group') || !function_exists('hireai_make_bilingual_group')) {
+        return;
+    }
+
+    acf_add_local_field_group(hireai_make_bilingual_group('group_page_about', '关于我们页', [
+        ['name' => 'about_hero_badge', 'label' => 'Hero · 徽章', 'type' => 'text', 'zh' => '品牌源起与理念', 'en' => 'BRAND GENESIS & PHILOSOPHY'],
+        ['name' => 'about_hero_title', 'label' => 'Hero · 主标题', 'type' => 'textarea', 'zh' => '智能，臻于高度。', 'en' => 'Intelligence, Elevated.', 'extra' => ['rows' => 1]],
+        ['name' => 'about_hero_accent', 'label' => 'Hero · 副标题', 'type' => 'textarea', 'zh' => '当代科技，邂逅高级定制。', 'en' => 'Where High Technology Meets Haute Couture.', 'extra' => ['rows' => 1]],
+        ['name' => 'about_hero_divider', 'label' => 'Hero · 分隔标签', 'type' => 'text', 'zh' => '智慧工坊', 'en' => "Maison d'Intelligence"],
+        ['name' => 'about_hero_intro', 'label' => 'Hero · 简介', 'type' => 'textarea', 'zh' => '聘AI将认知架构、经营严谨性与高级定制级工艺结合，服务有雄心的全球化团队。', 'en' => 'HireAIPeople brings cognitive architecture, operational rigor, and couture-level craft together for ambitious global teams.', 'extra' => ['rows' => 3]],
+        ['name' => 'about_story_number', 'label' => '故事 · 编号', 'type' => 'text', 'zh' => '01', 'en' => '01'],
+        ['name' => 'about_story_kicker', 'label' => '故事 · 眉题', 'type' => 'text', 'zh' => '以雄心持续向前 · 关于我们', 'en' => 'FORGING FORWARD WITH AMBITION · ABOUT US'],
+        ['name' => 'about_story_image', 'label' => '故事 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'about_story_image_alt', 'label' => '故事 · 图片替代文字', 'type' => 'text', 'zh' => '聘AI人机共创团队', 'en' => 'The HireAIPeople human and AI co-creation team'],
+        ['name' => 'about_story_image_kicker', 'label' => '图片浮层 · 眉题', 'type' => 'text', 'zh' => '智慧共创工坊', 'en' => 'The Sanctuary Atelier'],
+        ['name' => 'about_story_image_title', 'label' => '图片浮层 · 标题', 'type' => 'text', 'zh' => 'AI 速度，人类温度。', 'en' => 'AI Speed. Human Warmth.'],
+        ['name' => 'about_story_image_pill', 'label' => '图片浮层 · 胶囊', 'type' => 'text', 'zh' => '共生模型 4.0', 'en' => 'Symbiosis Model 4.0'],
+        ['name' => 'about_story_card_kicker', 'label' => '浮动卡片 · 眉题', 'type' => 'text', 'zh' => '和谐范式', 'en' => 'HARMONIC PARADIGM'],
+        ['name' => 'about_story_card_quote', 'label' => '浮动卡片 · 引言', 'type' => 'textarea', 'zh' => '技术的终极目的不是替代人类，而是放大人的雄心与想象力。', 'en' => 'Technology’s ultimate purpose is never to replace humanity, but to amplify human ambition.', 'extra' => ['rows' => 3]],
+        ['name' => 'about_story_title', 'label' => '故事 · 标题', 'type' => 'textarea', 'zh' => '以更大的雄心向前', 'en' => 'Forging Forward with Greater Ambition', 'extra' => ['rows' => 1]],
+        ['name' => 'about_story_paragraph_1', 'label' => '故事 · 段落 1', 'type' => 'textarea', 'zh' => '我们是由持续热情与严谨 AI 研究驱动的建设者。我们相信，前沿判断、市场洞察与人的想象力决定方向，基础模型则负责加速实现。', 'en' => 'We are builders driven by rigorous AI research and persistent passion. We believe frontline judgment, market discernment, and human imagination chart the direction that foundation models accelerate.', 'extra' => ['rows' => 4]],
+        ['name' => 'about_story_paragraph_2', 'label' => '故事 · 段落 2', 'type' => 'textarea', 'zh' => '你对业务的触感、来自一线的反馈，以及对明天的想象，从来不是细节，而是每次合作的最高指南。', 'en' => 'Your tactile understanding of the business, customer feedback, and tomorrow’s vision are not details—they are the sovereign compass of every engagement.', 'extra' => ['rows' => 4]],
+        ['name' => 'about_story_pull_quote', 'label' => '故事 · 强调引言', 'type' => 'textarea', 'zh' => '「你的雄心与判断，始终最重要。」', 'en' => '“Your ambition and judgment are paramount.”', 'extra' => ['rows' => 2]],
+        ['name' => 'about_story_paragraph_3', 'label' => '故事 · 段落 3', 'type' => 'textarea', 'zh' => '我们提供稳定可靠的工程与技术底座，团队则贡献判断、同理心与精细打磨。每次交付，都应带来希望、探索的喜悦，以及对自身力量的确信。', 'en' => 'Our engineering scaffold stays unyielding while our team contributes judgment, empathy, and artisanal refinement. Every deployment should inspire hope, exploration, and conviction in your own power.', 'extra' => ['rows' => 4]],
+        ['name' => 'about_method_number', 'label' => '方法论 · 编号', 'type' => 'text', 'zh' => '02', 'en' => '02'],
+        ['name' => 'about_method_kicker', 'label' => '方法论 · 眉题', 'type' => 'text', 'zh' => '智能架构', 'en' => 'NEURAL ARCHITECTURE'],
+        ['name' => 'about_method_title', 'label' => '方法论 · 标题', 'type' => 'textarea', 'zh' => '面向自主智能的三段式协议', 'en' => 'A Tripartite Protocol for Sovereign Intelligence', 'extra' => ['rows' => 1]],
+        ['name' => 'about_method_intro', 'label' => '方法论 · 简介', 'type' => 'textarea', 'zh' => '以纪律严明的连续流程，将企业智慧转化为持续、高精度的经营表现。', 'en' => 'A disciplined continuum that translates corporate wisdom into perpetual, high-precision performance.', 'extra' => ['rows' => 2]],
+        ['name' => 'about_method_image', 'label' => '方法论 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'about_method_image_alt', 'label' => '方法论 · 图片替代文字', 'type' => 'text', 'zh' => '聘AI三阶段智能工作流架构', 'en' => 'HireAIPeople three-phase AI workflow architecture'],
+        ['name' => 'about_cta_kicker', 'label' => 'CTA · 眉题', 'type' => 'text', 'zh' => '共创未来', 'en' => 'CO-CREATE THE FUTURE'],
+        ['name' => 'about_cta_title', 'label' => 'CTA · 标题', 'type' => 'textarea', 'zh' => '准备好更有雄心地探索吗？', 'en' => 'Ready to explore with greater ambition?', 'extra' => ['rows' => 1]],
+        ['name' => 'about_cta_subtitle', 'label' => 'CTA · 副标题', 'type' => 'textarea', 'zh' => '告诉我们业务的下一站。我们会与你共同设计、打磨并运营 AI 数字员工。', 'en' => 'Tell us where your business must go next. We will design, refine, and operate the AI workforce beside you.', 'extra' => ['rows' => 3]],
+        ['name' => 'about_cta_primary_label', 'label' => 'CTA · 主按钮', 'type' => 'text', 'zh' => '发起联络', 'en' => 'Initiate Contact'],
+        ['name' => 'about_cta_primary_url', 'label' => 'CTA · 主按钮链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
+        ['name' => 'about_cta_secondary_label', 'label' => 'CTA · 副按钮', 'type' => 'text', 'zh' => '查看案例&洞察', 'en' => 'Examine Case Studies'],
+        ['name' => 'about_cta_secondary_url', 'label' => 'CTA · 副按钮链接', 'type' => 'text', 'zh' => '/cases-insights/', 'en' => '/cases-insights/'],
+        ['name' => 'about_cta_assurance_1', 'label' => 'CTA · 保障 1', 'type' => 'text', 'zh' => '严格 NDA 保护', 'en' => 'Strict NDA Protected'],
+        ['name' => 'about_cta_assurance_2', 'label' => 'CTA · 保障 2', 'type' => 'text', 'zh' => '自主可控架构', 'en' => 'Sovereign Architecture'],
+    ], [
+        [['param' => 'page_template', 'operator' => '==', 'value' => 'page-about.php']],
+    ]));
+
+    $repeater_subfields = static function ($labels, $prefix) {
+        return array_map(static function ($field) use ($prefix) {
+            return [
+                'key' => 'field_about_' . $prefix . '_' . $field['name'],
+                'label' => $field['label'],
+                'name' => $field['name'],
+                'type' => 'text',
+            ];
+        }, $labels);
+    };
+
+    acf_add_local_field_group([
+        'key' => 'group_page_about_repeaters',
+        'title' => '关于我们页 · 数据列表',
+        'fields' => [
+            [
+                'key' => 'field_about_stats_zh',
+                'label' => '中文 · Hero 数据',
+                'name' => 'about_stats_zh',
+                'type' => 'repeater',
+                'layout' => 'table',
+                'max' => 4,
+                'button_label' => '添加中文数据',
+                'sub_fields' => $repeater_subfields([
+                    ['name' => 'value', 'label' => '数值'],
+                    ['name' => 'unit', 'label' => '单位'],
+                    ['name' => 'label', 'label' => '说明'],
+                ], 'stats_zh'),
+            ],
+            [
+                'key' => 'field_about_stats_en',
+                'label' => 'English · Hero Stats',
+                'name' => 'about_stats_en',
+                'type' => 'repeater',
+                'layout' => 'table',
+                'max' => 4,
+                'button_label' => 'Add English stat',
+                'sub_fields' => $repeater_subfields([
+                    ['name' => 'value', 'label' => 'Value'],
+                    ['name' => 'unit', 'label' => 'Unit'],
+                    ['name' => 'label', 'label' => 'Label'],
+                ], 'stats_en'),
+            ],
+            [
+                'key' => 'field_about_process_zh',
+                'label' => '中文 · 三段方法论',
+                'name' => 'about_process_zh',
+                'type' => 'repeater',
+                'layout' => 'row',
+                'max' => 6,
+                'button_label' => '添加中文阶段',
+                'sub_fields' => $repeater_subfields([
+                    ['name' => 'number', 'label' => '编号'],
+                    ['name' => 'phase', 'label' => '阶段'],
+                    ['name' => 'title', 'label' => '标题'],
+                    ['name' => 'description', 'label' => '描述'],
+                    ['name' => 'meta', 'label' => '底部标签'],
+                ], 'process_zh'),
+            ],
+            [
+                'key' => 'field_about_process_en',
+                'label' => 'English · Methodology',
+                'name' => 'about_process_en',
+                'type' => 'repeater',
+                'layout' => 'row',
+                'max' => 6,
+                'button_label' => 'Add English phase',
+                'sub_fields' => $repeater_subfields([
+                    ['name' => 'number', 'label' => 'Number'],
+                    ['name' => 'phase', 'label' => 'Phase'],
+                    ['name' => 'title', 'label' => 'Title'],
+                    ['name' => 'description', 'label' => 'Description'],
+                    ['name' => 'meta', 'label' => 'Footer label'],
+                ], 'process_en'),
+            ],
+        ],
+        'location' => [[['param' => 'page_template', 'operator' => '==', 'value' => 'page-about.php']]],
+        'menu_order' => 6,
+    ]);
+
+    acf_add_local_field_group([
+        'key' => 'group_site_nav_about',
+        'title' => '导航 · 关于我们',
+        'fields' => [
+            ['key' => 'field_nav_item_about_label_zh', 'label' => '中文', 'name' => 'nav_item_about_label_zh', 'type' => 'text', 'default_value' => '关于我们'],
+            ['key' => 'field_nav_item_about_label_en', 'label' => 'English', 'name' => 'nav_item_about_label_en', 'type' => 'text', 'default_value' => 'About Us'],
+        ],
+        'location' => [[['param' => 'options_page', 'operator' => '==', 'value' => 'hireai-settings']]],
+        'menu_order' => 11,
+    ]);
+});
+
+function hireai_about_insert_page($title, $lang = '') {
+    $inserted = wp_insert_post([
+        'post_type' => 'page',
+        'post_status' => 'publish',
+        'post_title' => $title,
+        'post_name' => 'about',
+        'post_content' => '',
+    ], true);
+
+    if (is_wp_error($inserted) || !$inserted) {
+        return 0;
+    }
+
+    update_post_meta((int) $inserted, '_wp_page_template', 'page-about.php');
+    if ($lang !== '' && function_exists('pll_set_post_language')) {
+        pll_set_post_language((int) $inserted, $lang);
+    }
+
+    return (int) $inserted;
+}
+
+function hireai_about_ensure_pages() {
+    $existing = get_page_by_path('about', OBJECT, 'page');
+    $page_id = $existing instanceof WP_Post ? (int) $existing->ID : 0;
+
+    if (!$page_id) {
+        $page_id = hireai_about_insert_page('关于我们', function_exists('pll_default_language') ? pll_default_language('slug') : '');
+    }
+    if (!$page_id) {
+        return 0;
+    }
+
+    update_post_meta($page_id, '_wp_page_template', 'page-about.php');
+    if (function_exists('pll_set_post_language') && function_exists('pll_get_post_language')) {
+        $language = pll_get_post_language($page_id);
+        if (!$language) {
+            $language = function_exists('pll_default_language') ? pll_default_language('slug') : 'zh';
+            pll_set_post_language($page_id, $language);
+        }
+    }
+
+    if (function_exists('pll_get_post') && function_exists('pll_save_post_translations')) {
+        $translations = [];
+        $source_language = function_exists('pll_get_post_language') ? pll_get_post_language($page_id) : 'zh';
+        if (in_array($source_language, ['zh', 'en'], true)) {
+            $translations[$source_language] = $page_id;
+            $target_language = $source_language === 'zh' ? 'en' : 'zh';
+            $translated_id = (int) pll_get_post($page_id, $target_language);
+
+            if (!$translated_id) {
+                $translated_id = hireai_about_insert_page($target_language === 'en' ? 'About Us' : '关于我们', $target_language);
+            } elseif (get_post_field('post_type', $translated_id) === 'page') {
+                update_post_meta($translated_id, '_wp_page_template', 'page-about.php');
+            }
+
+            if ($translated_id) {
+                $translations[$target_language] = $translated_id;
+                pll_save_post_translations($translations);
+            }
+        }
+    }
+
+    return $page_id;
+}
+
+function hireai_about_nav_items() {
+    return [
+        ['slug' => 'home', 'acf' => 'nav_item_home_label', 'zh' => '首页', 'en' => 'Home'],
+        ['slug' => 'about', 'acf' => 'nav_item_about_label', 'zh' => '关于我们', 'en' => 'About Us'],
+        ['slug' => 'ai-employees', 'acf' => 'nav_item_ai-employees_label', 'zh' => 'AI数字员工', 'en' => 'AI Employees'],
+        ['slug' => 'ai-solutions', 'acf' => 'nav_item_ai-solutions_label', 'zh' => '方案&价格', 'en' => 'Solutions & Pricing'],
+        ['slug' => 'cases-insights', 'acf' => 'nav_item_cases-insights_label', 'zh' => '案例&洞察', 'en' => 'Cases & Insights'],
+        ['slug' => 'faq', 'acf' => 'nav_item_faq_label', 'zh' => '常见问题', 'en' => 'FAQ'],
+        ['slug' => 'contact', 'acf' => 'nav_item_contact_label', 'zh' => '联系', 'en' => 'Contact'],
+    ];
+}
+
+function hireai_about_nav_page_slug($item) {
+    if (!is_object($item) || (int) ($item->object_id ?? 0) <= 0) {
+        return '';
+    }
+    $object = get_post((int) $item->object_id);
+    return $object instanceof WP_Post && $object->post_type === 'page' ? $object->post_name : '';
+}
+
+function hireai_about_fallback_nav() {
+    $is_en = function_exists('hireai_lang_suffix') && hireai_lang_suffix() === '_en';
+    $current_url = untrailingslashit(esc_url(home_url(add_query_arg([], $GLOBALS['wp']->request ?? ''))));
+
+    echo '<ul class="hai-header__nav-list">';
+    foreach (hireai_about_nav_items() as $item) {
+        $fallback = $is_en ? $item['en'] : $item['zh'];
+        $label = function_exists('hireai_field_lang')
+            ? hireai_field_lang($item['acf'], $is_en ? 'en' : 'zh', $fallback, 'option')
+            : $fallback;
+
+        if ($item['slug'] === 'home') {
+            $url = hireai_localized_url(home_url('/'));
+            $is_current = is_front_page();
+        } else {
+            $page = get_page_by_path($item['slug']);
+            if (!$page) {
+                continue;
+            }
+            $url = hireai_localized_url(get_permalink($page));
+            $is_current = untrailingslashit($url) === $current_url;
+        }
+
+        $class = $is_current ? 'menu-item current-menu-item' : 'menu-item';
+        echo '<li class="' . esc_attr($class) . '"><a href="' . esc_url($url) . '">' . esc_html($label) . '</a></li>';
+    }
+    echo '</ul>';
+}
+
+add_filter('wp_nav_menu_args', function ($args) {
+    if (($args['theme_location'] ?? '') === 'primary' && ($args['fallback_cb'] ?? '') === 'hireai_fallback_nav') {
+        $args['fallback_cb'] = 'hireai_about_fallback_nav';
+    }
+    if (($args['theme_location'] ?? '') === 'footer' && class_exists('HireAI_Localized_Nav_Walker')) {
+        $args['walker'] = new HireAI_Localized_Nav_Walker();
+    }
+    return $args;
+}, 20);
+
+add_filter('nav_menu_item_title', function ($title, $item, $args = null, $depth = 0) {
+    $location = is_object($args) && isset($args->theme_location) ? (string) $args->theme_location : '';
+    if (!in_array($location, ['primary', 'footer'], true)) {
+        return $title;
+    }
+
+    $slug = hireai_about_nav_page_slug($item);
+    foreach (hireai_about_nav_items() as $nav_item) {
+        if ($nav_item['slug'] === $slug) {
+            $lang = function_exists('hireai_lang_suffix') && hireai_lang_suffix() === '_en' ? 'en' : 'zh';
+            $fallback = $lang === 'en' ? $nav_item['en'] : $nav_item['zh'];
+            $label = function_exists('hireai_field_lang')
+                ? hireai_field_lang($nav_item['acf'], $lang, $lang === 'en' ? $nav_item['en'] : $nav_item['zh'], 'option')
+                : ($lang === 'en' ? $nav_item['en'] : $nav_item['zh']);
+            $legacy_labels = [
+                'ai-solutions' => ['AI 解决方案商城', 'AI Solutions', 'AI解决方案'],
+                'cases-insights' => ['案例与洞察'],
+            ];
+            if (isset($legacy_labels[$slug]) && in_array($label, $legacy_labels[$slug], true)) {
+                return $fallback;
+            }
+            return $label;
+        }
+    }
+
+    return $title;
+}, 20, 4);
+
+add_filter('wp_nav_menu_objects', function ($items, $args = null) {
+    $location = is_object($args) && isset($args->theme_location) ? (string) $args->theme_location : '';
+    if (!in_array($location, ['primary', 'footer'], true) || !is_array($items)) {
+        return $items;
+    }
+
+    $order = array_column(hireai_about_nav_items(), 'slug');
+    $known = [];
+    $unknown = [];
+    foreach ($items as $key => $item) {
+        $slug = hireai_about_nav_page_slug($item);
+        if (in_array($slug, $order, true)) {
+            $known[$slug] = $item;
+        } else {
+            $unknown[$key] = $item;
+        }
+    }
+
+    $ordered = [];
+    foreach ($order as $slug) {
+        if (isset($known[$slug])) {
+            $ordered[] = $known[$slug];
+        }
+    }
+
+    return array_merge($ordered, array_values($unknown));
+}, 20, 2);
+
+function hireai_about_update_navigation() {
+    $about_id = hireai_about_ensure_pages();
+    if (!$about_id) {
+        return;
+    }
+
+    $menu = wp_get_nav_menu_object('主导航');
+    if (!$menu) {
+        $menu = get_term_by('name', '主导航', 'nav_menu');
+    }
+    if (!$menu) {
+        return;
+    }
+
+    $menu_id = (int) $menu->term_id;
+    $menu_items = wp_get_nav_menu_items($menu_id);
+    if (!is_array($menu_items)) {
+        $menu_items = [];
+    }
+
+    $item_by_slug = [];
+    foreach ($menu_items as $item) {
+        if ($item instanceof WP_Post && $item->type === 'post_type') {
+            $object = get_post((int) $item->object_id);
+            if ($object instanceof WP_Post && $object->post_type === 'page' && $object->post_name !== '') {
+                $item_by_slug[$object->post_name] = $item;
+            }
+        }
+    }
+
+    if (!isset($item_by_slug['about'])) {
+        wp_update_nav_menu_item($menu_id, 0, [
+            'menu-item-title' => '关于我们',
+            'menu-item-object' => 'page',
+            'menu-item-object-id' => $about_id,
+            'menu-item-type' => 'post_type',
+            'menu-item-status' => 'publish',
+        ]);
+        $menu_items = wp_get_nav_menu_items($menu_id);
+        $item_by_slug = [];
+        foreach ((array) $menu_items as $item) {
+            if ($item instanceof WP_Post && $item->type === 'post_type') {
+                $object = get_post((int) $item->object_id);
+                if ($object instanceof WP_Post && $object->post_type === 'page' && $object->post_name !== '') {
+                    $item_by_slug[$object->post_name] = $item;
+                }
+            }
+        }
+    }
+
+    $order = 1;
+    foreach (hireai_about_nav_items() as $nav_item) {
+        if (empty($item_by_slug[$nav_item['slug']])) {
+            continue;
+        }
+        $menu_item_id = (int) $item_by_slug[$nav_item['slug']]->ID;
+        if ($menu_item_id <= 0) {
+            continue;
+        }
+        wp_update_post([
+            'ID' => $menu_item_id,
+            'menu_order' => $order++,
+            'menu_item_parent' => 0,
+        ]);
+    }
+
+    $locations = get_theme_mod('nav_menu_locations', []);
+    if (!is_array($locations)) {
+        $locations = [];
+    }
+    $locations['primary'] = $menu_id;
+    set_theme_mod('nav_menu_locations', $locations);
+}
+
+function hireai_about_update_navigation_once() {
+    if (get_option('hireai_about_nav_initialized_390')) {
+        return;
+    }
+    hireai_about_update_navigation();
+    update_option('hireai_about_nav_initialized_390', 1);
+}
+
+add_action('after_switch_theme', 'hireai_about_update_navigation', 20);
+add_action('admin_init', 'hireai_about_update_navigation_once', 20);
+add_action('init', 'hireai_about_update_navigation_once', 99);

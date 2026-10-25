@@ -79,10 +79,10 @@ $ci_img = function ($name, $default) use ($ci_lang, $ci_page_id) {
 };
 
 /* ── 默认值（对齐 v2.2.6 视觉 / 排版） ────────────────────────── */
-$DEF_IMG_C1 = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKTez5bKYX8hkcGYIQTY7AQolcclgmGZVyeYdO7wtjzKGi1KGDp3W2_rnyulzx-fXVnwh8gbqlgLhL7rQYDO1Hy15ExxYsRLQtHY7utzChF5Rbbt_kkIEIxWTZRt6UaN0wAUNxg3cMa-JBP4U6F5ayebnM_4V0l7fTBRWgVMtAtDjYDzOfIoeVjRBeqtwa1JkujelvLr8_CVdXDxk8Fk5JPJgXAgj5o8PW25SxvcGZNL4zqNxKLunY37DbMfsijcrosruEz0jP5B8';
-$DEF_IMG_C2 = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAbzyCKncNddZWI4AL9W1PzTrf87dAdc15bSa6Fd3YrSSGFEuBfJ3GhCFLTHnITaPoy4NCIEIDZOeUKsHJd6e2c7FDaew9HCkxeuTv03yNA4X7y-qTkiFY4MOvSk2zrCu5GQ_p65NrRMz_GNOBLtPNKFzrS-Ckc5gm5l8yNmgXbThtaUMNmdR8RX5fPFCm2HTkfsWAPWB_exmyy2S83jKAisRxFIzhTpkKULDmR2dsgcRNJKdBeEcyuvWMQJMYMmhDdxAF54pTW_lY';
-$DEF_IMG_C3 = 'https://lh3.googleusercontent.com/aida-public/AB6AXuD4H19rUAh5_bCz2v1ci1tseGa-Di5jpnBrAnHe-YgawYATxXGmS91wVn2gBXbFf_0wxBUsuUY2OiauRcb-ihfSKdfpgDOKtdR6DPZPZ5hw5AN05sbGZDMOlJEQ7CyYm2vkYhqAeH64sLBuIhllT8g3Xj4Qtxu37Ey2Ec9ghcAQALQT7gvWNeq6ZYILIiQ17Q68TUDhnEJH1gswkrK2eVMzgllPbeCSTXoDVClzV4puDtJEM4bQXxHHSDexA5tek-i9d0zjTNG9gCI';
-$DEF_IMG_C4 = 'https://lh3.googleusercontent.com/aida-public/AB6AXuA07OHePXio7nWOjPsAAu22p1aEQmProB1QS2hd7-Dql9qnXIqTKGADFpMMJtQ7qjpsHvNaVVo1dP2zxURta_vFC6fKely12_ZmG1HXrJqIAf2mbwUgFewx_rSk1qT5UVJHJxUcXL-PEUsEAOkAezFV3CHIZCY4WD19WyO0KAcbMDq6Xa5pLw1HP0yU4oC697R8GifXGbWNOELwTRpCdraofjCGcJNz0GeZHhTKRb7gscadQ6qmTOUHImlIz4vTnY55Hec6Z9fGPyQ';
+$DEF_IMG_C1 = get_stylesheet_directory_uri() . '/assets/img/defaults/case-1.jpg';
+$DEF_IMG_C2 = get_stylesheet_directory_uri() . '/assets/img/defaults/case-2.jpg';
+$DEF_IMG_C3 = get_stylesheet_directory_uri() . '/assets/img/defaults/case-3.jpg';
+$DEF_IMG_C4 = get_stylesheet_directory_uri() . '/assets/img/defaults/case-4.jpg';
 ?>
 
 <style>
