@@ -2,10 +2,10 @@
 /**
  * Template Name: 聘AI - FAQ
  *
- * Stitch-matched v3.8.0 — 自由 FAQ 数据层
+ * Stitch-matched v3.8.1 — 自由 FAQ 数据层
  *   1. Hero        — 居中眉题 + 金色渐变大字 + 斜体引言
  *   2. Hero Banner — 全宽圆角大图
- *   3. FAQ body    — 左侧分组导航 + 右侧手风琴（玻璃拟态卡）
+ *   3. FAQ body    — 左侧分类过滤 + 右侧问答平铺（每页 10 条）
  *   4. CTA         — "Ready to Redefine Humanity?" 斜体 banner
  *
  * 数据源：
@@ -18,7 +18,7 @@
  *   WP_File_Header::get_data 拿不到 Template Name，从而后台看不到模板。
  *   v3.0.1 把 Template Name 注释放回第一个 PHP 块的最前面，ABSPATH 守卫移至第二块。
  *
- * @version 3.8.0
+ * @version 3.8.1
  */
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -180,12 +180,9 @@ if (!$has_faq_data_source) {
     }
 }
 
-$active_group = 0;
+$faq_category_keys = [];
 foreach ($faq_categories as $category_index => $category) {
-    if (!empty($category['items'])) {
-        $active_group = $category_index;
-        break;
-    }
+    $faq_category_keys[$category_index] = 'faq-category-' . ($category_index + 1);
 }
 
 /* --------------------------------------------------------------------
@@ -193,7 +190,7 @@ foreach ($faq_categories as $category_index => $category) {
  * -------------------------------------------------------------------- */
 ?>
 <!-- ════════════════════════════════════════════════════════════════
-     Page-specific styles (gold-gradient hero title + sidebar + glassy accordion)
+     Page-specific styles (gold-gradient hero title + sidebar + flat answers)
      ════════════════════════════════════════════════════════════════ -->
 <style id="hireai-faq-page-css">
 /* v3.5.7: 移除 italic（font-weight:700 + 非斜体 + 香槟金渐变）— Sasha brief 2026-09-01 */
@@ -249,7 +246,7 @@ foreach ($faq_categories as $category_index => $category) {
     box-shadow: 0 24px 60px rgba(26, 28, 28, 0.08);
 }
 
-/* FAQ body grid: sidebar + accordion */
+/* FAQ body grid: sidebar + paginated answer list */
 .hireai-faq-body {
     padding-block: clamp(40px, 6vw, 88px);
 }
@@ -312,14 +309,29 @@ foreach ($faq_categories as $category_index => $category) {
 .hireai-faq-sidebar__btn:focus-visible,
 .hireai-faq-sidebar__btn.is-active {
     color: #ffffff;
-    background-image: linear-gradient(135deg, #e9c176 0%, #775a19 100%);
+    background-color: #775a19;
+    background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
     background-clip: padding-box;
     border-left-color: rgba(119, 90, 25, 0.65);
     font-weight: 700;
 }
-.hireai-faq-sidebar__btn:focus-visible {
-    outline: 2px solid #775a19;
-    outline-offset: 2px;
+html body .hireai-faq-page .hireai-faq-sidebar__btn:focus,
+html body .hireai-faq-page .hireai-faq-sidebar__btn:focus-visible,
+html body .hireai-faq-page .hireai-faq-sidebar__btn:active {
+    outline: 2px solid #775a19 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 3px rgba(233, 193, 118, 0.35) !important;
+    color: #ffffff !important;
+    background-color: #775a19 !important;
+    background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%) !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+html body .hireai-faq-page .hireai-faq-sidebar__btn:hover,
+html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
+    color: #ffffff !important;
+    background-color: #775a19 !important;
+    background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%) !important;
+    -webkit-text-fill-color: #ffffff !important;
 }
 
 /* Sidebar fallback on mobile: horizontal scroll */
@@ -351,14 +363,14 @@ foreach ($faq_categories as $category_index => $category) {
     }
 }
 
-/* Accordion panel — glassy card */
+/* Answer list — glassy card */
 .hireai-faq-panel {
     display: flex;
     flex-direction: column;
     gap: clamp(16px, 2vw, 24px);
 }
 
-/* Each FAQ item — glassmorphism */
+/* Each FAQ item — answers render flat by default */
 /* v3.0.6: border-radius 4px (hireaipeople.txt 卡片圆角 0或4px) — was 16px */
 .hireai-faq-item {
     background: rgba(255, 255, 255, 0.78);
@@ -375,27 +387,6 @@ foreach ($faq_categories as $category_index => $category) {
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
     border-color: rgba(119, 90, 25, 0.45);
 }
-.hireai-faq-item:active,
-.hireai-faq-item.is-open,
-.hireai-faq-item:focus-within {
-    background-image: linear-gradient(135deg, rgba(233, 193, 118, 0.2), rgba(119, 90, 25, 0.08));
-    border-color: rgba(119, 90, 25, 0.5);
-    box-shadow: 0 8px 40px rgba(119, 90, 25, 0.12);
-}
-.hireai-faq-item__toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    width: 100%;
-    background: none;
-    border: 0;
-    padding: 0;
-    text-align: left;
-    cursor: pointer;
-    color: inherit;
-    font: inherit;
-}
 .hireai-faq-item__q {
     flex: 1;
     min-width: 0;
@@ -407,50 +398,83 @@ foreach ($faq_categories as $category_index => $category) {
     color: #1a1c1c;
     overflow-wrap: anywhere;
 }
-.hireai-faq-item__toggle:hover .hireai-faq-item__q { color: #775a19; }
-.hireai-faq-item__toggle:active .hireai-faq-item__q,
-.hireai-faq-item.is-open .hireai-faq-item__q,
-.hireai-faq-item__toggle:focus-visible .hireai-faq-item__q {
+.hireai-faq-item:hover .hireai-faq-item__q,
+.hireai-faq-item:focus-within .hireai-faq-item__q {
     background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
 }
-.hireai-faq-item__toggle:focus-visible {
-    outline: 2px solid #775a19;
-    outline-offset: 4px;
-}
-.hireai-faq-item__icon {
-    flex: 0 0 28px;
-    width: 28px;
-    height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #775a19;
-    transition: transform 0.3s ease;
-}
-.hireai-faq-item.is-open .hireai-faq-item__icon { transform: rotate(180deg); }
 
 .hireai-faq-item__a {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height 0.35s ease-out, opacity 0.3s ease-out, margin-top 0.3s ease-out, padding-top 0.3s ease-out;
-    margin-top: 0;
-    padding-top: 0;
-    border-top: 0 solid rgba(196, 199, 199, 0);
+    margin-top: clamp(14px, 2vw, 20px);
+    padding-top: clamp(14px, 2vw, 20px);
+    border-top: 1px solid rgba(196, 199, 199, 0.4);
     color: var(--on-surface-variant, #444748);
     font-size: 16px;
     line-height: 1.7;
 }
-.hireai-faq-item.is-open .hireai-faq-item__a {
-    max-height: 720px;
-    opacity: 1;
-    margin-top: clamp(16px, 2vw, 24px);
-    padding-top: clamp(16px, 2vw, 24px);
-    border-top: 1px solid rgba(196, 199, 199, 0.4);
+
+.hireai-faq-status {
+    margin: 0 0 18px;
+    color: var(--on-surface-variant, #444748);
+    font-family: var(--font-body-en, 'Inter'), sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+}
+
+.hireai-faq-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: clamp(28px, 4vw, 40px);
+}
+.hireai-faq-pagination__button,
+.hireai-faq-pagination__page {
+    min-width: 42px;
+    min-height: 42px;
+    padding: 9px 14px;
+    border: 1px solid rgba(196, 199, 199, 0.55);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    color: var(--on-surface, #1a1c1c);
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
+    font-size: 13px;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.hireai-faq-pagination__button:hover,
+.hireai-faq-pagination__button:active,
+.hireai-faq-pagination__button:focus,
+.hireai-faq-pagination__button:focus-visible,
+.hireai-faq-pagination__page:hover,
+.hireai-faq-pagination__page:active,
+.hireai-faq-pagination__page:focus,
+.hireai-faq-pagination__page:focus-visible,
+.hireai-faq-pagination__page[aria-current="page"] {
+    border-color: rgba(119, 90, 25, 0.65);
+    outline: 2px solid #775a19 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 3px rgba(233, 193, 118, 0.3) !important;
+    color: #ffffff !important;
+    background-color: #775a19 !important;
+    background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%) !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+.hireai-faq-pagination__button:disabled,
+.hireai-faq-pagination__page:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    color: var(--on-surface-variant, #444748) !important;
+    background-color: rgba(255, 255, 255, 0.82) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: 0 !important;
 }
 
 .hireai-faq-empty {
@@ -479,28 +503,34 @@ foreach ($faq_categories as $category_index => $category) {
     <img src="<?php echo esc_url($hero_image); ?>" alt="<?php echo esc_attr($hero_caption); ?>" loading="lazy">
   </section>
 
-  <!-- ═══════════ 3. FAQ BODY (Sidebar + Accordion) ═══════════ -->
+  <!-- ═══════════ 3. FAQ BODY (Category filter + flat list + pagination) ═══════════ -->
   <section class="hireai-faq-body" aria-labelledby="hireai-faq-body-title">
     <h2 id="hireai-faq-body-title" class="screen-reader-text">
       <?php echo esc_html($is_en ? 'Browse frequently asked questions' : '浏览常见问题'); ?>
     </h2>
     <div class="container hireai-faq-grid">
 
-      <!-- Sidebar: group navigation -->
+      <!-- Sidebar: category filter -->
       <aside class="hireai-faq-sidebar" aria-label="<?php echo esc_attr($is_en ? 'FAQ categories' : 'FAQ 分类导航'); ?>">
-        <ul class="hireai-faq-sidebar__list" role="tablist">
+        <ul class="hireai-faq-sidebar__list">
+          <li>
+            <button type="button"
+                    class="hireai-faq-sidebar__btn is-active"
+                    aria-pressed="true"
+                    data-faq-category="all">
+              <?php echo esc_html($is_en ? 'All FAQs' : '全部常见问题'); ?>
+            </button>
+          </li>
       <?php foreach ($faq_categories as $gkey => $category) :
-              $is_active = ($gkey === $active_group);
+              $category_key = $faq_category_keys[$gkey];
               $has_items = !empty($category['items']);
           ?>
-            <li role="presentation">
+            <li>
               <button type="button"
-                      class="hireai-faq-sidebar__btn<?php echo $is_active ? ' is-active' : ''; ?>"
-                      role="tab"
-                      aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>"
-                      aria-controls="hireai-faq-panel-<?php echo esc_attr($gkey); ?>"
-                      data-faq-group="<?php echo esc_attr($gkey); ?>"
-                      <?php echo $has_items ? '' : 'aria-disabled="true"'; ?>>
+                      class="hireai-faq-sidebar__btn"
+                      aria-pressed="false"
+                      data-faq-category="<?php echo esc_attr($category_key); ?>"
+                      <?php echo $has_items ? '' : 'disabled'; ?>>
                 <?php echo esc_html($category['label']); ?>
               </button>
             </li>
@@ -508,47 +538,43 @@ foreach ($faq_categories as $category_index => $category) {
         </ul>
       </aside>
 
-      <!-- Accordion panels -->
+      <!-- Flat Q&A list: data-faq-category on both sides of the filter -->
       <div class="hireai-faq-panel-wrap">
+        <div class="hireai-faq-panel" id="hireai-faq-results">
+          <p class="hireai-faq-status" data-faq-status aria-live="polite" hidden></p>
+        <?php $item_number = 0; ?>
         <?php foreach ($faq_categories as $gkey => $category) :
-            $items = $category['items'];
-            $is_active = ($gkey === $active_group);
+            $category_key = $faq_category_keys[$gkey];
+            foreach ($category['items'] as $item) :
+                $item_number++;
+                $qid = 'faq-' . $category_key . '-' . $item_number;
         ?>
-          <div class="hireai-faq-panel<?php echo $is_active ? '' : ' is-hidden'; ?>"
-               id="hireai-faq-panel-<?php echo esc_attr($gkey); ?>"
-               role="tabpanel"
-               data-faq-group="<?php echo esc_attr($gkey); ?>"
-               <?php echo $is_active ? '' : 'hidden'; ?>>
-            <?php if (empty($items)) : ?>
-              <p class="hireai-faq-empty"><?php echo esc_html($empty_text); ?></p>
-            <?php else : ?>
-              <?php foreach ($items as $idx => $item) :
-                  $qid = 'faq-' . $gkey . '-' . $idx;
-              ?>
-                <div class="hireai-faq-item" data-faq-item>
-                  <button type="button"
-                          class="hireai-faq-item__toggle"
-                          aria-expanded="false"
-                          aria-controls="<?php echo esc_attr($qid); ?>">
-                    <h3 class="hireai-faq-item__q"><?php echo esc_html($item['q']); ?></h3>
-                    <span class="hireai-faq-item__icon" aria-hidden="true">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                           stroke="currentColor" stroke-width="1.6"
-                           stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 9l6 6 6-6"/>
-                      </svg>
-                    </span>
-                  </button>
-                  <div class="hireai-faq-item__a" id="<?php echo esc_attr($qid); ?>" role="region">
-                    <div class="hireai-faq-item__a-inner">
-                      <?php echo nl2br(esc_html($item['a'])); ?>
-                    </div>
-                  </div>
-                </div>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </div>
-        <?php endforeach; ?>
+          <article class="hireai-faq-item" data-faq-item data-faq-category="<?php echo esc_attr($category_key); ?>">
+            <h3 class="hireai-faq-item__q"><?php echo esc_html($item['q']); ?></h3>
+            <div class="hireai-faq-item__a" id="<?php echo esc_attr($qid); ?>">
+              <div class="hireai-faq-item__a-inner">
+                <?php echo nl2br(esc_html($item['a'])); ?>
+              </div>
+            </div>
+          </article>
+        <?php endforeach; endforeach; ?>
+        <?php if ($item_number === 0) : ?>
+          <p class="hireai-faq-empty"><?php echo esc_html($empty_text); ?></p>
+        <?php endif; ?>
+        </div>
+        <nav class="hireai-faq-pagination"
+             aria-label="<?php echo esc_attr($is_en ? 'FAQ pagination' : 'FAQ 翻页'); ?>"
+             data-faq-pagination
+             hidden>
+          <button type="button" class="hireai-faq-pagination__button" data-faq-page-action="prev">
+            <?php echo esc_html($is_en ? 'Previous' : '上一页'); ?>
+          </button>
+          <div class="hireai-faq-pagination__pages" data-faq-pages
+               style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;"></div>
+          <button type="button" class="hireai-faq-pagination__button" data-faq-page-action="next">
+            <?php echo esc_html($is_en ? 'Next' : '下一页'); ?>
+          </button>
+        </nav>
       </div>
 
     </div>
@@ -577,49 +603,112 @@ foreach ($faq_categories as $category_index => $category) {
 
 </main>
 
-<!-- ═══════════ JS: Sidebar tab switch + Accordion expand ═══════════ -->
+<!-- ═══════════ JS: category filter + 10-per-page pagination ═══════════ -->
 <script>
 (function () {
     'use strict';
 
-    /* --- Sidebar tab switching --- */
-    var sidebarBtns = document.querySelectorAll('.hireai-faq-sidebar__btn');
-    var panels      = document.querySelectorAll('.hireai-faq-panel');
+    var perPage = 10;
+    var categoryButtons = Array.prototype.slice.call(document.querySelectorAll('.hireai-faq-sidebar__btn[data-faq-category]'));
+    var items = Array.prototype.slice.call(document.querySelectorAll('[data-faq-item]'));
+    var pagination = document.querySelector('[data-faq-pagination]');
+    var pageContainer = document.querySelector('[data-faq-pages]');
+    var status = document.querySelector('[data-faq-status]');
+    var prevButton = document.querySelector('[data-faq-page-action="prev"]');
+    var nextButton = document.querySelector('[data-faq-page-action="next"]');
+    var activeCategory = 'all';
+    var activePage = 0;
 
-    sidebarBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var gkey = btn.getAttribute('data-faq-group');
-            if (!gkey) return;
-            if (btn.getAttribute('aria-disabled') === 'true') return;
+    if (!categoryButtons.length || !items.length || !pagination || !pageContainer || !status || !prevButton || !nextButton) {
+        return;
+    }
 
-            sidebarBtns.forEach(function (b) {
-                b.classList.remove('is-active');
-                b.setAttribute('aria-selected', 'false');
+    function filteredItems() {
+        return items.filter(function (item) {
+            return activeCategory === 'all' || item.getAttribute('data-faq-category') === activeCategory;
+        });
+    }
+
+    function makePageButton(pageNumber) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'hireai-faq-pagination__page';
+        button.textContent = String(pageNumber + 1);
+        button.setAttribute('data-faq-page', String(pageNumber));
+        return button;
+    }
+
+    function render() {
+        var matching = filteredItems();
+        var pageCount = Math.max(1, Math.ceil(matching.length / perPage));
+        activePage = Math.min(activePage, pageCount - 1);
+        var first = activePage * perPage;
+        var last = Math.min(first + perPage, matching.length);
+
+        items.forEach(function (item) {
+            var index = matching.indexOf(item);
+            if (index >= first && index < last) {
+                item.removeAttribute('hidden');
+            } else {
+                item.setAttribute('hidden', '');
+            }
+        });
+
+        if (matching.length > 0) {
+            status.textContent = <?php echo wp_json_encode($is_en ? 'Showing %1$d–%2$d of %3$d questions' : '正在显示第 %1$d–%2$d 条，共 %3$d 条'); ?>;
+            status.textContent = status.textContent
+                .replace('%1$d', String(first + 1))
+                .replace('%2$d', String(last))
+                .replace('%3$d', String(matching.length));
+        } else {
+            status.textContent = <?php echo wp_json_encode($empty_text); ?>;
+        }
+        status.removeAttribute('hidden');
+
+        pageContainer.innerHTML = '';
+        for (var pageNumber = 0; pageNumber < pageCount; pageNumber++) {
+            var pageButton = makePageButton(pageNumber);
+            if (pageNumber === activePage) {
+                pageButton.setAttribute('aria-current', 'page');
+            }
+            pageButton.addEventListener('click', function () {
+                activePage = Number(this.getAttribute('data-faq-page'));
+                render();
             });
-            btn.classList.add('is-active');
-            btn.setAttribute('aria-selected', 'true');
+            pageContainer.appendChild(pageButton);
+        }
 
-            panels.forEach(function (p) {
-                if (p.getAttribute('data-faq-group') === gkey) {
-                    p.classList.remove('is-hidden');
-                    p.removeAttribute('hidden');
-                } else {
-                    p.classList.add('is-hidden');
-                    p.setAttribute('hidden', '');
-                }
+        if (matching.length > perPage) {
+            pagination.removeAttribute('hidden');
+        } else {
+            pagination.setAttribute('hidden', '');
+        }
+        prevButton.disabled = activePage === 0;
+        nextButton.disabled = activePage === pageCount - 1;
+    }
+
+    categoryButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            activeCategory = button.getAttribute('data-faq-category') || 'all';
+            activePage = 0;
+            categoryButtons.forEach(function (otherButton) {
+                otherButton.classList.toggle('is-active', otherButton === button);
+                otherButton.setAttribute('aria-pressed', otherButton === button ? 'true' : 'false');
             });
+            render();
         });
     });
 
-    /* --- Accordion expand / collapse --- */
-    document.querySelectorAll('.hireai-faq-item__toggle').forEach(function (toggle) {
-        toggle.addEventListener('click', function () {
-            var item = toggle.closest('.hireai-faq-item');
-            if (!item) return;
-            var open = item.classList.toggle('is-open');
-            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        });
+    prevButton.addEventListener('click', function () {
+        activePage = Math.max(0, activePage - 1);
+        render();
     });
+    nextButton.addEventListener('click', function () {
+        activePage += 1;
+        render();
+    });
+
+    render();
 })();
 </script>
 
