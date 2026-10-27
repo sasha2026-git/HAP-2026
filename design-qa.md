@@ -1,4 +1,63 @@
-# Design QA Report — HireAI Homepage v2.0.0 Stitch 1:1 还原
+# Product Design Report — About Us v3.9.2 ACF Field Cleanup
+
+## Source Visual Truth
+
+- Not supplied. This pass therefore checks the current approved About Us implementation, not pixel fidelity to a new source design.
+
+## Implementation Screenshot
+
+- Chinese desktop: `qa-screens/about-zh-desktop.png`
+- Chinese mobile: `qa-screens/about-mobile.png`
+- English desktop: `qa-screens/about-en-desktop.png`
+
+## Viewport / State
+
+- Chinese: `https://hireaipeople.com/zh/about/`
+- English: `https://hireaipeople.com/en/about-2/`
+- Viewports: 1440px, 1024px, and 375px.
+- Evidence was captured on 2026-10-27 before the local v3.9.2 patch was deployed. The patch only changes field sourcing/cleanup and preserves the current default strings, so it is not expected to alter the rendered layout.
+
+## Comparison Evidence
+
+- No new source target was supplied, so no source-vs-implementation pixel comparison is claimed.
+- DOM and screenshot checks passed in both languages at all three widths: HTTP 200, `lang` set correctly, no horizontal overflow, all five page images loaded, no empty image alt text, one H1, valid H2/H3 ordering, and CTA minimum height 52px.
+- Desktop layout resolves to the intended 7/5 story grid and 3-column process grid; tablet and mobile collapse the process grid to one column without page-level overflow.
+- OCR on the full-page Chinese and English screenshots confirms the visible narrative order: slogan, story, three-phase method, and CTA.
+
+## Findings
+
+- [P1] English CTA targets are not self-contained
+  Location: About Us English CTA buttons.
+  Evidence: live English output uses `/contact/` and `/cases-insights/`; a fresh browser context resolves both to `/zh/`.
+  Impact: an English visitor can land on Chinese destination pages.
+  Fix: create/associate English Contact and Cases & Insights pages, then set the two English CTA URL fields to those permalinks (or keep Polylang URL translation enabled after the translations exist).
+
+- [P2] Pixel comparison remains unverified
+  Location: v3.9.2 About Us visual target.
+  Evidence: no source visual was supplied.
+  Impact: code/DOM checks cannot prove fidelity to a new approved design.
+  Fix: provide the target when a visual redesign is intended; this cleanup intentionally preserves v3.9.1.
+
+## Implementation Checklist
+
+- Keep the v3.9.1 About Us layout unchanged.
+- Keep only ACF controls that the current template renders.
+- Direct-render fields: 32 base fields, each registered as Chinese and English controls.
+- Method repeater: one base repeater with five text subfields, registered separately for Chinese and English.
+- Deleted obsolete controls: Hero badge, old Hero title, Hero divider, Hero intro, and both Hero stats repeaters.
+- New Hero controls preserve current output while making the visible kicker and heading editable: `about_hero_kicker` and `about_hero_heading`.
+
+## Comparison History
+
+- 2026-10-27 v3.9.2: implementation-only product design check passed for responsive structure, asset loading, hierarchy, alt text, and CTA sizing; source fidelity not claimed.
+
+## final result
+
+**passed for implementation check** — source-target pixel comparison not claimed; English CTA translation destinations require WP content fixes outside this theme patch.
+
+---
+
+# Historical Design QA Report — HireAI Homepage v2.0.0 Stitch 1:1 还原
 
 ## Source Visual Truth
 - `/tmp/stitch_design_0819/screen.png`

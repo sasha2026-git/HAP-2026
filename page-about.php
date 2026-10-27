@@ -22,8 +22,8 @@ $suffix  = function_exists('hireai_lang_suffix') ? hireai_lang_suffix() : '';
 $is_en   = ($suffix === '_en');
 $page_id = get_the_ID();
 
-$hero_kicker = $is_en ? 'THE ATELIER' : '智慧工坊';
-$hero_title = get_the_title($page_id);
+$hero_kicker = hireai_field('about_hero_kicker', $is_en ? 'THE ATELIER' : '智慧工坊', $page_id);
+$hero_title = hireai_field('about_hero_heading', get_the_title($page_id), $page_id);
 $hero_subtitle = hireai_field('about_hero_accent', $is_en ? 'Where High Technology Meets Haute Couture.' : '当代科技，邂逅高级定制。', $page_id);
 
 $story_number = hireai_field('about_story_number', '01', $page_id);

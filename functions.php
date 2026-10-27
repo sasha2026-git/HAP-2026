@@ -3817,16 +3817,6 @@ require_once get_stylesheet_directory() . '/lib/faq-data.php';
  * v3.9.0 — About Us page fields, editable bilingual defaults, and navigation
  * ========================================================================= */
 
-function hireai_about_default_stats($lang = 'zh') {
-    $is_en = $lang === 'en';
-    return [
-        ['value' => '0.02', 'unit' => $is_en ? 's' : '秒', 'label' => $is_en ? 'Cognitive Latency' : '认知响应'],
-        ['value' => '100', 'unit' => '%', 'label' => $is_en ? 'Dedicated Deployment' : '专属部署'],
-        ['value' => '24', 'unit' => $is_en ? 'h' : '小时', 'label' => $is_en ? 'Concierge Response' : '管家响应'],
-        ['value' => 'Tier 1', 'unit' => '', 'label' => $is_en ? 'Enterprise Security' : '企业级安全'],
-    ];
-}
-
 function hireai_about_default_process($lang = 'zh') {
     $is_en = $lang === 'en';
     return [
@@ -3887,11 +3877,6 @@ function hireai_about_repeater_rows($field, $page_id, $lang, $defaults) {
     return $clean_rows ?: $defaults;
 }
 
-function hireai_about_stats($page_id, $lang = 'zh') {
-    $lang = $lang === 'en' ? 'en' : 'zh';
-    return hireai_about_repeater_rows('about_stats', $page_id, $lang, hireai_about_default_stats($lang));
-}
-
 function hireai_about_process_items($page_id, $lang = 'zh') {
     $lang = $lang === 'en' ? 'en' : 'zh';
     return hireai_about_repeater_rows('about_process', $page_id, $lang, hireai_about_default_process($lang));
@@ -3903,11 +3888,9 @@ add_action('acf/init', function () {
     }
 
     acf_add_local_field_group(hireai_make_bilingual_group('group_page_about', '关于我们页', [
-        ['name' => 'about_hero_badge', 'label' => 'Hero · 徽章', 'type' => 'text', 'zh' => '品牌源起与理念', 'en' => 'BRAND GENESIS & PHILOSOPHY'],
-        ['name' => 'about_hero_title', 'label' => 'Hero · 主标题', 'type' => 'textarea', 'zh' => '智能，臻于高度。', 'en' => 'Intelligence, Elevated.', 'extra' => ['rows' => 1]],
+        ['name' => 'about_hero_kicker', 'label' => 'Hero · 眉题', 'type' => 'text', 'zh' => '智慧工坊', 'en' => 'THE ATELIER'],
+        ['name' => 'about_hero_heading', 'label' => 'Hero · 主标题', 'type' => 'textarea', 'zh' => '关于我们', 'en' => 'About Us', 'extra' => ['rows' => 1]],
         ['name' => 'about_hero_accent', 'label' => 'Hero · 副标题', 'type' => 'textarea', 'zh' => '当代科技，邂逅高级定制。', 'en' => 'Where High Technology Meets Haute Couture.', 'extra' => ['rows' => 1]],
-        ['name' => 'about_hero_divider', 'label' => 'Hero · 分隔标签', 'type' => 'text', 'zh' => '智慧工坊', 'en' => "Maison d'Intelligence"],
-        ['name' => 'about_hero_intro', 'label' => 'Hero · 简介', 'type' => 'textarea', 'zh' => '聘AI将认知架构、经营严谨性与高级定制级工艺结合，服务有雄心的全球化团队。', 'en' => 'HireAIPeople brings cognitive architecture, operational rigor, and couture-level craft together for ambitious global teams.', 'extra' => ['rows' => 3]],
         ['name' => 'about_story_number', 'label' => '故事 · 编号', 'type' => 'text', 'zh' => '01', 'en' => '01'],
         ['name' => 'about_story_kicker', 'label' => '故事 · 眉题', 'type' => 'text', 'zh' => '以雄心持续向前 · 关于我们', 'en' => 'FORGING FORWARD WITH AMBITION · ABOUT US'],
         ['name' => 'about_story_image', 'label' => '故事 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
@@ -3956,34 +3939,6 @@ add_action('acf/init', function () {
         'key' => 'group_page_about_repeaters',
         'title' => '关于我们页 · 数据列表',
         'fields' => [
-            [
-                'key' => 'field_about_stats_zh',
-                'label' => '中文 · Hero 数据',
-                'name' => 'about_stats_zh',
-                'type' => 'repeater',
-                'layout' => 'table',
-                'max' => 4,
-                'button_label' => '添加中文数据',
-                'sub_fields' => $repeater_subfields([
-                    ['name' => 'value', 'label' => '数值'],
-                    ['name' => 'unit', 'label' => '单位'],
-                    ['name' => 'label', 'label' => '说明'],
-                ], 'stats_zh'),
-            ],
-            [
-                'key' => 'field_about_stats_en',
-                'label' => 'English · Hero Stats',
-                'name' => 'about_stats_en',
-                'type' => 'repeater',
-                'layout' => 'table',
-                'max' => 4,
-                'button_label' => 'Add English stat',
-                'sub_fields' => $repeater_subfields([
-                    ['name' => 'value', 'label' => 'Value'],
-                    ['name' => 'unit', 'label' => 'Unit'],
-                    ['name' => 'label', 'label' => 'Label'],
-                ], 'stats_en'),
-            ],
             [
                 'key' => 'field_about_process_zh',
                 'label' => '中文 · 三段方法论',
