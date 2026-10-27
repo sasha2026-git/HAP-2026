@@ -3,7 +3,7 @@
  * Template Name: 聘AI - 关于我们
  *
  * v3.9.0 — About Us
- *   1. Brand genesis hero
+ *   1. Page slogan hero
  *   2. Human / AI co-creation story
  *   3. Three-phase methodology
  *   4. Contact CTA
@@ -22,13 +22,9 @@ $suffix  = function_exists('hireai_lang_suffix') ? hireai_lang_suffix() : '';
 $is_en   = ($suffix === '_en');
 $page_id = get_the_ID();
 
-$hero_badge = hireai_field('about_hero_badge', $is_en ? 'BRAND GENESIS & PHILOSOPHY' : '品牌源起与理念', $page_id);
-$hero_title = hireai_field('about_hero_title', $is_en ? 'Intelligence, Elevated.' : '智能，臻于高度。', $page_id);
-$hero_accent = hireai_field('about_hero_accent', $is_en ? 'Where High Technology Meets Haute Couture.' : '当代科技，邂逅高级定制。', $page_id);
-$hero_divider = hireai_field('about_hero_divider', $is_en ? "Maison d'Intelligence" : '智慧工坊', $page_id);
-$hero_intro = hireai_field('about_hero_intro', $is_en
-    ? 'HireAIPeople brings cognitive architecture, operational rigor, and couture-level craft together for ambitious global teams.'
-    : '聘AI将认知架构、经营严谨性与高级定制级工艺结合，服务有雄心的全球化团队。', $page_id);
+$hero_kicker = $is_en ? 'THE ATELIER' : '智慧工坊';
+$hero_title = get_the_title($page_id);
+$hero_subtitle = hireai_field('about_hero_accent', $is_en ? 'Where High Technology Meets Haute Couture.' : '当代科技，邂逅高级定制。', $page_id);
 
 $story_number = hireai_field('about_story_number', '01', $page_id);
 $story_kicker = hireai_field('about_story_kicker', $is_en ? 'FORGING FORWARD WITH AMBITION · ABOUT US' : '以雄心持续向前 · 关于我们', $page_id);
@@ -77,23 +73,13 @@ $cta_secondary_url = hireai_field('about_cta_secondary_url', '/cases-insights/',
 $cta_assurance_1 = hireai_field('about_cta_assurance_1', $is_en ? 'Strict NDA Protected' : '严格 NDA 保护', $page_id);
 $cta_assurance_2 = hireai_field('about_cta_assurance_2', $is_en ? 'Sovereign Architecture' : '自主可控架构', $page_id);
 
-$stats = function_exists('hireai_about_stats') ? hireai_about_stats($page_id, $is_en ? 'en' : 'zh') : [];
 ?>
 <style id="hireai-about-page-css">
 .hireai-about-page{background:var(--hai-surface-low,#f9f9f9);color:var(--hai-on-surface,#1a1a1a);}
-.hireai-about-hero{position:relative;overflow:hidden;padding:120px 0;text-align:center;background:radial-gradient(circle at 50% 0,rgba(233,193,118,.18),transparent 62%),var(--hai-surface-lowest,#fff);}
-.hireai-about-hero__badge{display:inline-flex;align-items:center;gap:10px;margin-bottom:32px;padding:7px 16px;border:1px solid rgba(119,90,25,.22);border-radius:999px;background:rgba(255,255,255,.78);color:var(--hai-on-surface-variant,#4d4635);font-family:var(--font-label,Inter),sans-serif;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;}
-.hireai-about-hero__dot{width:6px;height:6px;border-radius:50%;background:var(--hai-secondary,#775a19);}
-.hireai-about-hero__title{margin:0 auto 20px;max-width:900px;font-family:var(--font-display-en,var(--font-serif));font-size:clamp(34px,5vw,72px);font-weight:600;line-height:1.08;letter-spacing:-.02em;}
-.hireai-about-hero__accent{display:block;margin-top:14px;font-family:var(--font-display-en,var(--font-serif));font-size:clamp(20px,2.4vw,34px);font-weight:400;font-style:italic;background:linear-gradient(135deg,#775a19,#fed488,#775a19);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
-.hireai-about-hero__divider{display:flex;align-items:center;justify-content:center;gap:16px;margin:30px 0;color:var(--hai-secondary,#775a19);font-family:var(--font-label,Inter),sans-serif;font-size:14px;letter-spacing:.16em;text-transform:uppercase;}
-.hireai-about-hero__divider::before,.hireai-about-hero__divider::after{content:"";width:48px;height:1px;background:var(--hai-platinum-grey,#b8b8b8);}
-.hireai-about-hero__intro{max-width:720px;margin:0 auto;font-family:var(--font-body-en,var(--font-body));font-size:18px;line-height:1.65;color:var(--hai-on-surface-variant,#4d4635);}
-.hireai-about-hero__stats{display:grid;grid-template-columns:repeat(4,1fr);gap:40px;max-width:920px;margin:72px auto 0;padding:0;}
-.hireai-about-stat{list-style:none;}
-.hireai-about-stat__value{display:block;font-family:var(--font-display-en,var(--font-serif));font-size:32px;font-weight:500;line-height:1.2;color:var(--hai-on-surface,#1a1a1a);}
-.hireai-about-stat__unit{color:var(--hai-secondary,#775a19);font-size:16px;}
-.hireai-about-stat__label{display:block;margin-top:8px;font-family:var(--font-label,Inter),sans-serif;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--hai-on-surface-variant,#4d4635);}
+.hireai-about-hero{padding-block:clamp(64px,8vw,120px) clamp(40px,5vw,72px);text-align:center;background:var(--hai-surface-lowest,#fff);}
+.hireai-about-hero .page-hero__kicker{display:inline-block;margin-bottom:24px;color:#775a19;}
+.hireai-about-hero .page-hero__title{display:inline-block;margin-bottom:28px;line-height:1.1;letter-spacing:-.01em;background:linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;font-style:normal;}
+.hireai-about-hero .page-hero__subtitle{max-width:640px;margin-inline:auto;font-family:var(--font-body-en,'Inter'),sans-serif;font-size:16px;font-style:normal;color:var(--hai-on-surface,#1a1c1c);line-height:1.6;}
 .hireai-about-section{padding:120px 0;background:var(--hai-surface-low,#f9f9f9);}
 .hireai-about-section--white{background:var(--hai-surface-lowest,#fff);}
 .hireai-about-container{max-width:1440px;margin:0 auto;padding:0 24px;}
@@ -144,31 +130,19 @@ $stats = function_exists('hireai_about_stats') ? hireai_about_stats($page_id, $i
 .hireai-about-cta__button:hover,.hireai-about-cta__button:focus-visible{transform:translateY(-2px);box-shadow:0 18px 42px rgba(119,90,25,.26);}
 .hireai-about-cta__assurance{display:flex;justify-content:center;flex-wrap:wrap;gap:28px;margin-top:52px;color:var(--hai-on-surface-variant,#4d4635);font-family:var(--font-label,Inter),sans-serif;font-size:13px;letter-spacing:.08em;text-transform:uppercase;}
 .hireai-about-cta__assurance span{display:inline-flex;align-items:center;gap:8px;}
-@media (max-width:1279px){.hireai-about-hero__stats{grid-template-columns:repeat(2,1fr);max-width:620px;}.hireai-about-story{grid-template-columns:1fr;gap:64px;}.hireai-about-story__media{margin-right:24px;}}
+@media (max-width:1279px){.hireai-about-story{grid-template-columns:1fr;gap:64px;}.hireai-about-story__media{margin-right:24px;}}
 @media (max-width:1023px){.hireai-about-process{grid-template-columns:1fr;}.hireai-about-story__frame img{height:430px;}}
-@media (max-width:767px){.hireai-about-hero,.hireai-about-section,.hireai-about-cta{padding-top:72px;padding-bottom:72px;}.hireai-about-hero__stats{grid-template-columns:repeat(2,1fr);gap:28px;margin-top:48px;}.hireai-about-container{padding:0 24px;}.hireai-about-story{gap:40px;}.hireai-about-story__media{margin-right:0;}.hireai-about-story__frame img{height:330px;}.hireai-about-story__card{position:relative;right:auto;bottom:auto;margin:-36px 16px 0;}.hireai-about-story__overlay{padding:22px;}.hireai-about-story__overlay-title{font-size:24px;}.hireai-about-story__title{font-size:30px;}.hireai-about-story__pull{font-size:19px;}.hireai-about-method__image{padding:10px;}.hireai-about-process__item{padding:24px;}.hireai-about-cta__card{padding:64px 24px;}.hireai-about-cta__actions .hireai-about-cta__button{width:100%;}}
+@media (max-width:767px){.hireai-about-hero,.hireai-about-section,.hireai-about-cta{padding-top:72px;padding-bottom:72px;}.hireai-about-container{padding:0 24px;}.hireai-about-story{gap:40px;}.hireai-about-story__media{margin-right:0;}.hireai-about-story__frame img{height:330px;}.hireai-about-story__card{position:relative;right:auto;bottom:auto;margin:-36px 16px 0;}.hireai-about-story__overlay{padding:22px;}.hireai-about-story__overlay-title{font-size:24px;}.hireai-about-story__title{font-size:30px;}.hireai-about-story__pull{font-size:19px;}.hireai-about-method__image{padding:10px;}.hireai-about-process__item{padding:24px;}.hireai-about-cta__card{padding:64px 24px;}.hireai-about-cta__actions .hireai-about-cta__button{width:100%;}}
 </style>
 
 <main class="hireai-about-page">
-    <section class="hireai-about-hero" aria-labelledby="hireai-about-title">
-        <div class="hireai-about-container">
-            <p class="hireai-about-hero__badge"><span class="hireai-about-hero__dot" aria-hidden="true"></span><?php echo esc_html($hero_badge); ?></p>
-            <h1 id="hireai-about-title" class="hireai-about-hero__title">
-                <?php echo esc_html($hero_title); ?>
-                <span class="hireai-about-hero__accent"><?php echo esc_html($hero_accent); ?></span>
-            </h1>
-            <p class="hireai-about-hero__divider"><?php echo esc_html($hero_divider); ?></p>
-            <p class="hireai-about-hero__intro"><?php echo esc_html($hero_intro); ?></p>
-            <ul class="hireai-about-hero__stats">
-                <?php foreach ($stats as $stat) : ?>
-                    <li class="hireai-about-stat">
-                        <span class="hireai-about-stat__value"><?php echo esc_html($stat['value']); ?><span class="hireai-about-stat__unit"><?php echo esc_html($stat['unit']); ?></span></span>
-                        <span class="hireai-about-stat__label"><?php echo esc_html($stat['label']); ?></span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
+    <header class="page-hero page-hero--center hireai-about-hero" aria-labelledby="hireai-about-title">
+        <div class="container">
+            <span class="label-caps page-hero__kicker"><?php echo esc_html($hero_kicker); ?></span>
+            <h1 id="hireai-about-title" class="display-lg page-hero__title"><?php echo esc_html($hero_title); ?></h1>
+            <p class="body-lg page-hero__subtitle"><?php echo esc_html($hero_subtitle); ?></p>
         </div>
-    </section>
+    </header>
 
     <section class="hireai-about-section" aria-labelledby="hireai-about-story-title">
         <div class="hireai-about-container">
