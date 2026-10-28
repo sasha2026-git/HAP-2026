@@ -538,12 +538,56 @@ function hireai_employee_detail_post_id() {
     return isset($posts[0]->ID) ? (int) $posts[0]->ID : 0;
 }
 
+function hireai_is_single_physical_bilingual_post($post_id) {
+    $post_id = (int) $post_id;
+    if ($post_id <= 0) {
+        return false;
+    }
+
+    $single_physical_templates = [
+        'front-page.php',
+        'page-ai-employees.php',
+        'page-ai-solutions.php',
+        'page-cases-insights.php',
+        'page-faq.php',
+        'page-contact.php',
+        'page-employee-detail.php',
+    ];
+
+    if (in_array((string) get_post_meta($post_id, '_wp_page_template', true), $single_physical_templates, true)) {
+        return true;
+    }
+
+    $post = get_post($post_id);
+    return $post instanceof WP_Post && $post->post_type === 'page' && $post->post_name === 'my-account';
+}
+
+function hireai_single_physical_url(array $segments, $lang, $query_string = '') {
+    $lang = $lang === 'zh' ? 'zh' : 'en';
+    $segments = array_values(array_filter($segments, static function ($segment) {
+        return $segment !== '';
+    }));
+
+    if (empty($segments)) {
+        return hireai_language_home_url($lang);
+    }
+
+    if ($lang === 'zh') {
+        array_unshift($segments, 'zh');
+    }
+
+    $url = hireai_site_root_url() . '/' . implode('/', $segments) . '/';
+    $url = hireai_url_with_clean_query($url, (string) $query_string);
+
+    return $lang === 'en' ? add_query_arg(['lang' => 'en'], $url) : $url;
+}
+
 /**
  * Resolve an internal page URL to the current language.
  *
  * Prefer Polylang post/term translations so localized slugs and physical
- * language prefixes stay authoritative; never append the legacy language
- * query parameter to a new link.
+ * language prefixes stay authoritative. Single-physical bilingual pages retain
+ * their legacy rendering URL because they have no Polylang translation post.
  */
 function hireai_localized_url($url, $lang = null) {
     $url = trim((string) $url);
@@ -574,6 +618,9 @@ function hireai_localized_url($url, $lang = null) {
         $source_post_id = hireai_url_to_post_id($url, $segments);
         if ($source_post_id > 0) {
             $translated_url = hireai_translated_permalink($source_post_id, $lang);
+            if ($translated_url === null && hireai_is_single_physical_bilingual_post($source_post_id)) {
+                $translated_url = hireai_single_physical_url($segments, $lang, (string) ($parts['query'] ?? ''));
+            }
         } else {
             $source_term_id = hireai_url_to_term_id($segments);
             if ($source_term_id > 0) {
@@ -633,6 +680,15 @@ function hireai_language_switch_url($target_lang) {
                 (string) (wp_parse_url(isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/', PHP_URL_QUERY) ?? '')
             );
         }
+    }
+
+    if ($current_post_id > 0 && hireai_is_single_physical_bilingual_post($current_post_id)) {
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? esc_url_raw(wp_unslash($_SERVER['REQUEST_URI'])) : '/';
+        return hireai_single_physical_url(
+            hireai_url_without_language_prefix($request_uri),
+            $target_lang,
+            (string) (wp_parse_url($request_uri, PHP_URL_QUERY) ?? '')
+        );
     }
 
     $queried_object = get_queried_object();
