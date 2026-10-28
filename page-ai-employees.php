@@ -539,13 +539,14 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 <div class="site-main lb-main lb-att<?php echo $is_en ? ' lb-att--en' : ''; ?>" id="content">
 
     <!-- ─────────── Hero ─────────── -->
-    <section class="lb-hero">
+    <section class="hireai-page-hero">
         <?php if ($hero_image !== '') : ?>
-            <img class="lb-hero__bg" src="<?php echo esc_url($hero_image); ?>" alt="" loading="eager" decoding="async" />
+            <img class="hireai-page-hero__background" src="<?php echo esc_url($hero_image); ?>" alt="" loading="eager" decoding="async" />
         <?php endif; ?>
-        <span class="lb-hero__kicker"><?php echo esc_html($hero_kicker); ?></span>
-        <h1 class="lb-hero__title"><?php echo esc_html($hero_title); ?></h1>
-        <p class="lb-hero__subtitle"><?php echo esc_html($hero_subtitle); ?></p>
+        <span class="kicker"><?php echo esc_html($hero_kicker); ?></span>
+        <h1><?php echo esc_html($hero_title); ?></h1>
+        <p><?php echo esc_html($hero_subtitle); ?></p>
+        <div style="width:1px;height:40px;background:linear-gradient(180deg,#775a19,transparent);margin:20px auto 0"></div>
     </section>
 
     <div class="lb-container">

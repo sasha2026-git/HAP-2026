@@ -652,10 +652,11 @@ if (!empty($auto_chips)) {
 <main class="sols-main">
 
     <!-- ============== Hero ============== -->
-    <header class="sols-page-hero">
-        <span class="sols-page-hero__kicker"><?php echo esc_html( $hero_kicker ); ?></span>
-        <h1 class="sols-page-hero__title"><?php echo esc_html( $hero_title ); ?></h1>
-        <p class="sols-page-hero__subtitle"><?php echo esc_html( $hero_subtitle ); ?></p>
+    <header class="hireai-page-hero">
+        <span class="kicker"><?php echo esc_html( $hero_kicker ); ?></span>
+        <h1><?php echo esc_html( $hero_title ); ?></h1>
+        <p><?php echo esc_html( $hero_subtitle ); ?></p>
+        <div style="width:1px;height:40px;background:linear-gradient(180deg,#775a19,transparent);margin:20px auto 0"></div>
         <div class="sols-page-hero__actions">
             <a class="btn btn-solid" href="<?php echo esc_url( $hero_cta_primary_link ); ?>">
                 <?php echo esc_html( $hero_cta_primary ); ?>

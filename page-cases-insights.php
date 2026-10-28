@@ -95,7 +95,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-sm
 .hero{
   display:block !important;
   min-height:auto !important;
-  padding:24px 24px 20px !important;
+  padding:24px 24px 60px !important;
   max-width:1200px !important;
   margin:0 auto !important;
   background:#faf9f9 !important;

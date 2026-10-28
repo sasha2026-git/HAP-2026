@@ -212,12 +212,13 @@ $form_action = esc_url(admin_url('admin-post.php'));
   <!-- ============================================================
        1. HERO
        ============================================================ -->
-  <section class="hireai-c-hero" aria-labelledby="hireai-c-title">
-    <p class="hireai-c-kicker"><?php echo esc_html($hero_kicker); ?></p>
-    <h1 id="hireai-c-title" class="hireai-c-title">
-      <span class="hireai-c-title__zh"><?php echo esc_html($title_zh); ?></span><span class="hireai-c-title__sep" aria-hidden="true"> / </span><span class="hireai-c-title__en"><?php echo esc_html($title_en); ?></span>
+  <section class="hireai-page-hero" aria-labelledby="hireai-c-title">
+    <p class="kicker"><?php echo esc_html($hero_kicker); ?></p>
+    <h1 id="hireai-c-title">
+      <span><?php echo esc_html($title_zh); ?></span><span aria-hidden="true"> / </span><span><?php echo esc_html($title_en); ?></span>
     </h1>
-    <p class="hireai-c-subtitle"><?php echo esc_html($hero_subtitle); ?></p>
+    <p><?php echo esc_html($hero_subtitle); ?></p>
+    <div style="width:1px;height:40px;background:linear-gradient(180deg,#775a19,transparent);margin:20px auto 0"></div>
   </section>
 
   <!-- ============================================================

@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.10.2
+Version: 3.10.3
 Text Domain:  hireaipeople
 */
 
@@ -112,6 +112,8 @@ Text Domain:  hireaipeople
 
   /* Typography */
   --font-serif: 'Playfair Display', 'Noto Serif SC', 'Noto Serif CJK SC', 'Songti SC', 'SimSun', serif;
+  --fd: 'Playfair Display', serif;
+  --txt-v: #444748;
   /* v3.0.6: per hireaipeople.txt — English body prefers Montserrat; Chinese falls back to Noto Sans SC */
   /* v3.0.7: 主 --font-body/--font-label 移除 Montserrat (woff2 未下载) — 避免系统字体错位 */
   --font-body: 'Inter', 'Noto Sans SC', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -1250,6 +1252,59 @@ body .mobile-drawer .mobile-drawer__menu .current-menu-item > a {
 
 .page-hero--center .page-hero__subtitle {
   margin-inline: auto;
+}
+
+/* Shared non-home page hero, matched to Cases & Insights */
+.hireai-page-hero {
+  display: block !important;
+  min-height: auto !important;
+  padding: 24px 24px 60px !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  background: #faf9f9 !important;
+  border-radius: 0 !important;
+  text-align: center !important;
+  align-items: unset !important;
+  position: relative !important;
+}
+.hireai-page-hero h1 {
+  color: #1a1c1c !important;
+  margin-bottom: 12px !important;
+}
+.hireai-page-hero .kicker {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3em !important;
+  text-transform: uppercase !important;
+  color: #775a19 !important;
+  display: block !important;
+  margin-bottom: 12px !important;
+  text-align: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.hireai-page-hero h1 {
+  font-family: var(--fd);
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 600;
+  line-height: 1.1;
+  margin: 0 0 20px;
+}
+.hireai-page-hero h1 {
+  background: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-style: normal;
+}
+.hireai-page-hero p {
+  font-size: clamp(14px, 1.2vw, 16px) !important;
+  line-height: 1.6 !important;
+  color: var(--txt-v) !important;
+  margin: 0 auto !important;
+}
+.hireai-page-hero__background {
+  display: none !important;
 }
 
 /* ==========================================================================

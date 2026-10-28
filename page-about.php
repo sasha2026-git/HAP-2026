@@ -139,12 +139,13 @@ $cta_assurance_2 = hireai_field('about_cta_assurance_2', $is_en ? 'Sovereign Arc
 </style>
 
 <main class="hireai-about-page">
-    <header class="page-hero page-hero--center hireai-about-hero" aria-labelledby="hireai-about-title">
-        <div class="container">
-            <span class="label-caps page-hero__kicker"><?php echo esc_html($hero_kicker); ?></span>
-            <h1 id="hireai-about-title" class="display-lg page-hero__title"><?php echo esc_html($hero_title); ?></h1>
-            <p class="body-lg page-hero__subtitle"><?php echo esc_html($hero_subtitle); ?></p>
+    <header class="hireai-page-hero" aria-labelledby="hireai-about-title">
+        <div>
+            <span class="kicker"><?php echo esc_html($hero_kicker); ?></span>
+            <h1 id="hireai-about-title"><?php echo esc_html($hero_title); ?></h1>
+            <p><?php echo esc_html($hero_subtitle); ?></p>
         </div>
+        <div style="width:1px;height:40px;background:linear-gradient(180deg,#775a19,transparent);margin:20px auto 0"></div>
     </header>
 
     <section class="hireai-about-section" aria-labelledby="hireai-about-story-title">

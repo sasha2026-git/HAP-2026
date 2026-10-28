@@ -487,15 +487,15 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
 <main id="content" class="hireai-faq-page">
 
   <!-- ═══════════ 1. HERO ═══════════ -->
-  <section class="hireai-faq-hero" aria-labelledby="hireai-faq-hero-title">
-    <div class="container">
-      <span class="label-caps hireai-faq-hero__kicker"><?php echo esc_html($kicker); ?></span>
-      <h1 id="hireai-faq-hero-title"
-          class="display-lg hireai-faq-hero__title">
+  <section class="hireai-page-hero" aria-labelledby="hireai-faq-hero-title">
+    <div>
+      <span class="kicker"><?php echo esc_html($kicker); ?></span>
+      <h1 id="hireai-faq-hero-title">
         <?php echo esc_html($title); ?>
       </h1>
-      <p class="body-lg hireai-faq-hero__subtitle"><?php echo esc_html($subtitle); ?></p>
+      <p><?php echo esc_html($subtitle); ?></p>
     </div>
+    <div style="width:1px;height:40px;background:linear-gradient(180deg,#775a19,transparent);margin:20px auto 0"></div>
   </section>
 
   <!-- ═══════════ 2. HERO BANNER IMAGE ═══════════ -->
