@@ -244,6 +244,24 @@ function hireai_polylang_pages_by_slug($slug, $template = '') {
     return $matched;
 }
 
+function hireai_polylang_pages_by_template($template) {
+    if ($template === '') {
+        return [];
+    }
+
+    return get_posts([
+        'post_type'        => 'page',
+        'post_status'      => ['publish', 'draft', 'pending', 'private'],
+        'posts_per_page'   => -1,
+        'meta_key'         => '_wp_page_template',
+        'meta_value'       => $template,
+        'orderby'          => 'ID',
+        'order'            => 'ASC',
+        'suppress_filters' => true,
+        'no_found_rows'    => true,
+    ]);
+}
+
 function hireai_polylang_post_language($post_id) {
     if (function_exists('pll_get_post_language')) {
         $language = pll_get_post_language((int) $post_id, 'slug');
@@ -255,7 +273,12 @@ function hireai_polylang_post_language($post_id) {
 }
 
 function hireai_polylang_page_for_language($slug, $template, $language) {
-    foreach (hireai_polylang_pages_by_slug($slug, $template) as $page) {
+    $pages = array_merge(
+        hireai_polylang_pages_by_slug($slug, $template),
+        hireai_polylang_pages_by_template($template)
+    );
+
+    foreach ($pages as $page) {
         if (hireai_polylang_post_language((int) $page->ID) === $language) {
             return (int) $page->ID;
         }
@@ -264,7 +287,10 @@ function hireai_polylang_page_for_language($slug, $template, $language) {
 }
 
 function hireai_polylang_legacy_source_page($slug, $template) {
-    $pages = hireai_polylang_pages_by_slug($slug, $template);
+    $pages = array_merge(
+        hireai_polylang_pages_by_slug($slug, $template),
+        hireai_polylang_pages_by_template($template)
+    );
     $unassigned = [];
 
     foreach ($pages as $page) {
@@ -308,8 +334,14 @@ function hireai_polylang_insert_page($config, $language) {
         'post_content' => '',
     ], true);
 
-    if (is_wp_error($inserted) || !$inserted) {
-        return 0;
+    if (is_wp_error($inserted)) {
+        return $inserted;
+    }
+    if (!$inserted) {
+        return new WP_Error(
+            'hireai_page_insert_empty',
+            sprintf('wp_insert_post returned 0 for the %s %s page', $config['slug'], $language)
+        );
     }
 
     $page_id = (int) $inserted;
@@ -317,18 +349,6 @@ function hireai_polylang_insert_page($config, $language) {
         pll_set_post_language($page_id, $language);
     }
     update_post_meta($page_id, '_wp_page_template', $config['template']);
-
-    if (get_post_field('post_name', $page_id) !== $config['slug']) {
-        $updated = wp_update_post([
-            'ID' => $page_id,
-            'post_name' => $config['slug'],
-        ], true);
-        if (is_wp_error($updated) || get_post_field('post_name', $page_id) !== $config['slug']) {
-            wp_trash_post($page_id);
-            return 0;
-        }
-    }
-
     update_post_meta($page_id, '_hireai_polylang_migration_created', 1);
     return $page_id;
 }
@@ -421,10 +441,14 @@ function hireai_polylang_pages_migrate() {
         }
 
         if (!$source_id) {
-            $source_id = hireai_polylang_insert_page($config, $source_language);
+            $created_source = hireai_polylang_insert_page($config, $source_language);
+            $source_id = is_wp_error($created_source) ? 0 : (int) $created_source;
         }
-        if (!$source_id) {
-            $errors[] = $key . ': source page could not be created';
+        if (!$source_id && isset($created_source)) {
+            $error_message = is_wp_error($created_source)
+                ? $created_source->get_error_message()
+                : 'wp_insert_post returned 0';
+            $errors[] = $key . ': source page could not be created (' . $error_message . ')';
             continue;
         }
 
@@ -437,25 +461,19 @@ function hireai_polylang_pages_migrate() {
             $target_id = hireai_polylang_page_for_language($config['slug'], $config['template'], $target_language);
         }
         if (!$target_id) {
-            $target_id = hireai_polylang_insert_page($config, $target_language);
+            $inserted_target = hireai_polylang_insert_page($config, $target_language);
+            $target_id = is_wp_error($inserted_target) ? 0 : (int) $inserted_target;
             $created_target = $target_id > 0;
         }
         if (!$target_id) {
-            $errors[] = $key . ': translation page could not be created';
+            $error_message = is_wp_error($inserted_target)
+                ? $inserted_target->get_error_message()
+                : 'wp_insert_post returned 0';
+            $errors[] = $key . ': translation page could not be created (' . $error_message . ')';
             continue;
         }
 
         update_post_meta($target_id, '_wp_page_template', $config['template']);
-        if (get_post_field('post_name', $target_id) !== $config['slug']) {
-            $updated = wp_update_post([
-                'ID' => $target_id,
-                'post_name' => $config['slug'],
-            ], true);
-            if (is_wp_error($updated) || get_post_field('post_name', $target_id) !== $config['slug']) {
-                $errors[] = $key . ': English page slug could not be normalized';
-                continue;
-            }
-        }
         if (!hireai_polylang_post_language($target_id) && function_exists('pll_set_post_language')) {
             pll_set_post_language($target_id, $target_language);
         }
