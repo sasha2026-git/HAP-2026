@@ -593,7 +593,7 @@ $raw_rows = array_slice($raw_rows, ($current_page - 1) * $per_page, $per_page);
 
         <!-- ─────────── Employee Rows Pagination (v3.4.0) ─────────── -->
         <?php if ($total_pages > 1):
-            $base_url = remove_query_arg('emp_page');
+            $base_url = hireai_localized_url(remove_query_arg(['emp_page', 'lang']));
         ?>
             <nav class="lb-att-pagination" aria-label="<?php echo esc_attr(hireai_employees_page_field('lookbook_pagination_label', $is_en ? 'Employee pagination' : '员工分页', $lb_pid)); ?>">
                     <?php for ($p = 1; $p <= $total_pages; $p++): ?>

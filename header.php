@@ -14,7 +14,7 @@
 $suffix      = function_exists('hireai_lang_suffix') ? hireai_lang_suffix() : '';
 $is_en       = ($suffix === '_en');
 $switch_lang = $is_en ? 'zh' : 'en';
-$switch_url  = function_exists('hireai_language_switch_url') ? hireai_language_switch_url($switch_lang) : home_url('/');
+$switch_url  = function_exists('hireai_language_switch_url') ? hireai_language_switch_url($switch_lang) : hireai_language_home_url($switch_lang);
 $logo_url    = function_exists('hireai_image')
     ? hireai_image('header_logo', get_stylesheet_directory_uri() . '/assets/img/logo.png', 'option')
     : get_stylesheet_directory_uri() . '/assets/img/logo.png';

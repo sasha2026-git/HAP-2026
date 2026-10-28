@@ -7,7 +7,7 @@ get_header();
 
 $suffix = hireai_lang_suffix();
 $contact_page = get_page_by_path('contact');
-$contact_url = $contact_page instanceof WP_Post ? get_permalink($contact_page) : home_url('/contact/');
+$contact_url = hireai_localized_url($contact_page instanceof WP_Post ? get_permalink($contact_page) : home_url('/contact/'));
 
 while (have_posts()) :
 	the_post();

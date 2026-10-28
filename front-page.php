@@ -81,7 +81,7 @@ foreach ([1, 2, 3] as $i) {
        fallback 链：post → /ai-employees/ 列表页（不再 /contact/，因为 contact 太重） */
     $product_url = function_exists('hireai_resolve_employee_url')
         ? hireai_resolve_employee_url($i - 1, hireai_field("fp_prod{$i}_url", home_url('/ai-employees/')))
-        : home_url('/ai-employees/');
+        : hireai_localized_url(home_url('/ai-employees/'));
     if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
         error_log('[hireai v3.0.7] fp_prod' . $i . '_url: ' . $product_url);
     }
@@ -120,7 +120,7 @@ $hireai_v360 = function ($base, $lang_code) {
 $hireai_v360_url = function ($base) {
     if (!function_exists('get_field')) return '';
     $v = get_field($base);
-    return is_string($v) ? trim($v) : '';
+    return is_string($v) && trim($v) !== '' ? hireai_localized_url(trim($v)) : '';
 };
 $hireai_v360_image_url = function ($base) {
     if (!function_exists('get_field')) return '';
@@ -171,7 +171,7 @@ if (is_array($_v360_sols_rep) && !empty($_v360_sols_rep)) {
             'desc'  => $is_en ? ($_row['desc_en'] ?? '') : ($_row['desc_zh'] ?? ''),
             'tag'   => $is_en ? ($_row['tag_en'] ?? '')  : ($_row['tag_zh'] ?? ''),
             'img'   => $_img,
-            'url'   => !empty($_row['url']) ? (string) $_row['url'] : home_url('/ai-solutions/'),
+            'url'   => !empty($_row['url']) ? hireai_localized_url((string) $_row['url']) : hireai_localized_url(home_url('/ai-solutions/')),
         ];
     }
 }

@@ -2,7 +2,7 @@
 $title     = isset($args['title']) ? $args['title'] : '';
 $excerpt   = isset($args['excerpt']) ? $args['excerpt'] : '';
 $tag       = isset($args['tag']) ? $args['tag'] : '';
-$link      = isset($args['link']) ? $args['link'] : home_url('/');
+$link      = hireai_localized_url(isset($args['link']) ? $args['link'] : home_url('/'));
 $price     = isset($args['price']) ? $args['price'] : '';
 $retainer  = isset($args['retainer']) ? $args['retainer'] : '';
 $operative = isset($args['operative']) ? $args['operative'] : '';

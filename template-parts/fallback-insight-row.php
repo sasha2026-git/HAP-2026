@@ -5,7 +5,7 @@
 $title   = isset($args['title']) ? $args['title'] : '';
 $excerpt = isset($args['excerpt']) ? $args['excerpt'] : '';
 $date    = isset($args['date']) ? $args['date'] : '';
-$link    = isset($args['link']) ? $args['link'] : home_url('/');
+$link    = hireai_localized_url(isset($args['link']) ? $args['link'] : home_url('/'));
 $cat     = isset($args['cat']) ? $args['cat'] : 'INSIGHT';
 $cta     = isset($args['cta_text']) ? $args['cta_text'] : '阅读更多';
 ?>

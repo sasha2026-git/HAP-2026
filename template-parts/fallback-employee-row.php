@@ -5,7 +5,7 @@ $title        = isset($args['title']) ? $args['title'] : '';
 $text         = isset($args['text']) ? $args['text'] : '';
 $button_text  = isset($args['button_text']) ? $args['button_text'] : '';
 $button_style = isset($args['button_style']) ? $args['button_style'] : 'filled';
-$link         = isset($args['link']) ? $args['link'] : home_url('/');
+$link         = hireai_localized_url(isset($args['link']) ? $args['link'] : home_url('/'));
 $image        = isset($args['image']) ? $args['image'] : '';
 $reverse      = !empty($args['reverse']);
 $style_class  = $button_style === 'outline' ? 'lookbook-row__button--outline' : 'lookbook-row__button';

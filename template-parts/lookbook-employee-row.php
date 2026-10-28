@@ -21,7 +21,7 @@ if ( ! empty( $link_arr['url'] ) ) {
     $url = $link_arr['url'];
 } elseif ( get_the_ID() ) {
     // 数字员工卡片默认跳转：/employee/<post_name>/ (Aurelian Prime 详情页)
-    $url = home_url( '/employee/' . get_post_field( 'post_name', get_the_ID() ) . '/' );
+    $url = hireai_localized_url( home_url( '/employee/' . get_post_field( 'post_name', get_the_ID() ) . '/' ) );
 } else {
     $url = get_permalink();
 }

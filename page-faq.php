@@ -591,10 +591,10 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
       <h2 id="hireai-faq-cta-title" class="lb-cta__heading"><?php echo esc_html($cta_title); ?></h2>
       <p class="lb-cta__sub"><?php echo esc_html($cta_sub); ?></p>
       <div class="lb-cta__actions">
-        <a class="lb-btn lb-btn--primary" href="<?php echo esc_url(home_url($cta_btn_url)); ?>">
+        <a class="lb-btn lb-btn--primary" href="<?php echo esc_url(hireai_localized_url($cta_btn_url)); ?>">
           <?php echo esc_html($cta_btn_label); ?>
         </a>
-        <a class="lb-btn lb-btn--ghost" href="<?php echo esc_url(home_url($cta_link_url)); ?>">
+        <a class="lb-btn lb-btn--ghost" href="<?php echo esc_url(hireai_localized_url($cta_link_url)); ?>">
           <?php echo esc_html($cta_link_label); ?>
         </a>
       </div>

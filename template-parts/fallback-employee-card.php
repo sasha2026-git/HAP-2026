@@ -2,7 +2,7 @@
 $title = isset($args['title']) ? $args['title'] : '';
 $role  = isset($args['role']) ? $args['role'] : '';
 $image = isset($args['image']) ? $args['image'] : '';
-$link  = isset($args['link']) ? $args['link'] : home_url('/');
+$link  = hireai_localized_url(isset($args['link']) ? $args['link'] : home_url('/'));
 $lg_only = !empty($args['lg_only']);
 ?>
 <article class="employee-card<?php echo $lg_only ? ' employee-card--lg-only' : ''; ?>" data-reveal>

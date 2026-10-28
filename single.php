@@ -90,7 +90,7 @@ while (have_posts()) :
                             <?php echo esc_html($btn_text); ?>
                             <?php echo hireai_svg('arrow', 14); ?>
                         </a>
-                        <a class="hireai-link hireai-link--ghost" href="<?php echo esc_url(home_url('/contact/')); ?>">
+                        <a class="hireai-link hireai-link--ghost" href="<?php echo esc_url(hireai_localized_url(home_url('/contact/'))); ?>">
                             <?php echo esc_html($is_en ? 'Request Custom Build' : '请求定制'); ?>
                         </a>
                     </div>
@@ -156,7 +156,7 @@ while (have_posts()) :
                 <?php the_content(); ?>
             </div>
             <footer class="hireai-single-faq__footer">
-                <a class="hireai-link--ghost" href="<?php echo esc_url(home_url('/faq/')); ?>">
+                <a class="hireai-link--ghost" href="<?php echo esc_url(hireai_localized_url(home_url('/faq/'))); ?>">
                     <?php echo esc_html($is_en ? 'Back to All FAQs' : '返回所有常见问题'); ?>
                 </a>
             </footer>

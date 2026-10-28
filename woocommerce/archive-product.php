@@ -64,7 +64,7 @@ $localize = function ($item, $key) use ($suffix) {
 						'excerpt'   => $localize($item, 'excerpt'),
 						'price'     => $localize($item, 'price'),
 						'retainer'  => $localize($item, 'retainer'),
-						'link'      => $localize($item, 'link'),
+						'link'      => hireai_localized_url($localize($item, 'link')),
 						'cta_text'  => $cta_text,
 						'image'     => hireai_default_image('solution-' . ($index + 1) . '.jpg'),
 					]);
