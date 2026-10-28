@@ -231,17 +231,13 @@ add_action('save_post_page', function ($post_id, $post) {
     }
 }, 20, 2);
 
-/* v3.0.8 (Bug A): 页面保存时清 transient + ACF cache
- *   - 防止 Sasha 编辑 ACF 图片后前台读旧值（LiteSpeed/对象缓存/ACF JSON sync）
- *   - 不修改 OBJECT CACHE 本身（依赖 LiteSpeed 自动失效）
+/* v3.9.4: 页面保存时触发缓存插件失效
+ *   - ACF 内部缓存由 acf/save_post 回调重置
+ *   - 页面缓存依赖 LiteSpeed 自动失效
  */
 add_action('save_post_page', function ($post_id, $post) {
     if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) {
         return;
-    }
-    // 清 ACF field values 缓存（WP Object Cache）
-    if (function_exists('wp_cache_delete_group')) {
-        wp_cache_delete_group('acf_field_values');
     }
     // 清 LiteSpeed Cache（如果安装）
     if (class_exists('LiteSpeed_Cache_API')) {
@@ -252,20 +248,21 @@ add_action('save_post_page', function ($post_id, $post) {
     }
 }, 30, 2);
 
-/* v3.0.8 (Bug A): ACF save_post 清对应页面的对象缓存（更精细触发）
- *   - ACF update_field 时立刻清 wp_cache（避免 ACF 内部缓存保留旧值）
+/* v3.9.4: ACF save_post 清内部 values store 与页面缓存
+ *   - 旧的缓存分组删除不是 ACF 实际缓存组，调用无效
  */
 add_action('acf/save_post', function ($post_id) {
-    if (function_exists('wp_cache_delete_group')) {
-        wp_cache_delete_group('acf_field_values');
+    if (function_exists('acf_get_store')) {
+        $values_store = acf_get_store('values');
+        if (is_object($values_store) && method_exists($values_store, 'reset')) {
+            $values_store->reset();
+        }
     }
     if (is_numeric($post_id) && function_exists('clean_post_cache')) {
         clean_post_cache((int) $post_id);
-    } elseif (function_exists('wp_cache_delete')) {
-        wp_cache_delete($post_id, 'post_meta');
     }
     if (defined('WP_DEBUG') && WP_DEBUG) {
-        error_log('[hireai v3.0.8] acf_save cache_clear: post_id=' . $post_id);
+        error_log('[hireai v3.9.4] acf_save cache_clear: post_id=' . $post_id);
     }
 }, 20);
 
@@ -1973,6 +1970,7 @@ function hireai_custom_template_canonical_id($template, $post_id = 0) {
         'page-cases-insights.php'  => 'cases-insights',
         'page-contact.php'         => 'contact',
         'page-faq.php'             => 'faq',
+        'page-about.php'           => 'about',
         'page-employee-detail.php' => 'employee',
     ];
     if (isset($slug_map[$template])) {
@@ -2022,7 +2020,7 @@ add_action('admin_notices', function () {
     if (!$screen || empty($screen->post_type) || $screen->post_type !== 'page') return;
     $post_id = isset($_GET['post']) ? (int) $_GET['post'] : 0;
     if (!$post_id || !current_user_can('edit_pages')) return;
-    $known = ['front-page.php', 'page-ai-employees.php', 'page-ai-solutions.php', 'page-cases-insights.php', 'page-contact.php', 'page-faq.php'];
+    $known = ['front-page.php', 'page-ai-employees.php', 'page-ai-solutions.php', 'page-cases-insights.php', 'page-contact.php', 'page-faq.php', 'page-about.php'];
     $tpl = (string) get_post_meta($post_id, '_wp_page_template', true);
     if (!in_array($tpl, $known, true)) return;
     $canonical = hireai_custom_template_canonical_id($tpl, $post_id);
@@ -2035,6 +2033,45 @@ add_action('admin_notices', function () {
         (int) $canonical,
         $tpl === 'page-ai-employees.php' ? ' 员工卡片内容另见下方「AI 数字员工页 · 员工行（Repeater）」区块——Repeater 为空时前台显示内置兜底 5 行。' : ''
     );
+});
+
+/* v3.9.4: About 双语 Tab 与 Polylang 物理页语言不匹配时降权提示 */
+add_action('admin_footer-post.php', function () {
+    if (
+        !function_exists('get_current_screen')
+        || !function_exists('pll_get_post_language')
+    ) {
+        return;
+    }
+
+    $screen = get_current_screen();
+    if (!$screen || empty($screen->post_type) || $screen->post_type !== 'page') return;
+    $post_id = isset($_GET['post']) ? (int) $_GET['post'] : 0;
+    if (!$post_id || get_post_meta($post_id, '_wp_page_template', true) !== 'page-about.php') return;
+
+    $language = (string) pll_get_post_language($post_id);
+    if ($language === 'zh') {
+        $tab_key = 'group_page_about_tab_en';
+        $title = '当前页面语言：中文。此 English Tab 不会用于中文 URL；请编辑中文页 + 中文 Tab。';
+    } elseif ($language === 'en') {
+        $tab_key = 'group_page_about_tab_zh';
+        $title = 'Current page language: English. This Chinese tab is not used by English URLs; edit the English page and English tab.';
+    } else {
+        return;
+    }
+    ?>
+    <style>
+        [data-key="<?php echo esc_attr($tab_key); ?>"] { opacity: 0.45; }
+    </style>
+    <script>
+        (function () {
+            var title = <?php echo wp_json_encode($title); ?>;
+            document.querySelectorAll('[data-key="<?php echo esc_js($tab_key); ?>"]').forEach(function (element) {
+                element.setAttribute('title', title);
+            });
+        })();
+    </script>
+    <?php
 });
 
 /* 后台提示：编辑「规范页本身」且 Repeater 均为空时，告知前台正显示兜底数据 */
@@ -3892,7 +3929,7 @@ add_action('acf/init', function () {
         return;
     }
 
-    acf_add_local_field_group(hireai_make_bilingual_group('group_page_about', '关于我们页', [
+    $about_group = hireai_make_bilingual_group('group_page_about', '关于我们页', [
         ['name' => 'about_hero_kicker', 'label' => 'Hero · 眉题', 'type' => 'text', 'zh' => '智慧工坊', 'en' => 'THE ATELIER'],
         ['name' => 'about_hero_heading', 'label' => 'Hero · 主标题', 'type' => 'textarea', 'zh' => '关于我们', 'en' => 'About Us', 'extra' => ['rows' => 1]],
         ['name' => 'about_hero_accent', 'label' => 'Hero · 副标题', 'type' => 'textarea', 'zh' => '当代科技，邂逅高级定制。', 'en' => 'Where High Technology Meets Haute Couture.', 'extra' => ['rows' => 1]],
@@ -3927,7 +3964,16 @@ add_action('acf/init', function () {
         ['name' => 'about_cta_assurance_2', 'label' => 'CTA · 保障 2', 'type' => 'text', 'zh' => '自主可控架构', 'en' => 'Sovereign Architecture'],
     ], [
         [['param' => 'page_template', 'operator' => '==', 'value' => 'page-about.php']],
-    ]));
+    ]);
+    array_unshift($about_group['fields'], [
+        'key' => 'field_page_about_note',
+        'label' => '使用说明',
+        'name' => '',
+        'type' => 'message',
+        'message' => '本页字段分中文/English 双 Tab；Polylang 下中英文是两个物理页面；前台语言由 URL 和 cookie 决定，改中文请编辑中文页+中文 Tab。',
+        'esc_html' => true,
+    ]);
+    acf_add_local_field_group($about_group);
 
     $repeater_subfields = static function ($labels, $prefix) {
         return array_map(static function ($field) use ($prefix) {

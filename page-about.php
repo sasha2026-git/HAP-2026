@@ -20,7 +20,10 @@ get_header();
 
 $suffix  = function_exists('hireai_lang_suffix') ? hireai_lang_suffix() : '';
 $is_en   = ($suffix === '_en');
-$page_id = get_the_ID();
+$canonical_page_id = function_exists('hireai_custom_template_canonical_id')
+    ? hireai_custom_template_canonical_id('page-about.php', get_the_ID())
+    : 0;
+$page_id = $canonical_page_id > 0 ? $canonical_page_id : get_the_ID();
 
 $hero_kicker = hireai_field('about_hero_kicker', $is_en ? 'THE ATELIER' : '智慧工坊', $page_id);
 $hero_title = hireai_field('about_hero_heading', get_the_title($page_id), $page_id);
