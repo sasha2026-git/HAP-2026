@@ -256,9 +256,14 @@ add_action('save_post_page', function ($post_id, $post) {
  *   - ACF update_field 时立刻清 wp_cache（避免 ACF 内部缓存保留旧值）
  */
 add_action('acf/save_post', function ($post_id) {
-    if (!function_exists('wp_cache_delete_group')) return;
-    // ACF 在 meta cache 中以 _acf_meta_<post_id> 为 key 缓存所有字段值
-    wp_cache_delete($post_id, 'post_meta');
+    if (function_exists('wp_cache_delete_group')) {
+        wp_cache_delete_group('acf_field_values');
+    }
+    if (is_numeric($post_id) && function_exists('clean_post_cache')) {
+        clean_post_cache((int) $post_id);
+    } elseif (function_exists('wp_cache_delete')) {
+        wp_cache_delete($post_id, 'post_meta');
+    }
     if (defined('WP_DEBUG') && WP_DEBUG) {
         error_log('[hireai v3.0.8] acf_save cache_clear: post_id=' . $post_id);
     }
