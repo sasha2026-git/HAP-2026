@@ -283,6 +283,13 @@ function hireai_polylang_page_for_language($slug, $template, $language) {
             return (int) $page->ID;
         }
     }
+
+    if ($language === 'zh') {
+        $fallback = get_page_by_path($slug, OBJECT, 'page');
+        if ($fallback instanceof WP_Post) {
+            return (int) $fallback->ID;
+        }
+    }
     return 0;
 }
 
@@ -297,6 +304,11 @@ function hireai_polylang_legacy_source_page($slug, $template) {
         if (hireai_polylang_post_language((int) $page->ID) === '') {
             $unassigned[] = $page;
         }
+    }
+
+    $fallback = get_page_by_path($slug, OBJECT, 'page');
+    if ($fallback instanceof WP_Post && hireai_polylang_post_language((int) $fallback->ID) === '') {
+        $unassigned[] = $fallback;
     }
 
     if (empty($unassigned)) {
@@ -590,6 +602,106 @@ function hireai_polylang_pages_rollback() {
     flush_rewrite_rules();
     return true;
 }
+
+function hireai_polylang_faq_duplicate_has_custom_content($page_id) {
+    $page = get_post((int) $page_id);
+    if (!$page instanceof WP_Post) {
+        return true;
+    }
+
+    if (trim((string) $page->post_content) !== '' || trim((string) $page->post_excerpt) !== '') {
+        return true;
+    }
+    if (trim((string) $page->post_title) !== '常见问题') {
+        return true;
+    }
+
+    foreach ((array) get_post_meta((int) $page_id) as $meta_key => $values) {
+        if (strpos((string) $meta_key, '_') === 0) {
+            continue;
+        }
+        foreach ((array) $values as $value) {
+            if (is_array($value)) {
+                if (!empty($value)) {
+                    return true;
+                }
+            } elseif (is_scalar($value)) {
+                if (trim((string) $value) !== '') {
+                    return true;
+                }
+            } elseif (!is_null($value)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function hireai_polylang_faq_dedupe_once() {
+    if (!current_user_can('manage_options') || get_option('hireai_faq_dedupe_done')) {
+        return;
+    }
+    foreach (['pll_get_post', 'pll_set_post_language', 'pll_save_post_translations'] as $polylang_function) {
+        if (!function_exists($polylang_function)) {
+            return;
+        }
+    }
+
+    $canonical_id = 686;
+    $duplicate_id = 2519;
+    $english_id = 2521;
+    $page_ids = [
+        'canonical' => $canonical_id,
+        'duplicate' => $duplicate_id,
+        'english' => $english_id,
+    ];
+
+    foreach ($page_ids as $page_id) {
+        $page = get_post($page_id);
+        if (!$page instanceof WP_Post || $page->post_type !== 'page' || $page->post_status === 'trash') {
+            return;
+        }
+    }
+
+    pll_save_post_translations(['zh' => $duplicate_id]);
+    pll_set_post_language($canonical_id, 'zh');
+    pll_set_post_language($english_id, 'en');
+    update_post_meta($canonical_id, '_wp_page_template', 'page-faq.php');
+    pll_save_post_translations([
+        'zh' => $canonical_id,
+        'en' => $english_id,
+    ]);
+
+    if ((int) pll_get_post($canonical_id, 'en') !== $english_id || (int) pll_get_post($english_id, 'zh') !== $canonical_id) {
+        return;
+    }
+
+    $trashed = false;
+    $trash_skipped_reason = '';
+    if (hireai_polylang_faq_duplicate_has_custom_content($duplicate_id)) {
+        $trash_skipped_reason = 'duplicate_has_custom_content';
+    } elseif (wp_trash_post($duplicate_id)) {
+        $trashed = true;
+    } else {
+        return;
+    }
+
+    $state = get_option('hireai_polylang_pages_migration');
+    if (is_array($state) && isset($state['results']['faq'])) {
+        $state['results']['faq']['source_id'] = $canonical_id;
+        update_option('hireai_polylang_pages_migration', $state, false);
+    }
+
+    update_option('hireai_faq_dedupe_done', [
+        'version' => '3.10.2',
+        'time' => current_time('mysql'),
+        'canonical_source_id' => $canonical_id,
+        'english_target_id' => $english_id,
+        'trashed_source_id' => $trashed ? $duplicate_id : 0,
+        'trash_skipped_reason' => $trash_skipped_reason,
+    ], false);
+}
+add_action('admin_init', 'hireai_polylang_faq_dedupe_once', 10);
 
 function hireai_polylang_pages_maybe_migrate() {
     if (!current_user_can('manage_options') || !function_exists('pll_save_post_translations')) {
