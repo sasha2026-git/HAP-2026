@@ -190,6 +190,419 @@ add_action('after_switch_theme', 'hireai_ensure_default_pages');
 add_action('admin_init', 'hireai_ensure_default_pages_once');
 
 /* -------------------------------------------------------------------------
+ * 0.0b Polylang 双物理页迁移（v3.10.0）
+ *   - 每个 zh 模板页创建/关联 en 页；
+ *   - 源页 *_en meta 不删除，完整复制到英文页同名 meta 与无后缀 base meta；
+ *   - 记录旧值与创建状态，失败或验收未通过时可用 rollback 函数恢复。
+ * ---------------------------------------------------------------------- */
+function hireai_polylang_page_configs() {
+    return [
+        'home' => [
+            'slug' => 'home', 'template' => 'front-page.php',
+            'zh_title' => '首页', 'en_title' => 'Home', 'migrate_fields' => true,
+        ],
+        'ai-employees' => [
+            'slug' => 'ai-employees', 'template' => 'page-ai-employees.php',
+            'zh_title' => 'AI数字员工', 'en_title' => 'AI Employees', 'migrate_fields' => true,
+        ],
+        'ai-solutions' => [
+            'slug' => 'ai-solutions', 'template' => 'page-ai-solutions.php',
+            'zh_title' => 'AI解决方案', 'en_title' => 'AI Solutions', 'migrate_fields' => true,
+        ],
+        'cases-insights' => [
+            'slug' => 'cases-insights', 'template' => 'page-cases-insights.php',
+            'zh_title' => '案例&洞察', 'en_title' => 'Cases & Insights', 'migrate_fields' => true,
+        ],
+        'faq' => [
+            'slug' => 'faq', 'template' => 'page-faq.php',
+            'zh_title' => '常见问题', 'en_title' => 'FAQ', 'migrate_fields' => true,
+        ],
+        'contact' => [
+            'slug' => 'contact', 'template' => 'page-contact.php',
+            'zh_title' => '联系', 'en_title' => 'Contact', 'migrate_fields' => true,
+        ],
+    ];
+}
+
+function hireai_polylang_pages_by_slug($slug, $template = '') {
+    $pages = get_posts([
+        'post_type'        => 'page',
+        'post_status'      => ['publish', 'draft', 'pending', 'private'],
+        'name'             => (string) $slug,
+        'posts_per_page'   => -1,
+        'orderby'          => 'ID',
+        'order'            => 'ASC',
+        'suppress_filters' => true,
+    ]);
+
+    $matched = [];
+    foreach ($pages as $page) {
+        if ($template === '' || get_post_meta((int) $page->ID, '_wp_page_template', true) === $template) {
+            $matched[] = $page;
+        }
+    }
+    return $matched;
+}
+
+function hireai_polylang_post_language($post_id) {
+    if (function_exists('pll_get_post_language')) {
+        $language = pll_get_post_language((int) $post_id, 'slug');
+        if (in_array($language, ['zh', 'en'], true)) {
+            return $language;
+        }
+    }
+    return '';
+}
+
+function hireai_polylang_page_for_language($slug, $template, $language) {
+    foreach (hireai_polylang_pages_by_slug($slug, $template) as $page) {
+        if (hireai_polylang_post_language((int) $page->ID) === $language) {
+            return (int) $page->ID;
+        }
+    }
+    return 0;
+}
+
+function hireai_polylang_legacy_source_page($slug, $template) {
+    $pages = hireai_polylang_pages_by_slug($slug, $template);
+    $unassigned = [];
+
+    foreach ($pages as $page) {
+        if (hireai_polylang_post_language((int) $page->ID) === '') {
+            $unassigned[] = $page;
+        }
+    }
+
+    if (empty($unassigned)) {
+        return 0;
+    }
+
+    usort($unassigned, static function ($left, $right) {
+        $left_score = hireai_polylang_english_meta_count((int) $left->ID);
+        $right_score = hireai_polylang_english_meta_count((int) $right->ID);
+        if ($left_score !== $right_score) {
+            return $right_score - $left_score;
+        }
+        return (int) $left->ID - (int) $right->ID;
+    });
+
+    return (int) $unassigned[0]->ID;
+}
+
+function hireai_polylang_english_meta_count($post_id) {
+    $count = 0;
+    foreach ((array) get_post_meta((int) $post_id) as $meta_key => $values) {
+        if (strpos((string) $meta_key, '_') !== 0 && preg_match('/_en($|_)/', (string) $meta_key)) {
+            $count++;
+        }
+    }
+    return $count;
+}
+
+function hireai_polylang_insert_page($config, $language) {
+    $inserted = wp_insert_post([
+        'post_type' => 'page',
+        'post_status' => 'publish',
+        'post_title' => $language === 'en' ? $config['en_title'] : $config['zh_title'],
+        'post_name' => $config['slug'],
+        'post_content' => '',
+    ], true);
+
+    if (is_wp_error($inserted) || !$inserted) {
+        return 0;
+    }
+
+    $page_id = (int) $inserted;
+    if (function_exists('pll_set_post_language')) {
+        pll_set_post_language($page_id, $language);
+    }
+    update_post_meta($page_id, '_wp_page_template', $config['template']);
+
+    if (get_post_field('post_name', $page_id) !== $config['slug']) {
+        $updated = wp_update_post([
+            'ID' => $page_id,
+            'post_name' => $config['slug'],
+        ], true);
+        if (is_wp_error($updated) || get_post_field('post_name', $page_id) !== $config['slug']) {
+            wp_trash_post($page_id);
+            return 0;
+        }
+    }
+
+    update_post_meta($page_id, '_hireai_polylang_migration_created', 1);
+    return $page_id;
+}
+
+function hireai_polylang_copy_page_fields($source_id, $target_id) {
+    $copied = [];
+    $source_keys = [];
+    $backup = [];
+    $verified = true;
+
+    foreach ((array) get_post_meta($source_id) as $meta_key => $values) {
+        $meta_key = (string) $meta_key;
+        if (strpos($meta_key, '_') === 0 || !preg_match('/^(.+)_en(_(.+))?$/U', $meta_key, $matches)) {
+            continue;
+        }
+
+        if (count((array) $values) !== 1) {
+            $verified = false;
+            continue;
+        }
+
+        $source_keys[] = $meta_key;
+        $target_key = $meta_key;
+        $base_key = $matches[1] . (isset($matches[3]) ? '_' . $matches[3] : '');
+        $value = get_post_meta($source_id, $meta_key, true);
+
+        foreach (array_unique([$target_key, $base_key]) as $copy_key) {
+            $had_meta = metadata_exists('post', $target_id, $copy_key);
+            $old_value = $had_meta ? get_post_meta($target_id, $copy_key, true) : null;
+            update_post_meta($target_id, $copy_key, $value);
+            $copied[] = $copy_key;
+            $backup[$copy_key] = ['existed' => $had_meta, 'value' => $old_value];
+        }
+
+        foreach ([$target_key, $base_key] as $verify_key) {
+            if (get_post_meta($target_id, $verify_key, true) !== $value) {
+                $verified = false;
+            }
+        }
+    }
+
+    return [
+        'source_keys' => array_values(array_unique($source_keys)),
+        'copied' => array_values(array_unique($copied)),
+        'backup' => $backup,
+        'verified' => $verified,
+    ];
+}
+
+function hireai_polylang_preserve_backup(array $backup, array $previous_backup) {
+    foreach ($backup as $meta_key => $current) {
+        if (array_key_exists($meta_key, $previous_backup)) {
+            $backup[$meta_key] = $previous_backup[$meta_key];
+        }
+    }
+    return $backup;
+}
+
+function hireai_polylang_pages_migrate() {
+    $results = [];
+    $errors = [];
+
+    foreach (['pll_get_post', 'pll_set_post_language', 'pll_save_post_translations'] as $polylang_function) {
+        if (!function_exists($polylang_function)) {
+            $errors[] = $polylang_function . ' unavailable';
+        }
+    }
+    if (!empty($errors)) {
+        return [
+            'version' => hireai_get_version(),
+            'time' => current_time('mysql'),
+            'results' => $results,
+            'errors' => array_values(array_unique($errors)),
+        ];
+    }
+
+    $previous_state = get_option('hireai_polylang_pages_migration');
+    $previous_results = is_array($previous_state) && is_array($previous_state['results'] ?? null)
+        ? $previous_state['results']
+        : [];
+
+    foreach (hireai_polylang_page_configs() as $key => $config) {
+        $source_language = 'zh';
+        $source_id = hireai_polylang_page_for_language($config['slug'], $config['template'], $source_language);
+        if (!$source_id) {
+            $source_id = hireai_polylang_legacy_source_page($config['slug'], $config['template']);
+        }
+        if ($source_id && hireai_polylang_post_language($source_id) === '' && function_exists('pll_set_post_language')) {
+            pll_set_post_language($source_id, $source_language);
+        }
+
+        if (!$source_id) {
+            $source_id = hireai_polylang_insert_page($config, $source_language);
+        }
+        if (!$source_id) {
+            $errors[] = $key . ': source page could not be created';
+            continue;
+        }
+
+        update_post_meta($source_id, '_wp_page_template', $config['template']);
+        $target_language = 'en';
+        $target_id = (int) (function_exists('pll_get_post') ? pll_get_post($source_id, $target_language) : 0);
+        $created_target = false;
+
+        if (!$target_id) {
+            $target_id = hireai_polylang_page_for_language($config['slug'], $config['template'], $target_language);
+        }
+        if (!$target_id) {
+            $target_id = hireai_polylang_insert_page($config, $target_language);
+            $created_target = $target_id > 0;
+        }
+        if (!$target_id) {
+            $errors[] = $key . ': translation page could not be created';
+            continue;
+        }
+
+        update_post_meta($target_id, '_wp_page_template', $config['template']);
+        if (get_post_field('post_name', $target_id) !== $config['slug']) {
+            $updated = wp_update_post([
+                'ID' => $target_id,
+                'post_name' => $config['slug'],
+            ], true);
+            if (is_wp_error($updated) || get_post_field('post_name', $target_id) !== $config['slug']) {
+                $errors[] = $key . ': English page slug could not be normalized';
+                continue;
+            }
+        }
+        if (!hireai_polylang_post_language($target_id) && function_exists('pll_set_post_language')) {
+            pll_set_post_language($target_id, $target_language);
+        }
+
+        $translations_saved = false;
+        if (function_exists('pll_save_post_translations') && function_exists('pll_get_post')) {
+            pll_save_post_translations([
+                $source_language => $source_id,
+                $target_language => $target_id,
+            ]);
+            $translations_saved = (int) pll_get_post($source_id, $target_language) === $target_id;
+        } else {
+            $errors[] = $key . ': pll_save_post_translations unavailable';
+        }
+        if (!$translations_saved) {
+            $errors[] = $key . ': Polylang translation link could not be verified';
+        }
+
+        $field_migration = null;
+        $fields_already_migrated = false;
+        if ($config['migrate_fields']) {
+            $fields_already_migrated = get_post_meta($target_id, '_hireai_polylang_fields_migrated', true) === '3.10.0';
+            if ($fields_already_migrated) {
+                $previous_fields = is_array($previous_results[$key]['fields'] ?? null)
+                    ? $previous_results[$key]['fields']
+                    : [];
+                $field_migration = [
+                    'source_keys' => (array) ($previous_fields['source_keys'] ?? []),
+                    'copied' => (array) ($previous_fields['copied'] ?? []),
+                    'backup' => (array) ($previous_fields['backup'] ?? []),
+                    'verified' => true,
+                    'already_migrated' => true,
+                ];
+            } else {
+                $field_migration = hireai_polylang_copy_page_fields($source_id, $target_id);
+                $previous_fields = is_array($previous_results[$key]['fields'] ?? null)
+                    ? $previous_results[$key]['fields']
+                    : [];
+                $field_migration['backup'] = hireai_polylang_preserve_backup(
+                    $field_migration['backup'],
+                    (array) ($previous_fields['backup'] ?? [])
+                );
+                if (!empty($field_migration['verified'])) {
+                    update_post_meta($target_id, '_hireai_polylang_fields_migrated', '3.10.0');
+                } else {
+                    $errors[] = $key . ': English field copy verification failed';
+                }
+            }
+        }
+
+        $results[$key] = [
+            'source_id' => $source_id,
+            'target_id' => $target_id,
+            'source_language' => $source_language,
+            'target_language' => $target_language,
+            'created_target' => $created_target,
+            'fields' => $field_migration,
+            'fields_already_migrated' => $fields_already_migrated,
+        ];
+    }
+
+    $state = [
+        'version' => hireai_get_version(),
+        'time' => current_time('mysql'),
+        'results' => $results,
+        'errors' => $errors,
+    ];
+    update_option('hireai_polylang_pages_migration', $state, false);
+
+    if (empty($errors)) {
+        update_option('hireai_polylang_pages_migration_complete', hireai_get_version(), false);
+        flush_rewrite_rules();
+    }
+
+    return $state;
+}
+
+function hireai_polylang_pages_rollback() {
+    $state = get_option('hireai_polylang_pages_migration');
+    if (!is_array($state) || empty($state['results'])) {
+        return new WP_Error('hireai_no_migration', 'No migration audit record found.');
+    }
+
+    foreach (array_reverse($state['results'], true) as $key => $record) {
+        $target_id = (int) ($record['target_id'] ?? 0);
+        if ($target_id <= 0 || get_post_status($target_id) === false) {
+            continue;
+        }
+
+        if (!empty($record['source_language']) && function_exists('pll_save_post_translations')) {
+            pll_save_post_translations([
+                (string) $record['source_language'] => (int) $record['source_id'],
+            ]);
+        }
+
+        $fields = is_array($record['fields'] ?? null) ? $record['fields'] : [];
+        foreach (($fields['backup'] ?? []) as $meta_key => $backup) {
+            if (!empty($backup['existed'])) {
+                update_post_meta($target_id, $meta_key, $backup['value']);
+            } else {
+                delete_post_meta($target_id, $meta_key);
+            }
+        }
+
+        if (!empty($record['created_target'])) {
+            wp_trash_post($target_id);
+        }
+        delete_post_meta($target_id, '_hireai_polylang_fields_migrated');
+        unset($record);
+    }
+
+    delete_option('hireai_polylang_pages_migration_complete');
+    update_option('hireai_polylang_pages_migration_rolled_back', current_time('mysql'), false);
+    flush_rewrite_rules();
+    return true;
+}
+
+function hireai_polylang_pages_maybe_migrate() {
+    if (!current_user_can('manage_options') || !function_exists('pll_save_post_translations')) {
+        return;
+    }
+
+    $completed = (string) get_option('hireai_polylang_pages_migration_complete', '');
+    if ($completed !== '' && version_compare($completed, '3.10.0', '>=')) {
+        return;
+    }
+
+    hireai_polylang_pages_migrate();
+}
+add_action('admin_init', 'hireai_polylang_pages_maybe_migrate', 20);
+
+if (class_exists('WP_CLI')) {
+    WP_CLI::add_command('hireai migrate-polylang-pages', static function () {
+        $state = hireai_polylang_pages_migrate();
+        WP_CLI::line(wp_json_encode($state, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        WP_CLI::success('Polylang page migration finished. Review errors field before publishing.');
+    });
+    WP_CLI::add_command('hireai rollback-polylang-pages', static function () {
+        $result = hireai_polylang_pages_rollback();
+        if (is_wp_error($result)) {
+            WP_CLI::error($result->get_error_message());
+        }
+        WP_CLI::success('Polylang page migration rollback finished.');
+    });
+}
+
+/* -------------------------------------------------------------------------
  * 0.1 数字员工详情页重写规则：/employee/<slug>/ -> 单页 + 模板 page-employee-detail.php
  *      兼容 Aurelian Prime 风格，每个数字员工是独立 WP 子页面，slug = employee-<name>
  * ---------------------------------------------------------------------- */
@@ -582,6 +995,14 @@ function hireai_single_physical_url(array $segments, $lang, $query_string = '') 
     return $lang === 'en' ? add_query_arg(['lang' => 'en'], $url) : $url;
 }
 
+function hireai_is_employee_detail_path(array $segments) {
+    return count($segments) === 2 && $segments[0] === 'employee';
+}
+
+function hireai_is_my_account_path(array $segments) {
+    return isset($segments[0]) && $segments[0] === 'my-account';
+}
+
 /**
  * Resolve an internal page URL to the current language.
  *
@@ -615,7 +1036,11 @@ function hireai_localized_url($url, $lang = null) {
     if (empty($segments)) {
         $translated_url = hireai_language_home_url($lang);
     } else {
-        $source_post_id = hireai_url_to_post_id($url, $segments);
+        if (hireai_is_employee_detail_path($segments)) {
+            $translated_url = hireai_language_home_url($lang) . implode('/', $segments) . '/';
+        } else {
+            $source_post_id = hireai_url_to_post_id($url, $segments);
+        }
         if ($source_post_id > 0) {
             $translated_url = hireai_translated_permalink($source_post_id, $lang);
             if ($translated_url === null && hireai_is_single_physical_bilingual_post($source_post_id)) {
@@ -667,6 +1092,19 @@ add_filter('wp_nav_menu_args', function ($args) {
 
 function hireai_language_switch_url($target_lang) {
     $target_lang = $target_lang === 'zh' ? 'zh' : 'en';
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? esc_url_raw(wp_unslash($_SERVER['REQUEST_URI'])) : '/';
+    $request_segments = hireai_url_without_language_prefix($request_uri);
+    $request_query = (string) (wp_parse_url($request_uri, PHP_URL_QUERY) ?? '');
+
+    if (hireai_is_employee_detail_path($request_segments)) {
+        return hireai_url_with_clean_query(
+            hireai_language_home_url($target_lang) . implode('/', $request_segments) . '/',
+            $request_query
+        );
+    }
+    if (hireai_is_my_account_path($request_segments)) {
+        return hireai_single_physical_url($request_segments, $target_lang, $request_query);
+    }
 
     $current_post_id = (int) get_queried_object_id();
     if ($current_post_id === 0 && function_exists('hireai_employee_detail_post_id')) {
@@ -683,11 +1121,10 @@ function hireai_language_switch_url($target_lang) {
     }
 
     if ($current_post_id > 0 && hireai_is_single_physical_bilingual_post($current_post_id)) {
-        $request_uri = isset($_SERVER['REQUEST_URI']) ? esc_url_raw(wp_unslash($_SERVER['REQUEST_URI'])) : '/';
         return hireai_single_physical_url(
-            hireai_url_without_language_prefix($request_uri),
+            $request_segments,
             $target_lang,
-            (string) (wp_parse_url($request_uri, PHP_URL_QUERY) ?? '')
+            $request_query
         );
     }
 
