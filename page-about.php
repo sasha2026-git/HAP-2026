@@ -2,7 +2,7 @@
 /**
  * Template Name: 聘AI - 关于我们
  *
- * v3.10.4 — About Us
+ * v3.10.5 — About Us
  *   1. Page slogan hero
  *   2. Human / AI co-creation story
  *   3. Three-phase methodology
@@ -10,7 +10,7 @@
  *   5. Contact CTA
  *
  * @package HireAI
- * @version 3.10.4
+ * @version 3.10.5
  */
 
 if (!defined('ABSPATH')) {
@@ -34,7 +34,10 @@ $story_number = hireai_field('about_story_number', '01', $page_id);
 $story_kicker = hireai_field('about_story_kicker', $is_en ? 'FORGING FORWARD WITH AMBITION · ABOUT US' : '以雄心持续向前 · 关于我们', $page_id);
 $story_image = hireai_image('about_story_image', get_stylesheet_directory_uri() . '/assets/img/defaults/employee-1.jpg', $page_id);
 $story_image_alt = hireai_field('about_story_image_alt', $is_en ? 'The HireAIPeople human and AI co-creation team' : '聘AI人机共创团队', $page_id);
-$story_image_pill = hireai_field('about_story_image_pill', $is_en ? 'Symbiosis Model 4.0' : '共生模型 4.0', $page_id);
+$story_card_kicker = hireai_field('about_story_card_kicker', $is_en ? 'HARMONIC PARADIGM' : '我们的价值观', $page_id);
+$story_card_quote = hireai_field('about_story_card_quote', $is_en
+    ? 'Technology’s ultimate purpose is never to replace humanity, but to amplify human ambition.'
+    : '技术的终极目的不是替代人类，而是放大人的雄心与想象力。', $page_id);
 $story_title = hireai_field('about_story_title', $is_en ? 'Forging Forward with Greater Ambition' : '以更大的雄心向前', $page_id);
 $story_paragraph_1 = hireai_field('about_story_paragraph_1', $is_en
     ? 'We are builders driven by rigorous AI research and persistent passion. We believe frontline judgment, market discernment, and human imagination chart the direction that foundation models accelerate.'
@@ -99,7 +102,9 @@ $cta_assurance_2 = hireai_field('about_cta_assurance_2', $is_en ? 'Sovereign Arc
 .hireai-about-story__frame{position:relative;overflow:hidden;border-radius:4px;border:1px solid rgba(196,199,199,.22);box-shadow:0 30px 80px rgba(26,28,28,.10);}
 .hireai-about-story__frame img{display:block;width:100%;height:560px;object-fit:cover;transform:scale(1.01);transition:transform .6s ease;}
 .hireai-about-story__media:hover .hireai-about-story__frame img{transform:scale(1.04);}
-.hireai-about-story__pill{position:absolute;top:24px;right:24px;display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border:1px solid rgba(255,255,255,.32);border-radius:999px;background:rgba(255,255,255,.18);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:#fff;font-family:var(--font-label,Inter),sans-serif;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
+.hireai-about-story__card{position:absolute;right:-24px;bottom:56px;max-width:330px;padding:26px;border:1px solid rgba(196,199,199,.30);border-radius:4px;background:rgba(255,255,255,.95);box-shadow:0 24px 60px rgba(26,28,28,.12);}
+.hireai-about-story__card-kicker{display:flex;align-items:center;gap:8px;margin-bottom:12px;color:var(--hai-secondary,#775a19);font-family:var(--font-label,Inter),sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;}
+.hireai-about-story__card-quote{margin:0;font-family:var(--font-display-en,var(--font-serif));font-size:19px;font-style:italic;line-height:1.45;color:var(--hai-on-surface,#1a1a1a);}
 html body .hireai-about-story__title{margin:0 0 26px;font-family:var(--font-display-en,var(--font-serif));font-size:32px;font-weight:600;line-height:1.2;letter-spacing:0;}
 .hireai-about-story__body{display:flex;flex-direction:column;gap:20px;font-family:var(--font-body-en,var(--font-body));font-size:16px;line-height:1.75;color:var(--hai-on-surface-variant,#4d4635);}
 .hireai-about-story__pull{margin:4px 0;padding:22px 26px;border-left:2px solid var(--hai-secondary,#775a19);border-radius:0 4px 4px 0;background:rgba(255,255,255,.82);box-shadow:0 12px 34px rgba(26,28,28,.05);font-family:var(--font-display-en,var(--font-serif));font-size:21px;font-style:italic;line-height:1.45;color:var(--hai-on-surface,#1a1a1a);}
@@ -138,7 +143,7 @@ html body .hireai-about-team__title{max-width:820px;margin:0 auto 18px;font-fami
 .hireai-about-cta__assurance span{display:inline-flex;align-items:center;gap:8px;}
 @media (max-width:1279px){.hireai-about-story{grid-template-columns:1fr;gap:64px;}.hireai-about-story__media{margin-right:24px;}}
 @media (max-width:1023px){.hireai-about-process{grid-template-columns:1fr;}.hireai-about-story__frame img{height:430px;}.hireai-about-team__image img{height:400px;}}
-@media (max-width:767px){.hireai-about-hero,.hireai-about-section,.hireai-about-cta{padding-top:72px;padding-bottom:72px;}.hireai-about-container{padding:0 24px;}.hireai-about-story{gap:40px;}.hireai-about-story__media{margin-right:0;}.hireai-about-story__frame img{height:330px;}.hireai-about-story__title{font-size:32px;}.hireai-about-story__pull{font-size:19px;}.hireai-about-method__image{padding:10px;}.hireai-about-team__image{padding:10px;}.hireai-about-team__image img{height:260px;}.hireai-about-process__item{padding:24px;}.hireai-about-cta__card{padding:64px 24px;}.hireai-about-cta__actions .hireai-about-cta__button{width:100%;}}
+@media (max-width:767px){.hireai-about-hero,.hireai-about-section,.hireai-about-cta{padding-top:72px;padding-bottom:72px;}.hireai-about-container{padding:0 24px;}.hireai-about-story{gap:40px;}.hireai-about-story__media{margin-right:0;}.hireai-about-story__frame img{height:330px;}.hireai-about-story__card{position:relative;right:auto;bottom:auto;margin:-36px 16px 0;}.hireai-about-story__title{font-size:32px;}.hireai-about-story__pull{font-size:19px;}.hireai-about-method__image{padding:10px;}.hireai-about-team__image{padding:10px;}.hireai-about-team__image img{height:260px;}.hireai-about-process__item{padding:24px;}.hireai-about-cta__card{padding:64px 24px;}.hireai-about-cta__actions .hireai-about-cta__button{width:100%;}}
 </style>
 
 <main class="hireai-about-page">
@@ -158,10 +163,11 @@ html body .hireai-about-team__title{max-width:820px;margin:0 auto 18px;font-fami
                 <div class="hireai-about-story__media">
                     <figure class="hireai-about-story__frame">
                         <img src="<?php echo esc_url($story_image); ?>" alt="<?php echo esc_attr($story_image_alt); ?>" loading="lazy" decoding="async">
-                        <?php if ($story_image_pill !== '') : ?>
-                            <span class="hireai-about-story__pill"><?php echo hireai_svg('sparkle', 15, 'hireai-about-icon'); ?><?php echo esc_html($story_image_pill); ?></span>
-                        <?php endif; ?>
                     </figure>
+                    <aside class="hireai-about-story__card">
+                        <p class="hireai-about-story__card-kicker"><?php echo hireai_svg('shield', 16, 'hireai-about-icon'); ?><?php echo esc_html($story_card_kicker); ?></p>
+                        <blockquote class="hireai-about-story__card-quote"><?php echo esc_html($story_card_quote); ?></blockquote>
+                    </aside>
                 </div>
                 <div>
                     <h2 id="hireai-about-story-title" class="hireai-about-story__title"><?php echo esc_html($story_title); ?></h2>
