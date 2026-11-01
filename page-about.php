@@ -2,7 +2,7 @@
 /**
  * Template Name: 聘AI - 关于我们
  *
- * v3.10.5 — About Us
+ * v3.10.6 — About Us
  *   1. Page slogan hero
  *   2. Human / AI co-creation story
  *   3. Three-phase methodology
@@ -10,7 +10,7 @@
  *   5. Contact CTA
  *
  * @package HireAI
- * @version 3.10.5
+ * @version 3.10.6
  */
 
 if (!defined('ABSPATH')) {
@@ -69,6 +69,8 @@ $team_intro = hireai_field('about_team_intro', $is_en
     : '策略、工程、设计与运营专家，与 AI 数字员工协同工作，持续打磨每一次交付。', $page_id);
 $team_image = hireai_image('about_team_image', get_stylesheet_directory_uri() . '/assets/img/defaults/employee-2.jpg', $page_id);
 $team_image_alt = hireai_field('about_team_image_alt', $is_en ? 'The HireAIPeople AI digital employee team' : '聘AI AI 数字员工团队', $page_id);
+$team_cta_label = hireai_field('about_team_cta_label', $is_en ? 'Explore AI Employees' : '了解AI员工', $page_id);
+$team_cta_url = hireai_field('about_team_cta_url', '/ai-employees/', $page_id);
 
 $cta_kicker = hireai_field('about_cta_kicker', $is_en ? 'CO-CREATE THE FUTURE' : '共创未来', $page_id);
 $cta_title = hireai_field('about_cta_title', $is_en ? 'Ready to explore with greater ambition?' : '准备好更有雄心地探索吗？', $page_id);
@@ -85,7 +87,7 @@ $cta_assurance_2 = hireai_field('about_cta_assurance_2', $is_en ? 'Sovereign Arc
 ?>
 <style id="hireai-about-page-css">
 .hireai-about-page{background:var(--hai-surface-low,#f9f9f9);color:var(--hai-on-surface,#1a1a1a);}
-.hireai-about-page>.hireai-page-hero{padding-bottom:40px !important;}
+.hireai-about-page>.hireai-page-hero{padding-bottom:27px !important;}
 .hireai-about-hero{padding-block:clamp(64px,8vw,120px) clamp(40px,5vw,72px);text-align:center;background:var(--hai-surface-lowest,#fff);}
 .hireai-about-hero .page-hero__kicker{display:inline-block;margin-bottom:24px;color:#775a19;}
 .hireai-about-hero .page-hero__title{display:inline-block;margin-bottom:28px;line-height:1.1;letter-spacing:-.01em;background:linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;font-style:normal;}
@@ -93,9 +95,10 @@ $cta_assurance_2 = hireai_field('about_cta_assurance_2', $is_en ? 'Sovereign Arc
 .hireai-about-section{padding:120px 0;background:var(--hai-surface-low,#f9f9f9);}
 .hireai-about-section--white{background:var(--hai-surface-lowest,#fff);}
 .hireai-about-container{max-width:1440px;margin:0 auto;padding:0 24px;}
-.hireai-about-tag{display:flex;align-items:center;gap:12px;margin-bottom:40px;color:var(--hai-on-surface-variant,#4d4635);font-family:var(--font-label,Inter),sans-serif;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;}
-.hireai-about-tag__number{color:var(--hai-secondary,#775a19);font-size:14px;}
+.hireai-about-tag{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:40px;color:var(--hai-on-surface-variant,#4d4635);font-family:var(--font-label,Inter),sans-serif;font-size:16px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;}
+.hireai-about-tag__number{color:var(--hai-secondary,#775a19);font-size:16px;}
 .hireai-about-tag__line{width:32px;height:1px;background:var(--hai-platinum-grey,#b8b8b8);}
+.hireai-about-tag__label{min-width:0;}
 .hireai-about-tag--center{justify-content:center;}
 .hireai-about-story{display:grid;grid-template-columns:7fr 5fr;gap:80px;align-items:center;}
 .hireai-about-story__media{position:relative;}
@@ -127,6 +130,7 @@ html body .hireai-about-team__title{max-width:820px;margin:0 auto 18px;font-fami
 .hireai-about-team__intro{max-width:720px;margin:0 auto 48px;font-family:var(--font-body-en,var(--font-body));font-size:18px;line-height:1.65;color:var(--hai-on-surface-variant,#4d4635);}
 .hireai-about-team__image{margin:0;padding:18px;border:1px solid rgba(196,199,199,.28);border-radius:4px;background:rgba(255,255,255,.78);box-shadow:0 20px 60px rgba(26,28,28,.06);}
 .hireai-about-team__image img{display:block;width:100%;height:520px;object-fit:cover;border-radius:4px;}
+.hireai-about-team__actions{display:flex;justify-content:center;margin-top:24px;}
 .hireai-about-cta{padding:120px 0;background:var(--hai-surface-low,#f9f9f9);}
 .hireai-about-cta__card{position:relative;overflow:hidden;max-width:960px;margin:0 auto;padding:88px 56px;text-align:center;border:1px solid rgba(119,90,25,.20);border-radius:4px;background:rgba(255,255,255,.80);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 32px 90px rgba(26,28,28,.07);}
 .hireai-about-cta__card::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,rgba(233,193,118,.20),transparent 62%);pointer-events:none;}
@@ -141,9 +145,8 @@ html body .hireai-about-team__title{max-width:820px;margin:0 auto 18px;font-fami
 .hireai-about-cta__button:hover,.hireai-about-cta__button:focus-visible{transform:translateY(-2px);box-shadow:0 18px 42px rgba(119,90,25,.26);}
 .hireai-about-cta__assurance{display:flex;justify-content:center;flex-wrap:wrap;gap:28px;margin-top:52px;color:var(--hai-on-surface-variant,#4d4635);font-family:var(--font-label,Inter),sans-serif;font-size:13px;letter-spacing:.08em;text-transform:uppercase;}
 .hireai-about-cta__assurance span{display:inline-flex;align-items:center;gap:8px;}
-@media (max-width:1279px){.hireai-about-story{grid-template-columns:1fr;gap:64px;}.hireai-about-story__media{margin-right:24px;}}
-@media (max-width:1023px){.hireai-about-process{grid-template-columns:1fr;}.hireai-about-story__frame img{height:430px;}.hireai-about-team__image img{height:400px;}}
-@media (max-width:767px){.hireai-about-hero,.hireai-about-section,.hireai-about-cta{padding-top:72px;padding-bottom:72px;}.hireai-about-container{padding:0 24px;}.hireai-about-story{gap:40px;}.hireai-about-story__media{margin-right:0;}.hireai-about-story__frame img{height:330px;}.hireai-about-story__card{position:relative;right:auto;bottom:auto;margin:-36px 16px 0;}.hireai-about-story__title{font-size:32px;}.hireai-about-story__pull{font-size:19px;}.hireai-about-method__image{padding:10px;}.hireai-about-team__image{padding:10px;}.hireai-about-team__image img{height:260px;}.hireai-about-process__item{padding:24px;}.hireai-about-cta__card{padding:64px 24px;}.hireai-about-cta__actions .hireai-about-cta__button{width:100%;}}
+@media (max-width:1023px){.hireai-about-story{grid-template-columns:1fr;gap:64px;}.hireai-about-story__media{margin-right:24px;}.hireai-about-process{grid-template-columns:1fr;}.hireai-about-story__frame img{height:430px;}.hireai-about-team__image img{height:400px;}}
+@media (max-width:767px){.hireai-about-hero,.hireai-about-section,.hireai-about-cta{padding-top:72px;padding-bottom:72px;}.hireai-about-container{padding:0 24px;}.hireai-about-story{gap:40px;}.hireai-about-story__media{margin-right:0;}.hireai-about-story__frame img{height:330px;}.hireai-about-story__card{position:relative;right:auto;bottom:auto;margin:-36px 16px 0;}.hireai-about-story__title{font-size:32px;}.hireai-about-story__pull{font-size:19px;}.hireai-about-method__image{padding:10px;}.hireai-about-team__image{padding:10px;}.hireai-about-team__image img{height:260px;}.hireai-about-team__actions{margin-top:20px;}.hireai-about-process__item{padding:24px;}.hireai-about-cta__card{padding:64px 24px;}.hireai-about-cta__actions .hireai-about-cta__button{width:100%;}.hireai-about-team__actions .hireai-about-cta__button{width:100%;}}
 </style>
 
 <main class="hireai-about-page">
@@ -158,7 +161,7 @@ html body .hireai-about-team__title{max-width:820px;margin:0 auto 18px;font-fami
 
     <section class="hireai-about-section" aria-labelledby="hireai-about-story-title">
         <div class="hireai-about-container">
-            <p class="hireai-about-tag"><span class="hireai-about-tag__number"><?php echo esc_html($story_number); ?></span><span class="hireai-about-tag__line" aria-hidden="true"></span><?php echo esc_html($story_kicker); ?></p>
+            <p class="hireai-about-tag"><span class="hireai-about-tag__number"><?php echo esc_html($story_number); ?></span><span class="hireai-about-tag__line" aria-hidden="true"></span><span class="hireai-about-tag__label"><?php echo esc_html($story_kicker); ?></span></p>
             <div class="hireai-about-story">
                 <div class="hireai-about-story__media">
                     <figure class="hireai-about-story__frame">
@@ -185,7 +188,7 @@ html body .hireai-about-team__title{max-width:820px;margin:0 auto 18px;font-fami
     <section class="hireai-about-section hireai-about-section--white" aria-labelledby="hireai-about-method-title">
         <div class="hireai-about-container">
             <div class="hireai-about-method">
-                <p class="hireai-about-tag hireai-about-tag--center"><span class="hireai-about-tag__number"><?php echo esc_html($method_number); ?></span><span class="hireai-about-tag__line" aria-hidden="true"></span><?php echo esc_html($method_kicker); ?></p>
+            <p class="hireai-about-tag hireai-about-tag--center"><span class="hireai-about-tag__number"><?php echo esc_html($method_number); ?></span><span class="hireai-about-tag__line" aria-hidden="true"></span><span class="hireai-about-tag__label"><?php echo esc_html($method_kicker); ?></span></p>
                 <h2 id="hireai-about-method-title" class="hireai-about-method__title"><?php echo esc_html($method_title); ?></h2>
                 <p class="hireai-about-method__intro"><?php echo esc_html($method_intro); ?></p>
                 <?php if ($method_image !== '') : ?>
@@ -225,6 +228,9 @@ html body .hireai-about-team__title{max-width:820px;margin:0 auto 18px;font-fami
                         <img src="<?php echo esc_url($team_image); ?>" alt="<?php echo esc_attr($team_image_alt); ?>" loading="lazy" decoding="async">
                     </figure>
                 <?php endif; ?>
+                <div class="hireai-about-team__actions">
+                    <a class="hireai-about-cta__button hireai-about-cta__button--secondary" href="<?php echo esc_url($team_cta_url); ?>"><?php echo esc_html($team_cta_label); ?><?php echo hireai_svg('arrow-forward', 16, 'hireai-about-icon'); ?></a>
+                </div>
             </div>
         </div>
     </section>

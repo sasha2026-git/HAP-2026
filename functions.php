@@ -4662,6 +4662,8 @@ add_action('acf/init', function () {
         ['name' => 'about_team_intro', 'label' => 'AI团队 · 简介', 'type' => 'textarea', 'zh' => '策略、工程、设计与运营专家，与 AI 数字员工协同工作，持续打磨每一次交付。', 'en' => 'Strategy, engineering, design, and operations specialists work with AI digital employees to refine every engagement.', 'extra' => ['rows' => 2]],
         ['name' => 'about_team_image', 'label' => 'AI团队 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
         ['name' => 'about_team_image_alt', 'label' => 'AI团队 · 图片替代文字', 'type' => 'text', 'zh' => '聘AI AI 数字员工团队', 'en' => 'The HireAIPeople AI digital employee team'],
+        ['name' => 'about_team_cta_label', 'label' => 'AI团队 · 按钮文字', 'type' => 'text', 'zh' => '了解AI员工', 'en' => 'Explore AI Employees'],
+        ['name' => 'about_team_cta_url', 'label' => 'AI团队 · 按钮链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
         ['name' => 'about_cta_kicker', 'label' => 'CTA · 眉题', 'type' => 'text', 'zh' => '共创未来', 'en' => 'CO-CREATE THE FUTURE'],
         ['name' => 'about_cta_title', 'label' => 'CTA · 标题', 'type' => 'textarea', 'zh' => '准备好更有雄心地探索吗？', 'en' => 'Ready to explore with greater ambition?', 'extra' => ['rows' => 1]],
         ['name' => 'about_cta_subtitle', 'label' => 'CTA · 副标题', 'type' => 'textarea', 'zh' => '告诉我们业务的下一站。我们会与你共同设计、打磨并运营 AI 数字员工。', 'en' => 'Tell us where your business must go next. We will design, refine, and operate the AI workforce beside you.', 'extra' => ['rows' => 3]],
