@@ -1,4 +1,4 @@
-# hireaipeople — AURELIAN WordPress Plugins
+# hAP — AURELIAN WordPress Plugins
 
 AURELIAN 品牌 WordPress 插件集合。所有插件使用 ACF 可视化编辑 + AURELIAN 设计系统（Playfair Display / Inter / 金色奢华风）。
 
