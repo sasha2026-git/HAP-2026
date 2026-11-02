@@ -111,7 +111,7 @@ foreach ([1, 2, 3] as $i) {
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* ---------- 读 NEW ACF 双语 helper（直接读 _zh / _en 后缀名） ---------- */
-$hireai_v360 = function ($base, $lang_code) {
+$hireai_v360 = function ($base, $lang_code) use ($front_page_id) {
     $sfx = ($lang_code === 'en') ? '_en' : '_zh';
     if (!function_exists('get_field') || !$front_page_id) return '';
     $v = get_field($base . $sfx, $front_page_id);
