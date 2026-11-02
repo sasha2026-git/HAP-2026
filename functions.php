@@ -2716,6 +2716,31 @@ function hireai_custom_template_canonical_id($template, $post_id = 0) {
     return $id;
 }
 
+function hireai_front_page_data_id($post_id = 0) {
+    $post_id = absint($post_id ?: get_queried_object_id());
+    if (!$post_id || get_post_meta($post_id, '_wp_page_template', true) !== 'front-page.php') {
+        $post_id = absint(get_option('page_on_front'));
+    }
+    if (!$post_id) {
+        $post_id = hireai_custom_template_canonical_id('front-page.php');
+    }
+
+    $language = hireai_current_lang();
+    if (
+        $post_id
+        && $language
+        && function_exists('pll_get_post')
+        && get_post_meta($post_id, '_wp_page_template', true) === 'front-page.php'
+    ) {
+        $translated_id = absint(pll_get_post($post_id, $language));
+        if ($translated_id && get_post_meta($translated_id, '_wp_page_template', true) === 'front-page.php') {
+            $post_id = $translated_id;
+        }
+    }
+
+    return $post_id;
+}
+
 function hireai_ai_employees_page_id($post_id = 0) {
     return hireai_custom_template_canonical_id('page-ai-employees.php', $post_id);
 }
@@ -2742,7 +2767,7 @@ add_action('admin_notices', function () {
     );
 });
 
-/* v3.9.4: About 双语 Tab 与 Polylang 物理页语言不匹配时降权提示 */
+/* v3.10.7: 首页/About 双语 Tab 与 Polylang 物理页语言不匹配时降权提示 */
 add_action('admin_footer-post.php', function () {
     if (
         !function_exists('get_current_screen')
@@ -2754,15 +2779,21 @@ add_action('admin_footer-post.php', function () {
     $screen = get_current_screen();
     if (!$screen || empty($screen->post_type) || $screen->post_type !== 'page') return;
     $post_id = isset($_GET['post']) ? (int) $_GET['post'] : 0;
-    if (!$post_id || get_post_meta($post_id, '_wp_page_template', true) !== 'page-about.php') return;
+    if (!$post_id || !current_user_can('edit_pages')) return;
+    $template = (string) get_post_meta($post_id, '_wp_page_template', true);
+    $group_map = [
+        'front-page.php' => 'group_front_page_v375',
+        'page-about.php' => 'group_page_about',
+    ];
+    if (!isset($group_map[$template])) return;
 
     $language = (string) pll_get_post_language($post_id);
     if ($language === 'zh') {
-        $tab_key = 'group_page_about_tab_en';
-        $title = '当前页面语言：中文。此 English Tab 不会用于中文 URL；请编辑中文页 + 中文 Tab。';
+        $tab_key = $group_map[$template] . '_tab_en';
+        $title = '当前页面语言：中文。此 English Tab 不会用于中文 URL；请编辑中文物理页 + 中文 Tab。';
     } elseif ($language === 'en') {
-        $tab_key = 'group_page_about_tab_zh';
-        $title = 'Current page language: English. This Chinese tab is not used by English URLs; edit the English page and English tab.';
+        $tab_key = $group_map[$template] . '_tab_zh';
+        $title = 'Current page language: English. This Chinese tab is not used by English URLs; edit the English physical page and English tab.';
     } else {
         return;
     }
@@ -3889,13 +3920,6 @@ add_action('acf/init', function () {
         ['name' => 'fp_hero_cta_2_url', 'label' => '① Hero · 次按钮 · 链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
         ['name' => 'fp_hero_cta_2_title', 'label' => '① Hero · 次按钮 · 文字', 'type' => 'text', 'zh' => '定制咨询', 'en' => 'CONSULTATION'],
 
-        /* ── ② 引言 ── */
-        ['name' => 'fp_intro_kicker', 'label' => '② 引言 · 眉题', 'type' => 'text', 'zh' => '工匠精神与算法', 'en' => 'Craftsmanship Meets Algorithm'],
-        ['name' => 'fp_intro_title', 'label' => '② 引言 · 标题', 'type' => 'textarea', 'zh' => '塑造超越物理边界的存在。', 'en' => 'Shaping existence beyond physical boundaries.', 'extra' => ['rows' => 2]],
-        ['name' => 'fp_intro_desc', 'label' => '② 引言 · 描述', 'type' => 'textarea', 'zh' => '我们结合传统奢华的严谨工艺与神经网络的无限可能。每一位数字员工都是独一无二的杰作，专为优雅、智慧与共鸣而设计。', 'en' => 'We combine the rigor of traditional luxury with the infinite potential of neural networks. Every digital employee is a one-of-a-kind masterpiece, designed for elegance, intelligence, and resonance.', 'extra' => ['rows' => 4]],
-        ['name' => 'fp_intro_cta_title', 'label' => '② 引言 · 按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
-        ['name' => 'fp_intro_cta_url', 'label' => '② 引言 · 按钮链接', 'type' => 'text', 'zh' => '/ai-employees/', 'en' => '/ai-employees/'],
-
         /* ── ③ 数字员工区块 ── */
         ['name' => 'fp_products_kicker', 'label' => '③ 数字员工 · 眉题', 'type' => 'text', 'zh' => '限量神经元系列', 'en' => 'Limited Neural Series'],
         ['name' => 'fp_products_title', 'label' => '③ 数字员工 · 标题', 'type' => 'textarea', 'zh' => 'AI 数字员工', 'en' => 'AI Digital Employees', 'extra' => ['rows' => 1]],
@@ -3936,21 +3960,25 @@ add_action('acf/init', function () {
         ['name' => 'fp_sol1_desc', 'label' => '④ 兜底方案 1 · 描述', 'type' => 'textarea', 'zh' => '智能顾问与客户关系维护的数字化重塑。', 'en' => 'Digital reshaping of intelligent advisors and client relationship management.', 'extra' => ['rows' => 3]],
         ['name' => 'fp_sol1_tag', 'label' => '④ 兜底方案 1 · 标签', 'type' => 'text', 'zh' => '金融', 'en' => 'Finance'],
         ['name' => 'fp_sol1_image', 'label' => '④ 兜底方案 1 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'fp_sol1_url', 'label' => '④ 兜底方案 1 · 链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
 
         ['name' => 'fp_sol2_title', 'label' => '④ 兜底方案 2 · 标题', 'type' => 'text', 'zh' => '高端零售与电商', 'en' => 'Premium Retail & E-commerce'],
         ['name' => 'fp_sol2_desc', 'label' => '④ 兜底方案 2 · 描述', 'type' => 'textarea', 'zh' => '24/7全天候奢华购物体验升级。', 'en' => '24/7 all-day luxury shopping experience upgrade.', 'extra' => ['rows' => 3]],
         ['name' => 'fp_sol2_tag', 'label' => '④ 兜底方案 2 · 标签', 'type' => 'text', 'zh' => '零售', 'en' => 'Retail'],
         ['name' => 'fp_sol2_image', 'label' => '④ 兜底方案 2 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'fp_sol2_url', 'label' => '④ 兜底方案 2 · 链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
 
         ['name' => 'fp_sol3_title', 'label' => '④ 兜底方案 3 · 标题', 'type' => 'text', 'zh' => '医疗健康与陪伴', 'en' => 'Healthcare & Companionship'],
         ['name' => 'fp_sol3_desc', 'label' => '④ 兜底方案 3 · 描述', 'type' => 'textarea', 'zh' => '充满同理心的智能关怀与健康咨询。', 'en' => 'Empathetic intelligent care and health consultation.', 'extra' => ['rows' => 3]],
         ['name' => 'fp_sol3_tag', 'label' => '④ 兜底方案 3 · 标签', 'type' => 'text', 'zh' => '健康', 'en' => 'Health'],
         ['name' => 'fp_sol3_image', 'label' => '④ 兜底方案 3 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'fp_sol3_url', 'label' => '④ 兜底方案 3 · 链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
 
         ['name' => 'fp_sol4_title', 'label' => '④ 兜底方案 4 · 标题', 'type' => 'text', 'zh' => '泛娱乐与虚拟偶像', 'en' => 'Entertainment & Virtual Idols'],
         ['name' => 'fp_sol4_desc', 'label' => '④ 兜底方案 4 · 描述', 'type' => 'textarea', 'zh' => '打造永不塌房的超级IP与互动体验。', 'en' => 'Build the ultimate never-fail super IP and interactive experience.', 'extra' => ['rows' => 3]],
         ['name' => 'fp_sol4_tag', 'label' => '④ 兜底方案 4 · 标签', 'type' => 'text', 'zh' => '娱乐', 'en' => 'Entertainment'],
         ['name' => 'fp_sol4_image', 'label' => '④ 兜底方案 4 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'fp_sol4_url', 'label' => '④ 兜底方案 4 · 链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
 
         /* ── ⑤ 案例与洞察区块 ── */
         ['name' => 'fp_cases_kicker', 'label' => '⑤ 案例 · 眉题', 'type' => 'text', 'zh' => '前沿视野', 'en' => 'Frontier Vision'],
@@ -3963,16 +3991,19 @@ add_action('acf/init', function () {
         ['name' => 'fp_case_major_title', 'label' => '⑤ 主案例 · 标题', 'type' => 'textarea', 'zh' => 'Aurelian Prime 在私人银行的应用', 'en' => 'Aurelian Prime in Private Banking', 'extra' => ['rows' => 2]],
         ['name' => 'fp_case_major_desc', 'label' => '⑤ 主案例 · 描述', 'type' => 'textarea', 'zh' => '了解我们的顶级数字员工如何提升高净值客户的留存率与满意度。', 'en' => 'Learn how our top digital employee boosts retention and satisfaction for high-net-worth clients.', 'extra' => ['rows' => 3]],
         ['name' => 'fp_case_major_image', 'label' => '⑤ 主案例 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
+        ['name' => 'fp_case_major_url', 'label' => '⑤ 主案例 · 链接', 'type' => 'text', 'zh' => '/cases-insights/', 'en' => '/cases-insights/'],
 
         ['name' => 'fp_case1_tag', 'label' => '⑤ 兜底案例 1 · 标签', 'type' => 'text', 'zh' => '案例研究', 'en' => 'CASE STUDY'],
         ['name' => 'fp_case1_title', 'label' => '⑤ 兜底案例 1 · 标题', 'type' => 'textarea', 'zh' => '电商视觉革命：转化率提升55%', 'en' => 'E-commerce Visual Revolution: +55% Conversion', 'extra' => ['rows' => 2]],
         ['name' => 'fp_case1_desc', 'label' => '⑤ 兜底案例 1 · 描述', 'type' => 'textarea', 'zh' => '重塑线上购物体验，结合虚拟试穿与个性化推荐带来的商业增长。', 'en' => 'Reshaping online shopping with virtual try-on and personalized recommendations.', 'extra' => ['rows' => 3]],
         ['name' => 'fp_case1_image', 'label' => '⑤ 兜底案例 1 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'fp_case1_url', 'label' => '⑤ 兜底案例 1 · 链接', 'type' => 'text', 'zh' => '/cases-insights/', 'en' => '/cases-insights/'],
 
         ['name' => 'fp_case2_tag', 'label' => '⑤ 兜底案例 2 · 标签', 'type' => 'text', 'zh' => '深度洞察', 'en' => 'DEEP INSIGHT'],
         ['name' => 'fp_case2_title', 'label' => '⑤ 兜底案例 2 · 标题', 'type' => 'textarea', 'zh' => '"未来不再仅仅是代码，更是交响乐。"', 'en' => '"The future is no longer just code, but a symphony."', 'extra' => ['rows' => 2]],
         ['name' => 'fp_case2_desc', 'label' => '⑤ 兜底案例 2 · 描述', 'type' => 'textarea', 'zh' => '探讨数字人性化的趋势，以及我们在构建有温度的AI方面的思考与实践。', 'en' => 'Exploring the trend of humanized digital beings and our approach to building warm AI.', 'extra' => ['rows' => 3]],
         ['name' => 'fp_case2_image', 'label' => '⑤ 兜底案例 2 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
+        ['name' => 'fp_case2_url', 'label' => '⑤ 兜底案例 2 · 链接', 'type' => 'text', 'zh' => '/cases-insights/', 'en' => '/cases-insights/'],
 
         /* ── ⑥ FAQ 区块 ── */
         ['name' => 'fp_faq_kicker', 'label' => '⑥ FAQ · 标题', 'type' => 'text', 'zh' => '常见问题', 'en' => 'FAQ'],
@@ -3993,11 +4024,21 @@ add_action('acf/init', function () {
         ['name' => 'fp_cta_subtitle', 'label' => '⑦ CTA · 描述', 'type' => 'textarea', 'zh' => '与我们的团队对话，打造专属您的数字员工阵容。', 'en' => 'Speak with our team and craft a digital workforce made for you.', 'extra' => ['rows' => 2]],
         ['name' => 'fp_cta_button_label', 'label' => '⑦ CTA · 按钮文字', 'type' => 'text', 'zh' => '联系我们', 'en' => 'Contact Us'],
         ['name' => 'fp_cta_button_url', 'label' => '⑦ CTA · 按钮链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
+        ['name' => 'fp_cta_secondary_button_label', 'label' => '⑦ CTA · 次按钮文字', 'type' => 'text', 'zh' => '预约咨询', 'en' => 'Book Consultation'],
+        ['name' => 'fp_cta_secondary_button_url', 'label' => '⑦ CTA · 次按钮链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
       ];
 
       $_front_group = hireai_make_bilingual_group('group_front_page_v375', '首页 — 全部内容（双语）', $_front_fields, [
           [['param' => 'page_type', 'operator' => '==', 'value' => 'front_page']],
           [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
+      ]);
+      array_unshift($_front_group['fields'], [
+          'key' => 'field_front_page_editing_note',
+          'label' => '数据源说明',
+          'name' => '',
+          'type' => 'message',
+          'message' => 'Polylang 下中英文首页是两个物理页面。中文 URL 读取当前中文页的 _zh 字段，英文 URL 读取当前英文页的 _en 字段；请在对应物理页和对应语言 Tab 编辑。',
+          'esc_html' => true,
       ]);
 
       /* ── 3 个 repeater 原样并入（field key 必须与 v3.6.0 一致，行数据以 key 存储） ── */
@@ -4031,6 +4072,8 @@ add_action('acf/init', function () {
           'sub_fields'    => [
               ['key' => 'field_fp_cases_minor_title_zh', 'label' => '标题 · 中',  'name' => 'title_zh', 'type' => 'text'],
               ['key' => 'field_fp_cases_minor_title_en', 'label' => 'Title · EN', 'name' => 'title_en', 'type' => 'text'],
+              ['key' => 'field_fp_cases_minor_tag_zh',   'label' => '标签 · 中',  'name' => 'tag_zh',   'type' => 'text'],
+              ['key' => 'field_fp_cases_minor_tag_en',   'label' => 'Tag · EN',   'name' => 'tag_en',   'type' => 'text'],
               ['key' => 'field_fp_cases_minor_desc_zh',  'label' => '描述 · 中',  'name' => 'desc_zh',  'type' => 'textarea', 'rows' => 2],
               ['key' => 'field_fp_cases_minor_desc_en',  'label' => 'Description · EN', 'name' => 'desc_en', 'type' => 'textarea', 'rows' => 2],
               ['key' => 'field_fp_cases_minor_image',    'label' => '图片（中英共用）', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
@@ -4566,7 +4609,7 @@ require_once get_stylesheet_directory() . '/lib/faq-data.php';
  * v3.9.0 — About Us page fields, editable bilingual defaults, and navigation
  * ========================================================================= */
 
-function hireai_about_default_process($lang = 'zh') {
+function hireai_about_process_defaults($lang = 'zh') {
     $is_en = $lang === 'en';
     return [
         [
@@ -4576,7 +4619,6 @@ function hireai_about_default_process($lang = 'zh') {
             'description' => $is_en
                 ? 'Distilling brand ethos, business rules, and confidential knowledge into a governed semantic foundation.'
                 : '将品牌精神、业务规则与机密知识沉淀为受治理的语义基础。',
-            'meta' => $is_en ? 'Vault Ingestion' : '安全入库',
         ],
         [
             'number' => '02',
@@ -4585,7 +4627,6 @@ function hireai_about_default_process($lang = 'zh') {
             'description' => $is_en
                 ? 'Cultivating digital temperament and skills that iterate alongside your operating team.'
                 : '培育数字员工性格与技能，并与经营团队持续迭代。',
-            'meta' => $is_en ? 'Cognitive Resonance' : '认知共振',
         ],
         [
             'number' => '03',
@@ -4594,41 +4635,35 @@ function hireai_about_default_process($lang = 'zh') {
             'description' => $is_en
                 ? 'Embedding AI employees into mission-critical workflows with measurable precision.'
                 : '将 AI 数字员工嵌入关键流程，并保持可衡量的执行精度。',
-            'meta' => $is_en ? 'Live Ecosystem' : '实时生态',
         ],
     ];
 }
 
-function hireai_about_repeater_rows($field, $page_id, $lang, $defaults) {
-    if (!function_exists('get_field')) {
-        return $defaults;
-    }
-
-    $rows = get_field($field . '_' . $lang, $page_id);
-    if (!is_array($rows) || empty($rows)) {
-        return $defaults;
-    }
-
-    $clean_rows = [];
-    foreach ($rows as $row) {
-        if (!is_array($row)) {
-            continue;
-        }
-        $clean_row = [];
-        foreach (reset($defaults) as $key => $unused) {
-            $clean_row[$key] = trim((string) ($row[$key] ?? ''));
-        }
-        if (implode('', $clean_row) !== '') {
-            $clean_rows[] = $clean_row;
-        }
-    }
-
-    return $clean_rows ?: $defaults;
-}
-
 function hireai_about_process_items($page_id, $lang = 'zh') {
     $lang = $lang === 'en' ? 'en' : 'zh';
-    return hireai_about_repeater_rows('about_process', $page_id, $lang, hireai_about_default_process($lang));
+    $defaults = hireai_about_process_defaults($lang);
+    if (!function_exists('hireai_field_lang')) {
+        return $defaults;
+    }
+
+    $items = [];
+    foreach ($defaults as $stage_index => $default_item) {
+        $item = [];
+        foreach ($default_item as $field_name => $default_value) {
+            $value = hireai_field_lang(
+                'about_process_' . ($stage_index + 1) . '_' . $field_name,
+                $lang,
+                $default_value,
+                $page_id
+            );
+            $item[$field_name] = trim((string) $value);
+        }
+        if (implode('', $item) !== '') {
+            $items[] = $item;
+        }
+    }
+
+    return $items ?: $defaults;
 }
 
 add_action('acf/init', function () {
@@ -4657,6 +4692,18 @@ add_action('acf/init', function () {
         ['name' => 'about_method_intro', 'label' => '方法论 · 简介', 'type' => 'textarea', 'zh' => '以纪律严明的连续流程，将企业智慧转化为持续、高精度的经营表现。', 'en' => 'A disciplined continuum that translates corporate wisdom into perpetual, high-precision performance.', 'extra' => ['rows' => 2]],
         ['name' => 'about_method_image', 'label' => '方法论 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
         ['name' => 'about_method_image_alt', 'label' => '方法论 · 图片替代文字', 'type' => 'text', 'zh' => '聘AI三阶段智能工作流架构', 'en' => 'HireAIPeople three-phase AI workflow architecture'],
+        ['name' => 'about_process_1_number', 'label' => '流程 01 · 编号', 'type' => 'text', 'zh' => '01', 'en' => '01'],
+        ['name' => 'about_process_1_phase', 'label' => '流程 01 · 阶段标签', 'type' => 'text', 'zh' => '阶段一 · 摄入', 'en' => 'PHASE INTAKE'],
+        ['name' => 'about_process_1_title', 'label' => '流程 01 · 标题', 'type' => 'text', 'zh' => '清晰数据摄入', 'en' => 'Crystalline Data Intake'],
+        ['name' => 'about_process_1_description', 'label' => '流程 01 · 描述', 'type' => 'textarea', 'zh' => '将品牌精神、业务规则与机密知识沉淀为受治理的语义基础。', 'en' => 'Distilling brand ethos, business rules, and confidential knowledge into a governed semantic foundation.', 'extra' => ['rows' => 3]],
+        ['name' => 'about_process_2_number', 'label' => '流程 02 · 编号', 'type' => 'text', 'zh' => '02', 'en' => '02'],
+        ['name' => 'about_process_2_phase', 'label' => '流程 02 · 阶段标签', 'type' => 'text', 'zh' => '阶段二 · 共创', 'en' => 'PHASE SYNTHESIS'],
+        ['name' => 'about_process_2_title', 'label' => '流程 02 · 标题', 'type' => 'text', 'zh' => '神经网络与共创', 'en' => 'Neural Synthesis & Co-Creation'],
+        ['name' => 'about_process_2_description', 'label' => '流程 02 · 描述', 'type' => 'textarea', 'zh' => '培育数字员工性格与技能，并与经营团队持续迭代。', 'en' => 'Cultivating digital temperament and skills that iterate alongside your operating team.', 'extra' => ['rows' => 3]],
+        ['name' => 'about_process_3_number', 'label' => '流程 03 · 编号', 'type' => 'text', 'zh' => '03', 'en' => '03'],
+        ['name' => 'about_process_3_phase', 'label' => '流程 03 · 阶段标签', 'type' => 'text', 'zh' => '阶段三 · 部署', 'en' => 'PHASE DEPLOYMENT'],
+        ['name' => 'about_process_3_title', 'label' => '流程 03 · 标题', 'type' => 'text', 'zh' => '高保真执行', 'en' => 'High-Fidelity Execution'],
+        ['name' => 'about_process_3_description', 'label' => '流程 03 · 描述', 'type' => 'textarea', 'zh' => '将 AI 数字员工嵌入关键流程，并保持可衡量的执行精度。', 'en' => 'Embedding AI employees into mission-critical workflows with measurable precision.', 'extra' => ['rows' => 3]],
         ['name' => 'about_team_number', 'label' => 'AI团队 · 编号', 'type' => 'text', 'zh' => '03', 'en' => '03'],
         ['name' => 'about_team_title', 'label' => 'AI团队 · 标题', 'type' => 'textarea', 'zh' => '关于AI数字员工团队', 'en' => 'The AI Digital Employee Team', 'extra' => ['rows' => 1]],
         ['name' => 'about_team_intro', 'label' => 'AI团队 · 简介', 'type' => 'textarea', 'zh' => '策略、工程、设计与运营专家，与 AI 数字员工协同工作，持续打磨每一次交付。', 'en' => 'Strategy, engineering, design, and operations specialists work with AI digital employees to refine every engagement.', 'extra' => ['rows' => 2]],
@@ -4685,58 +4732,6 @@ add_action('acf/init', function () {
         'esc_html' => true,
     ]);
     acf_add_local_field_group($about_group);
-
-    $repeater_subfields = static function ($labels, $prefix) {
-        return array_map(static function ($field) use ($prefix) {
-            return [
-                'key' => 'field_about_' . $prefix . '_' . $field['name'],
-                'label' => $field['label'],
-                'name' => $field['name'],
-                'type' => 'text',
-            ];
-        }, $labels);
-    };
-
-    acf_add_local_field_group([
-        'key' => 'group_page_about_repeaters',
-        'title' => '关于我们页 · 数据列表',
-        'fields' => [
-            [
-                'key' => 'field_about_process_zh',
-                'label' => '中文 · 三段方法论',
-                'name' => 'about_process_zh',
-                'type' => 'repeater',
-                'layout' => 'row',
-                'max' => 6,
-                'button_label' => '添加中文阶段',
-                'sub_fields' => $repeater_subfields([
-                    ['name' => 'number', 'label' => '编号'],
-                    ['name' => 'phase', 'label' => '阶段'],
-                    ['name' => 'title', 'label' => '标题'],
-                    ['name' => 'description', 'label' => '描述'],
-                    ['name' => 'meta', 'label' => '底部标签'],
-                ], 'process_zh'),
-            ],
-            [
-                'key' => 'field_about_process_en',
-                'label' => 'English · Methodology',
-                'name' => 'about_process_en',
-                'type' => 'repeater',
-                'layout' => 'row',
-                'max' => 6,
-                'button_label' => 'Add English phase',
-                'sub_fields' => $repeater_subfields([
-                    ['name' => 'number', 'label' => 'Number'],
-                    ['name' => 'phase', 'label' => 'Phase'],
-                    ['name' => 'title', 'label' => 'Title'],
-                    ['name' => 'description', 'label' => 'Description'],
-                    ['name' => 'meta', 'label' => 'Footer label'],
-                ], 'process_en'),
-            ],
-        ],
-        'location' => [[['param' => 'page_template', 'operator' => '==', 'value' => 'page-about.php']]],
-        'menu_order' => 6,
-    ]);
 
     acf_add_local_field_group([
         'key' => 'group_site_nav_about',

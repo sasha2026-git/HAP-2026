@@ -124,7 +124,6 @@ html body .hireai-about-method__title{max-width:820px;margin:0 auto 18px;font-fa
 .hireai-about-process__phase{display:block;margin-bottom:10px;font-family:var(--font-label,Inter),sans-serif;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--hai-on-surface-variant,#4d4635);}
 .hireai-about-process__title{margin:0 0 14px;font-family:var(--font-display-en,var(--font-serif));font-size:25px;font-weight:500;line-height:1.3;color:var(--hai-on-surface,#1a1a1a);}
 .hireai-about-process__text{margin:0;font-family:var(--font-body-en,var(--font-body));font-size:16px;line-height:1.7;color:var(--hai-on-surface-variant,#4d4635);}
-.hireai-about-process__meta{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:30px;color:var(--hai-on-surface-variant,#4d4635);font-family:var(--font-label,Inter),sans-serif;font-size:13px;letter-spacing:.08em;text-transform:uppercase;}
 .hireai-about-team{max-width:1040px;margin:0 auto;text-align:center;}
 html body .hireai-about-team__title{max-width:820px;margin:0 auto 18px;font-family:var(--font-display-en,var(--font-serif));font-size:32px;font-weight:600;line-height:1.2;letter-spacing:0;}
 .hireai-about-team__intro{max-width:720px;margin:0 auto 48px;font-family:var(--font-body-en,var(--font-body));font-size:18px;line-height:1.65;color:var(--hai-on-surface-variant,#4d4635);}
@@ -206,10 +205,6 @@ html body .hireai-about-team__title{max-width:820px;margin:0 auto 18px;font-fami
                             <span class="hireai-about-process__phase"><?php echo esc_html($item['phase']); ?></span>
                             <h3 class="hireai-about-process__title"><?php echo esc_html($item['title']); ?></h3>
                             <p class="hireai-about-process__text"><?php echo esc_html($item['description']); ?></p>
-                            <div class="hireai-about-process__meta">
-                                <span><?php echo esc_html($item['meta']); ?></span>
-                                <?php echo hireai_svg('arrow-forward', 16, 'hireai-about-icon'); ?>
-                            </div>
                         </li>
                     <?php endforeach; ?>
                 </ol>
