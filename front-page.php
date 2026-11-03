@@ -100,14 +100,13 @@ foreach ([1, 2, 3] as $i) {
 
 /* ═══════════════════════════════════════════════════════════════════════
    v3.6.0 改造 — 5 个 Section 渲染逻辑升级
-   策略（C+ACF 双 fallback + 保留旧链）:
-     - 优先：v3.6.0 NEW ACF (group_frontpage_v360) 显式双语字段 / repeater
-     - 次优：v3.6.0 NEW WC 商品（sol_featured_on_home=true）的双语 cover
-     - 第三：v3.5.7-p27 既有链 WC 商品 → ACF fp_* 字段 → 默认值
+   策略:
+     - 解决方案：仅读取当前语言 sol_featured_on_home=1 商品，实际数量直出
+     - 其他模块：沿用既有 ACF / 内容 fallback 链
    安全约束:
      - 不删除 / 不改 hireai_* helper 函数
      - 不改 typography / spacing / radius / container 数值
-     - 保留 hireai_get_ai_solutions_products 函数定义(虽然此处改用 inline WP_Query)
+     - 商品读取统一走 hireai_get_solution_products()
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* ---------- 读 NEW ACF 双语 helper（直接读 _zh / _en 后缀名） ---------- */
@@ -143,10 +142,7 @@ $hireai_v360_image_url = function ($base, $lang_code = null) use ($lang, $front_
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   ② 解决方案区域 — 三层 fallback
-   Layer 1: NEW ACF repeater (fp_sol_static_repeater)  ← D
-   Layer 2: NEW WC featured (sol_featured_on_home=1)   ← C
-   Layer 3: p27 旧链 WC → ACF fp_sol1..4 → defaults
+   ② 解决方案区域 — 当前语言 WC 商品（1-4 张，实际数量直出）
    ═══════════════════════════════════════════════════════════════════════ */
 $sol_section_kicker = $hireai_v360('fp_solutions_kicker',       $lang) ?: hireai_field_lang('fp_solutions_kicker',       $lang, $is_en ? 'Industry Empowerment' : '行业赋能', $front_page_id);
 $sol_section_title  = $hireai_v360('fp_solutions_title',        $lang) ?: hireai_field_lang('fp_solutions_title',        $lang, $is_en ? 'AI Solutions' : 'AI 解决方案', $front_page_id);
@@ -154,121 +150,20 @@ $sol_section_sub    = $hireai_v360('fp_solutions_subtitle',     $lang) ?: hireai
 $sol_explore_label  = $hireai_v360('fp_solutions_explore_label',$lang) ?: hireai_field_lang('fp_solutions_explore_label',$lang, $is_en ? 'Explore More' : '探索更多', $front_page_id);
 $sol_explore_url    = $hireai_v360_url('fp_solutions_explore_url') ?: hireai_field('fp_solutions_explore_url', home_url('/ai-solutions/'), $front_page_id);
 
-$solutions = [];
-
-/* ---- Layer 1: NEW ACF repeater (最多 4 张) ---- */
-$_v360_sols_rep = function_exists('get_field') && $front_page_id ? get_field('fp_sol_static_repeater', $front_page_id) : null;
-if (is_array($_v360_sols_rep) && !empty($_v360_sols_rep)) {
-    foreach (array_slice($_v360_sols_rep, 0, 4) as $_row) {
-        if (!is_array($_row)) continue;
-        $_t = $is_en ? ($_row['title_en'] ?? '') : ($_row['title_zh'] ?? '');
-        if (!is_string($_t) || $_t === '') continue;
-        $_img = '';
-        if (!empty($_row['image']) && is_array($_row['image']) && !empty($_row['image']['url'])) {
-            $_img = (string) $_row['image']['url'];
-        }
-        $solutions[] = [
-            'title' => $_t,
-            'desc'  => $is_en ? ($_row['desc_en'] ?? '') : ($_row['desc_zh'] ?? ''),
-            'tag'   => $is_en ? ($_row['tag_en'] ?? '')  : ($_row['tag_zh'] ?? ''),
-            'img'   => $_img,
-            'url'   => !empty($_row['url']) ? hireai_localized_url((string) $_row['url']) : hireai_localized_url(home_url('/ai-solutions/')),
-        ];
-    }
-}
-
-/* ---- Layer 2: NEW WC featured products (sol_featured_on_home=1, 按 sol_featured_order ASC) ---- */
-if (count($solutions) < 4 && post_type_exists('product') && function_exists('get_posts')) {
-    $_v360_feat = new WP_Query([
-        'post_type'      => 'product',
-        'post_status'    => 'publish',
-        'posts_per_page' => 4 - count($solutions),
-        'no_found_rows'  => true,
-        'meta_query'     => [
-            ['key' => 'sol_featured_on_home', 'value' => '1', 'compare' => '='],
-        ],
-        'meta_key'       => 'sol_featured_order',
-        'orderby'        => 'meta_value_num',
-        'order'          => 'ASC',
-    ]);
-    if ($_v360_feat->have_posts()) {
-        foreach ($_v360_feat->posts as $_p) {
-            $_pid = (int) $_p->ID;
-            /* NEW ACF 优先;无则回退 WP title/excerpt */
-            $_t_zh = function_exists('get_field') ? get_field('sol_title_zh', $_pid) : '';
-            $_t_en = function_exists('get_field') ? get_field('sol_title_en', $_pid) : '';
-            $_d_zh = function_exists('get_field') ? get_field('sol_desc_zh',  $_pid) : '';
-            $_d_en = function_exists('get_field') ? get_field('sol_desc_en',  $_pid) : '';
-            $_g_zh = function_exists('get_field') ? get_field('sol_tag_zh',   $_pid) : '';
-            $_g_en = function_exists('get_field') ? get_field('sol_tag_en',   $_pid) : '';
-            $_t = $is_en ? (is_string($_t_en) && $_t_en !== '' ? $_t_en : hireai_solution_product_display_title($_pid, 'en'))
-                         : (is_string($_t_zh) && $_t_zh !== '' ? $_t_zh : hireai_solution_product_display_title($_pid, 'zh'));
-            $_d = $is_en ? (is_string($_d_en) && $_d_en !== '' ? $_d_en : wp_trim_words(wp_strip_all_tags($_p->post_content), 24, '…'))
-                         : (is_string($_d_zh) && $_d_zh !== '' ? $_d_zh : wp_trim_words(wp_strip_all_tags($_p->post_content), 24, '…'));
-            $_g = $is_en ? ($_g_en ?: ($is_en ? 'Solution' : '解决方案'))
-                         : ($_g_zh ?: ($is_en ? 'Solution' : '解决方案'));
-            $solutions[] = [
-                'title' => (string) $_t,
-                'desc'  => (string) $_d,
-                'tag'   => (string) $_g,
-                'img'   => (string) get_the_post_thumbnail_url($_pid, 'large'),
-                'url'   => hireai_localized_url(get_permalink($_pid)),
-            ];
-        }
-        wp_reset_postdata();
-    }
-}
-
-/* ---- Layer 3: p27 旧链 — 完全保留（hireai_get_ai_solutions_products + ACF fp_sol1..4 + 默认值） ---- */
-if (count($solutions) < 4) {
-    if (function_exists('hireai_get_ai_solutions_products')) {
-        $_fp_wc_sols = hireai_get_ai_solutions_products(1, 4 - count($solutions));
-        if (!empty($_fp_wc_sols)) {
-            foreach ($_fp_wc_sols as $_fp_sol) {
-                if (count($solutions) >= 4) break;
-                $_fp_id      = is_object($_fp_sol) ? (int) $_fp_sol->ID : (int) $_fp_sol;
-                if ($_fp_id <= 0) continue;
-                /* v3.6.0 防御: featured 商品已被 Layer 2 用过 — 用 featured_order 排除 */
-                if (function_exists('get_field') && get_field('sol_featured_on_home', $_fp_id)) continue;
-                $_fp_thumb   = get_the_post_thumbnail_url($_fp_id, 'large');
-                $_fp_title   = hireai_solution_product_display_title($_fp_id, $lang);
-                $_fp_link    = hireai_localized_url(get_permalink($_fp_id));
-                $_fp_excerpt = has_excerpt($_fp_id)
-                    ? get_the_excerpt($_fp_id)
-                    : wp_trim_words(wp_strip_all_tags(get_post_field('post_content', $_fp_id)), 24, '…');
-                $_fp_tag     = function_exists('hireai_field_lang')
-                    ? hireai_field_lang('product_retainer_label', $lang, '', $_fp_id)
-                    : '';
-                $solutions[] = [
-                    'title' => $_fp_title,
-                    'desc'  => $_fp_excerpt,
-                    'tag'   => $_fp_tag,
-                    'img'   => $_fp_thumb,
-                    'url'   => $_fp_link,
-                ];
-            }
-        }
-    }
-
-    foreach ([1, 2, 3, 4] as $i) {
-        if (count($solutions) >= 4) break;
-        $dflt = [
-            1 => ['title' => '金融与财富管理',     'desc' => '智能顾问与客户关系维护的数字化重塑。', 'tag' => '金融', 'img' => 'solution-finance'],
-            2 => ['title' => '高端零售与电商',     'desc' => '24/7 全天候奢华购物体验升级。',         'tag' => '零售', 'img' => 'solution-retail'],
-            3 => ['title' => '医疗健康与陪伴',     'desc' => '充满同理心的智能关怀与健康咨询。',       'tag' => '健康', 'img' => ''],
-            4 => ['title' => '泛娱乐与虚拟偶像',   'desc' => '打造永不塌房的超级 IP 与互动体验。',     'tag' => '娱乐', 'img' => ''],
-        ];
-        $d = $dflt[$i];
-        $solutions[] = [
-            'title' => hireai_field_lang("fp_sol{$i}_title", $lang, $d['title'], $front_page_id),
-            'desc'  => hireai_field_lang("fp_sol{$i}_desc",  $lang, $d['desc'], $front_page_id),
-            'tag'   => hireai_field_lang("fp_sol{$i}_tag",   $lang, $d['tag'], $front_page_id),
-            'img'   => hireai_image("fp_sol{$i}_image", $d['img'] ? $home . '/assets/img/home/' . $d['img'] . '.png' : '', $front_page_id),
-            'url'   => hireai_field("fp_sol{$i}_url", home_url('/ai-solutions/'), $front_page_id),
-        ];
-    }
-}
-
+$solutions = hireai_get_solution_products([
+    'featured' => true,
+    'per_page' => 4,
+    'language' => $lang,
+]);
+$solutions = array_map(function ($product) {
+    return [
+        'title' => $product['title'],
+        'desc' => $product['excerpt'],
+        'tag' => $product['tag'],
+        'img' => $product['image'],
+        'url' => $product['permalink'],
+    ];
+}, $solutions);
 /* ═══════════════════════════════════════════════════════════════════════
    ③ Cases & Insights — 双层 fallback (NEW ACF repeater → 旧 ACF + 默认值)
    ═══════════════════════════════════════════════════════════════════════ */
@@ -754,6 +649,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 <!-- ═══════════════════════════════════════════════════════════════════════
      3) SOLUTIONS  ── Stitch AI 解决方案 (2x2 aspect-video 卡片 + primary CTA)
      ═══════════════════════════════════════════════════════════════════════ -->
+<?php if ($solutions) : ?>
 <section class="hireai-fp hireai-fp-solutions" aria-labelledby="hireai-fp-solutions-title">
     <div class="hireai-fp-solutions__inner">
         <div class="hireai-fp-solutions__head">
@@ -779,7 +675,9 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
                 </div>
                 <?php endif; ?>
                 <div class="hireai-fp-sol__overlay">
+                    <?php if (!empty($sol['tag'])) : ?>
                     <span class="hireai-fp-sol__tag"><?php echo esc_html($sol['tag']); ?></span>
+                    <?php endif; ?>
                     <h3 class="hireai-fp-sol__title"><?php echo esc_html($sol['title']); ?></h3>
                     <p class="hireai-fp-sol__desc"><?php echo esc_html($sol['desc']); ?></p>
                 </div>
@@ -793,6 +691,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
         </div>
     </div>
 </section>
+<?php endif; ?>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
      4) CASES  ── Stitch 案例 & 洞察 (12-col 网格 8+4)

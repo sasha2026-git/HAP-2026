@@ -33,6 +33,8 @@ get_header();
  * -------------------------------------------------------------------- */
 $suffix = function_exists('hireai_lang_suffix') ? hireai_lang_suffix() : '';
 $is_en  = ($suffix === '_en');
+$language = $is_en ? 'en' : 'zh';
+$page_id = get_the_ID();
 
 /* --------------------------------------------------------------------
  * 2. HERO FIELDS  (ACF group_page_contact)
@@ -85,6 +87,16 @@ $cta_desc_c     = hireai_field('cta_desc', $is_en
     ? 'Step into the future of luxury service with our bespoke digital workforce.'
     : '与我们的专属数字员工一同，迈入奢华服务的未来。');
 $cta_btn_c      = hireai_field('cta_btn_label', $is_en ? 'Begin Consultation' : '开始咨询');
+
+$invite_kicker        = hireai_contact_invite_field('invite_kicker', $language, $is_en ? 'INVITE & EARN' : '邀约礼遇', $page_id);
+$invite_title         = hireai_contact_invite_field('invite_title', $language, $is_en ? 'Invite & Earn' : '邀约礼遇 / Invite & Earn', $page_id);
+$invite_subtitle      = hireai_contact_invite_field('invite_subtitle', $language, $is_en ? 'Share your exclusive invite code with peers to enjoy the Aurelian AI experience together.' : '分享您的专属邀请码，与友共赏 AI 数字人卓越体验。', $page_id);
+$invite_code          = hireai_contact_invite_field('invite_code', $language, 'hireaipeople.com/invite/VIP001', $page_id);
+$invite_copy_text     = hireai_contact_invite_field('invite_copy_text', $language, $is_en ? 'Copy Link' : '复制链接', $page_id);
+$invite_reward_amount = hireai_contact_invite_field('invite_reward_amount', $language, $is_en ? '¥500' : '￥500', $page_id);
+$invite_reward_label  = hireai_contact_invite_field('invite_reward_label', $language, $is_en ? 'Both you and your invitee earn a ¥500 bespoke credit toward your next AI service upgrade.' : '双方均可获得 ￥500 定制额度奖励，用于您的下一次 AI 服务升级。', $page_id);
+$invite_steps_label   = hireai_contact_invite_field('invite_steps_label', $language, $is_en ? 'How It Works' : '如何运作', $page_id);
+$invite_steps         = hireai_contact_invite_steps($language, $page_id);
 
 // WeChat QR (admin upload) — fallback empty box if not set.
 $qr_image = hireai_image('wechat_qr', '');
@@ -205,6 +217,22 @@ $form_action = esc_url(admin_url('admin-post.php'));
 .hireai-c-cta__card > *{position:relative;z-index:1;}
 .hireai-c-cta__title{margin:0 0 20px;font-family:var(--hp-font-serif);font-weight:700;font-size:clamp(36px,5vw,72px);line-height:1.1;color:var(--hp-on-surface,#1a1c1c);}
 .hireai-c-cta__desc{margin:0 auto 36px;max-width:560px;font-family:var(--hp-font-body);font-size:clamp(15px,1.3vw,18px);line-height:1.6;color:var(--hp-on-surface-var);}
+.hireai-c-invite{margin:0 clamp(20px,5vw,80px) clamp(72px,9vw,120px);padding:clamp(56px,7vw,88px) clamp(24px,5vw,64px);border:1px solid rgba(119,90,25,.18);border-radius:var(--hp-radius-lg,1rem);background:rgba(250,249,249,.72);text-align:center;}
+.hireai-c-invite__kicker{display:inline-block;margin-bottom:14px;color:var(--hp-secondary,#775a19);font-family:var(--hp-font-body);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+.hireai-c-invite__title{margin:0 0 14px;font-family:var(--hp-font-serif);font-size:clamp(30px,4vw,52px);line-height:1.15;font-weight:700;color:var(--hp-on-surface,#1a1c1c);}
+.hireai-c-invite__subtitle{max-width:640px;margin:0 auto 40px;font-family:var(--hp-font-body);font-size:16px;line-height:1.7;color:var(--hp-on-surface-var);}
+.hireai-c-invite__row{display:flex;flex-direction:column;justify-content:center;gap:14px;max-width:720px;margin:0 auto 38px;}
+.hireai-c-invite__code{flex:1 1 auto;display:flex;align-items:center;justify-content:center;min-height:58px;padding:16px 22px;border:1px solid rgba(119,90,25,.35);border-radius:10px;background:#fff;overflow:hidden;}
+.hireai-c-invite__code code{font-family:var(--hp-font-mono,monospace);font-size:15px;word-break:break-all;}
+.hireai-c-invite__copy{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 32px;border:1px solid rgba(119,90,25,.4);border-radius:10px;background:transparent;color:var(--hp-on-surface,#1a1c1c);font-family:var(--hp-font-body);font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .3s ease;}
+.hireai-c-invite__copy:hover{border-color:var(--hp-secondary,#775a19);color:var(--hp-secondary,#775a19);background:rgba(119,90,25,.05);}
+.hireai-c-invite__reward-label{max-width:640px;margin:-18px auto 38px;font-family:var(--hp-font-body);font-size:14px;line-height:1.6;color:var(--hp-on-surface-var);}
+.hireai-c-invite__steps{max-width:720px;margin:0 auto;padding:0;list-style:none;text-align:left;display:flex;flex-direction:column;gap:22px;}
+.hireai-c-invite__step{display:flex;gap:22px;align-items:flex-start;}
+.hireai-c-invite__step-no{min-width:56px;font-family:var(--hp-font-serif);font-size:32px;line-height:1;color:var(--hp-secondary,#775a19);opacity:.55;}
+.hireai-c-invite__step-text{margin:0;padding-top:6px;font-family:var(--hp-font-body);font-size:15px;line-height:1.7;color:var(--hp-on-surface-var);}
+.hireai-c-invite__reward{color:var(--hp-secondary,#775a19);font-weight:700;}
+@media (min-width:720px){.hireai-c-invite__row{flex-direction:row;}}
 </style>
 
 <main class="hireai-contact">
@@ -415,7 +443,96 @@ $form_action = esc_url(admin_url('admin-post.php'));
     </div>
   </section>
 
+  <!-- ============================================================
+       5. Invite & Earn — 联系页底部
+       ============================================================ -->
+  <section class="hireai-c-invite" id="invite-earn" aria-labelledby="hireai-c-invite-title">
+    <header>
+      <span class="hireai-c-invite__kicker"><?php echo esc_html($invite_kicker); ?></span>
+      <h2 id="hireai-c-invite-title" class="hireai-c-invite__title"><?php echo esc_html($invite_title); ?></h2>
+      <p class="hireai-c-invite__subtitle"><?php echo esc_html($invite_subtitle); ?></p>
+    </header>
+
+    <div class="hireai-c-invite__row">
+      <div class="hireai-c-invite__code">
+        <code id="hireai-invite-code"><?php echo esc_html($invite_code); ?></code>
+      </div>
+      <button class="hireai-c-invite__copy" type="button" data-copy-target="hireai-invite-code" data-copied="<?php echo esc_attr($is_en ? 'Copied' : '已复制'); ?>">
+        <?php echo function_exists('hireai_svg') ? hireai_svg('content-copy', 14) : ''; ?>
+        <span><?php echo esc_html($invite_copy_text); ?></span>
+      </button>
+    </div>
+
+    <p class="hireai-c-invite__reward-label">
+      <?php
+      $reward_label_html = $invite_reward_amount !== '' && strpos($invite_reward_label, $invite_reward_amount) !== false
+        ? str_replace(esc_html($invite_reward_amount), '<span class="hireai-c-invite__reward">' . esc_html($invite_reward_amount) . '</span>', esc_html($invite_reward_label))
+        : esc_html($invite_reward_label);
+      echo wp_kses($reward_label_html, ['span' => ['class' => []]]);
+      ?>
+    </p>
+
+    <ol class="hireai-c-invite__steps" aria-label="<?php echo esc_attr($invite_steps_label); ?>">
+      <?php foreach ($invite_steps as $step) :
+        $step_no = (string) ($step['step_no'] ?? '');
+        $step_text = (string) ($is_en ? ($step['step_en'] ?? '') : ($step['step_zh'] ?? ''));
+        if ($invite_reward_amount !== '' && strpos($step_text, $invite_reward_amount) !== false) {
+          $rendered = str_replace(
+            esc_html($invite_reward_amount),
+            '<span class="hireai-c-invite__reward">' . esc_html($invite_reward_amount) . '</span>',
+            esc_html($step_text)
+          );
+        } else {
+          $rendered = esc_html($step_text);
+        }
+      ?>
+        <li class="hireai-c-invite__step">
+          <span class="hireai-c-invite__step-no"><?php echo esc_html($step_no); ?></span>
+          <p class="hireai-c-invite__step-text"><?php echo wp_kses($rendered, ['span' => ['class' => []]]); ?></p>
+        </li>
+      <?php endforeach; ?>
+    </ol>
+  </section>
+
 </main>
+
+<script>
+(function () {
+  var button = document.querySelector('.hireai-c-invite__copy');
+  if (!button) return;
+  button.addEventListener('click', function () {
+    var target = document.getElementById(button.getAttribute('data-copy-target'));
+    if (!target) return;
+    var text = target.textContent || '';
+    function done() {
+      var label = button.querySelector('span');
+      if (!label) return;
+      var original = label.textContent;
+      label.textContent = button.getAttribute('data-copied') || 'Copied';
+      window.setTimeout(function () { label.textContent = original; }, 1800);
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        var textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+        done();
+      });
+      return;
+    }
+    var textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
+    done();
+  });
+})();
+</script>
 
 <?php
 get_footer();

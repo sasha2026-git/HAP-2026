@@ -746,7 +746,23 @@ add_action('init', function () {
 
 add_filter('query_vars', function ($vars) {
     $vars[] = 'hireai_emp_slug';
+    $vars[] = 'solution_tag';
+    $vars[] = 'solution_page';
     return $vars;
+});
+
+add_action('admin_notices', function () {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    $missing_tags = get_option('hireai_missing_solution_tags', []);
+    if (empty($missing_tags) || !is_array($missing_tags)) {
+        return;
+    }
+    printf(
+        '<div class="notice notice-warning"><p><strong>聘AI：</strong>以下商品标签尚未在“站点设置 → 解决方案标签”配置中英文文案，前台筛选已隐藏：%s</p></div>',
+        esc_html(implode(', ', array_map('strval', $missing_tags)))
+    );
 });
 
 add_action('pre_get_posts', function ($q) {
@@ -1914,6 +1930,55 @@ function hireai_contact_page_id() {
     return $id;
 }
 
+function hireai_contact_invite_field($field_name, $language, $default, $contact_page_id = 0) {
+    $value = hireai_field_lang($field_name, $language, '', (int) $contact_page_id);
+    if (is_string($value) && trim($value) !== '') {
+        return trim($value);
+    }
+
+    $source_page_id = function_exists('hireai_polylang_page_for_language')
+        ? hireai_polylang_page_for_language('ai-solutions', 'page-ai-solutions.php', $language)
+        : 0;
+    if ($source_page_id > 0) {
+        $legacy_value = hireai_field_lang($field_name, $language, '', $source_page_id);
+        if (is_string($legacy_value) && trim($legacy_value) !== '') {
+            return trim($legacy_value);
+        }
+    }
+    return $default;
+}
+
+function hireai_contact_invite_steps($language, $contact_page_id = 0) {
+    $fallback = [
+        [
+            'step_no' => '01',
+            'step_zh' => '分享您的专属推荐链接。',
+            'step_en' => 'Share your exclusive referral link.',
+        ],
+        [
+            'step_no' => '02',
+            'step_zh' => '好友加入并完成首笔订阅。',
+            'step_en' => 'Your friend signs up and completes their first subscription.',
+        ],
+        [
+            'step_no' => '03',
+            'step_zh' => '双方均可获得 ￥500 定制额度奖励。',
+            'step_en' => 'Both you and your invitee earn a ¥500 bespoke credit.',
+        ],
+    ];
+
+    foreach ([(int) $contact_page_id, function_exists('hireai_polylang_page_for_language') ? hireai_polylang_page_for_language('ai-solutions', 'page-ai-solutions.php', $language) : 0] as $source_page_id) {
+        if ($source_page_id <= 0 || !function_exists('get_field')) {
+            continue;
+        }
+        $rows = get_field('solutions_invite_steps', $source_page_id);
+        if (is_array($rows) && !empty($rows)) {
+            return $rows;
+        }
+    }
+    return $fallback;
+}
+
 /* -------------------------------------------------------------------------
  * 0.5. v3.0.7 数据集成修复：智能 slug 探测（WP_DEBUG + 中文 slug 友好）
  * ---------------------------------------------------------------------- */
@@ -2089,6 +2154,380 @@ function hireai_list_all_product_categories() {
     return $out;
 }
 
+function hireai_solution_language($language = '') {
+    $language = strtolower((string) $language);
+    if (in_array($language, ['zh', 'en'], true)) {
+        return $language;
+    }
+    if (function_exists('pll_current_language')) {
+        $polylang_language = strtolower((string) pll_current_language('slug'));
+        if (in_array($polylang_language, ['zh', 'en'], true)) {
+            return $polylang_language;
+        }
+    }
+    return hireai_current_lang();
+}
+
+function hireai_solution_legacy_field($product_id, $base_name, $language) {
+    if (!function_exists('get_field')) {
+        return '';
+    }
+    $value = get_field($base_name . '_' . $language, (int) $product_id);
+    return is_string($value) ? trim($value) : '';
+}
+
+function hireai_solution_product_price_html($product) {
+    if (!is_object($product) || !method_exists($product, 'get_price_html')) {
+        return '';
+    }
+
+    $sale_price = method_exists($product, 'get_sale_price') ? (string) $product->get_sale_price() : '';
+    $regular_price = method_exists($product, 'get_regular_price') ? (string) $product->get_regular_price() : '';
+    if (
+        function_exists('wc_format_price_range')
+        && $sale_price !== ''
+        && $regular_price !== ''
+        && $sale_price !== $regular_price
+    ) {
+        return (string) wc_format_price_range($regular_price, $sale_price);
+    }
+
+    return (string) $product->get_price_html();
+}
+
+function hireai_solution_configured_tag_rows() {
+    $rows = function_exists('get_field') ? get_field('solution_tag_filters', 'option') : null;
+    return is_array($rows) ? $rows : [];
+}
+
+function hireai_solution_configured_tag_label(array $term_slugs, $language) {
+    $language = hireai_solution_language($language);
+    $term_slugs = array_values(array_filter(array_map('strval', $term_slugs)));
+    if (empty($term_slugs)) {
+        return '';
+    }
+
+    foreach (hireai_solution_configured_tag_rows() as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $configured_slug = sanitize_key((string) ($row['tag_slug'] ?? ''));
+        if ($configured_slug === '' || !in_array($configured_slug, $term_slugs, true)) {
+            continue;
+        }
+        $label = trim((string) ($language === 'en' ? ($row['label_en'] ?? '') : ($row['label_zh'] ?? '')));
+        if ($label !== '') {
+            return $label;
+        }
+    }
+    return '';
+}
+
+function hireai_make_solution_product_dto($product_id, $language = '') {
+    $product_id = (int) $product_id;
+    $language = hireai_solution_language($language);
+    $post = get_post($product_id);
+    if (!$post instanceof WP_Post || $post->post_status !== 'publish') {
+        return null;
+    }
+
+    $previous_post = $GLOBALS['post'] ?? null;
+    $GLOBALS['post'] = $post;
+    setup_postdata($post);
+
+    try {
+        $product = function_exists('wc_get_product') ? wc_get_product($product_id) : null;
+        if (is_object($product) && method_exists($product, 'is_visible') && !$product->is_visible()) {
+            return null;
+        }
+
+        $title = trim((string) get_the_title($product_id));
+        if ($title === '') {
+            $title = hireai_solution_legacy_field($product_id, 'sol_title', $language);
+        }
+
+        $excerpt = trim((string) get_the_excerpt($product_id));
+        if ($excerpt === '') {
+            $excerpt = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 24, '…');
+        }
+        if ($excerpt === '') {
+            $excerpt = hireai_solution_legacy_field($product_id, 'sol_desc', $language);
+        }
+
+        $tag_terms = wp_get_post_terms($product_id, 'product_tag', ['fields' => 'slugs']);
+        if (is_wp_error($tag_terms)) {
+            error_log('[hireai solution product] tag lookup failed #' . $product_id . ': ' . $tag_terms->get_error_message());
+            $tag_terms = [];
+        }
+
+        $stock_status = 'instock';
+        if (is_object($product) && method_exists($product, 'get_stock_status')) {
+            $stock = $product->get_stock_status();
+            if (is_string($stock) && $stock !== '') {
+                $stock_status = $stock;
+            }
+        }
+
+        $configured_tag = hireai_solution_configured_tag_label((array) $tag_terms, $language);
+
+        return [
+            'id' => $product_id,
+            'language' => $language,
+            'title' => $title,
+            'excerpt' => $excerpt,
+            'tag' => $configured_tag !== '' ? $configured_tag : hireai_solution_legacy_field($product_id, 'sol_tag', $language),
+            'kicker' => hireai_solution_legacy_field($product_id, 'product_operative', $language),
+            'retainer' => hireai_solution_legacy_field($product_id, 'product_retainer_label', $language),
+            'price_html' => hireai_solution_product_price_html($product),
+            'stock_status' => $stock_status,
+            'image' => get_the_post_thumbnail_url($product_id, 'large'),
+            'permalink' => get_permalink($product_id),
+            'personas' => array_values(array_unique(array_map('strval', (array) $tag_terms))),
+        ];
+    } catch (Throwable $exception) {
+        error_log('[hireai solution product] DTO failed #' . $product_id . ': ' . $exception->getMessage());
+        return null;
+    } finally {
+        wp_reset_postdata();
+        if ($previous_post instanceof WP_Post) {
+            $GLOBALS['post'] = $previous_post;
+            setup_postdata($previous_post);
+        }
+    }
+}
+
+function hireai_get_solution_products_result(array $args = []) {
+    $defaults = [
+        'paged' => 1,
+        'per_page' => 9,
+        'featured' => false,
+        'tag_slug' => '',
+        'language' => '',
+    ];
+    $args = wp_parse_args($args, $defaults);
+    $language = hireai_solution_language($args['language']);
+    $paged = max(1, (int) $args['paged']);
+    $per_page = (int) $args['per_page'];
+    $per_page = $per_page === -1 ? -1 : max(1, $per_page);
+    $tag_slug = sanitize_key((string) $args['tag_slug']);
+    $empty_result = [
+        'items' => [],
+        'total' => 0,
+        'max_num_pages' => 1,
+        'paged' => $paged,
+        'per_page' => $per_page,
+        'language' => $language,
+    ];
+
+    if (!post_type_exists('product')) {
+        return $empty_result;
+    }
+
+    $tax_query = [[
+        'taxonomy' => 'product_visibility',
+        'field' => 'slug',
+        'terms' => ['exclude-from-catalog'],
+        'operator' => 'NOT IN',
+    ]];
+
+    $filter_terms = [];
+    if ($tag_slug !== '') {
+        $filter_taxonomy = '';
+        foreach (['product_tag', 'product_cat'] as $taxonomy) {
+            if (!taxonomy_exists($taxonomy)) {
+                continue;
+            }
+            $term = get_term_by('slug', $tag_slug, $taxonomy);
+            if (!$term instanceof WP_Term) {
+                continue;
+            }
+            $filter_taxonomy = $taxonomy;
+            $filter_terms = [$term->slug];
+            if (function_exists('pll_get_term_translations')) {
+                $translations = pll_get_term_translations((int) $term->term_id);
+                if (is_array($translations)) {
+                    foreach ($translations as $translated_id) {
+                        $translated_term = get_term((int) $translated_id, $taxonomy);
+                        if ($translated_term instanceof WP_Term && $translated_term->slug !== '') {
+                            $filter_terms[] = $translated_term->slug;
+                        }
+                    }
+                }
+            }
+            $tax_query[] = [
+                'taxonomy' => $filter_taxonomy,
+                'field' => 'slug',
+                'terms' => array_values(array_unique($filter_terms)),
+                'operator' => 'IN',
+            ];
+            break;
+        }
+        if ($filter_taxonomy === '') {
+            $tax_query[] = [
+                'taxonomy' => 'product_tag',
+                'field' => 'slug',
+                'terms' => [$tag_slug],
+                'operator' => 'IN',
+            ];
+        }
+    }
+    if (count($tax_query) > 1) {
+        $tax_query['relation'] = 'AND';
+    }
+
+    $query_args = [
+        'post_type' => 'product',
+        'post_status' => 'publish',
+        'posts_per_page' => $per_page,
+        'paged' => $paged,
+        'orderby' => 'date',
+        'order' => 'DESC',
+        'no_found_rows' => false,
+        'fields' => 'ids',
+        'tax_query' => $tax_query,
+    ];
+
+    if (!empty($args['featured'])) {
+        $query_args['meta_query'] = [[
+            'key' => 'sol_featured_on_home',
+            'value' => '1',
+            'compare' => '=',
+            'type' => 'NUMERIC',
+        ]];
+        $query_args['posts_per_page'] = -1;
+        unset($query_args['paged']);
+        $query_args['no_found_rows'] = true;
+    }
+
+    if (function_exists('pll_current_language')) {
+        $query_args['lang'] = $language;
+    }
+
+    try {
+        $query = new WP_Query($query_args);
+        $product_ids = (array) $query->posts;
+        if (!empty($args['featured'])) {
+            usort($product_ids, function ($left_id, $right_id) {
+                $left_order = (int) get_post_meta((int) $left_id, 'sol_featured_order', true);
+                $right_order = (int) get_post_meta((int) $right_id, 'sol_featured_order', true);
+                $left_order = $left_order > 0 ? $left_order : 99;
+                $right_order = $right_order > 0 ? $right_order : 99;
+                if ($left_order === $right_order) {
+                    return strcmp(
+                        (string) get_post_field('post_date', (int) $right_id),
+                        (string) get_post_field('post_date', (int) $left_id)
+                    );
+                }
+                return $left_order <=> $right_order;
+            });
+            if ($per_page !== -1) {
+                $product_ids = array_slice($product_ids, ($paged - 1) * $per_page, $per_page);
+            }
+        }
+        $items = [];
+        foreach ($product_ids as $product_id) {
+            $dto = hireai_make_solution_product_dto($product_id, $language);
+            if ($dto !== null && $dto['title'] !== '') {
+                $items[] = $dto;
+            }
+        }
+
+        $total = !empty($args['featured']) ? count((array) $query->posts) : (int) $query->found_posts;
+        return [
+            'items' => $items,
+            'total' => $total,
+            'max_num_pages' => $per_page === -1
+                ? 1
+                : max(1, (int) ceil($total / $per_page)),
+            'paged' => $paged,
+            'per_page' => $per_page,
+            'language' => $language,
+        ];
+    } catch (Throwable $exception) {
+        error_log('[hireai solution products] query failed: ' . $exception->getMessage());
+        return $empty_result;
+    }
+}
+
+function hireai_get_solution_products(array $args = []) {
+    $result = hireai_get_solution_products_result($args);
+    return $result['items'];
+}
+
+function hireai_get_solution_filter_state($page_id = 0) {
+    $configured = [];
+    $rows = hireai_solution_configured_tag_rows();
+
+    foreach ((array) $rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $slug = sanitize_key((string) ($row['tag_slug'] ?? ''));
+        if ($slug === '' || $slug === 'all') {
+            continue;
+        }
+        $configured[$slug] = [
+            'slug' => $slug,
+            'label_zh' => trim((string) ($row['label_zh'] ?? '')),
+            'label_en' => trim((string) ($row['label_en'] ?? '')),
+            'enabled' => !empty($row['enabled']),
+            'order' => max(0, (int) ($row['tag_order'] ?? 99)),
+        ];
+    }
+
+    $filters = array_values(array_filter($configured, function ($filter) {
+        return !empty($filter['enabled']);
+    }));
+    usort($filters, function ($left, $right) {
+        if ($left['order'] === $right['order']) {
+            return strcmp($left['slug'], $right['slug']);
+        }
+        return $left['order'] <=> $right['order'];
+    });
+    array_unshift($filters, [
+        'slug' => 'all',
+        'label_zh' => '全部',
+        'label_en' => 'All',
+        'enabled' => true,
+        'order' => 0,
+    ]);
+
+    $missing_tags = [];
+    if (is_user_logged_in() && current_user_can('manage_options')) {
+        foreach (['zh', 'en'] as $detection_language) {
+            $all_products = hireai_get_solution_products_result([
+                'per_page' => -1,
+                'language' => $detection_language,
+            ]);
+            foreach ($all_products['items'] as $product) {
+                foreach ((array) $product['personas'] as $persona) {
+                    if (!isset($configured[$persona])) {
+                        $missing_tags[$persona] = $persona;
+                    } elseif (!empty($configured[$persona]['enabled']) && ($configured[$persona]['label_zh'] === '' || $configured[$persona]['label_en'] === '')) {
+                        $missing_tags[$persona] = $persona;
+                    }
+                }
+            }
+        }
+        foreach ($configured as $slug => $filter) {
+            if (empty($filter['enabled'])) {
+                continue;
+            }
+            if (!taxonomy_exists('product_tag') || !term_exists($slug, 'product_tag')) {
+                if (!taxonomy_exists('product_cat') || !term_exists($slug, 'product_cat')) {
+                    $missing_tags[$slug] = $slug;
+                }
+            }
+        }
+        update_option('hireai_missing_solution_tags', array_values($missing_tags), false);
+    }
+
+    return [
+        'filters' => $filters,
+        'missing_tags' => array_values($missing_tags),
+    ];
+}
+
 /**
  * v3.5.7-p18 Task B: 7 个场景分类清单(用于 AI 解决方案商城 tab)
  *   - 全部 + 7 个场景,共 8 个选项
@@ -2120,119 +2559,26 @@ function hireai_list_solution_categories() {
  * @return array<int,array> card 数据
  */
 function hireai_build_solution_cards_from_ids($ids) {
-    if (!is_array($ids) || empty($ids)) return [];
-    if (!function_exists('wc_get_product')) return [];
+    $language = hireai_solution_language();
     $cards = [];
-    foreach ($ids as $pid) {
-        $pid = (int) $pid;
-        $wc_post_obj = get_post($pid);
-        if (!$wc_post_obj || $wc_post_obj->post_status !== 'publish') continue;
-        $wc_prev_post = $GLOBALS['post'] ?? null;
-        $GLOBALS['post'] = $wc_post_obj;
-        setup_postdata($wc_post_obj);
-        $wc_obj  = wc_get_product($pid);
-        /* v3.7.6: WC 目录可见性兜底（product_visibility taxonomy 判定，兼容 WC 3.0+。
-         *   查询层的 tax_query 之外再加一道，防止历史脏数据/特殊可见性商品混进商城） */
-        if (is_object($wc_obj) && method_exists($wc_obj, 'is_visible') && ! $wc_obj->is_visible()) {
-            wp_reset_postdata();
-            if (!empty($wc_prev_post)) { $GLOBALS['post'] = $wc_prev_post; setup_postdata($wc_prev_post); }
-            continue;
-        }
-        $price_html = '';
-        $stock      = 'instock';
-        if (is_object($wc_obj)) {
-            if (function_exists('wc_format_price_range')) {
-                $price_html = wc_format_price_range($wc_obj);
-            } elseif (method_exists($wc_obj, 'get_price_html')) {
-                $price_html = $wc_obj->get_price_html();
-            }
-            if (method_exists($wc_obj, 'get_stock_status')) {
-                $ss = $wc_obj->get_stock_status();
-                $stock = ($ss === false || $ss === '' || $ss === null) ? 'instock' : (string) $ss;
-            }
-        }
-        /* 双语 ACF 字段(kicker=product_operative, retainer=product_retainer_label) */
-        $kz_raw   = function_exists('hireai_field_lang') ? hireai_field_lang('product_operative',       'zh', '', $pid) : (function_exists('hireai_field') ? hireai_field('product_operative',       '', $pid) : '');
-        $ken_raw  = function_exists('hireai_field_lang') ? hireai_field_lang('product_operative',       'en', '', $pid) : '';
-        $rtz_raw  = function_exists('hireai_field_lang') ? hireai_field_lang('product_retainer_label', 'zh', '', $pid) : (function_exists('hireai_field') ? hireai_field('product_retainer_label', '', $pid) : '');
-        $rten_raw = function_exists('hireai_field_lang') ? hireai_field_lang('product_retainer_label', 'en', '', $pid) : '';
-        $kicker_zh   = is_array($kz_raw)   ? '' : (string) $kz_raw;
-        $kicker_en   = is_array($ken_raw)  ? '' : (string) $ken_raw;
-        $retainer_zh = is_array($rtz_raw)  ? '' : (string) $rtz_raw;
-        $retainer_en = is_array($rten_raw) ? '' : (string) $rten_raw;
-        /* 提取数字人标签(用于 client-side persona 过滤)
-         * v3.5.7-p21: 优先 product_tag(Echo 数据完整,5 个数字人 slug),product_cat fallback
-         *   - 短 slug(victoria/adrian/...)和完整 slug(victoria-brand-pr/...)都接受
-         *   - 每张卡片打 data-personas="short1 short2 ..."(短名),JS chip 切换按短名匹配
-         */
-        $persona_slugs = [];
-        $dh_map        = function_exists('hireai_digital_humans') ? hireai_digital_humans() : [];
-        $dh_short_set  = array_keys($dh_map);
-        $dh_full_to_short = [];
-        foreach ($dh_map as $short => $info) {
-            if (!empty($info['full'])) { $dh_full_to_short[$info['full']] = $short; }
-        }
-        /* 1) product_tag 优先(Echo 数据) */
-        $tag_terms = function_exists('wp_get_post_terms') ? wp_get_post_terms($pid, 'product_tag', ['fields' => 'slugs']) : [];
-        if (!is_wp_error($tag_terms) && !empty($tag_terms)) {
-            foreach ($tag_terms as $slug) {
-                if ($slug === '' || $slug === null) continue;
-                if (in_array($slug, $dh_short_set, true)) {
-                    if (!in_array($slug, $persona_slugs, true)) { $persona_slugs[] = $slug; }
-                } elseif (isset($dh_full_to_short[$slug])) {
-                    $short = $dh_full_to_short[$slug];
-                    if (!in_array($short, $persona_slugs, true)) { $persona_slugs[] = $short; }
-                } else {
-                    /* v3.7.6: 前缀归并 —— 新增数字人的 full slug（如 victoria-sales，不在静态映射表里）
-                     * 自动归到对应短名 chip，保证"商品打新标签 → 商城分类自动可用" */
-                    foreach ($dh_short_set as $short) {
-                        if (strpos((string) $slug, $short . '-') === 0) {
-                            if (!in_array($short, $persona_slugs, true)) { $persona_slugs[] = $short; }
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        /* 2) product_cat fallback(旧数据,Echo 9/8 之前) */
-        if (empty($persona_slugs) && function_exists('hireai_list_solution_categories')) {
-            $scene_slugs = array_map(function ($c) { return $c['slug']; }, array_filter(hireai_list_solution_categories(), function ($c) { return !empty($c['is_scene']); }));
-        } else {
-            $scene_slugs = ['brand-ip','marketing','visual-design','ecommerce','crisis','copywriting','custom'];
-        }
-        $cat_terms = function_exists('wp_get_post_terms') ? wp_get_post_terms($pid, 'product_cat', ['fields' => 'slugs']) : [];
-        if (!is_wp_error($cat_terms) && !empty($cat_terms)) {
-            foreach ($cat_terms as $slug) {
-                if ($slug === '' || $slug === null) continue;
-                if (in_array($slug, $scene_slugs, true)) continue;
-                if (in_array($slug, $dh_short_set, true)) {
-                    if (!in_array($slug, $persona_slugs, true)) { $persona_slugs[] = $slug; }
-                } elseif (isset($dh_full_to_short[$slug])) {
-                    $short = $dh_full_to_short[$slug];
-                    if (!in_array($short, $persona_slugs, true)) { $persona_slugs[] = $short; }
-                } elseif (!in_array($slug, $persona_slugs, true)) {
-                    $persona_slugs[] = $slug;
-                }
-            }
-        }
+    foreach ((array) $ids as $product_id) {
+        $dto = hireai_make_solution_product_dto($product_id, $language);
+        if ($dto === null || $dto['title'] === '') continue;
         $cards[] = [
-            'id'          => $pid,
-            'title'       => hireai_solution_product_display_title($pid, hireai_current_lang()),
-            'excerpt'     => hireai_solution_product_display_excerpt($pid, hireai_current_lang()),
-            'image'       => get_the_post_thumbnail_url($pid, 'medium'),
-            'price'       => $price_html,
-            'stock'       => $stock,
-            'permalink'   => get_permalink($pid),
-            'kicker_zh'   => $kicker_zh,
-            'kicker_en'   => $kicker_en,
-            'retainer_zh' => $retainer_zh,
-            'retainer_en' => $retainer_en,
-            'personas'    => $persona_slugs,
+            'id' => $dto['id'],
+            'title' => $dto['title'],
+            'excerpt' => $dto['excerpt'],
+            'image' => $dto['image'],
+            'price' => $dto['price_html'],
+            'stock' => $dto['stock_status'],
+            'permalink' => $dto['permalink'],
+            'kicker_zh' => $language === 'zh' ? $dto['kicker'] : '',
+            'kicker_en' => $language === 'en' ? $dto['kicker'] : '',
+            'retainer_zh' => $language === 'zh' ? $dto['retainer'] : '',
+            'retainer_en' => $language === 'en' ? $dto['retainer'] : '',
+            'personas' => $dto['personas'],
         ];
-        wp_reset_postdata();
-        if ($wc_prev_post) { $GLOBALS['post'] = $wc_prev_post; setup_postdata($wc_prev_post); }
     }
-    wp_reset_postdata();
     return $cards;
 }
 
@@ -2277,9 +2623,7 @@ function hireai_solution_product_display_excerpt($pid, $lang = '') {
 }
 
 /**
- * v3.5.7-p18 Task B: 把 card 数据映射到前端模板用的字段
- *   - is_cta 强制 false(已废弃 CTA 卡)
- *   - 标题/描述 双语(zh 优先,缺失时 fallback en)
+ * 兼容映射：把当前语言 DTO 转成旧模板字段结构。
  *
  * @param array $p card 数据(从 hireai_build_solution_cards_from_ids 返回)
  * @return array
@@ -2363,11 +2707,43 @@ function hireai_resolve_employees($limit = 6) {
         'order'          => 'ASC',
         'no_found_rows'  => true,
     ];
+    $category_slugs = [];
+    foreach ([
+        'ai-employee', 'ai-employees', 'digital-employees', 'employee', 'employees',
+    ] as $slug) {
+        $term = get_term_by('slug', $slug, 'category');
+        if ($term instanceof WP_Term) {
+            $category_slugs[] = $term->slug;
+            if (function_exists('pll_get_term_translations')) {
+                $translations = pll_get_term_translations((int) $term->term_id);
+                if (is_array($translations)) {
+                    foreach ($translations as $translated_id) {
+                        $translated_term = get_term((int) $translated_id, 'category');
+                        if ($translated_term instanceof WP_Term && $translated_term->slug !== '') {
+                            $category_slugs[] = $translated_term->slug;
+                        }
+                    }
+                }
+            }
+        }
+    }
     if ($cat_id > 0) {
-        $query_args['cat'] = $cat_id;
-    } else {
-        // 兜底：拿最近 post（避免返回空）
-        $query_args['category_name'] = 'ai-employee';
+        $term = get_term($cat_id, 'category');
+        if ($term instanceof WP_Term && $term->slug !== '') {
+            $category_slugs[] = $term->slug;
+        }
+    }
+    $category_slugs = array_values(array_unique($category_slugs));
+    if (empty($category_slugs)) {
+        return [];
+    }
+    if (!empty($category_slugs)) {
+        $query_args['tax_query'] = [[
+            'taxonomy' => 'category',
+            'field' => 'slug',
+            'terms' => $category_slugs,
+            'operator' => 'IN',
+        ]];
     }
     $posts = get_posts($query_args);
 
@@ -2396,141 +2772,13 @@ function hireai_resolve_employee_url($index = 0, $fallback_url = '') {
     return $fallback_url;
 }
 
-/* -------------------------------------------------------------------------
- * 2.7. v3.5.7-p16 — 数据层 hooks(数据源抽象)
- *    让 page-ai-solutions.php / page-cases-insights.php 不再直接写 WP_Query
- *    而是调用这两个 hook,确保:
- *      - product_cat 探测+去重(修 v3.5.7-p15 product_cat 重复 push bug)
- *      - 缓存 key 命名一致(save_post / save_post_product 清缓存路径固定)
- *      - 双语 fallback 逻辑统一(zh 失败自动试英文 slug)
- * ---------------------------------------------------------------------- */
-
-/**
- * v3.5.7-p18: 获取 AI 解决方案页面用的 WC 商品 ID 列表(已应用 tax_query + 去重)
- *   - 调用 page-ai-solutions.php 直接消费返回的 IDs
- *   - 缓存 key: hireai_solutions_cache_v2_p{N}_cat{SLUG}_per{PERSONA_SLUG}(与 save_post_product hook 一致)
- *   - product_visibility NOT IN(排除 hidden/search 屏蔽)
- *   - 7 场景 product_cat:brand-ip / marketing / visual-design / ecommerce / crisis / copywriting / custom
- *   - 数字人 product_cat:由 hireai_list_solution_personas() 动态从 DB 抽出(独立维度,与场景 AND 关系)
- *   - 探测失败时 fallback:不过滤 product_cat,让所有 publish product 都返回
- *
- * @param int    $paged         当前页码
- * @param int    $per_page      每页商品数
- * @param string $category_slug 场景分类 slug(留空=全部)
- * @param string $persona_slug  数字人分类 slug(留空=全部)
- * @return array<int> WC product post IDs
- */
+/* 旧商品 ID 接口：仅保留调用兼容，实际统一委托给当前语言 DTO 查询层。 */
 function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_slug = '', $persona_slug = '') {
-    if (!post_type_exists('product') || !function_exists('wc_get_product')) return [];
-    $paged         = max(1, (int) $paged);
-    $per_page      = -1 === (int) $per_page ? -1 : max(1, (int) $per_page);
-    $category_slug = is_string($category_slug) ? sanitize_key($category_slug) : '';
-    $persona_slug  = is_string($persona_slug)  ? sanitize_key($persona_slug)  : '';
-
-    /*
-     * v3.7.46: 移除 language-agnostic transient。旧缓存 key 不带语言，
-     * 而 Polylang 会根据浏览语言改变 WP_Query 结果，导致一次缓存把另一语言的空结果
-     * 复用到所有语言。商品保存后商城必须立即同步，因此改为直接标准 WC 查询。
-     */
-    $meta_query = [];
-    $tax_query = [[
-        'taxonomy' => 'product_visibility',
-        'field'    => 'slug',
-        'terms'    => ['exclude-from-catalog'],
-        'operator' => 'NOT IN',
-    ]];
-
-    // 场景分类筛选用 slug IN；同一分类在 Polylang 翻译或重命名后不再依赖单个 term_id。
-    if (!empty($category_slug)) {
-        $tax_query[] = [
-            'taxonomy' => 'product_cat',
-            'field'    => 'slug',
-            'terms'    => [(string) $category_slug],
-            'operator' => 'IN',
-        ];
-    }
-
-    // 3. 数字人筛选(独立维度,与场景 AND 关系)
-    /* v3.5.7-p21: persona_slug 改走 product_tag(Echo 数据) + 短→长 slug 映射
-     *   - 之前查 product_cat(Echo 没写) -> 数字人 chip 永远拉不到商品
-     *   - 接受短名(victoria/adrian/iris/kai/evan)或完整 slug(victoria-brand-pr/...)
-     *   - 优先查 product_tag;若 term 不存在,fallback 到 product_cat(兼容历史数据)
-     */
-    if (!empty($persona_slug)) {
-        $effective_slug = function_exists('hireai_digital_human_full_slug')
-            ? hireai_digital_human_full_slug($persona_slug)
-            : $persona_slug;
-        $term     = null;
-        $tax_used = '';
-        if (taxonomy_exists('product_tag')) {
-            $term = get_term_by('slug', $effective_slug, 'product_tag');
-            if ($term && !is_wp_error($term)) {
-                $tax_used = 'product_tag';
-            }
-        }
-        if ((!$term || is_wp_error($term)) && taxonomy_exists('product_cat')) {
-            $fallback = get_term_by('slug', $effective_slug, 'product_cat');
-            if ($fallback && !is_wp_error($fallback)) {
-                $term     = $fallback;
-                $tax_used = 'product_cat';
-            }
-        }
-        if ($term && !is_wp_error($term) && $tax_used !== '') {
-            $tax_query[] = [
-                'taxonomy' => $tax_used,
-                'field'    => 'slug',
-                'terms'    => [(string) $effective_slug],
-                'operator' => 'IN',
-            ];
-        }
-    }
-
-    // 4. 筛选同时存在 → relation=AND
-    if (count($tax_query) > 1) {
-        $tax_query['relation'] = 'AND';
-    }
-
-    // 5. 去重 + 兼容旧 hook 调用
-    $tax_query = function_exists('hireai_dedupe_tax_query')
-        ? hireai_dedupe_tax_query($tax_query)
-        : $tax_query;
-
-    $query_args = [
-        'post_type'      => 'product',
-        'post_status'    => 'publish',
-        'posts_per_page' => $per_page,
-        'paged'          => $paged,
-        'orderby'        => 'date',
-        'order'          => 'DESC',
-        'no_found_rows'  => true,
-        'fields'         => 'ids',
-        'tax_query'      => $tax_query,
-        'meta_query'     => $meta_query,
-    ];
-
-    $polylang_active = function_exists('pll_current_language') && function_exists('pll_default_language');
-    $polylang_current = $polylang_active ? pll_current_language('slug') : '';
-    $current_language = $polylang_current ? $polylang_current : hireai_current_lang();
-    $default_language = $polylang_active ? pll_default_language('slug') : 'zh';
-
-    if ($polylang_active) {
-        $query_args['lang'] = implode(',', array_values(array_unique(array_filter([$current_language, $default_language]))));
-    }
-
-    $q = new WP_Query($query_args);
-    $ids = is_array($q->posts) ? array_map('intval', $q->posts) : [];
-    wp_reset_postdata();
-
-    // 7. 当前语言没有商品时回退默认语言，避免 Sasha 只传中文商品时英文商城显示空。
-    if (empty($ids) && $polylang_active && $default_language && $default_language !== $current_language) {
-        $query_args['lang'] = $default_language;
-
-        $q = new WP_Query($query_args);
-        $ids = is_array($q->posts) ? array_map('intval', $q->posts) : [];
-        wp_reset_postdata();
-    }
-
-    return $ids;
+    return hireai_get_solution_products([
+        'paged' => $paged,
+        'per_page' => $per_page,
+        'tag_slug' => $persona_slug !== '' ? $persona_slug : $category_slug,
+    ]);
 }
 
 /**
@@ -3594,18 +3842,7 @@ add_action('acf/init', function () {
         ['name' => 'hero_cta_secondary_link', 'label' => 'Hero · 次 CTA 链接', 'type' => 'text', 'zh' => '/category/cases/', 'en' => '/category/cases/'],
         ['name' => 'card_cta_text', 'label' => '卡片按钮文字', 'type' => 'text', 'zh' => '探索更多', 'en' => 'Explore More'],
         ['name' => 'empty_text', 'label' => '筛选空状态文案', 'type' => 'text', 'zh' => '该分类下暂无解决方案', 'en' => 'No solutions in this category yet.'],
-        /* —— 邀约礼遇区块字段 —— */
-        ['name' => 'invite_kicker', 'label' => '邀约礼遇 · 眉题', 'type' => 'text', 'zh' => '邀约礼遇', 'en' => 'INVITE & EARN'],
-        ['name' => 'invite_title', 'label' => '邀约礼遇 · 标题', 'type' => 'textarea', 'zh' => '邀约礼遇 / Invite & Earn', 'en' => 'Invite & Earn', 'extra' => ['rows' => 1]],
-        ['name' => 'invite_subtitle', 'label' => '邀约礼遇 · 副标题', 'type' => 'textarea', 'zh' => '分享您的专属邀请码，与友共赏 AI 数字人卓越体验。', 'en' => 'Share your exclusive invite code with peers to enjoy the Aurelian AI experience together.', 'extra' => ['rows' => 2]],
-        ['name' => 'invite_code', 'label' => '邀约礼遇 · 推荐码', 'type' => 'text', 'zh' => 'hireaipeople.com/invite/VIP001', 'en' => 'hireaipeople.com/invite/VIP001'],
-        ['name' => 'invite_copy_text', 'label' => '邀约礼遇 · 复制按钮文字', 'type' => 'text', 'zh' => '复制链接', 'en' => 'Copy Link'],
-        ['name' => 'invite_reward_amount', 'label' => '邀约礼遇 · 奖励金额', 'type' => 'text', 'zh' => '￥500', 'en' => '¥500'],
-        ['name' => 'invite_reward_label', 'label' => '邀约礼遇 · 奖励描述', 'type' => 'textarea', 'zh' => '双方均可获得 ￥500 定制额度奖励，用于您的下一次 AI 服务升级。', 'en' => 'Both you and your invitee earn a ¥500 bespoke credit toward your next AI service upgrade.', 'extra' => ['rows' => 2]],
-        ['name' => 'invite_steps_label', 'label' => '邀约礼遇 · 步骤区块标签', 'type' => 'text', 'zh' => '如何运作', 'en' => 'How It Works'],
-        /* —— 筛选 / 大 CTA 收尾 —— */
-        ['name' => 'filter_tab_scene_label', 'label' => '筛选 · 按场景标签', 'type' => 'text', 'zh' => '按场景分类', 'en' => 'By Scenario'],
-        ['name' => 'filter_tab_employee_label', 'label' => '筛选 · 按数字员工标签', 'type' => 'text', 'zh' => '按数字员工分类', 'en' => 'By Digital Employee'],
+        /* —— 大 CTA 收尾 —— */
         ['name' => 'final_cta_kicker', 'label' => '收尾 CTA · 眉题', 'type' => 'text', 'zh' => 'NEXT STEP', 'en' => 'NEXT STEP'],
         ['name' => 'final_cta_title', 'label' => '收尾 CTA · 标题', 'type' => 'textarea', 'zh' => '准备好为您的品牌升级了吗？', 'en' => 'Ready to Elevate Your Brand?', 'extra' => ['rows' => 1]],
         ['name' => 'final_cta_subtitle', 'label' => '收尾 CTA · 副标题', 'type' => 'textarea', 'zh' => '告诉我们您的雄心，我们将围绕它设计一套专属 AI 解决方案。', 'en' => 'Tell us your ambitions and we will design a bespoke AI plan around them.', 'extra' => ['rows' => 2]],
@@ -3618,7 +3855,7 @@ add_action('acf/init', function () {
     /* 邀约礼遇 — 推荐步骤 repeater（中文/英文各一行） */
     acf_add_local_field_group([
         'key'    => 'group_solutions_invite_steps',
-        'title'  => 'AI 解决方案 — 邀约礼遇 · 推荐步骤',
+        'title'  => '联系页 — 邀约礼遇 · 推荐步骤',
         'fields' => [
             [
                 'key' => 'field_solutions_invite_steps',
@@ -3636,47 +3873,65 @@ add_action('acf/init', function () {
             ],
         ],
         'location' => [
-            [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-solutions.php']],
+            [['param' => 'page_template', 'operator' => '==', 'value' => 'page-contact.php']],
         ],
     ]);
 
-    /* 筛选配置（单一 repeater，行内含中英文标签 + 场景 slug） */
+    /* 全局筛选配置：slug / 双语文案 / 启用状态 / 排序，自由增删 */
     acf_add_local_field_group([
-        'key'    => 'group_solutions_filters',
-        'title'  => 'AI 解决方案 — 筛选配置',
+        'key'    => 'group_solution_tag_filters',
+        'title'  => '解决方案标签',
         'fields' => [
             [
-                'key'       => 'field_solutions_filters',
-                'label'     => '场景筛选',
-                'name'      => 'solutions_filters',
+                'key'       => 'field_solution_tag_filters',
+                'label'     => '标签配置',
+                'name'      => 'solution_tag_filters',
                 'type'      => 'repeater',
-                'instructions' => '可选。每行一个筛选 chip：中英文标签 + 数字人标签 slug（victoria / adrian / iris / kai / evan）。留空 = 自动按商品已有标签生成（推荐，商品新增标签会自动出现在筛选栏）。',
+                'instructions' => '每行一个商品标签筛选 chip。未配置中英文文案的标签会在前台隐藏，并在后台提示；「全部」由系统内置。',
                 'layout'    => 'table',
-                'button_label' => '添加场景',
+                'button_label' => '添加标签',
                 'sub_fields' => [
                     [
-                        'key'   => 'field_filter_label_zh',
+                        'key'   => 'field_solution_tag_slug',
+                        'label' => 'product_tag slug',
+                        'name'  => 'tag_slug',
+                        'type'  => 'text',
+                        'required' => 1,
+                    ],
+                    [
+                        'key'   => 'field_solution_tag_label_zh',
                         'label' => '标签（中文）',
-                        'name'  => 'filter_label_zh',
+                        'name'  => 'label_zh',
                         'type'  => 'text',
                     ],
                     [
-                        'key'   => 'field_filter_label_en',
+                        'key'   => 'field_solution_tag_label_en',
                         'label' => 'Label (EN)',
-                        'name'  => 'filter_label_en',
+                        'name'  => 'label_en',
                         'type'  => 'text',
                     ],
                     [
-                        'key'   => 'field_filter_slug',
-                        'label' => '商品分类 slug',
-                        'name'  => 'filter_slug',
-                        'type'  => 'text',
+                        'key'           => 'field_solution_tag_enabled',
+                        'label'         => '启用',
+                        'name'          => 'enabled',
+                        'type'          => 'true_false',
+                        'default_value' => 1,
+                        'ui'            => 1,
+                    ],
+                    [
+                        'key'           => 'field_solution_tag_order',
+                        'label'         => '排序',
+                        'name'          => 'tag_order',
+                        'type'          => 'number',
+                        'default_value' => 99,
+                        'min'           => 0,
+                        'step'          => 1,
                     ],
                 ],
             ],
         ],
         'location' => [
-            [['param' => 'page_template', 'operator' => '==', 'value' => 'page-ai-solutions.php']],
+            [['param' => 'options_page', 'operator' => '==', 'value' => 'hireai-settings']],
         ],
     ]);
 
@@ -3821,6 +4076,14 @@ add_action('acf/init', function () {
         ['name' => 'social_xhs_url', 'label' => '社交 · 小红书链接', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'social_ins_url', 'label' => '社交 · Instagram 链接', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'social_fb_url', 'label' => '社交 · Facebook 链接', 'type' => 'text', 'zh' => '', 'en' => ''],
+        ['name' => 'invite_kicker', 'label' => '邀约礼遇 · 眉题', 'type' => 'text', 'zh' => '邀约礼遇', 'en' => 'INVITE & EARN'],
+        ['name' => 'invite_title', 'label' => '邀约礼遇 · 标题', 'type' => 'textarea', 'zh' => '邀约礼遇 / Invite & Earn', 'en' => 'Invite & Earn', 'extra' => ['rows' => 1]],
+        ['name' => 'invite_subtitle', 'label' => '邀约礼遇 · 副标题', 'type' => 'textarea', 'zh' => '分享您的专属邀请码，与友共赏 AI 数字人卓越体验。', 'en' => 'Share your exclusive invite code with peers to enjoy the Aurelian AI experience together.', 'extra' => ['rows' => 2]],
+        ['name' => 'invite_code', 'label' => '邀约礼遇 · 推荐码', 'type' => 'text', 'zh' => 'hireaipeople.com/invite/VIP001', 'en' => 'hireaipeople.com/invite/VIP001'],
+        ['name' => 'invite_copy_text', 'label' => '邀约礼遇 · 复制按钮文字', 'type' => 'text', 'zh' => '复制链接', 'en' => 'Copy Link'],
+        ['name' => 'invite_reward_amount', 'label' => '邀约礼遇 · 奖励金额', 'type' => 'text', 'zh' => '￥500', 'en' => '¥500'],
+        ['name' => 'invite_reward_label', 'label' => '邀约礼遇 · 奖励描述', 'type' => 'textarea', 'zh' => '双方均可获得 ￥500 定制额度奖励，用于您的下一次 AI 服务升级。', 'en' => 'Both you and your invitee earn a ¥500 bespoke credit toward your next AI service upgrade.', 'extra' => ['rows' => 2]],
+        ['name' => 'invite_steps_label', 'label' => '邀约礼遇 · 步骤区块标签', 'type' => 'text', 'zh' => '如何运作', 'en' => 'How It Works'],
         ['name' => 'cta_title', 'label' => 'CTA · 标题', 'type' => 'textarea', 'zh' => '准备好重新定义服务了吗？', 'en' => 'Ready to Redefine Humanity?', 'extra' => ['rows' => 1]],
         ['name' => 'cta_desc', 'label' => 'CTA · 描述', 'type' => 'textarea', 'zh' => '与我们的专属数字员工一同，迈入奢华服务的未来。', 'en' => 'Step into the future of luxury service with our bespoke digital workforce.', 'extra' => ['rows' => 2]],
         ['name' => 'cta_btn_label', 'label' => 'CTA · 按钮文字', 'type' => 'text', 'zh' => '开始咨询', 'en' => 'Begin Consultation'],
@@ -3903,7 +4166,7 @@ add_action('acf/init', function () {
        *        fp_faq_subtitle / fp_cta_desc 等死字段不再注册）。
        *     2. 旧字段的历史数据仍在 post meta 中，模板兜底链继续兼容，
        *        已填内容不会丢；在新组里保存一次即自然接管。
-       *     3. 3 个 repeater 的 field key 与 v3.6.0 完全一致
+       *     3. 2 个 repeater 的 field key 与 v3.6.0 完全一致
        *        （repeater 行数据以 key 存储，key 变更会丢数据）。
        * ==================================================================== */
       $_front_fields = [
@@ -3956,29 +4219,6 @@ add_action('acf/init', function () {
         ['name' => 'fp_solutions_explore_url', 'label' => '④ 解决方案 · 按钮链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
 
         /* 兜底静态方案卡 1-4（repeater 未填或未满 4 张时显示） */
-        ['name' => 'fp_sol1_title', 'label' => '④ 兜底方案 1 · 标题', 'type' => 'text', 'zh' => '金融与财富管理', 'en' => 'Finance & Wealth Management'],
-        ['name' => 'fp_sol1_desc', 'label' => '④ 兜底方案 1 · 描述', 'type' => 'textarea', 'zh' => '智能顾问与客户关系维护的数字化重塑。', 'en' => 'Digital reshaping of intelligent advisors and client relationship management.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_sol1_tag', 'label' => '④ 兜底方案 1 · 标签', 'type' => 'text', 'zh' => '金融', 'en' => 'Finance'],
-        ['name' => 'fp_sol1_image', 'label' => '④ 兜底方案 1 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
-        ['name' => 'fp_sol1_url', 'label' => '④ 兜底方案 1 · 链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
-
-        ['name' => 'fp_sol2_title', 'label' => '④ 兜底方案 2 · 标题', 'type' => 'text', 'zh' => '高端零售与电商', 'en' => 'Premium Retail & E-commerce'],
-        ['name' => 'fp_sol2_desc', 'label' => '④ 兜底方案 2 · 描述', 'type' => 'textarea', 'zh' => '24/7全天候奢华购物体验升级。', 'en' => '24/7 all-day luxury shopping experience upgrade.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_sol2_tag', 'label' => '④ 兜底方案 2 · 标签', 'type' => 'text', 'zh' => '零售', 'en' => 'Retail'],
-        ['name' => 'fp_sol2_image', 'label' => '④ 兜底方案 2 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
-        ['name' => 'fp_sol2_url', 'label' => '④ 兜底方案 2 · 链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
-
-        ['name' => 'fp_sol3_title', 'label' => '④ 兜底方案 3 · 标题', 'type' => 'text', 'zh' => '医疗健康与陪伴', 'en' => 'Healthcare & Companionship'],
-        ['name' => 'fp_sol3_desc', 'label' => '④ 兜底方案 3 · 描述', 'type' => 'textarea', 'zh' => '充满同理心的智能关怀与健康咨询。', 'en' => 'Empathetic intelligent care and health consultation.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_sol3_tag', 'label' => '④ 兜底方案 3 · 标签', 'type' => 'text', 'zh' => '健康', 'en' => 'Health'],
-        ['name' => 'fp_sol3_image', 'label' => '④ 兜底方案 3 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
-        ['name' => 'fp_sol3_url', 'label' => '④ 兜底方案 3 · 链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
-
-        ['name' => 'fp_sol4_title', 'label' => '④ 兜底方案 4 · 标题', 'type' => 'text', 'zh' => '泛娱乐与虚拟偶像', 'en' => 'Entertainment & Virtual Idols'],
-        ['name' => 'fp_sol4_desc', 'label' => '④ 兜底方案 4 · 描述', 'type' => 'textarea', 'zh' => '打造永不塌房的超级IP与互动体验。', 'en' => 'Build the ultimate never-fail super IP and interactive experience.', 'extra' => ['rows' => 3]],
-        ['name' => 'fp_sol4_tag', 'label' => '④ 兜底方案 4 · 标签', 'type' => 'text', 'zh' => '娱乐', 'en' => 'Entertainment'],
-        ['name' => 'fp_sol4_image', 'label' => '④ 兜底方案 4 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
-        ['name' => 'fp_sol4_url', 'label' => '④ 兜底方案 4 · 链接', 'type' => 'text', 'zh' => '/ai-solutions/', 'en' => '/ai-solutions/'],
 
         /* ── ⑤ 案例与洞察区块 ── */
         ['name' => 'fp_cases_kicker', 'label' => '⑤ 案例 · 眉题', 'type' => 'text', 'zh' => '前沿视野', 'en' => 'Frontier Vision'],
@@ -4041,26 +4281,7 @@ add_action('acf/init', function () {
           'esc_html' => true,
       ]);
 
-      /* ── 3 个 repeater 原样并入（field key 必须与 v3.6.0 一致，行数据以 key 存储） ── */
-      $_front_group['fields'][] = [
-          'key'           => 'field_fp_sol_static_repeater',
-          'label'         => '④ 解决方案静态卡片（最多 4 张 · 未填时回退到兜底方案 1-4）',
-          'name'          => 'fp_sol_static_repeater',
-          'type'          => 'repeater',
-          'max'           => 4,
-          'layout'        => 'row',
-          'button_label'  => '添加一张方案卡',
-          'sub_fields'    => [
-              ['key' => 'field_fp_sol_static_title_zh', 'label' => '标题 · 中',    'name' => 'title_zh', 'type' => 'text'],
-              ['key' => 'field_fp_sol_static_title_en', 'label' => 'Title · EN',   'name' => 'title_en', 'type' => 'text'],
-              ['key' => 'field_fp_sol_static_desc_zh',  'label' => '描述 · 中',    'name' => 'desc_zh',  'type' => 'textarea', 'rows' => 2],
-              ['key' => 'field_fp_sol_static_desc_en',  'label' => 'Description · EN', 'name' => 'desc_en', 'type' => 'textarea', 'rows' => 2],
-              ['key' => 'field_fp_sol_static_tag_zh',   'label' => '标签 · 中',    'name' => 'tag_zh',   'type' => 'text'],
-              ['key' => 'field_fp_sol_static_tag_en',   'label' => 'Tag · EN',     'name' => 'tag_en',   'type' => 'text'],
-              ['key' => 'field_fp_sol_static_image',    'label' => '图片（中英共用）', 'name' => 'image',   'type' => 'image', 'return_format' => 'array', 'preview_size' => 'medium'],
-              ['key' => 'field_fp_sol_static_url',      'label' => '链接（中英共用）', 'name' => 'url',     'type' => 'url'],
-          ],
-      ];
+      /* ── 2 个 repeater 原样并入（field key 必须与 v3.6.0 一致，行数据以 key 存储） ── */
       $_front_group['fields'][] = [
           'key'           => 'field_fp_cases_minor_repeater',
           'label'         => '⑤ 小案例列表（最多 6 张 · 未填时回退到兜底案例 1-2）',
@@ -4105,17 +4326,25 @@ add_action('acf/init', function () {
 
       acf_add_local_field_group($_front_group);
 
-      /* ---- v3.6.0-B: 商品双语 + 首页推荐 ---- */
+      /* ---- v3.6.0-B: Polylang 商品记录 + 首页推荐 ---- */
       acf_add_local_field_group([
           'key'      => 'group_product_featured_v360',
-          'title'    => 'AI 解决方案商品 · v3.6.0 双语 + 首页推荐',
+          'title'    => 'AI 解决方案商品记录 + 首页推荐',
           'fields'   => [
-              ['key' => 'field_sol_title_zh',             'label' => '解决方案标题 · 中（覆盖默认 WP title）',     'name' => 'sol_title_zh',             'type' => 'text'],
-              ['key' => 'field_sol_title_en',             'label' => 'Solution Title · EN',                       'name' => 'sol_title_en',             'type' => 'text'],
-              ['key' => 'field_sol_desc_zh',              'label' => '解决方案描述 · 中（覆盖默认 excerpt）',     'name' => 'sol_desc_zh',              'type' => 'textarea', 'rows' => 3],
-              ['key' => 'field_sol_desc_en',              'label' => 'Solution Description · EN',                 'name' => 'sol_desc_en',              'type' => 'textarea', 'rows' => 3],
-              ['key' => 'field_sol_tag_zh',               'label' => '标签 · 中',                                  'name' => 'sol_tag_zh',               'type' => 'text'],
-              ['key' => 'field_sol_tag_en',               'label' => 'Tag · EN',                                   'name' => 'sol_tag_en',               'type' => 'text'],
+              [
+                  'key' => 'field_product_polylang_note',
+                  'label' => '数据来源',
+                  'name' => '',
+                  'type' => 'message',
+                  'message' => '商品标题、摘要、正文和语言跟随当前 Polylang 商品记录；中英文请分别编辑对应翻译商品。下方字段仅作为旧双语单商品数据的兼容 fallback。',
+                  'esc_html' => true,
+              ],
+              ['key' => 'field_sol_title_zh',             'label' => '兼容标题 · 中（仅旧数据 fallback）',        'name' => 'sol_title_zh',             'type' => 'text'],
+              ['key' => 'field_sol_title_en',             'label' => 'Legacy Title · EN',                         'name' => 'sol_title_en',             'type' => 'text'],
+              ['key' => 'field_sol_desc_zh',              'label' => '兼容描述 · 中（仅旧数据 fallback）',        'name' => 'sol_desc_zh',              'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_sol_desc_en',              'label' => 'Legacy Description · EN',                   'name' => 'sol_desc_en',              'type' => 'textarea', 'rows' => 3],
+              ['key' => 'field_sol_tag_zh',               'label' => '兼容标签 · 中（仅旧数据 fallback）',        'name' => 'sol_tag_zh',               'type' => 'text'],
+              ['key' => 'field_sol_tag_en',               'label' => 'Legacy Tag · EN',                           'name' => 'sol_tag_en',               'type' => 'text'],
               [
                   'key'           => 'field_sol_featured_on_home',
                   'label'         => '★ 首页推荐开关（默认未勾选；勾选后此商品会被 front-page 解决方案区拉取）',
@@ -4159,7 +4388,7 @@ add_action('acf/init', function () {
         ]);
     }
 
-    acf_add_local_field_group(hireai_make_bilingual_group('group_site_options', '站点设置 — 页脚', [
+    acf_add_local_field_group(hireai_make_bilingual_group('group_site_options', '站点设置 — 全局内容', [
         ['name' => 'header_logo', 'label' => '页眉 Logo', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url']],
         ['name' => 'header_brand_label', 'label' => '页眉 · 品牌 aria-label（Logo 链接）', 'type' => 'text', 'zh' => '聘AI（Hire AI People）', 'en' => 'Hire AI People'],
         ['name' => 'header_logo_alt', 'label' => '页眉 · Logo alt 文本', 'type' => 'text', 'zh' => '聘AI（Hire AI People）', 'en' => 'Hire AI People'],
@@ -4324,16 +4553,15 @@ function hireai_flush_solutions_cache() {
 add_action('set_object_terms', function ($object_id, $terms, $tt_ids, $taxonomy) {
     if (get_post_type($object_id) !== 'product') return;
     if (!in_array($taxonomy, ['product_tag', 'product_cat', 'product_brand'], true)) return;
-    hireai_flush_solutions_cache();
+    hireai_purge_solution_related_cache('product taxonomy changed #' . (int) $object_id);
 }, 10, 4);
 
 /* v3.5.7-p17 Bug 3 修复：保留原 save_post_product hook (WC 价格/库存变化但 status 不变时仍需清缓存)
- *   - 仍然只在 publish 状态时清缓存 (与 v3.5.7-p16 行为一致)
+ *   - 发布、更新、下架都会影响首页/商城/联系页内容，因此均触发 targeted purge
  *   - 抽出 hireai_flush_solutions_cache() 复用
  */
 add_action('save_post_product', function ($post_id, $post) {
     if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) return;
-    if ($post->post_status !== 'publish') return;
     // 1. transient (使用 v3.5.7-p17 抽出的统一清缓存函数)
     hireai_flush_solutions_cache();
     // 2. ACF 字段缓存
@@ -4341,9 +4569,8 @@ add_action('save_post_product', function ($post_id, $post) {
         $s = acf_get_store('fields');         if ($s) { $s->reset(); }
         $g = acf_get_store('field-groups');   if ($g) { $g->reset(); }
     }
-    // 3. 全文缓存对象（WP Rocket / W3 Total Cache / LiteSpeed 通用钩子）
-    if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
-    if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai product saved'); }
+    // 3. 首页 / 方案页 / 联系页中英文 URL 定向失效
+    hireai_purge_solution_related_cache('product saved #' . (int) $post_id);
     // 4. OPcache
     if (function_exists('opcache_invalidate')) { @opcache_invalidate(__FILE__, true); }
 }, 20, 2);
@@ -4355,14 +4582,13 @@ add_action('save_post_product', function ($post_id, $post) {
  */
 add_action('transition_post_status', function ($new, $old, $post) {
     if (!$post || $post->post_type !== 'product') return;
-    if ($new === 'publish' && $old !== 'publish') {
+    if (($new === 'publish' && $old !== 'publish') || ($old === 'publish' && $new !== 'publish')) {
         hireai_flush_solutions_cache();
         if (function_exists('acf_get_store')) {
             $s = acf_get_store('fields');         if ($s) { $s->reset(); }
             $g = acf_get_store('field-groups');   if ($g) { $g->reset(); }
         }
-        if (function_exists('wp_cache_clear_cache')) { wp_cache_clear_cache(); }
-        if (class_exists('\LiteSpeed\Purge')) { \LiteSpeed\Purge::purge_all('hireai product published'); }
+        hireai_purge_solution_related_cache('product published #' . (int) $post->ID);
         if (function_exists('opcache_invalidate')) { @opcache_invalidate(__FILE__, true); }
     }
 }, 20, 3);
@@ -4399,6 +4625,78 @@ add_action('save_post', function ($post_id, $post) {
     delete_option('hireai_last_seen_version');
 }, 20, 2);
 
+function hireai_solution_related_purge_urls() {
+    $urls = [];
+
+    foreach (['zh', 'en'] as $language) {
+        $home_url = function_exists('pll_home_url') ? pll_home_url($language) : '';
+        if (!is_string($home_url) || $home_url === '') {
+            $home_url = hireai_language_home_url($language);
+        }
+        $urls[] = untrailingslashit($home_url);
+
+        $solution_page_id = function_exists('hireai_polylang_page_for_language')
+            ? hireai_polylang_page_for_language('ai-solutions', 'page-ai-solutions.php', $language)
+            : 0;
+        $contact_page_id = function_exists('hireai_polylang_page_for_language')
+            ? hireai_polylang_page_for_language('contact', 'page-contact.php', $language)
+            : 0;
+
+        $solution_url = $solution_page_id > 0 ? get_permalink($solution_page_id) : $home_url . 'ai-solutions/';
+        $contact_url = $contact_page_id > 0 ? get_permalink($contact_page_id) : $home_url . 'contact/';
+        if (is_string($solution_url) && $solution_url !== '') {
+            $urls[] = untrailingslashit($solution_url);
+        }
+        if (is_string($contact_url) && $contact_url !== '') {
+            $urls[] = untrailingslashit($contact_url);
+        }
+    }
+
+    return array_values(array_unique(array_filter($urls)));
+}
+
+function hireai_purge_target_urls(array $urls, $reason = '') {
+    $purged_urls = [];
+    foreach ($urls as $url) {
+        $url = esc_url_raw((string) $url);
+        if ($url === '') {
+            continue;
+        }
+
+        try {
+            if (class_exists('\LiteSpeed\Purge') && method_exists('\LiteSpeed\Purge', 'purge_url')) {
+                \LiteSpeed\Purge::purge_url($url);
+                $purged_urls[] = $url;
+            }
+            if (function_exists('rocket_clean_files')) {
+                rocket_clean_files([$url]);
+                $purged_urls[] = $url;
+            }
+            if (function_exists('w3tc_flush_url')) {
+                w3tc_flush_url($url);
+                $purged_urls[] = $url;
+            }
+            do_action('litespeed_purge_url', $url);
+        } catch (Throwable $exception) {
+            error_log('[hireai cache] targeted purge failed ' . $url . ': ' . $exception->getMessage());
+        }
+    }
+
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        error_log('[hireai cache] ' . ($reason !== '' ? $reason : 'targeted purge') . ': ' . implode(', ', array_values(array_unique($purged_urls))));
+    }
+    return array_values(array_unique($purged_urls));
+}
+
+function hireai_purge_solution_related_cache($reason = '') {
+    hireai_flush_solutions_cache();
+    delete_option('hireai_missing_solution_tags');
+    return hireai_purge_target_urls(
+        hireai_solution_related_purge_urls(),
+        $reason !== '' ? $reason : 'solution products changed'
+    );
+}
+
 /* -------------------------------------------------------------------------
  * v3.7.5 — 内容保存即清全页缓存（修复「后台改了图文、前台不生效」）
  *   之前只在 主题更新 / 商品保存 / 案例文章保存 时清 LiteSpeed；
@@ -4419,6 +4717,13 @@ function hireai_purge_front_cache($reason = '') {
 /* 任何 ACF 表单保存（页面字段 / 商品字段 / 「站点设置」选项页）→ 清缓存 */
 add_action('acf/save_post', function ($post_id) {
     $what = is_string($post_id) ? $post_id : (string) get_post_type($post_id);
+    if ($what === 'product') {
+        hireai_purge_solution_related_cache('product ACF saved');
+        return;
+    }
+    if (is_string($post_id)) {
+        delete_option('hireai_missing_solution_tags');
+    }
     hireai_purge_front_cache('hireai acf saved: ' . $what);
 }, 20);
 
@@ -4499,56 +4804,13 @@ add_action('init', function () {
 }, 20);
 
 /* -------------------------------------------------------------------------
- * v3.5.7-p21: 注册 category taxonomy 到 product CPT + 6 个数字人 chip 配置
+ * v3.5.7-p21: 注册 category taxonomy 到 product CPT
  *   - WP 5.5+ 默认断开 category 与 product 关联,Echo 9/8 写入的 80-92 post category 静默丢失
  *   - 加这行(priority 5,在 p18 seed priority 20 之前)让防御生效,不影响现有 page-is_singular('product') 代码
- *   - 数字人 chip 改为 6 个(All + 5 数字人),slug 走 product_tag,short→full 映射兼容历史数据
  * ---------------------------------------------------------------------- */
 add_action('init', function () {
     register_taxonomy_for_object_type('category', 'product');
 }, 5);
-
-/**
- * v3.5.7-p21: 6 个数字人 chip 配置(AI 解决方案商城顶栏筛选)
- *   - 取代 v3.5.7-p18 的 8 个场景 tab(product_cat 字段空 → 8 个 panel 全空)
- *   - slug 走 product_tag(Echo 数据最完整的就是 product_tag 5 个数字人)
- *   - short slug(victoria/adrian/iris/kai/evan) = chip 显示用
- *   - full slug(victoria-brand-pr/...) = 历史 product_tag 数据,Echo 也可能用 short
- *   - ACF repeater 'solutions_filters' 仍可覆盖(向后兼容)
- *
- * @return array<string,array{slug:string,full:string,label_zh:string,label_en:string}>
- */
-function hireai_digital_humans() {
-    return [
-        'victoria' => ['slug' => 'victoria', 'full' => 'victoria-brand-pr', 'label_zh' => 'Victoria · 公关',   'label_en' => 'Victoria · PR'],
-        'adrian'   => ['slug' => 'adrian',   'full' => 'adrian-strategy',  'label_zh' => 'Adrian · 品牌IP',  'label_en' => 'Adrian · Brand-IP'],
-        'iris'     => ['slug' => 'iris',     'full' => 'iris-visual',      'label_zh' => 'Iris · 视觉',      'label_en' => 'Iris · Visual'],
-        'kai'      => ['slug' => 'kai',      'full' => 'kai-ecommerce',    'label_zh' => 'Kai · 电商',       'label_en' => 'Kai · E-Commerce'],
-        'evan'     => ['slug' => 'evan',     'full' => 'evan-copywriting', 'label_zh' => 'Evan · 文案',      'label_en' => 'Evan · Copywriting'],
-    ];
-}
-
-/**
- * v3.5.7-p21: slug 映射(short → full),供 hireai_get_ai_solutions_products() 用
- *   - 接受 'victoria' → 返回 'victoria-brand-pr'(或反之)
- *   - 如果传入的 slug 不在 map,原样返回(兼容未来新增数字人)
- *
- * @param string $slug chip 短名或完整 slug
- * @return string 完整 product_tag slug
- */
-function hireai_digital_human_full_slug($slug) {
-    if (!is_string($slug) || $slug === '') return '';
-    static $short_to_full = null;
-    if ($short_to_full === null) {
-        $map = function_exists('hireai_digital_humans') ? hireai_digital_humans() : [];
-        $short_to_full = [];
-        foreach ($map as $short => $info) {
-            $short_to_full[$short] = $info['full'];
-            $short_to_full[$info['full']] = $info['full']; // 幂等
-        }
-    }
-    return isset($short_to_full[$slug]) ? $short_to_full[$slug] : $slug;
-}
 
 /* v3.5.7-p27 Bug Fix: 禁用 Polylang 自动同步 category term
  *   解决「Sasha 后台挂 cat 时 Polylang 自动建翻译 cat(案例-zh)→ Echo 怎么挂都被覆盖」

@@ -1,33 +1,35 @@
-# Design QA — Front Page ACF Update
+# Design QA — HireAI v3.11.0 Solutions Refactor
 
-final result: passed
+final result: blocked
 
 ## Evidence
 
-- Source visual truth: `qa-screens/front-page-acf-source.jpg`
-- Implementation screenshot: `qa-screens/front-page-acf-live-zh.png`
-- Side-by-side comparison: `qa-screens/front-page-acf-compare.png`
-- Viewport: 1435×436
-- State: logged-out Chinese homepage, default Products section copy, desktop
-- Full-view evidence: OCR and positional comparison of the eyebrow, title, subtitle, and Explore link all match the intended copy. Eyebrow/title/subtitle horizontal starts align at approximately x=72; the remaining text-position delta is local font rasterization, not layout drift.
-- Focused-region evidence: not needed because the supplied 436px-tall target contains only the section header, not card imagery or interaction states.
+- Source visual truth path: unavailable — no source design for the v3.11.0 solutions marketplace, featured-home section, or relocated contact invite module was supplied.
+- Implementation screenshot path: unavailable — the workspace has theme source only and no runnable WordPress site/container.
+- Viewport: not captured.
+- State: not captured (Chinese and English logged-out homepage, `/ai-solutions/`, and `/contact/` are the required states).
+- Full-view comparison evidence: blocked; no rendered implementation or current source target.
+- Focused region comparison evidence: blocked for the same reason.
 
-## Required Surfaces
+## Static Product Checks
 
-- Fonts and typography: 12px uppercase kicker, 48px headline, 16px body copy, and uppercase Explore link retain the source hierarchy.
-- Spacing and layout: section background, 80px desktop side padding, text stack, and bottom divider remain aligned with the supplied target.
-- Colors and tokens: light surface (`#f4f3f3`), black text, muted body text, and gold hover token remain unchanged by the ACF data-source fix.
-- Image quality: no image assets are present in the supplied header crop; no visual change was made.
-- Copy and content: `限量神经元系列`, `AI 数字员工`, `每一位数字员工都拥有独特的灵魂、技能与能力，随时加入您的团队。`, and `探索更多` match exactly.
+- Visual structure: verified in source — marketplace cards use a 1-column mobile grid and 3-column grid from 720px; both top and bottom pagination navs render only when more than one page exists.
+- Responsive behavior: inferred from CSS, not browser-verified — filter chips wrap, card media retain a 16:9 ratio, and the contact invite switches from stacked to horizontal code/copy layout at 720px.
+- ACF editability: verified in source — product featured flag/order, global tag repeater, contact invite copy, and contact invite steps have registered editable fields; old product bilingual title/description/tag fields remain fallback-only.
+- Fonts/assets: verified in source — page styles use the local Playfair/Inter/Noto font stack and inline SVG; no blocked CDN or Material Symbols reference was found.
 
 ## Findings
 
-No P0/P1/P2 findings. The code change locks ACF reads to the current-language front page and adds missing fields; it intentionally does not alter markup, typography, spacing, color, or default copy.
+- [P1] Current design comparison cannot run
+  Location: homepage solutions, `/ai-solutions/`, and `/contact/`.
+  Evidence: no current source visual target and no rendered implementation screenshot.
+  Impact: typography, spacing, image fidelity, and bilingual content cannot be accepted from markup alone.
+  Fix: provide the source designs and a deploy preview or local WordPress environment, then capture desktop and mobile screenshots for both languages.
 
 ## Comparison History
 
-- Pass 1: compared the supplied header against the live Chinese homepage at the same viewport. No P0/P1/P2 differences; no fix iteration required.
+- Pass 1: blocked before comparison because both required artifacts were unavailable.
 
 ## Verification Boundary
 
-The screenshot is the live v3.10.6 default state. The v3.10.7 code changes were not deployed during QA, so a saved ACF override cannot yet be visually verified on production. Because the patch changes only field-source resolution and ACF registration, this default-state comparison validates no visual regression.
+The earlier `front-page-acf-*` screenshots cover the v3.10.x Products header crop and cannot validate this v3.11.0 refactor.
