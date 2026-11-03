@@ -8,7 +8,7 @@
  *   1. Hero (centered kicker + bilingual title + italic intro)
  *   2. Decorative banner image
  *   3. Inquiry form + Direct Concierge (7 / 5 grid)
- *   4. CTA: "Ready to Redefine Humanity?"
+ *   4. Invite & Earn
  *
  * Data sources:
  *   - ACF group_page_contact (registered in functions.php)
@@ -65,11 +65,7 @@ $hero_image = function_exists('hireai_image')
  * -------------------------------------------------------------------- */
 $contact_email  = hireai_field('contact_email', 'concierge@hireaipeople.com');
 $contact_wechat = hireai_field('contact_wechat', 'hireai-official');
-$contact_addr   = hireai_field('contact_address', $is_en ? 'Shanghai, China' : '中国 · 上海');
-$map_label      = hireai_field('contact_map_label', $is_en ? 'View Map' : '查看地图');
-$map_url        = hireai_field('contact_map_url', 'https://uri.amap.com/search?keyword=Shanghai%2C%20China');
-
-/* v3.7.5: 新增可视化编辑字段 —— 表单标题/电话/微信标签、管家区、社交链接、底部 CTA */
+/* v3.7.5: 新增可视化编辑字段 —— 表单标题/电话/微信标签、管家区、社交链接 */
 $form_heading   = hireai_field('form_heading',   $is_en ? 'Inquiry Form' : '咨询表单');
 $label_phone    = hireai_field('form_phone_label', $is_en ? 'Phone' : '电话');
 $label_wechat   = hireai_field('form_wechat_label', $is_en ? 'WeChat' : '微信');
@@ -80,14 +76,6 @@ $concierge_desc = hireai_field('concierge_desc', $is_en
 $social_xhs_url = hireai_field('social_xhs_url', '');
 $social_ins_url = hireai_field('social_ins_url', '');
 $social_fb_url  = hireai_field('social_fb_url', '');
-$cta_title_c    = hireai_field('cta_title', $is_en
-    ? 'Ready to Redefine Humanity?'
-    : '准备好重新定义服务了吗？');
-$cta_desc_c     = hireai_field('cta_desc', $is_en
-    ? 'Step into the future of luxury service with our bespoke digital workforce.'
-    : '与我们的专属数字员工一同，迈入奢华服务的未来。');
-$cta_btn_c      = hireai_field('cta_btn_label', $is_en ? 'Begin Consultation' : '开始咨询');
-
 $invite_kicker        = hireai_contact_invite_field('invite_kicker', $language, $is_en ? 'INVITE & EARN' : '邀约礼遇', $page_id);
 $invite_title         = hireai_contact_invite_field('invite_title', $language, $is_en ? 'Invite & Earn' : '邀约礼遇 / Invite & Earn', $page_id);
 $invite_subtitle      = hireai_contact_invite_field('invite_subtitle', $language, $is_en ? 'Share your exclusive invite code with peers to enjoy the Aurelian AI experience together.' : '分享您的专属邀请码，与友共赏 AI 数字人卓越体验。', $page_id);
@@ -178,6 +166,8 @@ $form_action = esc_url(admin_url('admin-post.php'));
 
 /* Submit row alignment */
 .hireai-c-form__actions{display:flex;justify-content:flex-end;margin-top:8px;padding-top:32px;border-top:1px solid rgba(196,199,199,.5);}
+html body .hireai-c-form__actions .hireai-c-form__submit{background:linear-gradient(135deg,#775a19 0%,#8d6a1d 100%) !important;border:1px solid #e9c176 !important;color:#fff !important;-webkit-text-fill-color:#fff !important;}
+html body .hireai-c-form__actions .hireai-c-form__submit:hover,html body .hireai-c-form__actions .hireai-c-form__submit:focus-visible{background:linear-gradient(135deg,#8d6a1d 0%,#775a19 100%) !important;border-color:#e9c176 !important;box-shadow:0 0 20px rgba(233,193,118,.45) !important;color:#fff !important;-webkit-text-fill-color:#fff !important;}
 
 /* ----- Direct Concierge ----- */
 .hireai-c-concierge{padding:clamp(24px,3vw,40px) 0;}
@@ -203,20 +193,6 @@ $form_action = esc_url(admin_url('admin-post.php'));
 .hireai-c-social a{width:44px;height:44px;border-radius:50%;border:1px solid rgba(119,90,25,.3);display:flex;align-items:center;justify-content:center;font-family:var(--hp-font-body);font-size:12px;font-weight:600;color:var(--hp-secondary,#775a19);text-decoration:none;transition:all .3s;}
 .hireai-c-social a:hover{background:var(--hp-secondary,#775a19);color:var(--hp-on-primary,#fff);box-shadow:0 0 18px rgba(119,90,25,.4);}
 
-/* Address */
-.hireai-c-addr{margin-top:36px;padding-top:32px;border-top:1px solid rgba(196,199,199,.45);}
-.hireai-c-addr h4{margin:0 0 12px;font-family:var(--hp-font-body);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--hp-on-surface-var);}
-.hireai-c-addr p{margin:0 0 14px;font-family:var(--hp-font-body);font-size:14px;line-height:1.6;color:var(--hp-on-surface,#1a1c1c);white-space:pre-line;}
-.hireai-c-addr a{font-family:var(--hp-font-body);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--hp-secondary,#775a19);text-decoration:none;border-bottom:1px solid rgba(119,90,25,.3);padding-bottom:4px;transition:border-color .25s;}
-.hireai-c-addr a:hover{border-bottom-color:var(--hp-secondary);}
-
-/* ===== CTA ===== */
-.hireai-c-cta{padding:0 clamp(20px,5vw,80px) clamp(72px,9vw,120px);background:var(--hp-surface,#faf9f9);}
-.hireai-c-cta__card{position:relative;overflow:hidden;text-align:center;padding:clamp(56px,8vw,96px) clamp(24px,5vw,64px);border-radius:var(--hp-radius-lg,1rem);background:rgba(250,249,249,.72);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(119,90,25,.18);box-shadow:0 30px 80px rgba(0,0,0,.06);}
-.hireai-c-cta__card::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at center,rgba(233,193,118,.16) 0%,transparent 60%);pointer-events:none;}
-.hireai-c-cta__card > *{position:relative;z-index:1;}
-.hireai-c-cta__title{margin:0 0 20px;font-family:var(--hp-font-serif);font-weight:700;font-size:clamp(36px,5vw,72px);line-height:1.1;color:var(--hp-on-surface,#1a1c1c);}
-.hireai-c-cta__desc{margin:0 auto 36px;max-width:560px;font-family:var(--hp-font-body);font-size:clamp(15px,1.3vw,18px);line-height:1.6;color:var(--hp-on-surface-var);}
 .hireai-c-invite{margin:0 clamp(20px,5vw,80px) clamp(72px,9vw,120px);padding:clamp(56px,7vw,88px) clamp(24px,5vw,64px);border:1px solid rgba(119,90,25,.18);border-radius:var(--hp-radius-lg,1rem);background:rgba(250,249,249,.72);text-align:center;}
 .hireai-c-invite__kicker{display:inline-block;margin-bottom:14px;color:var(--hp-secondary,#775a19);font-family:var(--hp-font-body);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
 .hireai-c-invite__title{margin:0 0 14px;font-family:var(--hp-font-serif);font-size:clamp(30px,4vw,52px);line-height:1.15;font-weight:700;color:var(--hp-on-surface,#1a1c1c);}
@@ -358,7 +334,7 @@ $form_action = esc_url(admin_url('admin-post.php'));
           </div>
 
           <div class="hireai-c-form__actions">
-            <button class="hp-btn hp-btn--primary" type="submit">
+            <button class="hp-btn hp-btn--primary hireai-c-form__submit" type="submit">
               <?php echo esc_html($label_submit); ?> / 提交
             </button>
           </div>
@@ -409,42 +385,13 @@ $form_action = esc_url(admin_url('admin-post.php'));
           </div>
         </div>
 
-        <?php if ($contact_addr !== '') : ?>
-        <div class="hireai-c-addr">
-          <h4><?php echo esc_html($is_en ? 'Headquarters' : '总部'); ?></h4>
-          <p><?php echo nl2br(esc_html($contact_addr)); ?></p>
-          <?php if ($map_url !== '') : ?>
-            <a href="<?php echo esc_url($map_url); ?>"
-               target="_blank" rel="noopener noreferrer">
-              <?php echo esc_html($map_label); ?> →
-            </a>
-          <?php endif; ?>
-        </div>
-        <?php endif; ?>
       </aside>
 
     </div>
   </section>
 
   <!-- ============================================================
-       4. CTA  -  Ready to Redefine Humanity?
-       ============================================================ -->
-  <section class="hireai-c-cta" aria-labelledby="hireai-c-cta-title">
-    <div class="hireai-c-cta__card">
-      <h2 id="hireai-c-cta-title" class="hireai-c-cta__title">
-        <?php echo esc_html($cta_title_c); ?>
-      </h2>
-      <p class="hireai-c-cta__desc">
-        <?php echo esc_html($cta_desc_c); ?>
-      </p>
-      <a class="hp-btn hp-btn--primary" href="#hireai-c-title">
-        <?php echo esc_html($cta_btn_c); ?>
-      </a>
-    </div>
-  </section>
-
-  <!-- ============================================================
-       5. Invite & Earn — 联系页底部
+       4. Invite & Earn — 联系页底部
        ============================================================ -->
   <section class="hireai-c-invite" id="invite-earn" aria-labelledby="hireai-c-invite-title">
     <header>

@@ -4056,9 +4056,6 @@ add_action('acf/init', function () {
         ['name' => 'contact_email', 'label' => '联系邮箱', 'type' => 'text', 'zh' => 'concierge@hireaipeople.com', 'en' => 'concierge@hireaipeople.com'],
         ['name' => 'contact_wechat', 'label' => '微信号', 'type' => 'text', 'zh' => 'hireai-official', 'en' => 'hireai-official'],
         ['name' => 'wechat_qr', 'label' => '微信二维码', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array']],
-        ['name' => 'contact_address', 'label' => '总部地址', 'type' => 'textarea', 'zh' => '中国 · 上海', 'en' => 'Shanghai, China', 'extra' => ['rows' => 2]],
-        ['name' => 'contact_map_label', 'label' => '地图按钮文字', 'type' => 'text', 'zh' => '查看地图', 'en' => 'View Map'],
-        ['name' => 'contact_map_url', 'label' => '地图链接', 'type' => 'text', 'zh' => 'https://uri.amap.com/search?keyword=Shanghai%2C%20China', 'en' => 'https://uri.amap.com/search?keyword=Shanghai%2C%20China'],
         ['name' => 'form_name_label', 'label' => '表单 · 姓名', 'type' => 'text', 'zh' => '姓名', 'en' => 'Name'],
         ['name' => 'form_company_label', 'label' => '表单 · 公司/机构', 'type' => 'text', 'zh' => '公司/机构', 'en' => 'Company Entity'],
         ['name' => 'form_email_label', 'label' => '表单 · 邮箱', 'type' => 'text', 'zh' => '邮箱', 'en' => 'Secure Email'],
@@ -4084,9 +4081,6 @@ add_action('acf/init', function () {
         ['name' => 'invite_reward_amount', 'label' => '邀约礼遇 · 奖励金额', 'type' => 'text', 'zh' => '￥500', 'en' => '¥500'],
         ['name' => 'invite_reward_label', 'label' => '邀约礼遇 · 奖励描述', 'type' => 'textarea', 'zh' => '双方均可获得 ￥500 定制额度奖励，用于您的下一次 AI 服务升级。', 'en' => 'Both you and your invitee earn a ¥500 bespoke credit toward your next AI service upgrade.', 'extra' => ['rows' => 2]],
         ['name' => 'invite_steps_label', 'label' => '邀约礼遇 · 步骤区块标签', 'type' => 'text', 'zh' => '如何运作', 'en' => 'How It Works'],
-        ['name' => 'cta_title', 'label' => 'CTA · 标题', 'type' => 'textarea', 'zh' => '准备好重新定义服务了吗？', 'en' => 'Ready to Redefine Humanity?', 'extra' => ['rows' => 1]],
-        ['name' => 'cta_desc', 'label' => 'CTA · 描述', 'type' => 'textarea', 'zh' => '与我们的专属数字员工一同，迈入奢华服务的未来。', 'en' => 'Step into the future of luxury service with our bespoke digital workforce.', 'extra' => ['rows' => 2]],
-        ['name' => 'cta_btn_label', 'label' => 'CTA · 按钮文字', 'type' => 'text', 'zh' => '开始咨询', 'en' => 'Begin Consultation'],
     ], [
         [['param' => 'page_template', 'operator' => '==', 'value' => 'page-contact.php']],
     ]));
