@@ -169,11 +169,34 @@ $sol_section_sub    = $hireai_v360('fp_solutions_subtitle',     $lang) ?: hireai
 $sol_explore_label  = $hireai_v360('fp_solutions_explore_label',$lang) ?: hireai_field_lang('fp_solutions_explore_label',$lang, $is_en ? 'Explore More' : '探索更多', $front_page_id);
 $sol_explore_url    = $hireai_v360_url('fp_solutions_explore_url') ?: hireai_field('fp_solutions_explore_url', home_url('/ai-solutions/'), $front_page_id);
 
-$solutions = hireai_get_solution_products([
+$solution_result = hireai_get_solution_products_result([
     'featured' => true,
     'per_page' => 4,
     'language' => $lang,
 ]);
+$solutions = $solution_result['items'];
+
+/* v3.11.5: 精选方案不足 4 个时，用当前语言最新已发布商品补足；完全没有精选则维持不渲染。 */
+if (!empty($solutions) && count($solutions) < 4) {
+    $solution_ids = wp_list_pluck($solutions, 'id');
+    $latest_solutions = hireai_get_solution_products_result([
+        'featured' => false,
+        'per_page' => 12,
+        'language' => $lang,
+    ])['items'];
+
+    foreach ($latest_solutions as $latest_solution) {
+        if (count($solutions) >= 4) {
+            break;
+        }
+        if (in_array((int) $latest_solution['id'], array_map('intval', $solution_ids), true)) {
+            continue;
+        }
+        $solutions[] = $latest_solution;
+        $solution_ids[] = (int) $latest_solution['id'];
+    }
+}
+
 /* v3.11.4: 每张方案卡使用本地封面兜底，避免缺少特色图时退化成灰色空块。 */
 $solution_fallback_images = [
     $home . '/assets/img/defaults/solution-4.jpg',
@@ -463,6 +486,9 @@ html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
 .hireai-fp-sol__tag{display:inline-block;font-family:var(--f-label);font-size:11px;font-weight:700;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-bottom:10px;}
 .hireai-fp-sol__title{font-family:var(--f-headline);font-size:clamp(20px,1.8vw,26px);font-weight:500;line-height:1.3;color:#fff;margin:0 0 8px;}
 .hireai-fp-sol__desc{font-family:var(--f-body);font-size:14px;line-height:1.6;color:rgba(255,255,255,.85);margin:0;max-width:36ch;}
+.hireai-fp-sol__price{display:inline-flex;align-items:center;gap:8px;margin-top:10px;font-family:var(--f-label);font-size:12px;font-weight:600;line-height:1.3;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-light,#e9c176);}
+.hireai-fp-sol__price-value del{color:rgba(233,193,118,.62);}
+.hireai-fp-sol__price-value ins{text-decoration:none;color:var(--gold-light,#e9c176);}
 .hireai-fp-solutions__cta{text-align:center;}
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -683,6 +709,12 @@ html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
                     <?php endif; ?>
                     <h3 class="hireai-fp-sol__title"><?php echo esc_html($sol['title']); ?></h3>
                     <p class="hireai-fp-sol__desc"><?php echo esc_html($sol['desc']); ?></p>
+                    <?php if (!empty($sol['price_html'])) : ?>
+                    <span class="hireai-fp-sol__price">
+                        <span><?php echo esc_html($is_en ? 'Starting at' : '起步价'); ?></span>
+                        <span class="hireai-fp-sol__price-value"><?php echo wp_kses_post($sol['price_html']); ?></span>
+                    </span>
+                    <?php endif; ?>
                 </div>
             </a>
             <?php endforeach; ?>

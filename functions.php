@@ -2181,6 +2181,11 @@ function hireai_solution_product_price_html($product) {
         return '';
     }
 
+    $effective_price = method_exists($product, 'get_price') ? $product->get_price() : null;
+    if ($effective_price === null || $effective_price === '' || (float) $effective_price <= 0) {
+        return '';
+    }
+
     $sale_price = method_exists($product, 'get_sale_price') ? (string) $product->get_sale_price() : '';
     $regular_price = method_exists($product, 'get_regular_price') ? (string) $product->get_regular_price() : '';
     if (
