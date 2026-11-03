@@ -2296,6 +2296,141 @@ function hireai_make_solution_product_dto($product_id, $language = '') {
     }
 }
 
+function hireai_get_featured_employee_products(array $args = []) {
+    $args = wp_parse_args($args, [
+        'language' => '',
+        'per_page' => 8,
+    ]);
+    $language = hireai_solution_language($args['language']);
+    $per_page = max(1, min(24, (int) $args['per_page']));
+
+    if (!post_type_exists('product')) {
+        return [];
+    }
+
+    $language_condition = null;
+    if (taxonomy_exists('language') && function_exists('pll_get_post_language')) {
+        $language_condition = [
+            'taxonomy' => 'language',
+            'field'    => 'slug',
+            'terms'    => $language === 'en' ? ['en', 'en_US'] : ['zh', 'zh_CN'],
+            'operator' => 'IN',
+        ];
+    }
+
+    $query_args = [
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'posts_per_page' => 100,
+        'orderby'        => 'menu_order',
+        'order'          => 'ASC',
+        'no_found_rows'  => true,
+        'fields'         => 'ids',
+    ];
+
+    if (function_exists('pll_current_language')) {
+        $query_args['lang'] = $language;
+    }
+
+    try {
+        $product_ids = [];
+        $visibility_queries = [
+            [
+                'tax_query' => [
+                    [
+                        'taxonomy' => 'product_visibility',
+                        'field'    => 'slug',
+                        'terms'    => ['exclude-from-catalog', 'exclude-from-search'],
+                        'operator' => 'NOT IN',
+                    ],
+                    [
+                        'taxonomy' => 'product_visibility',
+                        'field'    => 'slug',
+                        'terms'    => ['featured'],
+                        'operator' => 'IN',
+                    ],
+                ],
+            ],
+            [
+                'tax_query' => [
+                    [
+                        'taxonomy' => 'product_visibility',
+                        'field'    => 'slug',
+                        'terms'    => ['exclude-from-catalog', 'exclude-from-search'],
+                        'operator' => 'NOT IN',
+                    ],
+                ],
+                'meta_query' => [
+                    [
+                        'key'     => '_featured',
+                        'value'   => 'yes',
+                        'compare' => '=',
+                    ],
+                ],
+            ],
+        ];
+
+        foreach ($visibility_queries as $featured_query) {
+            $current_query_args = array_merge($query_args, $featured_query);
+            if ($language_condition) {
+                $current_query_args['tax_query'][] = $language_condition;
+            }
+            $query = new WP_Query($current_query_args);
+            $product_ids = array_merge($product_ids, (array) $query->posts);
+        }
+
+        $product_ids = array_values(array_unique(array_map('intval', $product_ids)));
+        usort($product_ids, function ($left_id, $right_id) {
+            $left_id = (int) $left_id;
+            $right_id = (int) $right_id;
+            $left_order = (int) get_post_meta($left_id, 'sol_featured_order', true);
+            $right_order = (int) get_post_meta($right_id, 'sol_featured_order', true);
+
+            if ($left_order <= 0) {
+                $left_order = max(0, (int) get_post_field('menu_order', $left_id)) + 1000;
+            }
+            if ($right_order <= 0) {
+                $right_order = max(0, (int) get_post_field('menu_order', $right_id)) + 1000;
+            }
+            if ($left_order === $right_order) {
+                return (string) get_the_title($left_id) <=> (string) get_the_title($right_id);
+            }
+            return $left_order <=> $right_order;
+        });
+
+        $items = [];
+        foreach (array_slice($product_ids, 0, $per_page) as $product_id) {
+            $product = hireai_make_solution_product_dto($product_id, $language);
+            if ($product === null || $product['title'] === '') {
+                continue;
+            }
+
+            $badge = trim((string) $product['tag']);
+            if ($badge === '') {
+                $categories = wp_get_post_terms($product_id, 'product_cat', ['fields' => 'names']);
+                if (!is_wp_error($categories) && !empty($categories)) {
+                    $badge = (string) reset($categories);
+                }
+            }
+
+            $items[] = [
+                'id'    => $product_id,
+                'title' => $product['title'],
+                'desc'  => $product['excerpt'],
+                'badge' => $badge,
+                'img'   => $product['image'],
+                'url'   => $product['permalink'],
+                'btn'   => '',
+            ];
+        }
+
+        return $items;
+    } catch (Throwable $exception) {
+        error_log('[hireai featured employees] query failed: ' . $exception->getMessage());
+        return [];
+    }
+}
+
 function hireai_get_solution_products_result(array $args = []) {
     $defaults = [
         'paged' => 1,
@@ -4319,6 +4454,34 @@ add_action('acf/init', function () {
       $_front_group['hide_on_screen'] = ['the_content', 'excerpt', 'discussion', 'comments', 'revisions', 'author', 'format', 'page_attributes'];
 
       acf_add_local_field_group($_front_group);
+
+      /* ---- v3.11.3: 数字员工区展示数量（独立于解决方案推荐） ---- */
+      acf_add_local_field_group([
+          'key'      => 'group_front_products_limit_v3113',
+          'title'    => '首页 · 数字员工区设置',
+          'fields'   => [
+              [
+                  'key'           => 'field_fp_products_count_v3113',
+                  'label'         => '精选数字员工数量上限',
+                  'name'          => 'fp_products_count',
+                  'type'          => 'number',
+                  'default_value' => 8,
+                  'min'           => 1,
+                  'max'           => 24,
+                  'step'          => 1,
+                  'instructions'  => '首页按精选商品和排序结果最多显示该数量；留空或设为 0 时使用默认 8。',
+              ],
+          ],
+          'location' => [
+              [['param' => 'page_type', 'operator' => '==', 'value' => 'front_page']],
+              [['param' => 'page_template', 'operator' => '==', 'value' => 'front-page.php']],
+          ],
+          'menu_order'            => 4,
+          'position'              => 'side',
+          'style'                 => 'default',
+          'label_placement'       => 'top',
+          'instruction_placement' => 'label',
+      ]);
 
       /* ---- v3.6.0-B: Polylang 商品记录 + 首页推荐 ---- */
       acf_add_local_field_group([

@@ -82,6 +82,9 @@ while (have_posts()) :
 	</div>
 
 	<div class="container">
+		<div class="product-single__description hireai-prose">
+			<?php the_content(); ?>
+		</div>
 		<?php
 		woocommerce_related_products([
 			'posts_per_page' => 3,

@@ -57,43 +57,16 @@ $prod_section_sub    = hireai_field_lang('fp_products_subtitle', $lang, $is_en ?
 $prod_explore_label  = hireai_field_lang('fp_products_explore_label', $lang, $is_en ? 'Explore More' : '探索更多', $front_page_id);
 $prod_explore_url    = hireai_field('fp_products_explore_url', home_url('/ai-employees/'), $front_page_id);
 
-/* v3.0.7: 智能探测 (多 slug + 中文 category) — 避免 v3.0.6 仅 'ai-employee' 失败导致跳 /contact/ */
-$ai_employee_posts = function_exists('hireai_resolve_employees') ? hireai_resolve_employees(3) : [];
-$ai_employee_slugs = [];
-foreach ($ai_employee_posts as $emp_post) {
-    if ($emp_post instanceof WP_Post) {
-        $ai_employee_slugs[] = $emp_post->post_name;
-    }
-}
-
-$products = [];
-foreach ([1, 2, 3] as $i) {
-    $dflt = [
-        1 => ['title' => 'Aurelian Prime',     'desc' => '精英女性数字分身',   'badge' => 'Edition 01/50'],
-        2 => ['title' => 'Aurelian Executive', 'desc' => '权威与外交协议',     'badge' => 'Executive Series'],
-        3 => ['title' => 'Neural Sales Core',  'desc' => '企业级 AI 优化',     'badge' => 'Neural Series'],
-    ];
-    $img_map = [1 => 'product-prime', 2 => 'product-exec', 3 => 'product-neural'];
-    $d = $dflt[$i];
-
-    /* v3.0.7: 用 hireai_resolve_employee_url() — get_permalink() 让 WP 处理中文 slug 编码
-       fallback 链：post → /ai-employees/ 列表页（不再 /contact/，因为 contact 太重） */
-    $product_url = function_exists('hireai_resolve_employee_url')
-        ? hireai_resolve_employee_url($i - 1, hireai_field("fp_prod{$i}_url", home_url('/ai-employees/'), $front_page_id))
-        : hireai_localized_url(home_url('/ai-employees/'));
-    if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
-        error_log('[hireai v3.0.7] fp_prod' . $i . '_url: ' . $product_url);
-    }
-
-    $products[] = [
-        'title' => hireai_field_lang("fp_prod{$i}_title", $lang, $d['title'], $front_page_id),
-        'desc'  => hireai_field_lang("fp_prod{$i}_desc",  $lang, $d['desc'], $front_page_id),
-        'badge' => hireai_field_lang("fp_prod{$i}_badge", $lang, $d['badge'], $front_page_id),
-        'img'   => hireai_image("fp_prod{$i}_image", $home . '/assets/img/home/' . $img_map[$i] . '.png', $front_page_id),
-        'url'   => $product_url,
-        'btn'   => hireai_field_lang("fp_prod{$i}_btn", $lang, $is_en ? 'Explore More' : '探索更多', $front_page_id),
-    ];
-}
+/* v3.11.3: 数字员工区由后台 WooCommerce「精选商品」控制，与解决方案区独立。 */
+$products_limit = function_exists('get_field') ? (int) get_field('fp_products_count', $front_page_id) : 0;
+$products = hireai_get_featured_employee_products([
+    'language' => $lang,
+    'per_page' => $products_limit > 0 ? $products_limit : 8,
+]);
+$products = array_map(function ($product) use ($is_en) {
+    $product['btn'] = $is_en ? 'Explore More' : '探索更多';
+    return $product;
+}, $products);
 
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -582,6 +555,7 @@ html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
 <!-- ═══════════════════════════════════════════════════════════════════════
      2) PRODUCTS  ── 设计基准 AI 数字员工 (3-col / aspect 3:4 / 徽章 / outline 按钮)
      ═══════════════════════════════════════════════════════════════════════ -->
+<?php if ($products) : ?>
 <section class="hireai-fp hireai-fp-products" aria-labelledby="hireai-fp-products-title">
     <div class="hireai-fp-products__inner">
         <div class="hireai-fp-products__head">
@@ -621,6 +595,7 @@ html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
         </div>
     </div>
 </section>
+<?php endif; ?>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
      3) SOLUTIONS  ── 设计基准 AI 解决方案 (2x2 aspect-video 卡片 + primary CTA)
