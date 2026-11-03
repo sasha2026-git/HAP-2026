@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.11.5
+Version: 3.11.6
 Text Domain:  hireaipeople
 */
 
@@ -681,8 +681,24 @@ h4 {
   max-width: 100%;
   object-fit: contain;
 }
+
+/* WooCommerce loads `.woocommerce img { height: auto }` after this sheet.
+   These product-body selectors preserve the fixed-height brand mark. */
+body.woocommerce .hai-header__logo,
+body.woocommerce-page .hai-header__logo {
+  height: 44px;
+  width: auto;
+  max-height: 44px;
+}
+
 @media (min-width: 768px) {
   .hai-header__logo { height: 56px; }
+
+  body.woocommerce .hai-header__logo,
+  body.woocommerce-page .hai-header__logo {
+    height: 56px;
+    max-height: 56px;
+  }
 }
 
 /* Right actions */
@@ -2346,6 +2362,15 @@ mark {
   margin-bottom: 24px;
   font-size: var(--fs-body-lg);
   color: var(--on-surface-variant);
+}
+
+.woocommerce div.product .product-single__summary .woocommerce-product-details__short-description {
+  margin-bottom: 32px;
+  color: var(--on-surface-variant);
+}
+
+.woocommerce div.product .product-single__summary .product_meta {
+  margin-top: 32px;
 }
 
 .product-single__price-line .price {
