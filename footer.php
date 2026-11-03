@@ -20,19 +20,25 @@ $footer_nav_aria = function_exists('hireai_field_lang')
         $is_en ? 'Footer navigation' : '页脚导航', 'option')
     : ($is_en ? 'Footer navigation' : '页脚导航');
 
-/* 社交图标 aria 标签（中英文双 fallback） */
-$social_public_aria = function_exists('hireai_field_lang')
-    ? hireai_field_lang('footer_social_public_aria', $is_en ? 'en' : 'zh',
-        $is_en ? 'Public' : '公开', 'option')
-    : ($is_en ? 'Public' : '公开');
-$social_diamond_aria = function_exists('hireai_field_lang')
-    ? hireai_field_lang('footer_social_diamond_aria', $is_en ? 'en' : 'zh',
-        $is_en ? 'Diamond' : '钻石', 'option')
-    : ($is_en ? 'Diamond' : '钻石');
-$social_token_aria = function_exists('hireai_field_lang')
-    ? hireai_field_lang('footer_social_token_aria', $is_en ? 'en' : 'zh',
-        $is_en ? 'Token' : '代币', 'option')
-    : ($is_en ? 'Token' : '代币');
+$social_urls = function_exists('hireai_field') ? [
+    'public'  => hireai_field('footer_social_public_url', '', 'option'),
+    'diamond' => hireai_field('footer_social_diamond_url', '', 'option'),
+    'token'   => hireai_field('footer_social_token_url', '', 'option'),
+] : [];
+$social_links = [];
+foreach ($social_urls as $icon => $url) {
+    if (is_string($url) && trim($url) !== '') {
+        $aria_field = 'footer_social_' . $icon . '_aria';
+        $aria_fallback = $is_en ? ucfirst($icon) : ['public' => '公开', 'diamond' => '钻石', 'token' => '代币'][$icon];
+        $aria_label = function_exists('hireai_field_lang')
+            ? hireai_field_lang($aria_field, $is_en ? 'en' : 'zh', $aria_fallback, 'option')
+            : $aria_fallback;
+        $social_links[$icon] = [
+            'url'   => $url,
+            'aria'  => $aria_label,
+        ];
+    }
+}
 
 /* 4 个法务链接的 label + url（hireai_field_lang 中英文 fallback） */
 $fallback_links = [
@@ -123,11 +129,13 @@ function hireai_footer_resolve_link($slug, $fallback_url) {
     </nav>
 
     <!-- Social icons row with top/bottom borders (aria-labels 多语言驱动) -->
+    <?php if (!empty($social_links)) : ?>
     <div class="hai-footer__social">
-      <a class="hai-footer__social-link" href="#" aria-label="<?php echo esc_attr($social_public_aria); ?>"><?php echo hireai_svg("public", 18, "hai-footer__social-icon"); ?></a>
-      <a class="hai-footer__social-link" href="#" aria-label="<?php echo esc_attr($social_diamond_aria); ?>"><?php echo hireai_svg("diamond", 18, "hai-footer__social-icon"); ?></a>
-      <a class="hai-footer__social-link" href="#" aria-label="<?php echo esc_attr($social_token_aria); ?>"><?php echo hireai_svg("token", 18, "hai-footer__social-icon"); ?></a>
+      <?php foreach ($social_links as $icon => $link) : ?>
+      <a class="hai-footer__social-link" href="<?php echo esc_url($link['url']); ?>" aria-label="<?php echo esc_attr($link['aria']); ?>"><?php echo hireai_svg($icon, 18, "hai-footer__social-icon"); ?></a>
+      <?php endforeach; ?>
     </div>
+    <?php endif; ?>
 
     <!-- Copyright -->
     <p class="hai-footer__copyright"><?php echo esc_html($copyright); ?></p>

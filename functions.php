@@ -4423,6 +4423,24 @@ add_action('acf/init', function () {
     ], [
         [['param' => 'options_page', 'operator' => '==', 'value' => 'hireai-settings']],
     ]));
+
+    acf_add_local_field_group([
+        'key' => 'group_site_social_links',
+        'title' => '站点设置 — 页脚社交链接',
+        'fields' => [
+            ['key' => 'field_footer_social_public_url', 'label' => '页脚 · 社交图标 1 URL', 'name' => 'footer_social_public_url', 'type' => 'url'],
+            ['key' => 'field_footer_social_diamond_url', 'label' => '页脚 · 社交图标 2 URL', 'name' => 'footer_social_diamond_url', 'type' => 'url'],
+            ['key' => 'field_footer_social_token_url', 'label' => '页脚 · 社交图标 3 URL', 'name' => 'footer_social_token_url', 'type' => 'url'],
+        ],
+        'location' => [
+            [['param' => 'options_page', 'operator' => '==', 'value' => 'hireai-settings']],
+        ],
+        'menu_order' => 11,
+        'position' => 'normal',
+        'style' => 'default',
+        'label_placement' => 'top',
+        'instruction_placement' => 'label',
+    ]);
 });
 
 // ============================================================

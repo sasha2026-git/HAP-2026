@@ -1,9 +1,7 @@
 <?php if (!defined('ABSPATH')) exit;
 /**
  * Template Name: Front Page
- * Hire AI People — Stitch-matched v3.0.1 (2026-08-22)
- *
- * 重写自 /tmp/stitch-check/{code.html,screen.png,DESIGN.md}
+ * Hire AI People — design-baseline v3.0.1 (2026-08-22)
  * 六大 Section：Hero → Products → Solutions → Cases → FAQ → CTA
  *
  * v3.0.1 修复 v3.0.0 已知问题：
@@ -15,7 +13,7 @@
  *   - 全 button 严格 label-md（14px / 600 / 0.1em uppercase）
  *   - 全 kicker 严格 label-sm（12px / 500 / 0.05em uppercase）
  *   - section gap 严格 120px（--gap: clamp(60px,8vw,120px)）
- *   - 金色斜体用 .hireai-fp__gold（135deg #e9c176 → #775a19）
+ *   - 金色斜体用 .hireai-fp__gold（纯色 #775a19，白底达标）
  */
 get_header();
 
@@ -278,15 +276,13 @@ $cta_btn_2_url   = hireai_field('fp_cta_secondary_button_url', home_url('/contac
 
 /* i18n text */
 $t = [
-    'prev'     => $is_en ? 'Previous'       : '上一个',
-    'next'     => $is_en ? 'Next'           : '下一个',
     'expand'   => $is_en ? 'Expand answer'  : '展开答案',
     'collapse' => $is_en ? 'Collapse answer' : '收起答案',
 ];
 ?>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
-     页面专有样式（hireai-fp-* 命名空间；严格对齐 DESIGN.md + Stitch 截图）
+     页面专有样式（hireai-fp-* 命名空间；对齐设计基准）
      ═══════════════════════════════════════════════════════════════════════ -->
 <style>
 /* ── Reset / Base ──────────────────────────────────────────────────── */
@@ -326,9 +322,7 @@ $t = [
 
 /* ── 通用：金质渐变斜体（hero accent 用） ──────────────────────── */
 .hireai-fp__gold{
-    background:linear-gradient(135deg,#e9c176 0%,#775a19 100%);
-    -webkit-background-clip:text;background-clip:text;
-    -webkit-text-fill-color:transparent;color:transparent;
+    color:#775a19;
     font-style:italic;font-weight:400;
     display:inline-block;
 }
@@ -367,7 +361,7 @@ $t = [
 .hireai-fp__btn.hireai-fp__btn--outline:hover, .hireai-fp__btn--outline.hireai-fp__btn--outline:hover{background:rgba(119,90,25,.12);}
 .hireai-fp__btn.hireai-fp__btn--ghost, .hireai-fp__btn--ghost.hireai-fp__btn--ghost{background:transparent;color:#1a1c1c!important;border:1px solid #1a1c1c;}
 .hireai-fp__btn.hireai-fp__btn--ghost:hover, .hireai-fp__btn--ghost.hireai-fp__btn--ghost:hover{background:#1a1c1c;color:#fff;}
-.hireai-fp__btn.hireai-fp__btn--gold, .hireai-fp__btn--gold.hireai-fp__btn--gold{background:linear-gradient(135deg,#e9c176 0%,#775a19 100%);color:#fff!important;border-color:transparent;}
+.hireai-fp__btn.hireai-fp__btn--gold, .hireai-fp__btn--gold.hireai-fp__btn--gold{background:#775a19;color:#fff!important;border:1px solid #e9c176;}
 .hireai-fp__btn.hireai-fp__btn--gold:hover, .hireai-fp__btn--gold.hireai-fp__btn--gold:hover{box-shadow:0 0 32px rgba(233,193,118,.45);transform:translateY(-1px);}
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -390,9 +384,10 @@ html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__title-line{display:block;w
 .hireai-fp-hero__subtitle{font-family:var(--f-body);font-size:var(--sz-bl);font-weight:400;line-height:1.6;color:rgba(26,28,28,.80);margin:0 auto 36px;width:min(100%,680px);max-width:680px;overflow-wrap:break-word;}
 /* v3.3.0: spec §4 Hero 副标题 = body-lg italic (en only); zh keeps upright */
 html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
+html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
 .hireai-fp-hero__actions{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;}
 /* ═══════════════════════════════════════════════════════════════════════
-   2) PRODUCTS  ── Stitch AI 数字员工 (3-col 卡片 / aspect 3:4)
+   2) PRODUCTS  ── 设计基准 AI 数字员工 (3-col 卡片 / aspect 3:4)
    ═══════════════════════════════════════════════════════════════════════ */
 .hireai-fp-products{background:var(--surface-low,#f4f3f3);padding-block:var(--gap);padding-inline:var(--side);color:#1a1c1c;}
 .hireai-fp-products__inner{max-width:var(--max);margin:0 auto;}
@@ -403,13 +398,9 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 .hireai-fp-products__sub{font-family:var(--f-body);font-size:var(--sz-bm);line-height:1.6;color:var(--ink-muted);margin:0 0 20px;max-width:560px;}
 .hireai-fp-products__explore{display:inline-flex;align-items:center;font-family:var(--f-label);font-size:var(--sz-lm);font-weight:600;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;color:#000;padding-bottom:4px;border-bottom:1px solid #000;transition:color .3s,border-color .3s;}
 .hireai-fp-products__explore:hover{color:var(--gold);border-bottom-color:var(--gold);}
-.hireai-fp-products__nav{display:flex;gap:12px;}
-.hireai-fp-products__nav button{width:48px;height:48px;border-radius:50%;border:1px solid #c4c7c7;background:transparent;color:#1a1c1c;display:inline-flex;align-items:center;justify-content:center;transition:all .25s;}
-.hireai-fp-products__nav button:hover{background:rgba(0,0,0,.06);border-color:#000;}
-.hireai-fp-products__nav svg{width:20px;height:20px;}
-
 .hireai-fp-products__grid{display:grid;grid-template-columns:1fr;gap:var(--gutter);}
-@media(min-width:768px){.hireai-fp-products__grid{grid-template-columns:repeat(3,1fr);}}
+@media(min-width:768px){.hireai-fp-products__grid{grid-template-columns:repeat(2,1fr);}}
+@media(min-width:1024px){.hireai-fp-products__grid{grid-template-columns:repeat(3,1fr);}}
 
 .hireai-fp-product{display:flex;flex-direction:column;}
 .hireai-fp-product__media{position:relative;aspect-ratio:3/4;overflow:hidden;margin-bottom:24px;background:#eee;border:1px solid var(--line);transition:border-color .5s;}
@@ -423,7 +414,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 .hireai-fp-product__btn{width:100%;margin-top:auto;}
 
 /* ═══════════════════════════════════════════════════════════════════════
-   3) SOLUTIONS  ── Stitch AI 解决方案 (2x2 aspect-video 卡片)
+   3) SOLUTIONS  ── 设计基准 AI 解决方案 (2x2 aspect-video 卡片)
    ═══════════════════════════════════════════════════════════════════════ */
 .hireai-fp-solutions{background:var(--surface,#faf9f9);padding-block:var(--gap);padding-inline:var(--side);}
 .hireai-fp-solutions__inner{max-width:var(--max);margin:0 auto;}
@@ -450,7 +441,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 .hireai-fp-solutions__cta{text-align:center;}
 
 /* ═══════════════════════════════════════════════════════════════════════
-   4) CASES  ── Stitch 案例 & 洞察 (12-col grid, 8+4)
+   4) CASES  ── 设计基准 案例 & 洞察 (12-col grid, 8+4)
    ═══════════════════════════════════════════════════════════════════════ */
 .hireai-fp-cases{background:var(--surface-white,#fff);padding-block:var(--gap);padding-inline:var(--side);border-top:1px solid var(--line);}
 .hireai-fp-cases__inner{max-width:var(--max);margin:0 auto;}
@@ -459,11 +450,6 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 .hireai-fp-cases__title{font-family:var(--f-headline);font-size:var(--sz-h1);font-weight:600;line-height:1.2;color:#000;margin:0;}
 .hireai-fp-cases__title .hireai-fp__gold{font-style:italic;font-weight:400;}
 .hireai-fp-cases__sub{font-family:var(--f-body);font-size:var(--sz-bm);line-height:1.6;color:var(--ink-muted);margin:12px 0 0;}
-.hireai-fp-cases__nav{display:flex;gap:12px;}
-.hireai-fp-cases__nav button{width:48px;height:48px;border-radius:50%;border:1px solid #c4c7c7;background:transparent;color:#1a1c1c;display:inline-flex;align-items:center;justify-content:center;transition:all .25s;}
-.hireai-fp-cases__nav button:hover{background:rgba(0,0,0,.06);border-color:#000;}
-.hireai-fp-cases__nav svg{width:20px;height:20px;}
-
 .hireai-fp-cases__grid{display:grid;grid-template-columns:1fr;gap:clamp(28px,3vw,40px);}
 @media(min-width:1024px){.hireai-fp-cases__grid{grid-template-columns:repeat(12,1fr);}}
 
@@ -495,7 +481,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 .hireai-fp-cases__cta{text-align:center;margin-top:clamp(40px,5vw,72px);}
 
 /* ═══════════════════════════════════════════════════════════════════════
-   5) FAQ  ── Stitch 常见问题 (3 项手风琴)
+   5) FAQ  ── 设计基准 常见问题 (3 项手风琴)
    ═══════════════════════════════════════════════════════════════════════ */
 .hireai-fp-faq{background:var(--surface,#faf9f9);padding-block:var(--gap);padding-inline:var(--side);border-top:1px solid var(--line);text-align:center;}
 .hireai-fp-faq__title{font-family:var(--f-headline);font-size:var(--sz-h1);font-weight:600;line-height:1.2;color:#000;margin:0;}
@@ -515,7 +501,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 .hireai-fp-faq__cta{text-align:center;margin-top:clamp(40px,5vw,72px);}
 
 /* ═══════════════════════════════════════════════════════════════════════
-   6) CTA BAND  ── Stitch 大 CTA (深色 + 金色 radial glow)
+   6) CTA BAND  ── 设计基准 大 CTA (深色 + 金色 radial glow)
    ═══════════════════════════════════════════════════════════════════════ */
 .hireai-fp-cta{position:relative;background:#000;color:#fff;padding:clamp(80px,10vw,140px) var(--side);text-align:center;overflow:hidden;}
 .hireai-fp-cta__glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:clamp(400px,60vw,720px);aspect-ratio:1/1;background:radial-gradient(circle,rgba(119,90,25,.30),transparent 65%);pointer-events:none;}
@@ -538,12 +524,10 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
     html body .hireai-fp .hireai-fp-hero .hireai-fp-hero__inner{position:relative;inset:auto;width:100%;min-width:0;padding:52px 20px 68px;}
     .hireai-fp-hero__kicker{margin-bottom:16px;}
     .hireai-fp-hero__title{font-size:clamp(32px,8vw,48px);}
-    .hireai-fp-hero__title .hireai-fp__gold{background:linear-gradient(135deg,#e9c176 0%,#775a19 100%);-webkit-background-clip:text;background-clip:text;}
     .hireai-fp-hero__subtitle{max-width:100%;margin-bottom:24px;color:rgba(26,28,28,.80);}
     .hireai-fp-hero__actions{gap:12px;}
     .hireai-fp-hero__actions .hireai-fp__btn{min-height:48px;padding:14px 22px;font-size:13px;}
     .hireai-fp-products__head,.hireai-fp-solutions__head,.hireai-fp-cases__head{flex-direction:column;align-items:flex-start;}
-    .hireai-fp-products__nav,.hireai-fp-cases__nav{display:none;}
     .hireai-fp-faq__list{padding-inline:0;}
     .hireai-fp-cta__actions{flex-direction:column;align-items:stretch;}
     .hireai-fp-cta__actions .hireai-fp__btn{width:100%;}
@@ -596,7 +580,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
-     2) PRODUCTS  ── Stitch AI 数字员工 (3-col / aspect 3:4 / 徽章 / outline 按钮)
+     2) PRODUCTS  ── 设计基准 AI 数字员工 (3-col / aspect 3:4 / 徽章 / outline 按钮)
      ═══════════════════════════════════════════════════════════════════════ -->
 <section class="hireai-fp hireai-fp-products" aria-labelledby="hireai-fp-products-title">
     <div class="hireai-fp-products__inner">
@@ -614,14 +598,6 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
                     <?php echo esc_html($prod_explore_label); ?>
                 </a>
                 <?php endif; ?>
-            </div>
-            <div class="hireai-fp-products__nav" aria-hidden="true">
-                <button type="button" aria-label="<?php echo esc_attr($t['prev']); ?>">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </button>
-                <button type="button" aria-label="<?php echo esc_attr($t['next']); ?>">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </button>
             </div>
         </div>
         <div class="hireai-fp-products__grid">
@@ -647,7 +623,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
-     3) SOLUTIONS  ── Stitch AI 解决方案 (2x2 aspect-video 卡片 + primary CTA)
+     3) SOLUTIONS  ── 设计基准 AI 解决方案 (2x2 aspect-video 卡片 + primary CTA)
      ═══════════════════════════════════════════════════════════════════════ -->
 <?php if ($solutions) : ?>
 <section class="hireai-fp hireai-fp-solutions" aria-labelledby="hireai-fp-solutions-title">
@@ -694,7 +670,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 <?php endif; ?>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
-     4) CASES  ── Stitch 案例 & 洞察 (12-col 网格 8+4)
+     4) CASES  ── 设计基准 案例 & 洞察 (12-col 网格 8+4)
      ═══════════════════════════════════════════════════════════════════════ -->
 <section class="hireai-fp hireai-fp-cases" aria-labelledby="hireai-fp-cases-title">
     <div class="hireai-fp-cases__inner">
@@ -707,14 +683,6 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
                 <?php if ($cases_sub) : ?>
                 <p class="hireai-fp-cases__sub"><?php echo esc_html($cases_sub); ?></p>
                 <?php endif; ?>
-            </div>
-            <div class="hireai-fp-cases__nav" aria-hidden="true">
-                <button type="button" aria-label="<?php echo esc_attr($t['prev']); ?>">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </button>
-                <button type="button" aria-label="<?php echo esc_attr($t['next']); ?>">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </button>
             </div>
         </div>
         <div class="hireai-fp-cases__grid">
@@ -754,7 +722,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
-     5) FAQ  ── Stitch 常见问题 (3 项手风琴 + ghost CTA)
+     5) FAQ  ── 设计基准 常见问题 (3 项手风琴 + ghost CTA)
      ═══════════════════════════════════════════════════════════════════════ -->
 <section class="hireai-fp hireai-fp-faq" id="hireai-fp-faq" aria-labelledby="hireai-fp-faq-title">
     <h2 class="hireai-fp-faq__title" id="hireai-fp-faq-title"><?php echo esc_html($faq_kicker); ?></h2>
@@ -791,7 +759,7 @@ html[lang="en"] .hireai-fp-hero__subtitle{font-style:italic;}
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
-     6) CTA BAND  ── Stitch 大 CTA (深色 + 金色 radial glow + 双按钮)
+     6) CTA BAND  ── 设计基准 大 CTA (深色 + 金色 radial glow + 双按钮)
      ═══════════════════════════════════════════════════════════════════════ -->
 <section class="hireai-fp hireai-fp-cta" aria-labelledby="hireai-fp-cta-title">
     <div class="hireai-fp-cta__glow" aria-hidden="true"></div>
