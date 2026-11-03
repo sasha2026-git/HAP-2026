@@ -63,6 +63,54 @@ $products = hireai_get_featured_employee_products([
     'language' => $lang,
     'per_page' => $products_limit > 0 ? $products_limit : 8,
 ]);
+
+/* v3.11.4: 精选商品未配置时保持 v3.11.2 首页区块可见，中英文各用一套本地兜底卡。 */
+if (empty($products)) {
+    $products = [];
+    $employee_defaults = [
+        1 => [
+            'title' => $is_en ? 'Aurelian Prime' : 'Aurelian Prime',
+            'desc'  => $is_en ? 'Elite female digital avatar' : '精英女性数字分身',
+            'badge' => $is_en ? 'Edition 01/50' : '限量 01/50',
+            'image' => 'home/product-prime.png',
+        ],
+        2 => [
+            'title' => $is_en ? 'Aurelian Executive' : 'Aurelian Executive',
+            'desc'  => $is_en ? 'Authority & diplomacy protocol' : '权威与外交协议',
+            'badge' => $is_en ? 'Executive Series' : 'Executive Series',
+            'image' => 'home/product-exec.png',
+        ],
+        3 => [
+            'title' => $is_en ? 'Neural Sales Core' : 'Neural Sales Core',
+            'desc'  => $is_en ? 'Enterprise-grade AI optimization' : '企业级AI优化',
+            'badge' => $is_en ? 'Neural Series' : 'Neural Series',
+            'image' => 'home/product-neural.png',
+        ],
+    ];
+
+    foreach ($employee_defaults as $index => $default) {
+        $products[] = [
+            'title' => hireai_field_lang("fp_prod{$index}_title", $lang, $default['title'], $front_page_id),
+            'desc'  => hireai_field_lang("fp_prod{$index}_desc", $lang, $default['desc'], $front_page_id),
+            'badge' => hireai_field_lang("fp_prod{$index}_badge", $lang, $default['badge'], $front_page_id),
+            'img'   => hireai_image("fp_prod{$index}_image", $home . '/assets/img/' . $default['image'], $front_page_id),
+            'url'   => function_exists('hireai_resolve_employee_url')
+                ? hireai_resolve_employee_url($index - 1, $prod_explore_url)
+                : $prod_explore_url,
+            'btn'   => hireai_field_lang("fp_prod{$index}_btn", $lang, $is_en ? 'Explore More' : '探索更多', $front_page_id),
+        ];
+    }
+
+    $products[] = [
+        'title' => $is_en ? 'Custom Consultation' : '定制咨询',
+        'desc'  => $is_en ? 'Speak with our team to design a bespoke digital employee.' : '与我们的团队对话，定制专属数字员工。',
+        'badge' => $is_en ? 'Bespoke Service' : '定制服务',
+        'img'   => $home . '/assets/img/defaults/employee-5.jpg',
+        'url'   => $hero_cta_2_url,
+        'btn'   => $is_en ? 'Book Consultation' : '预约咨询',
+    ];
+}
+
 $products = array_map(function ($product) use ($is_en) {
     $product['btn'] = $is_en ? 'Explore More' : '探索更多';
     return $product;
@@ -126,15 +174,19 @@ $solutions = hireai_get_solution_products([
     'per_page' => 4,
     'language' => $lang,
 ]);
-$solutions = array_map(function ($product) {
-    return [
-        'title' => $product['title'],
-        'desc' => $product['excerpt'],
-        'tag' => $product['tag'],
-        'img' => $product['image'],
-        'url' => $product['permalink'],
-    ];
-}, $solutions);
+/* v3.11.4: 每张方案卡使用本地封面兜底，避免缺少特色图时退化成灰色空块。 */
+$solution_fallback_images = [
+    $home . '/assets/img/defaults/solution-4.jpg',
+    $home . '/assets/img/defaults/solution-2.jpg',
+    $home . '/assets/img/defaults/solution-1.jpg',
+    $home . '/assets/img/defaults/solution-3.jpg',
+];
+
+foreach ($solutions as $solution_index => $solution_product) {
+    $solutions[$solution_index]['img'] = !empty($solution_product['image'])
+        ? $solution_product['image']
+        : $solution_fallback_images[$solution_index % 4];
+}
 /* ═══════════════════════════════════════════════════════════════════════
    ③ Cases & Insights — 双层 fallback (NEW ACF repeater → 旧 ACF + 默认值)
    ═══════════════════════════════════════════════════════════════════════ */
