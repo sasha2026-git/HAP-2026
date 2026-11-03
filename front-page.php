@@ -57,14 +57,14 @@ $prod_section_sub    = hireai_field_lang('fp_products_subtitle', $lang, $is_en ?
 $prod_explore_label  = hireai_field_lang('fp_products_explore_label', $lang, $is_en ? 'Explore More' : '探索更多', $front_page_id);
 $prod_explore_url    = hireai_field('fp_products_explore_url', home_url('/ai-employees/'), $front_page_id);
 
-/* v3.11.3: 数字员工区由后台 WooCommerce「精选商品」控制，与解决方案区独立。 */
+/* v3.11.7: 数字员工区固定 3 张，避免后台精选数量撑破首屏卡片布局。 */
 $products_limit = function_exists('get_field') ? (int) get_field('fp_products_count', $front_page_id) : 0;
 $products = hireai_get_featured_employee_products([
     'language' => $lang,
     'per_page' => $products_limit > 0 ? $products_limit : 8,
 ]);
 
-/* v3.11.4: 精选商品未配置时保持 v3.11.2 首页区块可见，中英文各用一套本地兜底卡。 */
+/* v3.11.7: 数字员工区固定 3 张；精选商品未配置时使用中英文本地兜底卡。 */
 if (empty($products)) {
     $products = [];
     $employee_defaults = [
@@ -101,20 +101,19 @@ if (empty($products)) {
         ];
     }
 
-    $products[] = [
-        'title' => $is_en ? 'Custom Consultation' : '定制咨询',
-        'desc'  => $is_en ? 'Speak with our team to design a bespoke digital employee.' : '与我们的团队对话，定制专属数字员工。',
-        'badge' => $is_en ? 'Bespoke Service' : '定制服务',
-        'img'   => $home . '/assets/img/defaults/employee-5.jpg',
-        'url'   => $hero_cta_2_url,
-        'btn'   => $is_en ? 'Book Consultation' : '预约咨询',
-    ];
 }
 
 $products = array_map(function ($product) use ($is_en) {
-    $product['btn'] = $is_en ? 'Explore More' : '探索更多';
-    return $product;
+    return [
+        'title' => (string) ($product['title'] ?? ''),
+        'desc'  => (string) ($product['desc'] ?? ''),
+        'badge' => (string) ($product['badge'] ?? ''),
+        'img'   => (string) ($product['img'] ?? ''),
+        'url'   => (string) ($product['url'] ?? $prod_explore_url),
+        'btn'   => $is_en ? 'Explore More' : '探索更多',
+    ];
 }, $products);
+$products = array_slice(array_values($products), 0, 3);
 
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -176,7 +175,7 @@ $solution_result = hireai_get_solution_products_result([
 ]);
 $solutions = $solution_result['items'];
 
-/* v3.11.5: 精选方案不足 4 个时，用当前语言最新已发布商品补足；完全没有精选则维持不渲染。 */
+/* v3.11.5: 精选方案不足 4 个时，用当前语言最新已发布商品补足。 */
 if (!empty($solutions) && count($solutions) < 4) {
     $solution_ids = wp_list_pluck($solutions, 'id');
     $latest_solutions = hireai_get_solution_products_result([
@@ -197,6 +196,59 @@ if (!empty($solutions) && count($solutions) < 4) {
     }
 }
 
+/* v3.11.7: 完全没有已发布方案时使用本地 4 卡兜底，保证首页区块完整。 */
+if (empty($solutions)) {
+    $solution_defaults = [
+        [
+            'title' => $is_en ? 'Brand VI Solution' : '品牌VI方案',
+            'desc'  => $is_en ? 'Build a coherent brand identity with AI-generated visual systems.' : '用 AI 视觉系统打造一致且有质感的品牌识别。',
+            'tag'   => $is_en ? 'Brand Design' : '品牌设计',
+            'image' => $home . '/assets/img/defaults/solution-1.jpg',
+        ],
+        [
+            'title' => $is_en ? 'Intelligent Support Suite' : '智能客服矩阵',
+            'desc'  => $is_en ? 'Resolve enquiries faster with multilingual digital assistants.' : '通过多语言数字助手更快响应客户咨询。',
+            'tag'   => $is_en ? 'Customer Service' : '客户服务',
+            'image' => $home . '/assets/img/defaults/solution-2.jpg',
+        ],
+        [
+            'title' => $is_en ? 'Data Insight Assistant' : '数据洞察助手',
+            'desc'  => $is_en ? 'Turn business data into clear, decision-ready reports.' : '把业务数据转成清晰的决策报告。',
+            'tag'   => $is_en ? 'Data Analysis' : '数据分析',
+            'image' => $home . '/assets/img/defaults/solution-3.jpg',
+        ],
+        [
+            'title' => $is_en ? 'Workflow Automation' : '流程自动化',
+            'desc'  => $is_en ? 'Connect teams and systems to reduce repetitive operations.' : '连接团队与系统，减少重复运营工作。',
+            'tag'   => $is_en ? 'Operations' : '运营效率',
+            'image' => $home . '/assets/img/defaults/solution-4.jpg',
+        ],
+    ];
+
+    foreach ($solution_defaults as $solution_default) {
+        $solutions[] = [
+            'title' => $solution_default['title'],
+            'desc' => $solution_default['desc'],
+            'tag' => $solution_default['tag'],
+            'image' => $solution_default['image'],
+            'permalink' => $sol_explore_url,
+            'price_html' => '',
+        ];
+    }
+}
+
+/* v3.11.7: DTO 键名与首页模板统一，避免 excerpt/permalink 被读成未定义键。 */
+$solutions = array_map(function ($solution_product) use ($sol_explore_url) {
+    return [
+        'title' => (string) ($solution_product['title'] ?? ''),
+        'desc' => (string) ($solution_product['desc'] ?? $solution_product['excerpt'] ?? ''),
+        'tag' => (string) ($solution_product['tag'] ?? ''),
+        'img' => (string) ($solution_product['image'] ?? ''),
+        'url' => (string) ($solution_product['url'] ?? $solution_product['permalink'] ?? $sol_explore_url),
+        'price_html' => (string) ($solution_product['price_html'] ?? ''),
+    ];
+}, $solutions);
+
 /* v3.11.4: 每张方案卡使用本地封面兜底，避免缺少特色图时退化成灰色空块。 */
 $solution_fallback_images = [
     $home . '/assets/img/defaults/solution-4.jpg',
@@ -206,8 +258,8 @@ $solution_fallback_images = [
 ];
 
 foreach ($solutions as $solution_index => $solution_product) {
-    $solutions[$solution_index]['img'] = !empty($solution_product['image'])
-        ? $solution_product['image']
+    $solutions[$solution_index]['img'] = '' !== $solution_product['img']
+        ? $solution_product['img']
         : $solution_fallback_images[$solution_index % 4];
 }
 /* ═══════════════════════════════════════════════════════════════════════
@@ -653,7 +705,7 @@ html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
             </div>
         </div>
         <div class="hireai-fp-products__grid">
-            <?php foreach ($products as $p) : if (empty($p['title'])) continue; ?>
+            <?php foreach ($products as $p) : if ('' === $p['title']) continue; ?>
             <article class="hireai-fp-product">
                 <div class="hireai-fp-product__media">
                     <?php if (!empty($p['img'])) : ?>
@@ -693,9 +745,9 @@ html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
             </div>
         </div>
         <div class="hireai-fp-solutions__grid">
-            <?php foreach ($solutions as $sol) : if (empty($sol['title'])) continue; ?>
+            <?php foreach ($solutions as $sol) : if ('' === $sol['title']) continue; ?>
             <a class="hireai-fp-sol" href="<?php echo esc_url($sol['url']); ?>">
-                <?php if (!empty($sol['img'])) : ?>
+                <?php if ('' !== $sol['img']) : ?>
                 <img class="hireai-fp-sol__img" src="<?php echo esc_url($sol['img']); ?>" alt="<?php echo esc_attr($sol['title']); ?>" loading="lazy" decoding="async"
                      onerror="this.src='<?php echo esc_url($home . '/assets/img/defaults/solution-1.jpg'); ?>'; this.onerror=function(){ this.style.display='none'; };">
                 <?php else : ?>
@@ -704,12 +756,12 @@ html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
                 </div>
                 <?php endif; ?>
                 <div class="hireai-fp-sol__overlay">
-                    <?php if (!empty($sol['tag'])) : ?>
+                    <?php if ('' !== $sol['tag']) : ?>
                     <span class="hireai-fp-sol__tag"><?php echo esc_html($sol['tag']); ?></span>
                     <?php endif; ?>
                     <h3 class="hireai-fp-sol__title"><?php echo esc_html($sol['title']); ?></h3>
                     <p class="hireai-fp-sol__desc"><?php echo esc_html($sol['desc']); ?></p>
-                    <?php if (!empty($sol['price_html'])) : ?>
+                    <?php if ('' !== $sol['price_html']) : ?>
                     <span class="hireai-fp-sol__price">
                         <span><?php echo esc_html($is_en ? 'Starting at' : '起步价'); ?></span>
                         <span class="hireai-fp-sol__price-value"><?php echo wp_kses_post($sol['price_html']); ?></span>
