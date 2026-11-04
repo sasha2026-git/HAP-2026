@@ -347,13 +347,15 @@ if (is_array($_v360_faq) && !empty($_v360_faq)) {
         ];
     }
 }
-if (count($faq_items) < 1) {
-    foreach ([1, 2, 3] as $i) {
-        if (count($faq_items) >= 3) break;
+if (count($faq_items) < 5) {
+    foreach ([1, 2, 3, 4, 5] as $i) {
+        if (count($faq_items) >= 5) break;
         $dflt = [
             1 => ['q' => '定制一位数字员工需要多长时间？', 'a' => '这取决于定制的复杂程度。基础模型微调通常需要 2–4 周，而完全定制化（包括独特外观建模、声音克隆和深度行业知识库训练）可能需要 8–12 周。'],
             2 => ['q' => '数字员工的知识库可以实时更新吗？', 'a' => '是的，我们的系统支持通过 API 进行实时知识库更新。您可以随时添加新的产品信息、政策变更或行业动态，确保数字员工始终掌握最新资讯。'],
             3 => ['q' => '如何保障数据隐私与安全？',         'a' => '我们采用企业级加密标准，所有交互数据均在本地或专属私有云中处理。我们严格遵守全球数据保护法规，确保您的商业机密与客户隐私绝对安全。'],
+            4 => ['q' => '合作流程和交付周期是怎样的？',       'a' => '我们通常按照需求梳理、方案确认、制作交付和上线优化四个阶段推进。标准项目一般需要 2–4 周，复杂定制项目会根据功能范围提供专属排期。'],
+            5 => ['q' => '支持哪些语言和付款方式？',           'a' => '数字员工目前支持中文、英文等主流语言，可按业务需求扩展语种。我们支持对公转账及主流国际支付方式，具体条款会在合作确认阶段书面明确。'],
         ];
         $d = $dflt[$i];
         $faq_items[] = [
@@ -513,7 +515,7 @@ html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
 .hireai-fp-products__cta{text-align:center;}
 
 /* ═══════════════════════════════════════════════════════════════════════
-   3) SOLUTIONS  ── 设计基准 AI 解决方案 (2x2 aspect-video 卡片)
+    3) SOLUTIONS  ── 设计基准 AI 解决方案 (媒体在上 / 内容在下)
    ═══════════════════════════════════════════════════════════════════════ */
 .hireai-fp-solutions{background:var(--surface,#faf9f9);padding-block:var(--gap);padding-inline:var(--side);}
 .hireai-fp-solutions__inner{max-width:var(--max);margin:0 auto;}
@@ -526,20 +528,22 @@ html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
 .hireai-fp-solutions__grid{display:grid;grid-template-columns:1fr;gap:24px;margin-bottom:48px;}
 @media(min-width:768px){.hireai-fp-solutions__grid{grid-template-columns:repeat(2,1fr);gap:clamp(24px,3vw,48px);}}
 
-.hireai-fp-sol{position:relative;display:block;aspect-ratio:16/9;overflow:hidden;border:1px solid var(--line);transition:border-color .5s;}
+.hireai-fp-sol{display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--line);background:var(--surface-white,#fff);transition:border-color .5s;}
 .hireai-fp-sol:hover{border-color:var(--gold-light);}
+.hireai-fp-sol__media{position:relative;aspect-ratio:16/9;overflow:hidden;background:#eee;}
 .hireai-fp-sol__img{width:100%;height:100%;object-fit:cover;transition:transform .7s ease-out;}
 .hireai-fp-sol:hover .hireai-fp-sol__img{transform:scale(1.05);}
 .hireai-fp-sol__placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#e8e8e8;color:rgba(119,90,25,.45);}
 .hireai-fp-sol__placeholder svg{width:64px;height:64px;}
-.hireai-fp-sol__overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:32px;color:#fff;background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.20) 40%,rgba(0,0,0,.85) 100%);}
+.hireai-fp-sol__body{display:flex;flex:1;flex-direction:column;align-items:flex-start;padding:clamp(20px,2.2vw,28px);}
 /* v3.0.6: letter-spacing 0.1em (DESIGN.md label-md letterSpacing) — was 0.2em */
-.hireai-fp-sol__tag{display:inline-block;font-family:var(--f-label);font-size:11px;font-weight:700;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-bottom:10px;}
-.hireai-fp-sol__title{font-family:var(--f-headline);font-size:clamp(20px,1.8vw,26px);font-weight:500;line-height:1.3;color:#fff;margin:0 0 8px;}
-.hireai-fp-sol__desc{font-family:var(--f-body);font-size:14px;line-height:1.6;color:rgba(255,255,255,.85);margin:0;max-width:36ch;}
-.hireai-fp-sol__price{display:inline-flex;align-items:center;gap:8px;margin-top:10px;font-family:var(--f-label);font-size:12px;font-weight:600;line-height:1.3;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-light,#e9c176);}
-.hireai-fp-sol__price-value del{color:rgba(233,193,118,.62);}
-.hireai-fp-sol__price-value ins{text-decoration:none;color:var(--gold-light,#e9c176);}
+.hireai-fp-sol__tag{display:inline-block;font-family:var(--f-label);font-size:11px;font-weight:700;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+.hireai-fp-sol__title{font-family:var(--f-headline);font-size:clamp(20px,1.8vw,26px);font-weight:500;line-height:1.3;color:#000;margin:0 0 8px;transition:color .3s;}
+.hireai-fp-sol:hover .hireai-fp-sol__title{color:var(--gold);}
+.hireai-fp-sol__desc{font-family:var(--f-body);font-size:14px;line-height:1.6;color:var(--ink-muted);margin:0;max-width:46ch;}
+.hireai-fp-sol__price{display:inline-flex;align-items:center;gap:8px;margin-top:auto;padding-top:14px;font-family:var(--f-label);font-size:12px;font-weight:600;line-height:1.3;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
+.hireai-fp-sol__price-value del{color:rgba(119,90,25,.62);}
+.hireai-fp-sol__price-value ins{text-decoration:none;color:var(--gold);}
 .hireai-fp-solutions__cta{text-align:center;}
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -743,15 +747,17 @@ html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
         <div class="hireai-fp-solutions__grid">
             <?php foreach ($solutions as $sol) : if ('' === $sol['title']) continue; ?>
             <a class="hireai-fp-sol" href="<?php echo esc_url($sol['url']); ?>">
-                <?php if ('' !== $sol['img']) : ?>
-                <img class="hireai-fp-sol__img" src="<?php echo esc_url($sol['img']); ?>" alt="<?php echo esc_attr($sol['title']); ?>" loading="lazy" decoding="async"
-                     onerror="this.src='<?php echo esc_url($home . '/assets/img/defaults/solution-1.jpg'); ?>'; this.onerror=function(){ this.style.display='none'; };">
-                <?php else : ?>
-                <div class="hireai-fp-sol__placeholder" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></svg>
+                <div class="hireai-fp-sol__media">
+                    <?php if ('' !== $sol['img']) : ?>
+                    <img class="hireai-fp-sol__img" src="<?php echo esc_url($sol['img']); ?>" alt="<?php echo esc_attr($sol['title']); ?>" loading="lazy" decoding="async"
+                         onerror="this.src='<?php echo esc_url($home . '/assets/img/defaults/solution-1.jpg'); ?>'; this.onerror=function(){ this.style.display='none'; };">
+                    <?php else : ?>
+                    <div class="hireai-fp-sol__placeholder" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></svg>
+                    </div>
+                    <?php endif; ?>
                 </div>
-                <?php endif; ?>
-                <div class="hireai-fp-sol__overlay">
+                <div class="hireai-fp-sol__body">
                     <?php if ('' !== $sol['tag']) : ?>
                     <span class="hireai-fp-sol__tag"><?php echo esc_html($sol['tag']); ?></span>
                     <?php endif; ?>
@@ -829,7 +835,7 @@ html[lang^="zh"] .hireai-fp-hero__title{letter-spacing:0;}
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
-     5) FAQ  ── 设计基准 常见问题 (3 项手风琴 + ghost CTA)
+     5) FAQ  ── 设计基准 常见问题 (5 项手风琴 + ghost CTA)
      ═══════════════════════════════════════════════════════════════════════ -->
 <section class="hireai-fp hireai-fp-faq" id="hireai-fp-faq" aria-labelledby="hireai-fp-faq-title">
     <h2 class="hireai-fp-faq__title" id="hireai-fp-faq-title"><?php echo esc_html($faq_kicker); ?></h2>

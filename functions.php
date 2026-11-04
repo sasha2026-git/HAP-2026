@@ -4392,6 +4392,12 @@ add_action('acf/init', function () {
         ['name' => 'fp_faq3_q', 'label' => '⑥ 兜底问答 3 · 问题', 'type' => 'text', 'zh' => '如何保障数据隐私与安全？', 'en' => 'How do you ensure data privacy and security?'],
         ['name' => 'fp_faq3_a', 'label' => '⑥ 兜底问答 3 · 回答', 'type' => 'textarea', 'zh' => '我们采用企业级加密标准，所有交互数据均在本地或专属私有云中处理。', 'en' => 'We employ enterprise-grade encryption standards. All interaction data is processed in local or dedicated private clouds.', 'extra' => ['rows' => 4]],
 
+        ['name' => 'fp_faq4_q', 'label' => '⑥ 兜底问答 4 · 问题', 'type' => 'text', 'zh' => '合作流程和交付周期是怎样的？', 'en' => 'What are the collaboration process and delivery timelines?'],
+        ['name' => 'fp_faq4_a', 'label' => '⑥ 兜底问答 4 · 回答', 'type' => 'textarea', 'zh' => '我们通常按照需求梳理、方案确认、制作交付和上线优化四个阶段推进。标准项目一般需要 2–4 周，复杂定制项目会根据功能范围提供专属排期。', 'en' => 'We typically work through requirements, solution confirmation, production delivery, and launch optimization. Standard projects usually take 2–4 weeks, while complex custom projects receive a dedicated schedule based on scope.', 'extra' => ['rows' => 4]],
+
+        ['name' => 'fp_faq5_q', 'label' => '⑥ 兜底问答 5 · 问题', 'type' => 'text', 'zh' => '支持哪些语言和付款方式？', 'en' => 'Which languages and payment methods are supported?'],
+        ['name' => 'fp_faq5_a', 'label' => '⑥ 兜底问答 5 · 回答', 'type' => 'textarea', 'zh' => '数字员工目前支持中文、英文等主流语言，可按业务需求扩展语种。我们支持对公转账及主流国际支付方式，具体条款会在合作确认阶段书面明确。', 'en' => 'Digital employees currently support Chinese, English, and other major languages, with additional languages available by business need. We support corporate transfers and major international payment methods; exact terms are confirmed in writing at the engagement stage.', 'extra' => ['rows' => 4]],
+
         /* ── ⑦ CTA 区块 ── */
         ['name' => 'fp_cta_kicker', 'label' => '⑦ CTA · 眉题', 'type' => 'text', 'zh' => '开启旅程', 'en' => 'NEXT STEP'],
         ['name' => 'fp_cta_title', 'label' => '⑦ CTA · 标题', 'type' => 'textarea', 'zh' => '开启您的 AI 雇佣之旅', 'en' => 'Begin Your AI Hiring Journey', 'extra' => ['rows' => 1]],
@@ -4437,7 +4443,7 @@ add_action('acf/init', function () {
       ];
       $_front_group['fields'][] = [
           'key'           => 'field_fp_faq_repeater',
-          'label'         => '⑥ FAQ 问答列表（最多 10 题 · 未填时回退到兜底问答 1-3）',
+          'label'         => '⑥ FAQ 问答列表（最多 10 题 · 不足 5 题时回退到兜底问答 1-5）',
           'name'          => 'fp_faq_repeater',
           'type'          => 'repeater',
           'max'           => 10,
