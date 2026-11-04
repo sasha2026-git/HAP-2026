@@ -2259,6 +2259,17 @@ function hireai_make_solution_product_dto($product_id, $language = '') {
             $excerpt = hireai_solution_legacy_field($product_id, 'sol_desc', $language);
         }
 
+        /* v3.11.10: EN 语言下优先读取 sol_title_en / sol_desc_en 覆盖。
+           商品本体保持中文（价格/图片/分类复用），英文站只需补这两个 meta 即可同步文案。 */
+        $sol_title_lang = hireai_solution_legacy_field($product_id, 'sol_title', $language);
+        if ($language === 'en' && $sol_title_lang !== '') {
+            $title = $sol_title_lang;
+        }
+        $sol_desc_lang = hireai_solution_legacy_field($product_id, 'sol_desc', $language);
+        if ($language === 'en' && $sol_desc_lang !== '') {
+            $excerpt = $sol_desc_lang;
+        }
+
         $tag_terms = wp_get_post_terms($product_id, 'product_tag', ['fields' => 'slugs']);
         if (is_wp_error($tag_terms)) {
             error_log('[hireai solution product] tag lookup failed #' . $product_id . ': ' . $tag_terms->get_error_message());
