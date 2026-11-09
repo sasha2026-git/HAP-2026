@@ -169,7 +169,7 @@ html body .case__cta,html body .case:hover .case__cta,html body .case:active .ca
 .art-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;max-width:1200px;margin:0 auto}
 .art{cursor:pointer}
 html body .art-card__cta,html body .art:hover .art-card__cta,html body .art:active .art-card__cta,html body .art:focus-visible .art-card__cta{color:var(--gold);-webkit-text-fill-color:var(--gold)}
-.art__iw{aspect-ratio:4/5;border-radius:8px;overflow:hidden;margin-bottom:16px}
+.art__iw{width:80%;margin-inline:auto;aspect-ratio:4/5;border-radius:8px;overflow:hidden;margin-bottom:16px}
 .art__ph{width:100%;height:100%;background:linear-gradient(135deg,var(--bg),#e8e5df);display:flex;align-items:center;justify-content:center;font-size:48px;color:#747878;transition:transform .7s}
 /* v3.5.7-p17 Bug 2 修复：洞察 ACF 配图样式 */
 .art__img{width:100%;height:100%;object-fit:cover;transition:transform .7s;}
