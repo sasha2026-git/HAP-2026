@@ -139,7 +139,7 @@ body{font-family:var(--fb);background:var(--bg);color:var(--txt);-webkit-font-sm
 .badge-bl{bottom:20px;left:20px}
 .badge-tl{top:20px;left:20px}
 .badge-br{bottom:20px;right:20px}
-.case__body{padding:20px 0 0}
+.case__body{width:90%;margin-inline:auto;padding:20px 0 0}
 .case__body h3{font-family:var(--fd);font-size:20px;margin:0 0 6px}
 .case__body p{font-size:14px;line-height:1.5;color:var(--txt-v)}
 /* v3.7.16: block inherited Elementor link colors for every case-card state. */
@@ -170,6 +170,7 @@ html body .case__cta,html body .case:hover .case__cta,html body .case:active .ca
 .art{cursor:pointer}
 html body .art-card__cta,html body .art:hover .art-card__cta,html body .art:active .art-card__cta,html body .art:focus-visible .art-card__cta{color:var(--gold);-webkit-text-fill-color:var(--gold)}
 .art__iw{width:80%;margin-inline:auto;aspect-ratio:4/5;border-radius:8px;overflow:hidden;margin-bottom:16px}
+.art__content{width:80%;margin-inline:auto}
 .art__ph{width:100%;height:100%;background:linear-gradient(135deg,var(--bg),#e8e5df);display:flex;align-items:center;justify-content:center;font-size:48px;color:#747878;transition:transform .7s}
 /* v3.5.7-p17 Bug 2 修复：洞察 ACF 配图样式 */
 .art__img{width:100%;height:100%;object-fit:cover;transition:transform .7s;}
@@ -566,30 +567,32 @@ footer .copy{font-size:13px;color:var(--txt-v)}
     <?php foreach ( $ci_art_slots as $ci_a ) : ?>
       <a class="art art-card" href="<?php echo esc_url( $ci_a['href'] ); ?>">
         <div class="art__iw"><?php if (!empty($ci_a['img'])) : ?><img class="art__img" src="<?php echo esc_url($ci_a['img']); ?>" alt="<?php echo esc_attr($ci_a['title_zh']); ?>" loading="lazy" /><?php else : ?><div class="art__ph">✦</div><?php endif; ?></div>
-        <span class="art__cat">
-          <span class="zh"><?php echo esc_html( $ci_a['cat_zh'] ); ?></span>
-          <span class="en" style="display:none"><?php echo esc_html( $ci_a['cat_en'] ); ?></span>
-        </span>
-        <?php if ( $ci_a['source'] === 'static' ) : ?>
-          <h4>
-            <span class="zh"><?php echo esc_html( $ci_a['title_zh'] ); ?><em><?php echo esc_html( $ci_a['em_zh'] ); ?></em><?php echo esc_html( $ci_a['post_zh'] ); ?></span>
-            <span class="en" style="display:none"><?php echo esc_html( $ci_a['title_en'] ); ?><em><?php echo esc_html( $ci_a['em_en'] ); ?></em><?php echo esc_html( $ci_a['post_en'] ); ?></span>
-          </h4>
-        <?php else : ?>
-          <h4>
-            <span class="zh"><?php echo esc_html( $ci_a['title_zh'] ); ?></span>
-            <span class="en" style="display:none"><?php echo esc_html( $ci_a['title_en'] ); ?></span>
-          </h4>
-        <?php endif; ?>
-        <p>
-          <span class="zh"><?php echo esc_html( $ci_a['desc_zh'] ); ?></span>
-          <span class="en" style="display:none"><?php echo esc_html( $ci_a['desc_en'] ); ?></span>
-        </p>
-        <span class="art__rt">
-          <span class="zh"><?php echo esc_html( $ci_a['rt_zh'] ); ?></span>
-          <span class="en" style="display:none"><?php echo esc_html( $ci_a['rt_en'] ); ?></span>
-        </span>
-        <span class="art-card__cta">阅读全文 →</span>
+        <div class="art__content">
+          <span class="art__cat">
+            <span class="zh"><?php echo esc_html( $ci_a['cat_zh'] ); ?></span>
+            <span class="en" style="display:none"><?php echo esc_html( $ci_a['cat_en'] ); ?></span>
+          </span>
+          <?php if ( $ci_a['source'] === 'static' ) : ?>
+            <h4>
+              <span class="zh"><?php echo esc_html( $ci_a['title_zh'] ); ?><em><?php echo esc_html( $ci_a['em_zh'] ); ?></em><?php echo esc_html( $ci_a['post_zh'] ); ?></span>
+              <span class="en" style="display:none"><?php echo esc_html( $ci_a['title_en'] ); ?><em><?php echo esc_html( $ci_a['em_en'] ); ?></em><?php echo esc_html( $ci_a['post_en'] ); ?></span>
+            </h4>
+          <?php else : ?>
+            <h4>
+              <span class="zh"><?php echo esc_html( $ci_a['title_zh'] ); ?></span>
+              <span class="en" style="display:none"><?php echo esc_html( $ci_a['title_en'] ); ?></span>
+            </h4>
+          <?php endif; ?>
+          <p>
+            <span class="zh"><?php echo esc_html( $ci_a['desc_zh'] ); ?></span>
+            <span class="en" style="display:none"><?php echo esc_html( $ci_a['desc_en'] ); ?></span>
+          </p>
+          <span class="art__rt">
+            <span class="zh"><?php echo esc_html( $ci_a['rt_zh'] ); ?></span>
+            <span class="en" style="display:none"><?php echo esc_html( $ci_a['rt_en'] ); ?></span>
+          </span>
+          <span class="art-card__cta">阅读全文 →</span>
+        </div>
       </a>
     <?php endforeach; ?>
   </div>
