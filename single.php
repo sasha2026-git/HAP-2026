@@ -190,6 +190,7 @@ while (have_posts()) :
             $thumbnail_id = get_post_thumbnail_id($post_id);
             $post_content = get_post_field('post_content', $post_id);
             $thumbnail_duplicate = false;
+            $hide_hero_image = function_exists('get_field') && get_field('show_hero_image', $post_id) === false;
 
             if ($thumbnail_id) {
                 $thumbnail_duplicate = strpos($post_content, 'wp-image-' . $thumbnail_id) !== false;
@@ -205,7 +206,7 @@ while (have_posts()) :
                 }
             }
             ?>
-            <?php if (has_post_thumbnail() && !$thumbnail_duplicate) : ?>
+            <?php if (has_post_thumbnail() && !$thumbnail_duplicate && !$hide_hero_image) : ?>
                 <div class="hireai-single-post__hero">
                     <?php the_post_thumbnail('hireai-wide', ['class' => 'hireai-single-post__hero-img', 'loading' => 'lazy']); ?>
                 </div>

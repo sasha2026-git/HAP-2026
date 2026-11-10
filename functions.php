@@ -3643,6 +3643,33 @@ add_action('acf/init', function () {
         array(array('param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:insights')),
     )));
 
+    /* ---- 案例/洞察详情页 Hero 封面图开关 ---- */
+    acf_add_local_field_group([
+        'key'      => 'group_single_hero_visibility',
+        'title'    => '详情页 — Hero 封面图',
+        'fields'   => [
+            [
+                'key'           => 'field_show_hero_image',
+                'label'         => '显示 Hero 封面图',
+                'name'          => 'show_hero_image',
+                'type'          => 'true_false',
+                'instructions'  => '关闭后强制隐藏正文上方的特色图；未设置时默认显示，并继续沿用正文重复图自动隐藏规则。',
+                'default_value' => 1,
+                'ui'            => 1,
+                'ui_on_text'    => '显示',
+                'ui_off_text'   => '隐藏',
+            ],
+        ],
+        'location' => [
+            [
+                ['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:cases'],
+            ],
+            [
+                ['param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:insights'],
+            ],
+        ],
+    ]);
+
 /* ---- 5. 案例 & 洞察页（v3.7.4 重写：AllScented 模式直接注册，去 hireai_make_bilingual_group 闭包）
      *    历史：v3.7.3 用 hireai_make_bilingual_group() 闭包，对已带 _zh 后缀的字段（如 ci_hero_h1_pre_zh）
      *          会自动追加 _zh，最终注册成带双后缀的 field name。源码里难看清字段对应关系。
