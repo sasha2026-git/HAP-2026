@@ -186,22 +186,7 @@ while (have_posts()) :
                     ?>
                 </div>
             </header>
-            <?php
-            /* v3.11.13: 特色图若已在正文中出现（同附件ID或同URL），详情页不再重复渲染 hero，避免封面图与正文首图重复 */
-            $_hap_thumb_id = (int) get_post_thumbnail_id();
-            $_hap_content_html = function_exists('get_the_content') ? get_the_content() : '';
-            $_hap_dup_hero = false;
-            if ($_hap_thumb_id && $_hap_content_html) {
-                if (strpos($_hap_content_html, 'wp-image-' . $_hap_thumb_id) !== false) {
-                    $_hap_dup_hero = true;
-                } else {
-                    foreach (['full', 'large', 'medium_large'] as $_hap_size) {
-                        $_hap_u = wp_get_attachment_image_url($_hap_thumb_id, $_hap_size);
-                        if ($_hap_u && strpos($_hap_content_html, $_hap_u) !== false) { $_hap_dup_hero = true; break; }
-                    }
-                }
-            }
-            if (has_post_thumbnail() && !$_hap_dup_hero) : ?>
+            <?php if (has_post_thumbnail()) : ?>
                 <div class="hireai-single-post__hero">
                     <?php the_post_thumbnail('hireai-wide', ['class' => 'hireai-single-post__hero-img', 'loading' => 'lazy']); ?>
                 </div>
@@ -236,17 +221,6 @@ while (have_posts()) :
         .hireai-single-post__meta { margin-top: 12px; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--on-surface-variant, #444748); letter-spacing: 0.05em; }
         .hireai-single-post__hero { margin-bottom: 32px; border-radius: 12px; overflow: hidden; }
         .hireai-single-post__hero-img { width: 100%; height: auto; display: block; }
-
-        /* v3.11.13: Before/After 编辑式对比区块（案例正文可用 hireai-ba 类） */
-        .hireai-ba { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 28px 0; }
-        .hireai-ba__col { position: relative; border: 1px solid #E8E5DF; border-radius: 12px; overflow: hidden; background: #fff; }
-        .hireai-ba__col img { width: 100%; height: auto; display: block; }
-        .hireai-ba__pill { position: absolute; top: 12px; left: 12px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; padding: 4px 12px; border-radius: 999px; }
-        .hireai-ba__col--before .hireai-ba__pill { background: #1A1C1C; color: #F4F3F3; }
-        .hireai-ba__col--after .hireai-ba__pill { background: #E9C176; color: #1A1C1C; }
-        .hireai-ba__cap { font-size: 13px; color: #444748; padding: 10px 14px 12px; }
-        .hireai-ba--single { grid-template-columns: 1fr; }
-        @media (max-width: 640px) { .hireai-ba { grid-template-columns: 1fr; } }
         .hireai-single-post__content { line-height: 1.8; }
         .hireai-single-post__footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--outline-variant, #c4c7c7); }
         .hireai-single-post__nav { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }

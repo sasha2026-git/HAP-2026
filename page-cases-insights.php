@@ -306,10 +306,7 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           if (empty($ci_post_img)) {
               $ci_post_img = get_the_post_thumbnail_url($ci_pid, 'large');
           }
-          /* v3.11.13: 卡片描述优先用 ACF「案例卡片 · 副标题」（case_subtitle），为空再回退 excerpt */
-          $_ci_acf_sub = function_exists('get_field') ? get_field('case_subtitle', $ci_pid) : '';
-          if (is_array($_ci_acf_sub)) { $_ci_acf_sub = $_ci_acf_sub['zh'] ?? ($_ci_acf_sub['en'] ?? ''); }
-          $ci_post_excerpt = (is_string($_ci_acf_sub) && trim($_ci_acf_sub) !== '') ? trim($_ci_acf_sub) : ( has_excerpt( $ci_pid ) ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( $ci_post_obj->post_content ), 32, '…' ) );
+          $ci_post_excerpt = has_excerpt( $ci_pid ) ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( $ci_post_obj->post_content ), 32, '…' );
           $ci_post_title   = get_the_title( $ci_pid );
           $ci_post_permalink = hireai_localized_url( get_permalink( $ci_pid ) );
           $ci_case_slots[] = [
@@ -506,10 +503,7 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           $GLOBALS['post'] = $ci_post_obj;
           setup_postdata( $ci_post_obj );
           $ci_post_title   = get_the_title( $ci_pid );
-          /* v3.11.13: 卡片描述优先用 ACF「案例卡片 · 副标题」（case_subtitle），为空再回退 excerpt */
-          $_ci_acf_sub = function_exists('get_field') ? get_field('case_subtitle', $ci_pid) : '';
-          if (is_array($_ci_acf_sub)) { $_ci_acf_sub = $_ci_acf_sub['zh'] ?? ($_ci_acf_sub['en'] ?? ''); }
-          $ci_post_excerpt = (is_string($_ci_acf_sub) && trim($_ci_acf_sub) !== '') ? trim($_ci_acf_sub) : ( has_excerpt( $ci_pid ) ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( $ci_post_obj->post_content ), 28, '…' ) );
+          $ci_post_excerpt = has_excerpt( $ci_pid ) ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( $ci_post_obj->post_content ), 28, '…' );
           $ci_post_cats    = get_the_category( $ci_pid );
           $ci_cat_name     = ! empty( $ci_post_cats ) ? $ci_post_cats[0]->name : '';
           $ci_post_date    = get_the_date( 'Y.m.d' );
