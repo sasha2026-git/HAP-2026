@@ -3637,6 +3637,7 @@ add_action('acf/init', function () {
     acf_add_local_field_group(hireai_make_bilingual_group('group_insight_meta', '洞察 — 卡片', [
         ['name' => 'insight_cat',      'label' => '洞察 · 分类标签（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
         ['name' => 'insight_read_time', 'label' => '洞察 · 阅读时长（覆盖）', 'type' => 'text', 'zh' => '', 'en' => ''],
+        ['name' => 'insight_subtitle', 'label' => '洞察卡片 · 副标题（覆盖 excerpt）', 'type' => 'textarea', 'zh' => '', 'en' => '', 'extra' => ['rows' => 2]],
         ['name' => 'insight_cover_image', 'label' => '洞察 · 封面图片（覆盖 WP 特色图，空白则回退 featured image）', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array', 'preview_size' => 'medium']],
     ], array(
         array(array('param' => 'post_taxonomy', 'operator' => '==', 'value' => 'category:insights')),

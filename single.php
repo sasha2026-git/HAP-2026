@@ -186,7 +186,26 @@ while (have_posts()) :
                     ?>
                 </div>
             </header>
-            <?php if (has_post_thumbnail()) : ?>
+            <?php
+            $thumbnail_id = get_post_thumbnail_id($post_id);
+            $post_content = get_post_field('post_content', $post_id);
+            $thumbnail_duplicate = false;
+
+            if ($thumbnail_id) {
+                $thumbnail_duplicate = strpos($post_content, 'wp-image-' . $thumbnail_id) !== false;
+
+                if (!$thumbnail_duplicate) {
+                    foreach (['full', 'large', 'medium_large'] as $thumbnail_size) {
+                        $thumbnail_src = wp_get_attachment_image_src($thumbnail_id, $thumbnail_size);
+                        if (!empty($thumbnail_src[0]) && strpos($post_content, $thumbnail_src[0]) !== false) {
+                            $thumbnail_duplicate = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            ?>
+            <?php if (has_post_thumbnail() && !$thumbnail_duplicate) : ?>
                 <div class="hireai-single-post__hero">
                     <?php the_post_thumbnail('hireai-wide', ['class' => 'hireai-single-post__hero-img', 'loading' => 'lazy']); ?>
                 </div>
@@ -224,6 +243,11 @@ while (have_posts()) :
         .hireai-single-post__content { line-height: 1.8; }
         .hireai-single-post__footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--outline-variant, #c4c7c7); }
         .hireai-single-post__nav { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+        .hireai-ba { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 24px 0; }
+        .hireai-ba > * { margin: 0; padding: 14px 22px; border-radius: 999px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 12px; letter-spacing: .18em; line-height: 1.5; text-transform: uppercase; }
+        .hireai-ba > .before, .hireai-ba > [data-type="before"], .hireai-ba > .hireai-ba__before { background: #111; color: #fff; }
+        .hireai-ba > .after, .hireai-ba > [data-type="after"], .hireai-ba > .hireai-ba__after { background: linear-gradient(135deg, #775a19, #e9c176); color: #241b07; }
+        @media (max-width: 768px) { .hireai-ba { grid-template-columns: 1fr; } }
         </style>
 
     <?php endif; ?>

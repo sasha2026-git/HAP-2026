@@ -307,6 +307,8 @@ footer .copy{font-size:13px;color:var(--txt-v)}
               $ci_post_img = get_the_post_thumbnail_url($ci_pid, 'large');
           }
           $ci_post_excerpt = has_excerpt( $ci_pid ) ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( $ci_post_obj->post_content ), 32, '…' );
+          $ci_case_subtitle_zh = trim( (string) $ci_field_lang_force( 'case_subtitle', '', '', 'zh', $ci_pid ) );
+          $ci_case_subtitle_en = trim( (string) $ci_field_lang_force( 'case_subtitle', '', '', 'en', $ci_pid ) );
           $ci_post_title   = get_the_title( $ci_pid );
           $ci_post_permalink = hireai_localized_url( get_permalink( $ci_pid ) );
           $ci_case_slots[] = [
@@ -316,8 +318,8 @@ footer .copy{font-size:13px;color:var(--txt-v)}
               'badge_en' => (string) $ci_field_lang_force( 'case_badge', '', '', 'en', $ci_pid ),
               'title_zh' => $ci_post_title,
               'title_en' => $ci_post_title,
-              'desc_zh'  => $ci_post_excerpt,
-              'desc_en'  => $ci_post_excerpt,
+              'desc_zh'  => $ci_case_subtitle_zh ?: $ci_post_excerpt,
+              'desc_en'  => $ci_case_subtitle_en ?: $ci_post_excerpt,
               'href'     => $ci_post_permalink,
           ];
           wp_reset_postdata();
@@ -504,6 +506,8 @@ footer .copy{font-size:13px;color:var(--txt-v)}
           setup_postdata( $ci_post_obj );
           $ci_post_title   = get_the_title( $ci_pid );
           $ci_post_excerpt = has_excerpt( $ci_pid ) ? get_the_excerpt() : wp_trim_words( wp_strip_all_tags( $ci_post_obj->post_content ), 28, '…' );
+          $ci_insight_subtitle_zh = trim( (string) $ci_field_lang_force( 'insight_subtitle', '', '', 'zh', $ci_pid ) );
+          $ci_insight_subtitle_en = trim( (string) $ci_field_lang_force( 'insight_subtitle', '', '', 'en', $ci_pid ) );
           $ci_post_cats    = get_the_category( $ci_pid );
           $ci_cat_name     = ! empty( $ci_post_cats ) ? $ci_post_cats[0]->name : '';
           $ci_post_date    = get_the_date( 'Y.m.d' );
@@ -525,8 +529,8 @@ footer .copy{font-size:13px;color:var(--txt-v)}
               'cat_en'  => $ci_cat_en,
               'title_zh' => $ci_post_title,
               'title_en' => $ci_post_title,
-              'desc_zh'  => $ci_post_excerpt,
-              'desc_en'  => $ci_post_excerpt,
+              'desc_zh'  => $ci_insight_subtitle_zh ?: $ci_post_excerpt,
+              'desc_en'  => $ci_insight_subtitle_en ?: $ci_post_excerpt,
               'rt_zh'   => $ci_rt_zh,
               'rt_en'   => $ci_rt_en,
               'href'    => $ci_post_permalink,
