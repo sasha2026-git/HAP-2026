@@ -16,7 +16,7 @@
 | 仓库 | `git@github.com:sasha2026-git/HAP-2026.git` |
 | 工作分支 | **main**（WordPress 跟踪 main，不是 dev） |
 | 本地工作副本 | `/tmp/codex-projects/hireaipeople-theme`（**仓库根 = 主题根**） |
-| 当前版本 | v3.11.15（以 `style.css` 的 `Version:` 为唯一来源） |
+| 当前版本 | v3.11.14（以 `style.css` 的 `Version:` 为唯一来源） |
 | 线上实际生效版本 | **v3.11.14**（2026-11-13 01:54 由 Sasha 升级完成；Echo 实测首页 `style.css?ver=3.11.14`，与仓库一致 ✅）。**每次发版后请回填此字段**（Echo 修改 2026-11-13） |
 | 部署环境 | 阿里云香港 ECS + 宝塔面板（IP / SSH / 面板凭据**只找 Sasha**，禁止写进仓库） |
 | 负责人 | Sasha（决策/发布）；Echo（内容/运营）；Codex CLI（代码） |
@@ -257,4 +257,3 @@ Codex 调试产生的临时文件（`*-SUMMARY.md`、`specs-review/`、`*.bak`�
 | 2026-11-13 | **Echo 交叉核对（真实仓库 + 线上站点）后修正 6 处**：①§2 设计系统色值由黑金旧版改为现行浅底金棕（#F9F9F9/#1A1C1C/#775A19/#E9C176）②§4 删除不存在的 `[aurelian_blog_header]` ③§2 字体栈补 Noto Sans SC / Noto Serif SC ④§11 删除 Echo 的 git push / gh release 权限（与 2026-11-11 铁律冲突）。另新增：§1「线上实际生效版本」字段、§14 出图色值。⑤§9 + §10 按 Sasha 确认更正：PHP 版本为 **8.4**，原 `php-fpm-80.service` 服务名作废 ⑥§1 线上版本已由 Sasha 升级至 v3.11.14，Echo 实测确认一致 | Echo |
 | 2026-11-13 | **Codex 二次复核 Echo 版**：逐条实测验证 Echo 的 6 处修正（色值 `#f9f9f9/#1a1c1c/#775a19/#e9c176/#f4f3f3/#e8e5df` 全部命中 style.css、旧黑金 3 值 0 命中；`add_shortcode` 全仓只有 `aurelian_blog`/`aurelian_faq`，确认 `[aurelian_blog_header]` 不存在；Noto Sans/Serif SC woff2 已本地化；线上 `style.css?ver=3.11.14` 实测一致）→ **Echo 6 处全部正确**。另补 3 处：§6 字体清单补 Noto 并列出实际 woff2 文件、§11 拆分 Codex/Echo 职责避免误读、§9 标注 php-fpm 服务名为待验证项 | Codex |
 | 2026-11-13 | Sasha 确认 php-fpm 服务名 = **`php-fpm-84.service`**（PHP 8.4），§9 / §10 已按实测值定稿（取消「待验证」标注） | Sasha + Codex |
-| 2026-11-13 | **v3.11.15**：「关于我们」页三步流程默认文案（中英）对齐 AI 数字员工页，仅更新 `hireai_about_process_defaults()` 与 ACF `about_process_1..3` 默认值 | Codex |

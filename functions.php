@@ -5101,27 +5101,27 @@ function hireai_about_process_defaults($lang = 'zh') {
     return [
         [
             'number' => '01',
-            'phase' => $is_en ? 'PHASE DISCOVERY' : '阶段一 · 沟通',
-            'title' => $is_en ? 'Consult' : '人工沟通，需求洞察',
+            'phase' => $is_en ? 'PHASE INTAKE' : '阶段一 · 摄入',
+            'title' => $is_en ? 'Crystalline Data Intake' : '清晰数据摄入',
             'description' => $is_en
-                ? 'Discuss your goals and needs with a human expert to define the right direction.'
-                : '与我们的人工专家顾问沟通您的目标、需求与挑战，明确项目方向。',
+                ? 'Distilling brand ethos, business rules, and confidential knowledge into a governed semantic foundation.'
+                : '将品牌精神、业务规则与机密知识沉淀为受治理的语义基础。',
         ],
         [
             'number' => '02',
-            'phase' => $is_en ? 'PHASE EXECUTION' : '阶段二 · 执行',
-            'title' => $is_en ? 'Create' : '专家统筹，AI执行',
+            'phase' => $is_en ? 'PHASE SYNTHESIS' : '阶段二 · 共创',
+            'title' => $is_en ? 'Neural Synthesis & Co-Creation' : '神经网络与共创',
             'description' => $is_en
-                ? 'Expert-Led. AI-Powered. Our experts orchestrate AI digital employees and integrate the right technologies to deliver tailored solutions.'
-                : '我们的专家顾问根据项目需求，灵活调用并整合不同的 AI 数字员工与技术，打造定制化解决方案。',
+                ? 'Cultivating digital temperament and skills that iterate alongside your operating team.'
+                : '培育数字员工性格与技能，并与经营团队持续迭代。',
         ],
         [
             'number' => '03',
-            'phase' => $is_en ? 'PHASE DELIVERY' : '阶段三 · 交付',
-            'title' => $is_en ? 'Deliver' : '人工审核，专业交付',
+            'phase' => $is_en ? 'PHASE DEPLOYMENT' : '阶段三 · 部署',
+            'title' => $is_en ? 'High-Fidelity Execution' : '高保真执行',
             'description' => $is_en
-                ? 'Every deliverable is reviewed, refined and delivered by human experts.'
-                : '每项成果均由人工专家审核、完善并交付，确保交付质量与专业标准。',
+                ? 'Embedding AI employees into mission-critical workflows with measurable precision.'
+                : '将 AI 数字员工嵌入关键流程，并保持可衡量的执行精度。',
         ],
     ];
 }
@@ -5180,17 +5180,17 @@ add_action('acf/init', function () {
         ['name' => 'about_method_image', 'label' => '方法论 · 图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
         ['name' => 'about_method_image_alt', 'label' => '方法论 · 图片替代文字', 'type' => 'text', 'zh' => '聘AI三阶段智能工作流架构', 'en' => 'HireAIPeople three-phase AI workflow architecture'],
         ['name' => 'about_process_1_number', 'label' => '流程 01 · 编号', 'type' => 'text', 'zh' => '01', 'en' => '01'],
-        ['name' => 'about_process_1_phase', 'label' => '流程 01 · 阶段标签', 'type' => 'text', 'zh' => '阶段一 · 沟通', 'en' => 'PHASE DISCOVERY'],
-        ['name' => 'about_process_1_title', 'label' => '流程 01 · 标题', 'type' => 'text', 'zh' => '人工沟通，需求洞察', 'en' => 'Consult'],
-        ['name' => 'about_process_1_description', 'label' => '流程 01 · 描述', 'type' => 'textarea', 'zh' => '与我们的人工专家顾问沟通您的目标、需求与挑战，明确项目方向。', 'en' => 'Discuss your goals and needs with a human expert to define the right direction.', 'extra' => ['rows' => 3]],
+        ['name' => 'about_process_1_phase', 'label' => '流程 01 · 阶段标签', 'type' => 'text', 'zh' => '阶段一 · 摄入', 'en' => 'PHASE INTAKE'],
+        ['name' => 'about_process_1_title', 'label' => '流程 01 · 标题', 'type' => 'text', 'zh' => '清晰数据摄入', 'en' => 'Crystalline Data Intake'],
+        ['name' => 'about_process_1_description', 'label' => '流程 01 · 描述', 'type' => 'textarea', 'zh' => '将品牌精神、业务规则与机密知识沉淀为受治理的语义基础。', 'en' => 'Distilling brand ethos, business rules, and confidential knowledge into a governed semantic foundation.', 'extra' => ['rows' => 3]],
         ['name' => 'about_process_2_number', 'label' => '流程 02 · 编号', 'type' => 'text', 'zh' => '02', 'en' => '02'],
-        ['name' => 'about_process_2_phase', 'label' => '流程 02 · 阶段标签', 'type' => 'text', 'zh' => '阶段二 · 执行', 'en' => 'PHASE EXECUTION'],
-        ['name' => 'about_process_2_title', 'label' => '流程 02 · 标题', 'type' => 'text', 'zh' => '专家统筹，AI执行', 'en' => 'Create'],
-        ['name' => 'about_process_2_description', 'label' => '流程 02 · 描述', 'type' => 'textarea', 'zh' => '我们的专家顾问根据项目需求，灵活调用并整合不同的 AI 数字员工与技术，打造定制化解决方案。', 'en' => 'Expert-Led. AI-Powered. Our experts orchestrate AI digital employees and integrate the right technologies to deliver tailored solutions.', 'extra' => ['rows' => 3]],
+        ['name' => 'about_process_2_phase', 'label' => '流程 02 · 阶段标签', 'type' => 'text', 'zh' => '阶段二 · 共创', 'en' => 'PHASE SYNTHESIS'],
+        ['name' => 'about_process_2_title', 'label' => '流程 02 · 标题', 'type' => 'text', 'zh' => '神经网络与共创', 'en' => 'Neural Synthesis & Co-Creation'],
+        ['name' => 'about_process_2_description', 'label' => '流程 02 · 描述', 'type' => 'textarea', 'zh' => '培育数字员工性格与技能，并与经营团队持续迭代。', 'en' => 'Cultivating digital temperament and skills that iterate alongside your operating team.', 'extra' => ['rows' => 3]],
         ['name' => 'about_process_3_number', 'label' => '流程 03 · 编号', 'type' => 'text', 'zh' => '03', 'en' => '03'],
-        ['name' => 'about_process_3_phase', 'label' => '流程 03 · 阶段标签', 'type' => 'text', 'zh' => '阶段三 · 交付', 'en' => 'PHASE DELIVERY'],
-        ['name' => 'about_process_3_title', 'label' => '流程 03 · 标题', 'type' => 'text', 'zh' => '人工审核，专业交付', 'en' => 'Deliver'],
-        ['name' => 'about_process_3_description', 'label' => '流程 03 · 描述', 'type' => 'textarea', 'zh' => '每项成果均由人工专家审核、完善并交付，确保交付质量与专业标准。', 'en' => 'Every deliverable is reviewed, refined and delivered by human experts.', 'extra' => ['rows' => 3]],
+        ['name' => 'about_process_3_phase', 'label' => '流程 03 · 阶段标签', 'type' => 'text', 'zh' => '阶段三 · 部署', 'en' => 'PHASE DEPLOYMENT'],
+        ['name' => 'about_process_3_title', 'label' => '流程 03 · 标题', 'type' => 'text', 'zh' => '高保真执行', 'en' => 'High-Fidelity Execution'],
+        ['name' => 'about_process_3_description', 'label' => '流程 03 · 描述', 'type' => 'textarea', 'zh' => '将 AI 数字员工嵌入关键流程，并保持可衡量的执行精度。', 'en' => 'Embedding AI employees into mission-critical workflows with measurable precision.', 'extra' => ['rows' => 3]],
         ['name' => 'about_team_number', 'label' => 'AI团队 · 编号', 'type' => 'text', 'zh' => '03', 'en' => '03'],
         ['name' => 'about_team_title', 'label' => 'AI团队 · 标题', 'type' => 'textarea', 'zh' => '关于AI数字员工团队', 'en' => 'The AI Digital Employee Team', 'extra' => ['rows' => 1]],
         ['name' => 'about_team_intro', 'label' => 'AI团队 · 简介', 'type' => 'textarea', 'zh' => '策略、工程、设计与运营专家，与 AI 数字员工协同工作，持续打磨每一次交付。', 'en' => 'Strategy, engineering, design, and operations specialists work with AI digital employees to refine every engagement.', 'extra' => ['rows' => 2]],
