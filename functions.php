@@ -807,8 +807,10 @@ add_action('save_post_page', function ($post_id, $post) {
     }
 }, 30, 2);
 
-/* v3.9.4: ACF save_post 清内部 values store 与页面缓存
- *   - 旧的缓存分组删除不是 ACF 实际缓存组，调用无效
+/* v3.9.4 / v3.11.15: ACF save_post 清内部 values store 与对象缓存
+ *   - reset() 清 ACF 内存 store
+ *   - 兼容 v3.9.3 的 post_meta / acf_field_values 对象缓存清理；
+ *     LiteSpeed/Redis 下只 reset 内存 store 仍可能读到旧值
  */
 add_action('acf/save_post', function ($post_id) {
     if (function_exists('acf_get_store')) {
@@ -817,13 +819,93 @@ add_action('acf/save_post', function ($post_id) {
             $values_store->reset();
         }
     }
-    if (is_numeric($post_id) && function_exists('clean_post_cache')) {
-        clean_post_cache((int) $post_id);
+    if (is_numeric($post_id)) {
+        $post_id = (int) $post_id;
+        /* LiteSpeed/Redis 等对象缓存可能单独缓存 acf_field_values 与 post_meta；
+         * 只 reset ACF 内存 store 不够，保存后仍可能读到旧值。 */
+        if (function_exists('wp_cache_delete_group')) {
+            wp_cache_delete_group('acf_field_values');
+        }
+        if (function_exists('wp_cache_delete')) {
+            wp_cache_delete($post_id, 'post_meta');
+            wp_cache_delete($post_id, 'posts');
+        }
+        if (function_exists('clean_post_cache')) {
+            clean_post_cache($post_id);
+        }
     }
     if (defined('WP_DEBUG') && WP_DEBUG) {
-        error_log('[hireai v3.9.4] acf_save cache_clear: post_id=' . $post_id);
+        error_log('[hireai v3.11.15] acf_save cache_clear: post_id=' . $post_id);
     }
 }, 20);
+
+/* v3.11.15: 部分安全/图片优化插件会从允许列表移除 webp。
+ * 主题侧补回，避免 ACF 图片字段上传时报“文件类型不受支持”。 */
+add_filter('upload_mimes', function ($mimes) {
+    if (!is_array($mimes)) {
+        $mimes = [];
+    }
+    if (!isset($mimes['webp']) || $mimes['webp'] !== 'image/webp') {
+        $mimes['webp'] = 'image/webp';
+    }
+    return $mimes;
+}, 99);
+
+/* v3.11.15: 服务器 finfo 不可用或把 webp 识别成 application/octet-stream 时，
+ * 用 RIFF/WEBP 文件头兜底。只处理 .webp 扩展名，不改变其它文件类型。 */
+add_filter('wp_check_filetype_and_ext', function ($data, $file, $filename, $mimes) {
+    if (!is_array($data)) {
+        $data = [];
+    }
+    if (strtolower((string) pathinfo((string) $filename, PATHINFO_EXTENSION)) !== 'webp') {
+        return $data;
+    }
+
+    $type = isset($data['type']) ? (string) $data['type'] : '';
+    if ($type === 'image/webp' || $type === 'image/x-webp') {
+        /* 某些插件只补了 type、没补 ext，或 ext 与扩展名不一致，统一回 webp。 */
+        $data['type'] = 'image/webp';
+        $data['ext']  = 'webp';
+        return $data;
+    }
+    if ($type !== '' && $type !== 'application/octet-stream') {
+        return $data;
+    }
+
+    $detected = '';
+    if (is_string($file) && $file !== '' && file_exists($file)) {
+        if (function_exists('finfo_open')) {
+            $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo) {
+                $detected = (string) @finfo_file($finfo, $file);
+                @finfo_close($finfo);
+            }
+        }
+        if ($detected === '' && function_exists('getimagesize')) {
+            $info = @getimagesize($file);
+            if (!empty($info['mime'])) {
+                $detected = (string) $info['mime'];
+            }
+        }
+        if ($detected === '') {
+            $handle = @fopen($file, 'rb');
+            if ($handle) {
+                $head = (string) @fread($handle, 12);
+                @fclose($handle);
+                if (substr($head, 0, 4) === 'RIFF' && substr($head, 8, 4) === 'WEBP') {
+                    $detected = 'image/webp';
+                }
+            }
+        }
+    }
+
+    if ($detected === 'image/webp' || $detected === 'image/x-webp') {
+        $data['type'] = 'image/webp';
+        $data['ext']  = 'webp';
+    }
+
+    return $data;
+}, 99, 4);
 
 /* -------------------------------------------------------------------------
  * 0. 辅助函数（带默认值回退，ACF 未装时优雅降级）
@@ -3067,7 +3149,22 @@ function hireai_custom_template_canonical_id($template, $post_id = 0) {
     static $cache = [];
     $template = (string) $template;
     if ($template === '') return 0;
-    if (isset($cache[$template])) return $cache[$template];
+
+    $post_id       = absint($post_id);
+    $post_language = '';
+    if ($post_id && function_exists('pll_get_post_language')) {
+        $post_language = (string) pll_get_post_language($post_id);
+    } elseif (!$post_id && function_exists('pll_current_language')) {
+        /* 无 post_id 时也要把当前语言纳入 cache key；否则同一请求里
+         * 先后解析中英文模板页会复用第一次的结果。 */
+        $post_language = (string) pll_current_language('slug');
+    }
+
+    /* 缓存键必须包含 post_id + 语言：同一请求里不同物理页会调用同一模板，
+     * 只按 $template 缓存会把中文页 ID 泄漏给英文页。 */
+    $cache_key = $template . ':' . $post_id . ':' . $post_language;
+    if (isset($cache[$cache_key])) return (int) $cache[$cache_key];
+
     $id = 0;
     $slug_map = [
         'front-page.php'           => 'home',
@@ -3097,22 +3194,36 @@ function hireai_custom_template_canonical_id($template, $post_id = 0) {
         }
     }
 
-    if (
-        $id
-        && $post_id
-        && $post_id !== $id
-        && get_post_meta($post_id, '_wp_page_template', true) === $template
-        && function_exists('pll_get_post_language')
-        && function_exists('pll_get_post')
-    ) {
-        $language = pll_get_post_language($post_id);
-        if ($language && (int) pll_get_post($id, $language) === (int) $post_id) {
-            return (int) $post_id;
+    $resolved = $id;
+    $post_is_template = $post_id
+        && get_post_meta($post_id, '_wp_page_template', true) === $template;
+
+    if ($post_is_template) {
+        $canonical_language = '';
+        if ($id && function_exists('pll_get_post_language')) {
+            $canonical_language = (string) pll_get_post_language($id);
+        }
+
+        if ($post_language !== '' && $canonical_language !== $post_language) {
+            /* 中英文是两个物理页：语言不同就不是“重复页”，前台必须读本页 meta。
+             * 旧逻辑依赖 pll_get_post() 映射，映射缺失时会错误回退到中文规范页。 */
+            $resolved = $post_id;
+        } elseif (
+            $id
+            && $post_id !== $id
+            && $post_language !== ''
+            && function_exists('pll_get_post')
+            && (int) pll_get_post($id, $post_language) === $post_id
+        ) {
+            /* 已明确建立翻译映射时，本页就是该语言的规范页。 */
+            $resolved = $post_id;
+        } elseif (!$id) {
+            $resolved = $post_id;
         }
     }
 
-    $cache[$template] = $id;
-    return $id;
+    $cache[$cache_key] = (int) $resolved;
+    return (int) $resolved;
 }
 
 function hireai_front_page_data_id($post_id = 0) {
@@ -3209,6 +3320,36 @@ add_action('admin_footer-post.php', function () {
         })();
     </script>
     <?php
+});
+
+/* v3.11.15: About 编辑页顶部按物理页语言提示应编辑哪个 Tab。
+ * 仅提示，不隐藏字段；双 Tab 仍保留，避免误以为另一个 Tab 会作用于当前语言前台。 */
+add_action('admin_notices', function () {
+    if (!function_exists('get_current_screen') || !function_exists('pll_get_post_language')) {
+        return;
+    }
+    $screen = get_current_screen();
+    if (!$screen || empty($screen->post_type) || $screen->post_type !== 'page' || $screen->base !== 'post') {
+        return;
+    }
+    $post_id = isset($_GET['post']) ? (int) $_GET['post'] : 0;
+    if (!$post_id || !current_user_can('edit_pages')) {
+        return;
+    }
+    if ((string) get_post_meta($post_id, '_wp_page_template', true) !== 'page-about.php') {
+        return;
+    }
+
+    $language = (string) pll_get_post_language($post_id);
+    if ($language === 'zh') {
+        $message = '当前页面语言：中文。前台 About 页读取 _zh 字段，请编辑「中文内容」Tab；「English Content」Tab 的内容不会出现在中文 About 页。';
+    } elseif ($language === 'en') {
+        $message = 'Current page language: English. The front end reads _en fields — edit the “English Content” tab. The “中文内容” tab does not affect the English About page.';
+    } else {
+        return;
+    }
+
+    echo '<div class="notice notice-info"><p><strong>聘AI About 双语提示：</strong>' . esc_html($message) . '</p></div>';
 });
 
 /* 后台提示：编辑「规范页本身」且 Repeater 均为空时，告知前台正显示兜底数据 */
@@ -5497,3 +5638,454 @@ function hireai_about_update_navigation_once() {
 add_action('after_switch_theme', 'hireai_about_update_navigation', 20);
 add_action('admin_init', 'hireai_about_update_navigation_once', 20);
 add_action('init', 'hireai_about_update_navigation_once', 99);
+
+/* -------------------------------------------------------------------------
+ * v3.11.15 只读诊断：ACF 字段组 / About 双语页 meta / 附件 mime 盘点
+ *   仅 manage_options 可见；不写任何数据。用于确认：
+ *   1) 是否有数据库字段组与本地字段组同名冲突
+ *   2) 英文 About 页的 canonical 是否错误指向中文页
+ *   3) 页面实际存在哪些 about_* / _zh / _en meta
+ *   4) webp 附件的 post_mime_type / post_parent 是否导致 ACF 媒体弹窗筛掉
+ * ---------------------------------------------------------------------- */
+function hireai_acf_diag_location_has_template($location, $template) {
+    if (!is_array($location)) {
+        return false;
+    }
+    foreach ($location as $or_group) {
+        if (!is_array($or_group)) {
+            continue;
+        }
+        foreach ($or_group as $rule) {
+            if (
+                is_array($rule)
+                && isset($rule['param'], $rule['value'])
+                && $rule['param'] === 'page_template'
+                && (string) $rule['value'] === (string) $template
+            ) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function hireai_acf_diag_collect_fields($fields, &$rows) {
+    foreach ((array) $fields as $field) {
+        if (!is_array($field)) {
+            continue;
+        }
+        $rows[] = $field;
+        if (!empty($field['sub_fields'])) {
+            hireai_acf_diag_collect_fields($field['sub_fields'], $rows);
+        }
+    }
+}
+
+function hireai_acf_diag_group_fields($group) {
+    $fields = function_exists('acf_get_fields') ? acf_get_fields($group) : [];
+    if (!is_array($fields)) {
+        $fields = (isset($group['fields']) && is_array($group['fields'])) ? $group['fields'] : [];
+    }
+    return $fields;
+}
+
+function hireai_acf_diag_preview($value, $limit = 90) {
+    if (is_array($value) || is_object($value)) {
+        $value = wp_json_encode($value);
+    }
+    $value = trim((string) $value);
+    if ($value === '') {
+        return '';
+    }
+    if (function_exists('mb_substr')) {
+        return mb_substr($value, 0, $limit) . (mb_strlen($value) > $limit ? '…' : '');
+    }
+    return substr($value, 0, $limit) . (strlen($value) > $limit ? '…' : '');
+}
+
+function hireai_acf_diag_field_base($name) {
+    return preg_replace('/_(zh|en)$/', '', (string) $name);
+}
+
+function hireai_acf_diag_pages_for_template($template) {
+    global $wpdb;
+    $ids = $wpdb->get_col($wpdb->prepare(
+        "SELECT p.ID FROM {$wpdb->posts} p
+         INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+         WHERE p.post_type = 'page'
+           AND p.post_status NOT IN ('trash', 'auto-draft')
+           AND pm.meta_key = '_wp_page_template'
+           AND pm.meta_value = %s
+         ORDER BY p.ID ASC",
+        $template
+    ));
+    return array_values(array_unique(array_map('intval', (array) $ids)));
+}
+
+/* ACF 本地字段组没有数据库 ID；数据库字段组一定有 ID（部分版本另带 local=db）。 */
+function hireai_acf_diag_group_is_db($group) {
+    if (!is_array($group)) {
+        return false;
+    }
+    if (isset($group['local']) && $group['local'] === 'db') {
+        return true;
+    }
+    return !empty($group['ID']);
+}
+
+function hireai_acf_diag_attachment_inventory($page_id = 0) {
+    global $wpdb;
+    $page_id = absint($page_id);
+    $ids = $wpdb->get_col(
+        "SELECT ID FROM {$wpdb->posts}
+         WHERE post_type = 'attachment'
+           AND post_status NOT IN ('trash', 'auto-draft')
+         ORDER BY ID ASC"
+    );
+
+    $by_mime = [];
+    $webp = [];
+    $image_total = 0;
+    $image_for_page = 0;
+    $webp_for_page = 0;
+    foreach ((array) $ids as $id) {
+        $id = (int) $id;
+        $mime = (string) get_post_mime_type($id);
+        $mime = $mime !== '' ? $mime : '(empty)';
+        $parent = (int) get_post_field('post_parent', $id);
+        $file = (string) get_attached_file($id);
+        $ext = strtolower((string) pathinfo($file, PATHINFO_EXTENSION));
+        $lang = function_exists('pll_get_post_language') ? (string) pll_get_post_language($id) : '';
+
+        if (strpos($mime, 'image/') === 0) {
+            $image_total++;
+            if ($page_id && $parent === $page_id) {
+                $image_for_page++;
+            }
+        }
+        if ($mime === 'image/webp' && $page_id && $parent === $page_id) {
+            $webp_for_page++;
+        }
+
+        if (!isset($by_mime[$mime])) {
+            $by_mime[$mime] = ['count' => 0, 'parents' => [], 'langs' => []];
+        }
+        $by_mime[$mime]['count']++;
+        $lang_label = $lang !== '' ? $lang : '未分配';
+        $by_mime[$mime]['langs'][$lang_label] = ($by_mime[$mime]['langs'][$lang_label] ?? 0) + 1;
+        if ($parent) {
+            $by_mime[$mime]['parents'][$parent] = get_the_title($parent) ?: '(无标题)';
+        }
+
+        if ($mime === 'image/webp' || $ext === 'webp') {
+            $webp[] = [
+                'id' => $id,
+                'mime' => $mime,
+                'lang' => $lang,
+                'parent' => $parent,
+                'parent_title' => $parent ? (get_the_title($parent) ?: '(无标题)') : '',
+                'file' => $file,
+                'exists' => $file !== '' && file_exists($file),
+            ];
+        }
+    }
+
+    return [
+        'total' => count((array) $ids),
+        'by_mime' => $by_mime,
+        'webp' => $webp,
+        'image_total' => $image_total,
+        'image_for_page' => $image_for_page,
+        'webp_for_page' => $webp_for_page,
+    ];
+}
+
+function hireai_acf_diagnostics_page() {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    $template = 'page-about.php';
+    $pages = hireai_acf_diag_pages_for_template($template);
+    $selected = isset($_GET['hireai_diag_page']) ? absint(wp_unslash($_GET['hireai_diag_page'])) : 0;
+    if (!$selected && !empty($pages)) {
+        $selected = (int) $pages[0];
+    }
+
+    $all_groups = function_exists('acf_get_field_groups') ? acf_get_field_groups() : [];
+    $about_groups = [];
+    $field_groups_by_name = [];
+    foreach ((array) $all_groups as $group) {
+        if (!is_array($group) || !hireai_acf_diag_location_has_template(isset($group['location']) ? $group['location'] : [], $template)) {
+            continue;
+        }
+        $about_groups[] = $group;
+        $fields = hireai_acf_diag_group_fields($group);
+        $flat = [];
+        hireai_acf_diag_collect_fields($fields, $flat);
+        foreach ($flat as $field) {
+            if (empty($field['name'])) {
+                continue;
+            }
+            $base = hireai_acf_diag_field_base($field['name']);
+            $field_groups_by_name[$base][] = (string) $group['key'];
+        }
+    }
+
+    $mounted = [];
+    if ($selected && function_exists('acf_get_field_groups')) {
+        foreach ((array) acf_get_field_groups(['post_id' => $selected]) as $group) {
+            if (!empty($group['key'])) {
+                $mounted[] = (string) $group['key'];
+            }
+        }
+    }
+
+    $inventory = hireai_acf_diag_attachment_inventory($selected);
+    $allowed_mimes = function_exists('get_allowed_mime_types') ? get_allowed_mime_types() : [];
+    $webp_probe = function_exists('wp_check_filetype') ? wp_check_filetype('probe.webp') : [];
+    ?>
+    <div class="wrap">
+        <h1>聘AI · ACF 诊断</h1>
+        <p>只读诊断，不会修改字段、页面或附件。用于核对 About 双语页字段来源、canonical 解析和媒体库 MIME/父页面。</p>
+
+        <form method="get" style="margin:16px 0;padding:12px;background:#fff;border:1px solid #dcdcde;max-width:760px;">
+            <input type="hidden" name="page" value="hireai-acf-diagnostics">
+            <label for="hireai_diag_page"><strong>页面 ID：</strong></label>
+            <input type="number" id="hireai_diag_page" name="hireai_diag_page" value="<?php echo esc_attr($selected); ?>" min="1" style="width:120px;">
+            <button type="submit" class="button button-primary">查看该页</button>
+            <span style="margin-left:12px;color:#646970;">About 模板页：<?php echo esc_html(implode(', ', $pages) ?: '未找到'); ?></span>
+        </form>
+
+        <h2>1. 命中 page-about.php 的字段组</h2>
+        <?php if (empty($about_groups)) : ?>
+            <div class="notice notice-error inline"><p>没有字段组命中 <code>page-about.php</code>。请确认 ACF 已启用、字段组注册代码已执行。</p></div>
+        <?php else : ?>
+            <table class="widefat striped" style="max-width:1200px;">
+                <thead><tr><th>Group Key</th><th>标题</th><th>来源</th><th>字段数</th><th>图片字段 MIME / return_format</th><th>实际挂载到当前页</th></tr></thead>
+                <tbody>
+                <?php foreach ($about_groups as $group) :
+                    $fields = hireai_acf_diag_group_fields($group);
+                    $flat = [];
+                    hireai_acf_diag_collect_fields($fields, $flat);
+                    $is_local = !hireai_acf_diag_group_is_db($group);
+                    $image_rows = [];
+                    foreach ($flat as $field) {
+                        if (isset($field['type']) && $field['type'] === 'image') {
+                            $image_rows[] = ($field['name'] ?? '(no name)')
+                                . ' | mime_types=' . (isset($field['mime_types']) && $field['mime_types'] !== '' ? $field['mime_types'] : '（未限制）')
+                                . ' | library=' . (isset($field['library']) && $field['library'] !== '' ? $field['library'] : '（未设置，默认全部媒体）')
+                                . ' | return_format=' . (isset($field['return_format']) && $field['return_format'] !== '' ? $field['return_format'] : '（未设置）');
+                        }
+                    }
+                    $field_names = [];
+                    foreach ($flat as $field) {
+                        if (!empty($field['name'])) {
+                            $field_names[] = $field['name'];
+                        }
+                    }
+                ?>
+                    <tr>
+                        <td><code><?php echo esc_html($group['key'] ?? ''); ?></code></td>
+                        <td><?php echo esc_html($group['title'] ?? ''); ?></td>
+                        <td><?php echo $is_local ? '本地代码/JSON' : '<strong style="color:#b32d2e;">数据库</strong>'; ?></td>
+                        <td><?php echo (int) count($flat); ?></td>
+                        <td><?php echo $image_rows ? '<code>' . implode('</code><br><code>', array_map('esc_html', $image_rows)) . '</code>' : '—'; ?></td>
+                        <td><?php echo in_array((string) ($group['key'] ?? ''), $mounted, true) ? '是' : '否'; ?></td>
+                    </tr>
+                    <tr><td colspan="6"><details><summary>字段清单</summary><code><?php echo esc_html(implode(', ', $field_names)); ?></code></details></td></tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <h2>2. About 页面解析与 meta</h2>
+        <?php if (empty($pages)) : ?>
+            <div class="notice notice-error inline"><p>没有页面使用 <code>page-about.php</code> 模板。</p></div>
+        <?php else : ?>
+            <table class="widefat striped" style="max-width:1200px;">
+                <thead><tr><th>ID</th><th>标题</th><th>语言</th><th>模板</th><th>canonical 解析结果</th><th>前台读取</th><th>结论</th></tr></thead>
+                <tbody>
+                <?php foreach ($pages as $page_id) :
+                    $page = get_post($page_id);
+                    if (!$page) continue;
+                    $page_lang = function_exists('pll_get_post_language') ? (string) pll_get_post_language($page_id) : '';
+                    $page_template = (string) get_post_meta($page_id, '_wp_page_template', true);
+                    $canonical = function_exists('hireai_custom_template_canonical_id') ? (int) hireai_custom_template_canonical_id($template, $page_id) : 0;
+                    $diag_url = add_query_arg([
+                        'page' => 'hireai-acf-diagnostics',
+                        'hireai_diag_page' => (int) $page_id,
+                    ], admin_url('tools.php'));
+                    $warnings = [];
+                    if ($page_template !== $template) $warnings[] = '模板不是 page-about.php';
+                    if ($canonical && $canonical !== $page_id) $warnings[] = 'canonical 指向 #' . $canonical . '，本页编辑不会生效';
+                    if (!$canonical) $warnings[] = 'canonical 解析为 0';
+                ?>
+                    <tr<?php echo $page_id === $selected ? ' style="background:#fff8e5;"' : ''; ?>>
+                        <td><?php echo (int) $page_id; ?></td>
+                        <td><a href="<?php echo esc_url(get_edit_post_link($page_id)); ?>"><?php echo esc_html(get_the_title($page_id)); ?></a> · <a href="<?php echo esc_url($diag_url); ?>">诊断此页</a></td>
+                        <td><?php echo esc_html($page_lang ?: '—'); ?></td>
+                        <td><code><?php echo esc_html($page_template ?: '—'); ?></code></td>
+                        <td><?php echo (int) $canonical; ?></td>
+                        <td><?php echo $canonical ? '#' . (int) $canonical : '—'; ?></td>
+                        <td><?php echo $warnings ? '<strong style="color:#b32d2e;">' . esc_html(implode('；', $warnings)) . '</strong>' : '正常'; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <?php if ($selected && get_post($selected)) :
+            $selected_lang = function_exists('pll_get_post_language') ? (string) pll_get_post_language($selected) : '';
+            $selected_template = (string) get_post_meta($selected, '_wp_page_template', true);
+            $selected_canonical = function_exists('hireai_custom_template_canonical_id') ? (int) hireai_custom_template_canonical_id($template, $selected) : 0;
+            $about_by_slug = get_page_by_path('about');
+            $about_by_slug_id = $about_by_slug instanceof WP_Post ? (int) $about_by_slug->ID : 0;
+            $about_by_slug_lang = ($about_by_slug_id && function_exists('pll_get_post_language')) ? (string) pll_get_post_language($about_by_slug_id) : '';
+            $slug_translation = ($about_by_slug_id && $selected_lang !== '' && function_exists('pll_get_post'))
+                ? (int) pll_get_post($about_by_slug_id, $selected_lang)
+                : 0;
+            $expected_suffix = $selected_lang === 'en' ? '_en' : '_zh';
+            $bases = array_keys($field_groups_by_name);
+            sort($bases);
+        ?>
+            <h3>当前查看：#<?php echo (int) $selected; ?> <?php echo esc_html(get_the_title($selected)); ?></h3>
+            <div style="max-width:1200px;padding:12px 16px;background:#fff;border-left:4px solid <?php echo $selected_canonical === $selected ? '#00a32a' : '#d63638'; ?>;margin:12px 0;">
+                <p style="margin:0 0 6px;"><strong>语言：</strong><?php echo esc_html($selected_lang ?: '未分配'); ?>　<strong>模板：</strong><code><?php echo esc_html($selected_template ?: '—'); ?></code>　<strong>canonical：</strong>#<?php echo (int) $selected_canonical; ?>　<strong>get_page_by_path('about')：</strong><?php echo $about_by_slug_id ? '#' . (int) $about_by_slug_id . '（' . esc_html($about_by_slug_lang ?: '无语言') . '）' : '未找到'; ?>　<strong>Polylang 映射：</strong><?php echo $slug_translation ? '#' . (int) $slug_translation : '未建立'; ?></p>
+                <p style="margin:0;">
+                    <?php if ($selected_template !== $template) : ?>
+                        <strong style="color:#b32d2e;">结论：该页模板不是 page-about.php，ACF 字段组不会按模板挂载。</strong>
+                    <?php elseif ($selected_canonical !== $selected) : ?>
+                        <strong style="color:#b32d2e;">结论：前台会从 #<?php echo (int) $selected_canonical; ?> 读取，本页字段保存后不会出现在前台。</strong>
+                    <?php else : ?>
+                        <strong style="color:#00a32a;">结论：前台会从本页 #<?php echo (int) $selected; ?> 读取。</strong>
+                    <?php endif; ?>
+                    <?php if ($selected_lang !== '') : ?>
+                        本页前台优先读取 <code><?php echo esc_html($expected_suffix); ?></code> 后缀字段。
+                    <?php endif; ?>
+                </p>
+            </div>
+
+            <?php
+            $missing_expected = [];
+            $duplicate_fields = [];
+            foreach ($bases as $base) {
+                if (count(array_unique($field_groups_by_name[$base])) > 1) {
+                    $duplicate_fields[$base] = array_unique($field_groups_by_name[$base]);
+                }
+                if (!metadata_exists('post', $selected, $base . $expected_suffix)) {
+                    $missing_expected[] = $base . $expected_suffix;
+                }
+            }
+            ?>
+            <?php if ($duplicate_fields) : ?>
+                <div class="notice notice-error inline"><p><strong>检测到字段名冲突：</strong>以下字段同时出现在多个字段组：</p><ul><?php foreach ($duplicate_fields as $name => $keys) : ?><li><code><?php echo esc_html($name); ?></code> → <?php echo esc_html(implode(', ', $keys)); ?></li><?php endforeach; ?></ul></div>
+            <?php endif; ?>
+            <?php
+            $db_groups = array_filter($about_groups, 'hireai_acf_diag_group_is_db');
+            if ($db_groups) : ?>
+                <div class="notice notice-error inline"><p><strong>检测到数据库字段组：</strong><?php echo esc_html(implode(', ', wp_list_pluck($db_groups, 'key'))); ?>。ACF Free 正常情况下字段组应全部来自主题代码。</p></div>
+            <?php endif; ?>
+            <?php if ($missing_expected) : ?>
+                <div class="notice notice-warning inline"><p><strong>本页缺少 <?php echo esc_html($expected_suffix); ?> 后缀 meta：</strong><?php echo esc_html(implode(', ', array_slice($missing_expected, 0, 20))); ?><?php echo count($missing_expected) > 20 ? ' … 共 ' . count($missing_expected) . ' 个' : ''; ?>。这些位置前台会回退到无后缀值或代码默认值。</p></div>
+            <?php endif; ?>
+
+            <table class="widefat striped" style="max-width:1400px;">
+                <thead><tr><th>字段 base</th><th>_zh 是否存在 / 值</th><th>_en 是否存在 / 值</th><th>无后缀是否存在 / 值</th><th>本页应读</th></tr></thead>
+                <tbody>
+                <?php foreach ($bases as $base) :
+                    $expected_key = $base . $expected_suffix;
+                ?>
+                    <tr>
+                        <td><code><?php echo esc_html($base); ?></code></td>
+                        <?php foreach (['_zh', '_en', ''] as $suffix) :
+                            $key = $base . $suffix;
+                            $exists = metadata_exists('post', $selected, $key);
+                            $value = $exists ? get_post_meta($selected, $key, true) : '';
+                        ?>
+                            <td><?php echo $exists ? '<span style="color:#00a32a;">有</span> ' . esc_html(hireai_acf_diag_preview($value)) : '<span style="color:#b32d2e;">无</span>'; ?></td>
+                        <?php endforeach; ?>
+                        <td><code><?php echo esc_html($expected_key); ?></code><?php echo metadata_exists('post', $selected, $expected_key) ? '' : ' <strong style="color:#b32d2e;">(缺失)</strong>'; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <h2>3. 附件 MIME / 父页面盘点</h2>
+        <p>
+            <strong>附件总数：</strong><?php echo (int) $inventory['total']; ?>　
+            <strong>image/*：</strong><?php echo (int) $inventory['image_total']; ?>　
+            <strong>其中 post_parent=#<?php echo (int) $selected; ?>：</strong><?php echo (int) $inventory['image_for_page']; ?>　
+            <strong>该页 image/webp：</strong><?php echo (int) $inventory['webp_for_page']; ?>　
+            <strong>WebP 文件：</strong><?php echo (int) count($inventory['webp']); ?>　
+            <strong>get_allowed_mime_types()['webp']：</strong><code><?php echo esc_html(isset($allowed_mimes['webp']) ? $allowed_mimes['webp'] : '未注册'); ?></code>　
+            <strong>wp_check_filetype('probe.webp')：</strong><code><?php echo esc_html(wp_json_encode($webp_probe)); ?></code>
+        </p>
+        <table class="widefat striped" style="max-width:1200px;">
+            <thead><tr><th>post_mime_type</th><th>数量</th><th>Polylang 语言</th><th>post_parent 页面（ID + 标题）</th></tr></thead>
+            <tbody>
+            <?php foreach ($inventory['by_mime'] as $mime => $row) : ?>
+                <tr>
+                    <td><code><?php echo esc_html($mime); ?></code><?php echo $mime === 'image/webp' ? '' : (strpos($mime, 'image/') === 0 ? '' : ' <strong style="color:#b32d2e;">(非 image/*，ACF type=image 查不到)</strong>'); ?></td>
+                    <td><?php echo (int) $row['count']; ?></td>
+                    <td>
+                        <?php $lang_parts = []; foreach (($row['langs'] ?? []) as $lang_label => $lang_count) { $lang_parts[] = $lang_label . ' ' . (int) $lang_count; } echo esc_html(implode(' / ', $lang_parts) ?: '—'); ?>
+                    </td>
+                    <td>
+                        <?php if (empty($row['parents'])) : ?>
+                            —（无父页面）
+                        <?php else : ?>
+                            <?php $parts = []; foreach ($row['parents'] as $pid => $title) { $parts[] = '#' . (int) $pid . ' ' . $title; } echo esc_html(implode('；', $parts)); ?>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <h3>.webp 扩展名附件明细</h3>
+        <?php if (empty($inventory['webp'])) : ?>
+            <p>没有检测到 .webp 附件。</p>
+        <?php else : ?>
+            <table class="widefat striped" style="max-width:1400px;">
+                <thead><tr><th>ID</th><th>post_mime_type</th><th>Polylang 语言</th><th>post_parent</th><th>文件</th><th>文件存在</th><th>结论</th></tr></thead>
+                <tbody>
+                <?php foreach ($inventory['webp'] as $row) : ?>
+                    <tr>
+                        <td><?php echo (int) $row['id']; ?></td>
+                        <td><code><?php echo esc_html($row['mime']); ?></code></td>
+                        <td><?php echo esc_html($row['lang'] !== '' ? $row['lang'] : '未分配'); ?></td>
+                        <td><?php echo $row['parent'] ? '#' . (int) $row['parent'] . ' ' . esc_html($row['parent_title']) : '—'; ?></td>
+                        <td><code><?php echo esc_html($row['file'] ?: '—'); ?></code></td>
+                        <td><?php echo $row['exists'] ? '是' : '<strong style="color:#b32d2e;">否</strong>'; ?></td>
+                        <td>
+                            <?php
+                            if ($row['mime'] !== 'image/webp') {
+                                echo '<strong style="color:#b32d2e;">mime 不是 image/webp，ACF 图片字段会排除</strong>';
+                            } elseif ($row['parent']) {
+                                echo 'mime 正常；若弹窗选了“上传到此页面”，仅父页面为 #' . (int) $row['parent'] . ' 时可见';
+                            } else {
+                                echo 'mime 正常，无父页面；应在“全部媒体”中可见';
+                            }
+                            ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+        <p style="max-width:1200px;color:#646970;">判读：若 .webp 的 <code>post_mime_type</code> 是 <code>application/octet-stream</code> 等非 <code>image/*</code>，ACF 的 <code>type=image</code> 查询（LIKE 'image/%'）不会返回它；若 mime 正常但 <code>post_parent</code> 指向另一个页面，媒体弹窗的“上传到此页面”筛选会隐藏它。本页只读，不会自动修复历史附件。</p>
+    </div>
+    <?php
+}
+
+add_action('admin_menu', function () {
+    add_management_page(
+        '聘AI · ACF 诊断',
+        '聘AI · ACF 诊断',
+        'manage_options',
+        'hireai-acf-diagnostics',
+        'hireai_acf_diagnostics_page'
+    );
+});

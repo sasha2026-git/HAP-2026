@@ -16,7 +16,7 @@
 | 仓库 | `git@github.com:sasha2026-git/HAP-2026.git` |
 | 工作分支 | **main**（WordPress 跟踪 main，不是 dev） |
 | 本地工作副本 | `/tmp/codex-projects/hireaipeople-theme`（**仓库根 = 主题根**） |
-| 当前版本 | v3.11.14（以 `style.css` 的 `Version:` 为唯一来源） |
+| 当前版本 | v3.11.15（以 `style.css` 的 `Version:` 为唯一来源；2026-11-14 ACF About 热修复） |
 | 线上实际生效版本 | **v3.11.14**（2026-11-13 01:54 由 Sasha 升级完成；Echo 实测首页 `style.css?ver=3.11.14`，与仓库一致 ✅）。**每次发版后请回填此字段**（Echo 修改 2026-11-13） |
 | 部署环境 | 阿里云香港 ECS + 宝塔面板（IP / SSH / 面板凭据**只找 Sasha**，禁止写进仓库） |
 | 负责人 | Sasha（决策/发布）；Echo（内容/运营）；Codex CLI（代码） |
@@ -198,6 +198,9 @@ sudo systemctl reload php-fpm-84.service
 | 升级后白屏 Fatal error | `functions.php` 函数被删 | 见 §5，10 个 helper 禁删 |
 | 图标显示成方块 | Material Symbols CDN 被墙 | 改内联 SVG（见 §6） |
 | Echo 看不到 plugins.php | 角色权限受限 | 插件/设置类操作交给 Codex 或 Sasha |
+| 英文 About 改了 ACF 不生效 | `hireai_custom_template_canonical_id()` 的 static cache 只按模板名做 key，同请求内先把中文页 ID 缓存给英文页；Polylang 翻译映射缺失时也会回退中文页 | cache key 必须含 `post_id + 语言`；所有 return 路径统一写 cache；英文物理页语言与规范页不同时返回本页 ID（见 `functions.php:3149`） |
+| ACF 保存后前台仍读旧值 | v3.9.4 重构只 `acf_get_store('values')->reset()`，丢了 v3.9.3 的 post_meta / acf_field_values 对象缓存清理；LiteSpeed/Redis 下会回归 | `acf/save_post` 同时清 ACF store、`wp_cache_delete_group('acf_field_values')`、`post_meta` / `posts` 并 `clean_post_cache()`（见 `functions.php:815`） |
+| ACF 媒体弹窗看不到 WebP（仅个别页面） | 可能是附件 `post_mime_type` 非 `image/*`、`post_parent` 被“上传到此页面”筛选隐藏，或插件过滤；主题代码无 `mime_types` 限制 | 先看「工具 → 聘AI · ACF 诊断」第 3 节附件盘点；主题已补 `upload_mimes` + `wp_check_filetype_and_ext` WebP 兜底（见 `functions.php:844`） |
 
 ---
 
@@ -257,4 +260,5 @@ Codex 调试产生的临时文件（`*-SUMMARY.md`、`specs-review/`、`*.bak`�
 | 2026-11-13 | **Echo 交叉核对（真实仓库 + 线上站点）后修正 6 处**：①§2 设计系统色值由黑金旧版改为现行浅底金棕（#F9F9F9/#1A1C1C/#775A19/#E9C176）②§4 删除不存在的 `[aurelian_blog_header]` ③§2 字体栈补 Noto Sans SC / Noto Serif SC ④§11 删除 Echo 的 git push / gh release 权限（与 2026-11-11 铁律冲突）。另新增：§1「线上实际生效版本」字段、§14 出图色值。⑤§9 + §10 按 Sasha 确认更正：PHP 版本为 **8.4**，原 `php-fpm-80.service` 服务名作废 ⑥§1 线上版本已由 Sasha 升级至 v3.11.14，Echo 实测确认一致 | Echo |
 | 2026-11-13 | **Codex 二次复核 Echo 版**：逐条实测验证 Echo 的 6 处修正（色值 `#f9f9f9/#1a1c1c/#775a19/#e9c176/#f4f3f3/#e8e5df` 全部命中 style.css、旧黑金 3 值 0 命中；`add_shortcode` 全仓只有 `aurelian_blog`/`aurelian_faq`，确认 `[aurelian_blog_header]` 不存在；Noto Sans/Serif SC woff2 已本地化；线上 `style.css?ver=3.11.14` 实测一致）→ **Echo 6 处全部正确**。另补 3 处：§6 字体清单补 Noto 并列出实际 woff2 文件、§11 拆分 Codex/Echo 职责避免误读、§9 标注 php-fpm 服务名为待验证项 | Codex |
 | 2026-11-13 | Sasha 确认 php-fpm 服务名 = **`php-fpm-84.service`**（PHP 8.4），§9 / §10 已按实测值定稿（取消「待验证」标注） | Sasha + Codex |
-| 2026-11-13 | **v3.11.15 因属内容编辑已撤回**，改由 ACF 字段承载；代码与版本号恢复至 v3.11.14（revert e413256） | Codex |
+| 2026-11-13 | **v3.11.15（内容编辑版）已撤回**，改由 ACF 字段承载（revert e413256）；同日 v3.11.15 重新分配给 About ACF 热修复，见下行 | Codex |
+| 2026-11-14 | **v3.11.15 About ACF 热修复**：①修 `hireai_custom_template_canonical_id()` static cache key 忽略 `post_id` 的跨语言污染，英文 About 页改回读自己的 meta ②`acf/save_post` 恢复对象缓存清理 ③补 WebP `upload_mimes` / `wp_check_filetype_and_ext` 兜底 ④新增只读「工具 → 聘AI · ACF 诊断」（字段组来源/图片 mime、About 双语页 canonical/meta、附件 MIME/父页面盘点） | Codex |
