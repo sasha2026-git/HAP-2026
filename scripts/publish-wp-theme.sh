@@ -182,22 +182,26 @@ fi
 echo ""
 echo "[9/9] 打包 ZIP + 创建/更新 Release..."
 THEME_DIR=$(basename "$(git rev-parse --show-toplevel)")
-TMP_ZIP="/tmp/${THEME_DIR}-${TAG_NAME}.zip"
+REPO_ROOT=$(git rev-parse --show-toplevel)
+# v3.11.16 修正：ZIP 内文件必须在根目录（与 HAP-2026-v* 历史包一致），
+# 不能再套一层 ${THEME_DIR}/ 目录，否则 WP 上传会报「目标文件夹已存在/安装失败」。
+TMP_ZIP="/tmp/HAP-2026-${TAG_NAME}.zip"
 
-cd "$(dirname "$(git rev-parse --show-toplevel)")"
-zip -qr "$TMP_ZIP" "$THEME_DIR" \
-    -x "${THEME_DIR}/.git*" \
-    -x "${THEME_DIR}/_publish-*.sh" \
-    -x "${THEME_DIR}/scripts/*" \
-    -x "${THEME_DIR}/qa-report.md" \
-    -x "${THEME_DIR}/audit-reports/audit-v3.5.5-no-change-20260901*" \
-    -x "${THEME_DIR}/design-qa.md" \
-    -x "${THEME_DIR}/*.bak*" \
-    -x "${THEME_DIR}/audit-reports/fix-*.patch"
+cd "$REPO_ROOT"
+zip -qr "$TMP_ZIP" . \
+    -x ".git/*" -x ".git*" \
+    -x "_publish-*.sh" \
+    -x "scripts/*" \
+    -x "qa-report.md" \
+    -x "audit-reports/audit-v3.5.5-no-change-20260901*" \
+    -x "design-qa.md" \
+    -x "*.bak*" \
+    -x "audit-reports/fix-*.patch"
 echo "  ZIP: $TMP_ZIP ($(du -h "$TMP_ZIP" | awk '{print $1}'))"
 
 # 验证 ZIP 内的 Version 字段
-ZIP_VERSION=$(unzip -p "$TMP_ZIP" "*/style.css" 2>/dev/null | grep '^Version' | awk '{print $2}')
+ZIP_VERSION=$(unzip -p "$TMP_ZIP" style.css 2>/dev/null | grep '^Version' | awk '{print $2}')
+[ -z "$ZIP_VERSION" ] && ZIP_VERSION=$(unzip -p "$TMP_ZIP" "*/style.css" 2>/dev/null | grep '^Version' | awk '{print $2}')
 ZIP_VERSION="${ZIP_VERSION#v}"
 if [ "$ZIP_VERSION" != "$TARGET_VERSION_NOV" ]; then
     err "ZIP 内的 Version ($ZIP_VERSION) != 目标版本 ($TARGET_VERSION)
