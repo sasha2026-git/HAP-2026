@@ -18,7 +18,7 @@
  *   WP_File_Header::get_data 拿不到 Template Name，从而后台看不到模板。
  *   v3.0.1 把 Template Name 注释放回第一个 PHP 块的最前面，ABSPATH 守卫移至第二块。
  *
- * @version 3.8.1
+ * @version 3.11.16
  */
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -49,6 +49,15 @@ $search_placeholder = hireai_field('search_placeholder',
 $empty_text         = hireai_field('empty_text',
     $is_en ? 'No matching questions found. Try a different keyword.' : '未找到匹配的问题，请尝试其他关键词。',
     $page_id);
+
+/* FAQ 列表 / 翻页 UI 文案（v3.11.16：原先硬编码，现全部走 ACF 双语字段） */
+$all_label             = hireai_field('faq_all_label', $is_en ? 'All FAQs' : '全部常见问题', $page_id);
+$prev_label            = hireai_field('faq_prev_label', $is_en ? 'Previous' : '上一页', $page_id);
+$next_label            = hireai_field('faq_next_label', $is_en ? 'Next' : '下一页', $page_id);
+$status_template       = hireai_field('faq_status_template', $is_en ? 'Showing %1$d–%2$d of %3$d questions' : '正在显示第 %1$d–%2$d 条，共 %3$d 条', $page_id);
+$body_heading          = hireai_field('faq_body_heading', $is_en ? 'Browse frequently asked questions' : '浏览常见问题', $page_id);
+$sidebar_aria_label    = hireai_field('faq_sidebar_aria_label', $is_en ? 'FAQ categories' : 'FAQ 分类导航', $page_id);
+$pagination_aria_label = hireai_field('faq_pagination_aria_label', $is_en ? 'FAQ pagination' : 'FAQ 翻页', $page_id);
 
 $groups = [
     'partnership' => [
@@ -233,8 +242,21 @@ foreach ($faq_categories as $category_index => $category) {
 }
 
 /* Hero banner image */
+/* v3.11.16: 宽度与左右留白交给外层容器，口径对齐 page-about.php 的 .hireai-about-container
+   （max-width 1440 + padding-inline 24px）。不再依赖共享 .container——它在 ≥768px 被统一
+   改成 padding-inline:0，正是本页 hero 图贴边的原因。 */
 .hireai-faq-banner {
     margin-block: clamp(24px, 4vw, 56px);
+}
+.hireai-faq-banner__inner {
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+    padding-inline: 24px;
+}
+/* 同一页面内的正文 grid 也走 .container；给 FAQ 页补回 24px 边距，保持与 banner 对齐 */
+.hireai-faq-page .container {
+    padding-inline: 24px;
 }
 /* v3.0.6: border-radius 4px (hireaipeople.txt 图片圆角 0或4px) — was clamp(16px,1.5vw,24px) */
 .hireai-faq-banner img {
@@ -499,26 +521,28 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
   </section>
 
   <!-- ═══════════ 2. HERO BANNER IMAGE ═══════════ -->
-  <section class="container hireai-faq-banner" aria-hidden="true">
-    <img src="<?php echo esc_url($hero_image); ?>" alt="<?php echo esc_attr($hero_caption); ?>" loading="lazy">
+  <section class="hireai-faq-banner" aria-hidden="true">
+    <div class="hireai-faq-banner__inner">
+      <img src="<?php echo esc_url($hero_image); ?>" alt="<?php echo esc_attr($hero_caption); ?>" loading="lazy">
+    </div>
   </section>
 
   <!-- ═══════════ 3. FAQ BODY (Category filter + flat list + pagination) ═══════════ -->
   <section class="hireai-faq-body" aria-labelledby="hireai-faq-body-title">
     <h2 id="hireai-faq-body-title" class="screen-reader-text">
-      <?php echo esc_html($is_en ? 'Browse frequently asked questions' : '浏览常见问题'); ?>
+      <?php echo esc_html($body_heading); ?>
     </h2>
     <div class="container hireai-faq-grid">
 
       <!-- Sidebar: category filter -->
-      <aside class="hireai-faq-sidebar" aria-label="<?php echo esc_attr($is_en ? 'FAQ categories' : 'FAQ 分类导航'); ?>">
+      <aside class="hireai-faq-sidebar" aria-label="<?php echo esc_attr($sidebar_aria_label); ?>">
         <ul class="hireai-faq-sidebar__list">
           <li>
             <button type="button"
                     class="hireai-faq-sidebar__btn is-active"
                     aria-pressed="true"
                     data-faq-category="all">
-              <?php echo esc_html($is_en ? 'All FAQs' : '全部常见问题'); ?>
+              <?php echo esc_html($all_label); ?>
             </button>
           </li>
       <?php foreach ($faq_categories as $gkey => $category) :
@@ -563,16 +587,16 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
         <?php endif; ?>
         </div>
         <nav class="hireai-faq-pagination"
-             aria-label="<?php echo esc_attr($is_en ? 'FAQ pagination' : 'FAQ 翻页'); ?>"
+             aria-label="<?php echo esc_attr($pagination_aria_label); ?>"
              data-faq-pagination
              hidden>
           <button type="button" class="hireai-faq-pagination__button" data-faq-page-action="prev">
-            <?php echo esc_html($is_en ? 'Previous' : '上一页'); ?>
+            <?php echo esc_html($prev_label); ?>
           </button>
           <div class="hireai-faq-pagination__pages" data-faq-pages
                style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;"></div>
           <button type="button" class="hireai-faq-pagination__button" data-faq-page-action="next">
-            <?php echo esc_html($is_en ? 'Next' : '下一页'); ?>
+            <?php echo esc_html($next_label); ?>
           </button>
         </nav>
       </div>
@@ -655,7 +679,7 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
         });
 
         if (matching.length > 0) {
-            status.textContent = <?php echo wp_json_encode($is_en ? 'Showing %1$d–%2$d of %3$d questions' : '正在显示第 %1$d–%2$d 条，共 %3$d 条'); ?>;
+            status.textContent = <?php echo wp_json_encode($status_template); ?>;
             status.textContent = status.textContent
                 .replace('%1$d', String(first + 1))
                 .replace('%2$d', String(last))
