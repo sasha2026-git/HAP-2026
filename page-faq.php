@@ -18,7 +18,9 @@
  *   WP_File_Header::get_data 拿不到 Template Name，从而后台看不到模板。
  *   v3.0.1 把 Template Name 注释放回第一个 PHP 块的最前面，ABSPATH 守卫移至第二块。
  *
- * @version 3.11.16
+ *   v3.11.17：≤767px 分类筛选改为下拉（桌面横排按钮不变）。
+ *
+ * @version 3.11.17
  */
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -385,6 +387,124 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
     }
 }
 
+/* v3.11.17: mobile category filter — custom dropdown (≤767px only).
+   Desktop pills stay untouched. The panel overlays the FAQ list and never
+   creates horizontal overflow, even with long EN labels. */
+.hireai-faq-filter {
+    display: none;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+}
+.hireai-faq-filter__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-height: 48px;
+    padding: 10px 16px;
+    border: 1px solid rgba(119, 90, 25, 0.45);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #1a1c1c;
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
+    text-align: left;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.hireai-faq-filter__trigger:focus-visible {
+    outline: 2px solid #775a19;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(233, 193, 118, 0.35);
+}
+.hireai-faq-filter__value {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.hireai-faq-filter__icon {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+.hireai-faq-filter__trigger[aria-expanded="true"] .hireai-faq-filter__icon {
+    transform: rotate(180deg);
+}
+.hireai-faq-filter__menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 60;
+    max-height: min(60vh, 360px);
+    margin: 0;
+    padding: 6px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: 1px solid rgba(196, 199, 199, 0.55);
+    border-radius: 4px;
+    background: #ffffff;
+    box-shadow: 0 16px 40px rgba(26, 28, 28, 0.14);
+    box-sizing: border-box;
+}
+.hireai-faq-filter__menu[hidden] { display: none; }
+.hireai-faq-filter__option {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: #1a1c1c;
+    font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+.hireai-faq-filter__option:hover,
+.hireai-faq-filter__option:focus-visible {
+    outline: 2px solid #775a19;
+    outline-offset: -2px;
+    background: rgba(233, 193, 118, 0.18);
+}
+.hireai-faq-filter__option.is-active,
+.hireai-faq-filter__option[aria-selected="true"] {
+    background: rgba(119, 90, 25, 0.12);
+    box-shadow: inset 3px 0 0 #775a19;
+    color: #775a19;
+    font-weight: 700;
+}
+.hireai-faq-filter__option:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+@media (max-width: 767px) {
+    .hireai-faq-filter { display: block; }
+    .hireai-faq-sidebar {
+        overflow: visible;
+        border-left: 0;
+        padding-left: 0;
+    }
+    .hireai-faq-sidebar__list { display: none; }
+}
+
 /* Answer list — glassy card */
 .hireai-faq-panel {
     display: flex;
@@ -536,6 +656,51 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
 
       <!-- Sidebar: category filter -->
       <aside class="hireai-faq-sidebar" aria-label="<?php echo esc_attr($sidebar_aria_label); ?>">
+        <div class="hireai-faq-filter" data-faq-filter>
+          <button type="button"
+                  class="hireai-faq-filter__trigger"
+                  id="hireai-faq-filter-trigger"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  aria-controls="hireai-faq-filter-menu"
+                  aria-labelledby="hireai-faq-filter-label hireai-faq-filter-value"
+                  data-faq-filter-trigger>
+            <span class="screen-reader-text" id="hireai-faq-filter-label"><?php echo esc_html($sidebar_aria_label); ?></span>
+            <span class="hireai-faq-filter__value" id="hireai-faq-filter-value" data-faq-filter-value><?php echo esc_html($all_label); ?></span>
+            <svg class="hireai-faq-filter__icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="hireai-faq-filter__menu"
+               id="hireai-faq-filter-menu"
+               role="listbox"
+               aria-label="<?php echo esc_attr($sidebar_aria_label); ?>"
+               data-faq-filter-menu
+               hidden>
+            <button type="button"
+                    class="hireai-faq-filter__option is-active"
+                    role="option"
+                    aria-selected="true"
+                    data-faq-category="all"
+                    data-faq-filter-option>
+              <?php echo esc_html($all_label); ?>
+            </button>
+        <?php foreach ($faq_categories as $gkey => $category) :
+                $category_key = $faq_category_keys[$gkey];
+                $has_items = !empty($category['items']);
+        ?>
+            <button type="button"
+                    class="hireai-faq-filter__option"
+                    role="option"
+                    aria-selected="false"
+                    data-faq-category="<?php echo esc_attr($category_key); ?>"
+                    data-faq-filter-option
+                    <?php echo $has_items ? '' : 'disabled aria-disabled="true"'; ?>>
+              <?php echo esc_html($category['label']); ?>
+            </button>
+        <?php endforeach; ?>
+          </div>
+        </div>
         <ul class="hireai-faq-sidebar__list">
           <li>
             <button type="button"
@@ -634,6 +799,11 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
 
     var perPage = 10;
     var categoryButtons = Array.prototype.slice.call(document.querySelectorAll('.hireai-faq-sidebar__btn[data-faq-category]'));
+    var filter = document.querySelector('[data-faq-filter]');
+    var filterTrigger = document.querySelector('[data-faq-filter-trigger]');
+    var filterMenu = document.querySelector('[data-faq-filter-menu]');
+    var filterValue = document.querySelector('[data-faq-filter-value]');
+    var filterOptions = Array.prototype.slice.call(document.querySelectorAll('[data-faq-filter-option]'));
     var items = Array.prototype.slice.call(document.querySelectorAll('[data-faq-item]'));
     var pagination = document.querySelector('[data-faq-pagination]');
     var pageContainer = document.querySelector('[data-faq-pages]');
@@ -642,9 +812,60 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
     var nextButton = document.querySelector('[data-faq-page-action="next"]');
     var activeCategory = 'all';
     var activePage = 0;
+    var coreReady = !!(categoryButtons.length && items.length && pagination && pageContainer && status && prevButton && nextButton);
 
-    if (!categoryButtons.length || !items.length || !pagination || !pageContainer || !status || !prevButton || !nextButton) {
-        return;
+    function closeFilter(returnFocus) {
+        if (!filterTrigger || !filterMenu) {
+            return;
+        }
+        filterMenu.setAttribute('hidden', '');
+        filterTrigger.setAttribute('aria-expanded', 'false');
+        if (returnFocus) {
+            filterTrigger.focus();
+        }
+    }
+
+    function openFilter() {
+        if (!filterTrigger || !filterMenu) {
+            return;
+        }
+        filterMenu.removeAttribute('hidden');
+        filterTrigger.setAttribute('aria-expanded', 'true');
+        var activeOption = filterOptions.filter(function (option) {
+            return option.getAttribute('data-faq-category') === activeCategory;
+        })[0];
+        if (activeOption) {
+            activeOption.focus();
+        }
+    }
+
+    function syncSelection() {
+        categoryButtons.forEach(function (button) {
+            var isActive = button.getAttribute('data-faq-category') === activeCategory;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+        filterOptions.forEach(function (option) {
+            var isActive = option.getAttribute('data-faq-category') === activeCategory;
+            option.classList.toggle('is-active', isActive);
+            option.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        var selectedOption = filterOptions.filter(function (option) {
+            return option.getAttribute('data-faq-category') === activeCategory;
+        })[0];
+        if (selectedOption && filterValue) {
+            filterValue.textContent = selectedOption.textContent.replace(/\s+/g, ' ').trim();
+        }
+    }
+
+    function selectCategory(category, focusTrigger) {
+        activeCategory = category || 'all';
+        activePage = 0;
+        syncSelection();
+        closeFilter(!!focusTrigger);
+        if (coreReady) {
+            render();
+        }
     }
 
     function filteredItems() {
@@ -713,15 +934,79 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
 
     categoryButtons.forEach(function (button) {
         button.addEventListener('click', function () {
-            activeCategory = button.getAttribute('data-faq-category') || 'all';
-            activePage = 0;
-            categoryButtons.forEach(function (otherButton) {
-                otherButton.classList.toggle('is-active', otherButton === button);
-                otherButton.setAttribute('aria-pressed', otherButton === button ? 'true' : 'false');
-            });
-            render();
+            selectCategory(button.getAttribute('data-faq-category') || 'all', false);
         });
     });
+
+    if (filterTrigger && filterMenu && filter) {
+        filterTrigger.addEventListener('click', function () {
+            if (filterTrigger.getAttribute('aria-expanded') === 'true') {
+                closeFilter(false);
+            } else {
+                openFilter();
+            }
+        });
+
+        filterTrigger.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                openFilter();
+            }
+        });
+
+        filterOptions.forEach(function (option) {
+            option.addEventListener('click', function () {
+                if (option.disabled) {
+                    return;
+                }
+                selectCategory(option.getAttribute('data-faq-category') || 'all', true);
+            });
+        });
+
+        filterMenu.addEventListener('keydown', function (event) {
+            var enabledOptions = filterOptions.filter(function (option) {
+                return !option.disabled;
+            });
+            var currentIndex = enabledOptions.indexOf(document.activeElement);
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeFilter(true);
+                return;
+            }
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                var direction = event.key === 'ArrowDown' ? 1 : -1;
+                var nextIndex = currentIndex < 0 ? 0 : (currentIndex + direction + enabledOptions.length) % enabledOptions.length;
+                enabledOptions[nextIndex].focus();
+                return;
+            }
+            if (event.key === 'Home' || event.key === 'End') {
+                event.preventDefault();
+                enabledOptions[event.key === 'Home' ? 0 : enabledOptions.length - 1].focus();
+            }
+        });
+
+        document.addEventListener('click', function (event) {
+            if (filterTrigger.getAttribute('aria-expanded') === 'true' && !filter.contains(event.target)) {
+                closeFilter(false);
+            }
+        });
+
+        filter.addEventListener('focusout', function () {
+            window.setTimeout(function () {
+                if (filterTrigger.getAttribute('aria-expanded') === 'true' && !filter.contains(document.activeElement)) {
+                    closeFilter(false);
+                }
+            }, 0);
+        });
+    }
+
+    syncSelection();
+
+    if (!coreReady) {
+        return;
+    }
 
     prevButton.addEventListener('click', function () {
         activePage = Math.max(0, activePage - 1);

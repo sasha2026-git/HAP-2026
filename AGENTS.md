@@ -16,7 +16,7 @@
 | 仓库 | `git@github.com:sasha2026-git/HAP-2026.git` |
 | 工作分支 | **main**（WordPress 跟踪 main，不是 dev） |
 | 本地工作副本 | `/tmp/codex-projects/hireaipeople-theme`（**仓库根 = 主题根**） |
-| 当前版本 | v3.11.16（工作区，待发布；以 `style.css` 的 `Version:` 为唯一来源；2026-11-24 FAQ 页修复） |
+| 当前版本 | v3.11.17（工作区，待发布；以 `style.css` 的 `Version:` 为唯一来源；2026-11-24 FAQ 移动端分类下拉） |
 | 线上实际生效版本 | **v3.11.14**（2026-11-13 01:54 由 Sasha 升级完成；Echo 实测首页 `style.css?ver=3.11.14`，与仓库一致 ✅）。**每次发版后请回填此字段**（Echo 修改 2026-11-13） |
 | 部署环境 | 阿里云香港 ECS + 宝塔面板（IP / SSH / 面板凭据**只找 Sasha**，禁止写进仓库） |
 | 负责人 | Sasha（决策/发布）；Echo（内容/运营）；Codex CLI（代码） |
@@ -202,6 +202,7 @@ sudo systemctl reload php-fpm-84.service
 | ACF 保存后前台仍读旧值 | v3.9.4 重构只 `acf_get_store('values')->reset()`，丢了 v3.9.3 的 post_meta / acf_field_values 对象缓存清理；LiteSpeed/Redis 下会回归 | `acf/save_post` 同时清 ACF store、`wp_cache_delete_group('acf_field_values')`、`post_meta` / `posts` 并 `clean_post_cache()`（见 `functions.php:815`） |
 | ACF 媒体弹窗看不到 WebP（仅个别页面） | 可能是附件 `post_mime_type` 非 `image/*`、`post_parent` 被“上传到此页面”筛选隐藏，或插件过滤；主题代码无 `mime_types` 限制 | 先看「工具 → 聘AI · ACF 诊断」第 3 节附件盘点；主题已补 `upload_mimes` + `wp_check_filetype_and_ext` WebP 兜底（见 `functions.php:844`） |
 | FAQ 页 hero 大图横向贴边满屏 | 共享 `.container` 在 `@media (min-width:768px)` 被统一改成 `padding-inline:0`，页内 hero 直接用了它 | 页内 hero 改用自有容器（`max-width:1440px` + `padding-inline:24px`，对齐 about 容器）；FAQ 页内 `.container` 单独补回 24px（见 `page-faq.php` v3.11.16） |
+| FAQ 移动端分类筛选要横向滑动/溢出屏幕 | `@media (max-width:899px)` 把分类列表改成 `flex-wrap:nowrap` + `overflow-x:auto` | ≤767px 隐藏横排列表，改用 `.hireai-faq-filter` 自定义下拉；768px 以上保持原横排按钮（见 `page-faq.php` v3.11.17） |
 
 ---
 
@@ -264,3 +265,4 @@ Codex 调试产生的临时文件（`*-SUMMARY.md`、`specs-review/`、`*.bak`�
 | 2026-11-13 | **v3.11.15（内容编辑版）已撤回**，改由 ACF 字段承载（revert e413256）；同日 v3.11.15 重新分配给 About ACF 热修复，见下行 | Codex |
 | 2026-11-14 | **v3.11.15 About ACF 热修复**：①修 `hireai_custom_template_canonical_id()` static cache key 忽略 `post_id` 的跨语言污染，英文 About 页改回读自己的 meta ②`acf/save_post` 恢复对象缓存清理 ③补 WebP `upload_mimes` / `wp_check_filetype_and_ext` 兜底 ④新增只读「工具 → 聘AI · ACF 诊断」（字段组来源/图片 mime、About 双语页 canonical/meta、附件 MIME/父页面盘点） | Codex |
 | 2026-11-24 | **v3.11.16 FAQ 页修复（未发布）**：①hero banner 从共享 `.container` 改为 `.hireai-faq-banner__inner`（max-width 1440 + padding-inline 24px，与 about 容器一致），FAQ 页内 `.container` 补回 24px ②7 个硬编码 UI 文案改为 ACF 双语字段：`faq_all_label` / `faq_prev_label` / `faq_next_label` / `faq_status_template` / `faq_body_heading` / `faq_sidebar_aria_label` / `faq_pagination_aria_label`；未删任何函数（^function 117→117） | Codex |
+| 2026-11-24 | **v3.11.17 FAQ 移动端分类下拉（未发布）**：①≤767px 分类筛选由横向滑动按钮改为自定义下拉（触发器 + 纵向面板 + 内联 SVG 箭头），768px 以上桌面/平板横排按钮保持不变 ②下拉复用 `$all_label` / `$faq_categories[*]['label']` 与既有筛选 JS，同步桌面按钮、移动选项和触发器文案 ③支持点击外部/Esc 收起、方向键/Home/End、`aria-haspopup/expanded/controls`，选项触点 ≥48px ④不改 `functions.php` 与 ACF 字段；`style.css` 版本 3.11.16→3.11.17 | Codex |
