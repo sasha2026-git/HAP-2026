@@ -19,8 +19,9 @@
  *   v3.0.1 把 Template Name 注释放回第一个 PHP 块的最前面，ABSPATH 守卫移至第二块。
  *
  *   v3.11.17：≤767px 分类筛选改为下拉（桌面横排按钮不变）。
+ *   v3.11.18：修复下拉触发器被 Hello Elementor reset.css 的 #c36 玫红 hover/focus 覆盖。
  *
- * @version 3.11.17
+ * @version 3.11.18
  */
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -388,6 +389,12 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
 }
 
 /* v3.11.17: mobile category filter — custom dropdown (≤767px only).
+   v3.11.18: Hello Elementor 的父主题 reset.css 用
+   `[type="button"]:focus, [type="button"]:hover, button:focus, button:hover
+   { background-color:#c36; color:#fff }` (#c36 = #CC3366 玫红) 把 tap/hover 态的
+   触发器染成玫红。该选择器权重 (0,2,0) 高于原来的 .hireai-faq-filter__trigger
+   (0,1,0)，且 reset.css 在子主题样式之后加载。这里统一用 `.hireai-faq-page`
+   作用域把相关状态提到 (0,3,0)，不使用 !important。
    Desktop pills stay untouched. The panel overlays the FAQ list and never
    creates horizontal overflow, even with long EN labels. */
 .hireai-faq-filter {
@@ -396,7 +403,9 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
     width: 100%;
     max-width: 100%;
 }
-.hireai-faq-filter__trigger {
+
+/* Trigger = PC 选中态：金色渐变 + 白字（渐变与 .hireai-faq-sidebar__btn.is-active 完全一致） */
+.hireai-faq-page .hireai-faq-filter__trigger {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -405,10 +414,12 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
     max-width: 100%;
     min-height: 48px;
     padding: 10px 16px;
-    border: 1px solid rgba(119, 90, 25, 0.45);
+    border: 1px solid rgba(119, 90, 25, 0.65);
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.92);
-    color: #1a1c1c;
+    background-color: #775a19;
+    background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
+    color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
     font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
     font-size: 14px;
     font-weight: 600;
@@ -417,8 +428,23 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
     text-align: left;
     text-transform: uppercase;
     cursor: pointer;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
-.hireai-faq-filter__trigger:focus-visible {
+/* 覆盖 reset.css 的玫红 hover/focus/active（reset 为 (0,2,0)，这里 (0,3,0)） */
+.hireai-faq-page .hireai-faq-filter__trigger:hover,
+.hireai-faq-page .hireai-faq-filter__trigger:focus,
+.hireai-faq-page .hireai-faq-filter__trigger:active,
+.hireai-faq-page .hireai-faq-filter__trigger[aria-expanded="true"] {
+    border-color: rgba(119, 90, 25, 0.65);
+    background-color: #775a19;
+    background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
+    color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
+    outline: 0;
+    box-shadow: 0 6px 18px rgba(119, 90, 25, 0.22);
+    text-decoration: none;
+}
+.hireai-faq-page .hireai-faq-filter__trigger:focus-visible {
     outline: 2px solid #775a19;
     outline-offset: 2px;
     box-shadow: 0 0 0 3px rgba(233, 193, 118, 0.35);
@@ -434,12 +460,15 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
     flex: 0 0 auto;
     width: 16px;
     height: 16px;
+    color: currentColor;
     transition: transform 0.2s ease;
 }
 .hireai-faq-filter__trigger[aria-expanded="true"] .hireai-faq-filter__icon {
     transform: rotate(180deg);
 }
-.hireai-faq-filter__menu {
+
+/* Panel: white surface + thin gold border */
+.hireai-faq-page .hireai-faq-filter__menu {
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
@@ -450,14 +479,16 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
     padding: 6px;
     overflow-x: hidden;
     overflow-y: auto;
-    border: 1px solid rgba(196, 199, 199, 0.55);
+    border: 1px solid rgba(119, 90, 25, 0.35);
     border-radius: 4px;
-    background: #ffffff;
+    background-color: #ffffff;
+    background-image: none;
     box-shadow: 0 16px 40px rgba(26, 28, 28, 0.14);
     box-sizing: border-box;
 }
 .hireai-faq-filter__menu[hidden] { display: none; }
-.hireai-faq-filter__option {
+
+.hireai-faq-page .hireai-faq-filter__option {
     display: flex;
     align-items: center;
     width: 100%;
@@ -465,8 +496,10 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
     padding: 12px 14px;
     border: 0;
     border-radius: 3px;
-    background: transparent;
+    background-color: transparent;
+    background-image: none;
     color: #1a1c1c;
+    -webkit-text-fill-color: #1a1c1c;
     font-family: var(--font-label, 'Montserrat', 'Inter', sans-serif), sans-serif;
     font-size: 14px;
     font-weight: 500;
@@ -477,21 +510,32 @@ html body .hireai-faq-page .hireai-faq-sidebar__btn.is-active {
     white-space: normal;
     overflow-wrap: anywhere;
     cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
-.hireai-faq-filter__option:hover,
-.hireai-faq-filter__option:focus-visible {
-    outline: 2px solid #775a19;
+/* 覆盖 reset.css 的玫红 hover/focus/active（reset 为 (0,2,0)，这里 (0,3,0)） */
+.hireai-faq-page .hireai-faq-filter__option:hover,
+.hireai-faq-page .hireai-faq-filter__option:focus,
+.hireai-faq-page .hireai-faq-filter__option:focus-visible,
+.hireai-faq-page .hireai-faq-filter__option:active {
+    background-color: rgba(233, 193, 118, 0.18);
+    background-image: none;
+    color: #1a1c1c;
+    -webkit-text-fill-color: #1a1c1c;
+    outline: 2px solid rgba(119, 90, 25, 0.55);
     outline-offset: -2px;
-    background: rgba(233, 193, 118, 0.18);
+    box-shadow: none;
 }
-.hireai-faq-filter__option.is-active,
-.hireai-faq-filter__option[aria-selected="true"] {
-    background: rgba(119, 90, 25, 0.12);
+/* Selected option = 浅金底 + 深金字 + 左侧金色竖条（对齐 PC 选中态语言） */
+.hireai-faq-page .hireai-faq-filter__option.is-active,
+.hireai-faq-page .hireai-faq-filter__option[aria-selected="true"] {
+    background-color: rgba(233, 193, 118, 0.22);
+    background-image: none;
     box-shadow: inset 3px 0 0 #775a19;
     color: #775a19;
+    -webkit-text-fill-color: #775a19;
     font-weight: 700;
 }
-.hireai-faq-filter__option:disabled {
+.hireai-faq-page .hireai-faq-filter__option:disabled {
     opacity: 0.45;
     cursor: not-allowed;
 }
