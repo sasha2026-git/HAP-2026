@@ -197,7 +197,7 @@ zip -qr "$TMP_ZIP" "$THEME_DIR" \
 echo "  ZIP: $TMP_ZIP ($(du -h "$TMP_ZIP" | awk '{print $1}'))"
 
 # 验证 ZIP 内的 Version 字段
-ZIP_VERSION=$(unzip -p "$TMP_ZIP" style.css 2>/dev/null | grep '^Version' | awk '{print $2}')
+ZIP_VERSION=$(unzip -p "$TMP_ZIP" "*/style.css" 2>/dev/null | grep '^Version' | awk '{print $2}')
 ZIP_VERSION="${ZIP_VERSION#v}"
 if [ "$ZIP_VERSION" != "$TARGET_VERSION_NOV" ]; then
     err "ZIP 内的 Version ($ZIP_VERSION) != 目标版本 ($TARGET_VERSION)
