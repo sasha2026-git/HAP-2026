@@ -39,21 +39,25 @@ $page_id = get_the_ID();
 /* --------------------------------------------------------------------
  * 2. HERO FIELDS  (ACF group_page_contact)
  * -------------------------------------------------------------------- */
-$hero_kicker   = hireai_field('header_kicker',  $is_en ? 'CONTACT' : '联系');
-// Bilingual title — admin controls each half independently.
-$title_zh = function_exists('hireai_field_lang')
-    ? hireai_field_lang('header_title', 'zh', '联络')
-    : hireai_field('header_title_zh', '联络');
-$title_en = function_exists('hireai_field_lang')
-    ? hireai_field_lang('header_title', 'en', 'Contact')
-    : hireai_field('header_title_en', 'Contact');
+$hero_kicker_default = $is_en ? 'Start Your Intelligent Upgrade' : '开启您的智能升级';
+$hero_kicker = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_kicker', $language, $hero_kicker_default, $page_id)
+    : hireai_field('header_kicker_' . $language, $hero_kicker_default, $page_id);
 
-$hero_subtitle = hireai_field(
-    'header_subtitle',
-    $is_en
-        ? 'Connect with our concierges to curate your bespoke AI workforce.'
-        : '与我们的管家联系，定制属于您的 AI 数字员工。'
-);
+// Bilingual title — Chinese page keeps both halves; English page renders EN only.
+$title_zh = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_title', 'zh', '即刻对话，专属定制', $page_id)
+    : hireai_field('header_title_zh', '即刻对话，专属定制', $page_id);
+$title_en = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_title', 'en', 'Connect Now, Tailored for You', $page_id)
+    : hireai_field('header_title_en', 'Connect Now, Tailored for You', $page_id);
+
+$hero_subtitle_default = $is_en
+    ? 'Submit your needs; a dedicated consultant will respond within 24 hours.'
+    : '提交您的业务需求，人工顾问将在24小时内响应';
+$hero_subtitle = function_exists('hireai_field_lang')
+    ? hireai_field_lang('header_subtitle', $language, $hero_subtitle_default, $page_id)
+    : hireai_field('header_subtitle_' . $language, $hero_subtitle_default, $page_id);
 
 // Decorative banner image — v3.7.5: 新增 ACF 字段 contact_hero_image，空白回退内置图
 $hero_image = function_exists('hireai_image')
@@ -219,7 +223,11 @@ html body .hireai-c-form__actions .hireai-c-form__submit:hover,html body .hireai
   <section class="hireai-page-hero" aria-labelledby="hireai-c-title">
     <p class="kicker"><?php echo esc_html($hero_kicker); ?></p>
     <h1 id="hireai-c-title">
-      <span><?php echo esc_html($title_zh); ?></span><span aria-hidden="true"> / </span><span><?php echo esc_html($title_en); ?></span>
+      <?php if ($is_en): ?>
+        <span><?php echo esc_html($title_en); ?></span>
+      <?php else: ?>
+        <span><?php echo esc_html($title_zh); ?></span><span aria-hidden="true"> / </span><span><?php echo esc_html($title_en); ?></span>
+      <?php endif; ?>
     </h1>
     <p><?php echo esc_html($hero_subtitle); ?></p>
     <div style="width:1px;height:40px;background:linear-gradient(180deg,#775a19,transparent);margin:20px auto 0"></div>

@@ -14,9 +14,9 @@ $is_en  = ( '_en' === $suffix );
 $page_id = get_the_ID();
 
 /* ====== 文案（页面 ACF 可编辑，缺省 = 设计稿文案） ====== */
-$hero_kicker       = hireai_field( 'header_kicker', $is_en ? 'BESPOKE SOLUTIONS' : 'BESPOKE SOLUTIONS', $page_id );
-$hero_title        = hireai_field( 'header_title', $is_en ? 'AI Solutions Marketplace' : 'AI方案商城', $page_id );
-$hero_subtitle     = hireai_field( 'header_subtitle', $is_en ? 'Hire elite digital minds to empower your business.' : '雇佣顶尖数字智脑，赋能企业未来。', $page_id );
+$hero_kicker       = hireai_field( 'header_kicker', $is_en ? 'Transparent Collaboration Models' : '清晰透明的合作模式', $page_id );
+$hero_title        = hireai_field( 'header_title', $is_en ? 'Tailored Scale, Flexible Delivery' : '按需配置，弹性交付', $page_id );
+$hero_subtitle     = hireai_field( 'header_subtitle', $is_en ? 'Eliminate overhead costs; make every investment count.' : '告别冗余人力成本，每一分投入皆见成效', $page_id );
 /* v3.11.21: Hero 按钮不再渲染；ACF 字段 hero_cta_primary_* / hero_cta_secondary_* 保留，后续可直接恢复模板输出。 */
 
 $card_cta_text     = hireai_field( 'card_cta_text', $is_en ? 'Explore More' : '探索更多', $page_id );

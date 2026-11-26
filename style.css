@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.11.21
+Version: 3.11.24
 Text Domain:  hireaipeople
 */
 
@@ -4812,18 +4812,25 @@ html[lang="en"] h2 {
 .sols-tab:hover {
     background: rgba(119, 90, 25, 0.06);
 }
-.sols-tab.is-active {
-    background: var(--gold-leaf, #775a19);
+/* v3.11.22: PC 激活态改为与移动端下拉一致的金色渐变（原来为纯色 #775a19） */
+.sols-tab.is-active,
+.sols-tab[aria-selected="true"],
+.sols-tab[aria-current="true"] {
+    background-color: #775a19;
+    background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
+    border-color: rgba(119, 90, 25, .65);
     color: #fff;
+    -webkit-text-fill-color: #fff;
     box-shadow: 0 6px 18px -6px rgba(119, 90, 25, 0.45);
 }
-.sols-tab[aria-selected="true"] {
-    background: var(--gold-leaf, #775a19);
+.sols-tab.is-active:hover,
+.sols-tab.is-active:focus,
+.sols-tab[aria-selected="true"]:hover,
+.sols-tab[aria-current="true"]:hover {
+    background-color: #775a19;
+    background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
     color: #fff;
-}
-.sols-tab[aria-current="true"] {
-    background: var(--gold-leaf, #775a19);
-    color: #fff;
+    -webkit-text-fill-color: #fff;
 }
 
 /* tab panel 切换 */

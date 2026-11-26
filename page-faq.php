@@ -36,13 +36,13 @@ $page_id = get_the_ID();
  * 1. PAGE FIELDS  (Hero + 分组标签 + CTA)
  * -------------------------------------------------------------------- */
 $kicker   = hireai_field('header_kicker',
-    $is_en ? 'THE ATELIER' : 'THE ATELIER', $page_id);
+    $is_en ? 'Comprehensive Partnership Guide' : '全方位合作指南', $page_id);
 $title    = hireai_field('header_title',
-    $is_en ? 'Frequently Asked' : '常见问题', $page_id);
+    $is_en ? 'Clarity First, Instant Answers' : '化繁为简，即刻解惑', $page_id);
 $subtitle = hireai_field('header_subtitle',
     $is_en
-        ? 'Discover detailed insights into our partnership models, financial structures, and security protocols.'
-        : '深入了解我们的合作模式、财务结构与安全协议。',
+        ? 'From security compliance to delivery standards, get every detail covered.'
+        : '从安全合规到交付标准，了解您关心的每一个细节',
     $page_id);
 $hero_caption = hireai_field('header_hero_caption',
     $is_en ? 'Our Atelier' : '我们的数字工坊', $page_id);

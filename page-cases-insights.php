@@ -5,7 +5,8 @@
  *
  * - 视觉排版严格对齐 v2.2.6（227 行精简硬编码版）
  * - 数据源：ACF（group_page_cases_insights 字段），缺失时回退到 v2.2.6 硬编码默认
- * - 双语：每个字符串都通过 hireai_field_lang 后台可编辑；.zh / .en 两个 span 始终输出，CSS/JS 切换可见性
+ * - 双语：每个字符串都通过 hireai_field_lang 后台可编辑；hero 按当前页面语言服务端只输出一侧，
+ *   其余区块继续输出 .zh / .en 两个 span，由 CSS/JS 切换可见性
  */
 
 get_header();
@@ -17,7 +18,7 @@ $ci_lang = function_exists('hireai_lang_suffix') ? (hireai_lang_suffix() === '_e
 
 /**
  * 强制读取指定语言的 ACF 字段值（不受当前 $ci_lang 影响）
- * 用法：$ci_field_lang('ci_hero_kicker', '智慧工坊', 'THE ATELIER OF INTELLIGENCE', 'zh')
+ * 用法：$ci_field_lang('ci_hero_kicker', $zh_default, $en_default, 'zh')
  */
 $ci_field_lang_force = function ($name, $zh_default, $en_default, $lang, $pid = null) use ($ci_page_id) {
     $def = ($lang === 'en') ? $en_default : $zh_default;
@@ -33,7 +34,7 @@ $ci_field_lang_force = function ($name, $zh_default, $en_default, $lang, $pid = 
 
 /**
  * 读取 ACF 双语字段（按当前 $ci_lang 自动选 zh/en）
- * 用法：$ci_field('ci_hero_kicker', '智慧工坊', 'THE ATELIER OF INTELLIGENCE')
+ * 用法：$ci_field('ci_hero_kicker', $zh_default, $en_default)
  */
 $ci_field = function ($name, $zh_default, $en_default) use ($ci_lang, $ci_field_lang_force) {
     return $ci_field_lang_force($name, $zh_default, $en_default, $ci_lang);
@@ -43,8 +44,14 @@ $ci_field = function ($name, $zh_default, $en_default) use ($ci_lang, $ci_field_
  * 渲染 .zh / .en 双语 span 块（保留 v2.2.6 的 CSS 切换模式）
  * - 默认隐藏 .en（与 v2.2.6 一致）；JS applyClientLang 会根据 cookie 切换
  * - 自动从 ACF 取 zh 和 en 两侧的值
+ * - 传入 $force_lang 时只输出当前页面语言的一侧（hero 使用，避免英文页出现中文或双语重复）
  */
-$ci_bi = function ($name, $zh_default, $en_default) use ($ci_field_lang_force) {
+$ci_bi = function ($name, $zh_default, $en_default, $force_lang = '') use ($ci_field_lang_force) {
+    if (in_array($force_lang, ['zh', 'en'], true)) {
+        $value = (string) $ci_field_lang_force($name, $zh_default, $en_default, $force_lang);
+        return $value === '' ? '' : '<span class="' . $force_lang . '">' . esc_html($value) . '</span>';
+    }
+
     $zh = (string) $ci_field_lang_force($name, $zh_default, $en_default, 'zh');
     $en = (string) $ci_field_lang_force($name, $zh_default, $en_default, 'en');
     if ($zh === '' && $en === '') {
@@ -216,23 +223,20 @@ footer .copy{font-size:13px;color:var(--txt-v)}
 
 <section class="hero">
   <?php
-    /* Hero kicker：ACF 驱动 zh/en 两个 span */
+    /* Hero kicker：按当前页面语言服务端只输出一侧 */
     echo '<span class="kicker">';
-    echo $ci_bi('ci_hero_kicker', '智慧工坊', 'THE ATELIER OF INTELLIGENCE');
+    echo $ci_bi('ci_hero_kicker', '见证真实商业增长', 'Witness Real Business Growth', $ci_lang);
     echo '</span>';
 
-    /* Hero h1：em 部分单独 ACF 字段（避免 wp_kses_post 风险），两侧独立读取 */
-    $h1_pre_zh = (string) $ci_field_lang_force('ci_hero_h1_pre_zh', '打造数字 ', 'Crafting Digital ', 'zh');
-    $h1_em_zh  = (string) $ci_field_lang_force('ci_hero_h1_em_zh',  '人文',                  'Humanity',           'zh');
-    $h1_pre_en = (string) $ci_field_lang_force('ci_hero_h1_pre_zh', '打造数字 ', 'Crafting Digital ', 'en');
-    $h1_em_en  = (string) $ci_field_lang_force('ci_hero_h1_em_zh',  '人文',                  'Humanity',           'en');
+    /* Hero h1：em 部分单独 ACF 字段（避免 wp_kses_post 风险），按当前页面语言只读取一侧 */
+    $h1_pre = (string) $ci_field_lang_force('ci_hero_h1_pre_zh', '实战沉淀，', 'Proven Execution, ', $ci_lang);
+    $h1_em  = (string) $ci_field_lang_force('ci_hero_h1_em_zh',  '前沿洞察',   'Frontier Insights',  $ci_lang);
   ?>
   <h1>
-    <span class="zh"><?php echo esc_html($h1_pre_zh); ?><em><?php echo esc_html($h1_em_zh); ?></em></span>
-    <span class="en" style="display:none"><?php echo esc_html($h1_pre_en); ?><em><?php echo esc_html($h1_em_en); ?></em></span>
+    <span class="<?php echo esc_attr($ci_lang); ?>"><?php echo esc_html($h1_pre); ?><em><?php echo esc_html($h1_em); ?></em></span>
   </h1>
   <p>
-    <?php echo $ci_bi('ci_hero_p_zh', '技术精度与传承美学的交汇之处。', 'Where technical precision meets heritage aesthetic.'); ?>
+    <?php echo $ci_bi('ci_hero_p_zh', '探索AI重塑业务流的标杆实践与深度思考', 'Explore benchmark practices and deep insights reshaping workflows.', $ci_lang); ?>
   </p>
 <div style="width:1px;height:40px;background:linear-gradient(180deg,#775a19,transparent);margin:20px auto 0"></div>
 </section>

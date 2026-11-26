@@ -2793,11 +2793,11 @@ function hireai_get_solution_filter_state($page_id = 0) {
 function hireai_list_solution_categories() {
     return [
         ''                => ['slug' => '',                'name_zh' => '全部',           'name_en' => 'All',                       'is_scene' => false],
+        'brand-marketing' => ['slug' => 'brand-marketing', 'name_zh' => '品牌与营销',     'name_en' => 'Brand & Marketing',         'is_scene' => true],
         'web-ecommerce'   => ['slug' => 'web-ecommerce',   'name_zh' => '网站与电商',     'name_en' => 'Website & E-commerce',      'is_scene' => true],
         'visual-design'   => ['slug' => 'visual-design',   'name_zh' => '视觉设计创意',   'name_en' => 'Visual Design & Creative',  'is_scene' => true],
         'content-video'   => ['slug' => 'content-video',   'name_zh' => '文案内容与视频', 'name_en' => 'Copy, Content & Video',     'is_scene' => true],
         'pr-compliance'   => ['slug' => 'pr-compliance',   'name_zh' => '公关与合规',     'name_en' => 'PR & Compliance',           'is_scene' => true],
-        'brand-marketing' => ['slug' => 'brand-marketing', 'name_zh' => '品牌与营销',     'name_en' => 'Brand & Marketing',         'is_scene' => true],
         'custom'          => ['slug' => 'custom',          'name_zh' => '定制',           'name_en' => 'Custom',                    'is_scene' => true],
     ];
 }
@@ -3853,10 +3853,10 @@ add_action('acf/init', function () {
                   'esc_html' => true),
 
             /* CI archive（v3.5.5 引入：页眉 + h1 + 副文） */
-            array('key' => 'field_ci_hero_kicker_zh',       'label' => 'CI · Hero 眉题',           'name' => 'ci_hero_kicker_zh',       'type' => 'text',     'default_value' => '智慧工坊'),
-            array('key' => 'field_ci_hero_h1_pre_zh',      'label' => 'CI · Hero h1 前缀',        'name' => 'ci_hero_h1_pre_zh',      'type' => 'text',     'default_value' => '打造数字 '),
-            array('key' => 'field_ci_hero_h1_em_zh',       'label' => 'CI · Hero h1 em',          'name' => 'ci_hero_h1_em_zh',       'type' => 'text',     'default_value' => '人文'),
-            array('key' => 'field_ci_hero_p_zh',           'label' => 'CI · Hero 副文',           'name' => 'ci_hero_p_zh',           'type' => 'textarea', 'default_value' => '技术精度与传承美学的交汇之处。',                                  'rows' => 2),
+            array('key' => 'field_ci_hero_kicker_zh',       'label' => 'CI · Hero 眉题',           'name' => 'ci_hero_kicker_zh',       'type' => 'text',     'default_value' => '见证真实商业增长'),
+            array('key' => 'field_ci_hero_h1_pre_zh',      'label' => 'CI · Hero h1 前缀',        'name' => 'ci_hero_h1_pre_zh',      'type' => 'text',     'default_value' => '实战沉淀，'),
+            array('key' => 'field_ci_hero_h1_em_zh',       'label' => 'CI · Hero h1 em',          'name' => 'ci_hero_h1_em_zh',       'type' => 'text',     'default_value' => '前沿洞察'),
+            array('key' => 'field_ci_hero_p_zh',           'label' => 'CI · Hero 副文',           'name' => 'ci_hero_p_zh',           'type' => 'textarea', 'default_value' => '探索AI重塑业务流的标杆实践与深度思考',                                  'rows' => 2),
             array('key' => 'field_ci_sec_h2_zh',           'label' => 'CI · 案例区 h2',           'name' => 'ci_sec_h2_zh',           'type' => 'text',     'default_value' => '卓越案例'),
 
             /* 案例 1-4（badge / title / desc / image） */
@@ -3922,10 +3922,10 @@ add_action('acf/init', function () {
                   'esc_html' => true),
 
             /* CI archive EN */
-            array('key' => 'field_ci_hero_kicker_en',       'label' => 'CI · Hero Eyebrow',     'name' => 'ci_hero_kicker_en',       'type' => 'text',     'default_value' => 'THE ATELIER OF INTELLIGENCE'),
-            array('key' => 'field_ci_hero_h1_pre_en',      'label' => 'CI · Hero h1 Prefix',    'name' => 'ci_hero_h1_pre_en',      'type' => 'text',     'default_value' => 'Crafting Digital '),
-            array('key' => 'field_ci_hero_h1_em_en',       'label' => 'CI · Hero h1 em',        'name' => 'ci_hero_h1_em_en',       'type' => 'text',     'default_value' => 'Humanity'),
-            array('key' => 'field_ci_hero_p_en',           'label' => 'CI · Hero Paragraph',    'name' => 'ci_hero_p_en',           'type' => 'textarea', 'default_value' => 'Where technical precision meets heritage aesthetic.',            'rows' => 2),
+            array('key' => 'field_ci_hero_kicker_en',       'label' => 'CI · Hero Eyebrow',     'name' => 'ci_hero_kicker_en',       'type' => 'text',     'default_value' => 'Witness Real Business Growth'),
+            array('key' => 'field_ci_hero_h1_pre_en',      'label' => 'CI · Hero h1 Prefix',    'name' => 'ci_hero_h1_pre_en',      'type' => 'text',     'default_value' => 'Proven Execution, '),
+            array('key' => 'field_ci_hero_h1_em_en',       'label' => 'CI · Hero h1 em',        'name' => 'ci_hero_h1_em_en',       'type' => 'text',     'default_value' => 'Frontier Insights'),
+            array('key' => 'field_ci_hero_p_en',           'label' => 'CI · Hero Paragraph',    'name' => 'ci_hero_p_en',           'type' => 'textarea', 'default_value' => 'Explore benchmark practices and deep insights reshaping workflows.',            'rows' => 2),
             array('key' => 'field_ci_sec_h2_en',           'label' => 'CI · Cases h2',          'name' => 'ci_sec_h2_en',           'type' => 'text',     'default_value' => 'Collaborative Excellence'),
 
             /* 案例 1-4 EN */
@@ -4173,9 +4173,9 @@ add_action('acf/init', function () {
 
     /* ---- 4. AI 解决方案页 ---- */
     acf_add_local_field_group(hireai_make_bilingual_group('group_page_ai_solutions', 'AI 解决方案页', [
-        ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => 'BESPOKE SOLUTIONS', 'en' => 'BESPOKE SOLUTIONS'],
-        ['name' => 'header_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => 'AI方案商城', 'en' => 'AI Solutions Marketplace', 'extra' => ['rows' => 1]],
-        ['name' => 'header_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '雇佣顶尖数字智脑，赋能企业未来，探索专为高净值品牌与前瞻企业打造的专属AI解决方案。', 'en' => 'Hire elite digital minds to empower your business. Discover bespoke AI solutions tailored for premium brands and forward-looking enterprises.', 'extra' => ['rows' => 2]],
+        ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '清晰透明的合作模式', 'en' => 'Transparent Collaboration Models'],
+        ['name' => 'header_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '按需配置，弹性交付', 'en' => 'Tailored Scale, Flexible Delivery', 'extra' => ['rows' => 1]],
+        ['name' => 'header_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '告别冗余人力成本，每一分投入皆见成效', 'en' => 'Eliminate overhead costs; make every investment count.', 'extra' => ['rows' => 2]],
         ['name' => 'hero_cta_primary_text', 'label' => 'Hero · 主 CTA 文字', 'type' => 'text', 'zh' => '定制方案', 'en' => 'Custom Plan'],
         ['name' => 'hero_cta_primary_link', 'label' => 'Hero · 主 CTA 链接', 'type' => 'text', 'zh' => '/contact/', 'en' => '/contact/'],
         ['name' => 'hero_cta_secondary_text', 'label' => 'Hero · 次 CTA 文字', 'type' => 'text', 'zh' => '查看案例', 'en' => 'View Cases'],
@@ -4276,9 +4276,9 @@ add_action('acf/init', function () {
     ]);
 
     acf_add_local_field_group(hireai_make_bilingual_group('group_page_faq', '常见问题页', [
-        ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => 'THE ATELIER', 'en' => 'THE ATELIER'],
-        ['name' => 'header_title', 'label' => '页眉标题（金色渐变大字）', 'type' => 'textarea', 'zh' => '常见问题', 'en' => 'Frequently Asked', 'extra' => ['rows' => 1]],
-        ['name' => 'header_subtitle', 'label' => '页眉副标题（斜体）', 'type' => 'textarea', 'zh' => '深入了解我们的合作模式、财务结构与安全协议。', 'en' => 'Discover detailed insights into our partnership models, financial structures, and security protocols.', 'extra' => ['rows' => 2]],
+        ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '全方位合作指南', 'en' => 'Comprehensive Partnership Guide'],
+        ['name' => 'header_title', 'label' => '页眉标题（金色渐变大字）', 'type' => 'textarea', 'zh' => '化繁为简，即刻解惑', 'en' => 'Clarity First, Instant Answers', 'extra' => ['rows' => 1]],
+        ['name' => 'header_subtitle', 'label' => '页眉副标题（斜体）', 'type' => 'textarea', 'zh' => '从安全合规到交付标准，了解您关心的每一个细节', 'en' => 'From security compliance to delivery standards, get every detail covered.', 'extra' => ['rows' => 2]],
         ['name' => 'header_hero_image', 'label' => 'Hero 横幅图片', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'url', 'preview_size' => 'medium']],
         ['name' => 'header_hero_caption', 'label' => 'Hero 图替代文字', 'type' => 'text', 'zh' => '我们的数字工坊', 'en' => 'Our Atelier'],
         ['name' => 'search_placeholder', 'label' => '检索框占位符', 'type' => 'text', 'zh' => '输入关键词检索…', 'en' => 'Search questions…'],
@@ -4397,9 +4397,9 @@ add_action('acf/init', function () {
 
     /* ---- 7. 联系页 ---- */
     acf_add_local_field_group(hireai_make_bilingual_group('group_page_contact', '联系页', [
-        ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '联系', 'en' => 'CONTACT'],
-        ['name' => 'header_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '发起联络', 'en' => 'Initiate Contact', 'extra' => ['rows' => 1]],
-        ['name' => 'header_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '告诉我们您的需求，我们将在一个工作日内回复。', 'en' => "Tell us your needs and we'll respond within one business day.", 'extra' => ['rows' => 2]],
+        ['name' => 'header_kicker', 'label' => '页眉眉题', 'type' => 'text', 'zh' => '开启您的智能升级', 'en' => 'Start Your Intelligent Upgrade'],
+        ['name' => 'header_title', 'label' => '页眉标题', 'type' => 'textarea', 'zh' => '即刻对话，专属定制', 'en' => 'Connect Now, Tailored for You', 'extra' => ['rows' => 1]],
+        ['name' => 'header_subtitle', 'label' => '页眉副标题', 'type' => 'textarea', 'zh' => '提交您的业务需求，人工顾问将在24小时内响应', 'en' => 'Submit your needs; a dedicated consultant will respond within 24 hours.', 'extra' => ['rows' => 2]],
         ['name' => 'contact_email', 'label' => '联系邮箱', 'type' => 'text', 'zh' => 'concierge@hireaipeople.com', 'en' => 'concierge@hireaipeople.com'],
         ['name' => 'contact_wechat', 'label' => '微信号', 'type' => 'text', 'zh' => 'hireai-official', 'en' => 'hireai-official'],
         ['name' => 'wechat_qr', 'label' => '微信二维码', 'type' => 'image', 'zh' => '', 'en' => '', 'extra' => ['return_format' => 'array']],
@@ -5181,11 +5181,11 @@ add_action('init', function () {
     if (!taxonomy_exists('product_cat')) return;
     if (get_transient('hireai_p18_product_cat_seeded')) return;
     $scenes = [
+        'brand-marketing' => '品牌与营销',
         'web-ecommerce'   => '网站与电商',
         'visual-design'   => '视觉设计创意',
         'content-video'   => '文案内容与视频',
         'pr-compliance'   => '公关与合规',
-        'brand-marketing' => '品牌与营销',
         'custom'          => '定制',
     ];
     foreach ($scenes as $slug => $name) {
@@ -6106,6 +6106,284 @@ function hireai_acf_diagnostics_page() {
     </div>
     <?php
 }
+
+/**
+ * v3.11.24: one-time hero copy sync for the four bilingual page pairs.
+ *
+ * ACF stores page-level values in post meta, so changing a field's default_value
+ * does not update pages that already saved the old copy. This migration only
+ * touches the explicitly whitelisted hero keys, and only when the stored value is
+ * empty or an exact known legacy value. Anything else is left untouched.
+ */
+function hireai_hero_copy_sync_v31122() {
+    if (get_option('hireai_hero_copy_sync_v31122')) {
+        return;
+    }
+
+    $allowed_keys = [
+        'header_kicker_zh', 'header_kicker_en',
+        'header_title_zh', 'header_title_en',
+        'header_subtitle_zh', 'header_subtitle_en',
+        'ci_hero_kicker_zh', 'ci_hero_kicker_en',
+        'ci_hero_h1_pre_zh', 'ci_hero_h1_pre_en',
+        'ci_hero_h1_em_zh', 'ci_hero_h1_em_en',
+        'ci_hero_p_zh', 'ci_hero_p_en',
+    ];
+
+    $templates = [
+        'solutions' => [
+            'slugs'  => ['ai-solutions', 'ai-solutions-2'],
+            'fields' => [
+                'header_kicker_zh' => [
+                    'value' => '清晰透明的合作模式',
+                    'old'   => ['BESPOKE SOLUTIONS', '清晰透明的合作模式'],
+                ],
+                'header_kicker_en' => [
+                    'value' => 'Transparent Collaboration Models',
+                    'old'   => ['BESPOKE SOLUTIONS', '清晰透明的合作模式'],
+                ],
+                'header_title_zh' => [
+                    'value' => '按需配置，弹性交付',
+                    'old'   => ['AI方案商城', 'AI Solutions Marketplace'],
+                ],
+                'header_title_en' => [
+                    'value' => 'Tailored Scale, Flexible Delivery',
+                    'old'   => ['AI Solutions Marketplace', 'AI方案商城'],
+                ],
+                'header_subtitle_zh' => [
+                    'value' => '告别冗余人力成本，每一分投入皆见成效',
+                    'old'   => [
+                        '雇佣顶尖数字智脑，赋能企业未来。',
+                        '雇佣顶尖数字智脑，赋能企业未来，探索专为高净值品牌与前瞻企业打造的专属AI解决方案。',
+                        'Hire elite digital minds to empower your business.',
+                        'Hire elite digital minds to empower your business. Discover bespoke AI solutions tailored for premium brands and forward-looking enterprises.',
+                    ],
+                ],
+                'header_subtitle_en' => [
+                    'value' => 'Eliminate overhead costs; make every investment count.',
+                    'old'   => [
+                        'Hire elite digital minds to empower your business.',
+                        'Hire elite digital minds to empower your business. Discover bespoke AI solutions tailored for premium brands and forward-looking enterprises.',
+                        '雇佣顶尖数字智脑，赋能企业未来。',
+                        '雇佣顶尖数字智脑，赋能企业未来，探索专为高净值品牌与前瞻企业打造的专属AI解决方案。',
+                    ],
+                ],
+            ],
+        ],
+        'cases' => [
+            'slugs'  => ['cases-insights', 'cases-insights-2'],
+            'fields' => [
+                'ci_hero_kicker_zh' => [
+                    'value' => '见证真实商业增长',
+                    'old'   => ['智慧工坊', 'THE ATELIER OF INTELLIGENCE'],
+                ],
+                'ci_hero_kicker_en' => [
+                    'value' => 'Witness Real Business Growth',
+                    'old'   => ['THE ATELIER OF INTELLIGENCE', '智慧工坊'],
+                ],
+                'ci_hero_h1_pre_zh' => [
+                    'value' => '实战沉淀，',
+                    'old'   => [
+                        '打造数字 ', '打造数字', '打造数字 人文',
+                        'Crafting Digital ', 'Crafting Digital', 'Crafting Digital Humanity', 'Crafting Digital Humanity ',
+                    ],
+                ],
+                'ci_hero_h1_pre_en' => [
+                    'value' => 'Proven Execution, ',
+                    'old'   => [
+                        'Crafting Digital ',
+                        'Crafting Digital',
+                        'Crafting Digital Humanity',
+                        'Crafting Digital Humanity ',
+                    ],
+                ],
+                'ci_hero_h1_em_zh' => [
+                    'value' => '前沿洞察',
+                    'old'   => ['人文', '打造数字 人文', 'Humanity', 'Crafting Digital Humanity'],
+                ],
+                'ci_hero_h1_em_en' => [
+                    'value' => 'Frontier Insights',
+                    'old'   => ['Humanity', 'Crafting Digital Humanity'],
+                ],
+                'ci_hero_p_zh' => [
+                    'value' => '探索AI重塑业务流的标杆实践与深度思考',
+                    'old'   => ['技术精度与传承美学的交汇之处。', 'Where technical precision meets heritage aesthetic.'],
+                ],
+                'ci_hero_p_en' => [
+                    'value' => 'Explore benchmark practices and deep insights reshaping workflows.',
+                    'old'   => ['Where technical precision meets heritage aesthetic.', '技术精度与传承美学的交汇之处。'],
+                ],
+            ],
+        ],
+        'faq' => [
+            'slugs'  => ['faq', 'faq-3'],
+            'fields' => [
+                'header_kicker_zh' => [
+                    'value' => '全方位合作指南',
+                    'old'   => ['THE ATELIER', '常见问题'],
+                ],
+                'header_kicker_en' => [
+                    'value' => 'Comprehensive Partnership Guide',
+                    'old'   => ['THE ATELIER', '常见问题'],
+                ],
+                'header_title_zh' => [
+                    'value' => '化繁为简，即刻解惑',
+                    'old'   => ['常见问题', 'Frequently Asked'],
+                ],
+                'header_title_en' => [
+                    'value' => 'Clarity First, Instant Answers',
+                    'old'   => ['Frequently Asked', '常见问题'],
+                ],
+                'header_subtitle_zh' => [
+                    'value' => '从安全合规到交付标准，了解您关心的每一个细节',
+                    'old'   => ['深入了解我们的合作模式、财务结构与安全协议。', 'Discover detailed insights into our partnership models, financial structures, and security protocols.'],
+                ],
+                'header_subtitle_en' => [
+                    'value' => 'From security compliance to delivery standards, get every detail covered.',
+                    'old'   => ['Discover detailed insights into our partnership models, financial structures, and security protocols.', '深入了解我们的合作模式、财务结构与安全协议。'],
+                ],
+            ],
+        ],
+        'contact' => [
+            'slugs'  => ['contact', 'contact-2'],
+            'fields' => [
+                'header_kicker_zh' => [
+                    'value' => '开启您的智能升级',
+                    'old'   => ['联系', 'CONTACT'],
+                ],
+                'header_kicker_en' => [
+                    'value' => 'Start Your Intelligent Upgrade',
+                    'old'   => ['CONTACT', '联系'],
+                ],
+                'header_title_zh' => [
+                    'value' => '即刻对话，专属定制',
+                    'old'   => ['发起联络', '联络', 'Initiate Contact', 'Contact'],
+                ],
+                'header_title_en' => [
+                    'value' => 'Connect Now, Tailored for You',
+                    'old'   => ['Initiate Contact', 'Contact', '发起联络', '联络'],
+                ],
+                'header_subtitle_zh' => [
+                    'value' => '提交您的业务需求，人工顾问将在24小时内响应',
+                    'old'   => [
+                        '提升您的智能生产力',
+                        '提升您的智能生产力。',
+                        '告诉我们您的需求，我们将在一个工作日内回复。',
+                        '与我们的管家联系，定制属于您的 AI 数字员工。',
+                        "Tell us your needs and we'll respond within one business day.",
+                        'Connect with our concierges to curate your bespoke AI workforce.',
+                    ],
+                ],
+                'header_subtitle_en' => [
+                    'value' => 'Submit your needs; a dedicated consultant will respond within 24 hours.',
+                    'old'   => [
+                        "Tell us your needs and we'll respond within one business day.",
+                        'Connect with our concierges to curate your bespoke AI workforce.',
+                        '提升您的智能生产力',
+                        '提升您的智能生产力。',
+                        '告诉我们您的需求，我们将在一个工作日内回复。',
+                        '与我们的管家联系，定制属于您的 AI 数字员工。',
+                    ],
+                ],
+            ],
+        ],
+    ];
+
+    $stats = ['pages' => 0, 'missing' => 0, 'written' => 0, 'already' => 0, 'custom' => 0];
+
+    try {
+        foreach ($templates as $template_name => $template) {
+            foreach ($template['slugs'] as $slug) {
+                $page = get_page_by_path($slug, OBJECT, 'page');
+                if (!($page instanceof WP_Post)) {
+                    $stats['missing']++;
+                    error_log('[hireai v3.11.24 hero copy sync] missing page: ' . $slug);
+                    continue;
+                }
+
+                $stats['pages']++;
+                $page_id = (int) $page->ID;
+                $page_written = 0;
+
+                foreach ($template['fields'] as $key => $spec) {
+                    if (!in_array($key, $allowed_keys, true)) {
+                        error_log('[hireai v3.11.24 hero copy sync] blocked non-whitelisted key: ' . $key . ' page=' . $slug);
+                        continue;
+                    }
+
+                    $current = get_post_meta($page_id, $key, true);
+                    if (is_array($current) || is_object($current)) {
+                        $stats['custom']++;
+                        error_log('[hireai v3.11.24 hero copy sync] skipped non-scalar value: page=' . $slug . ' key=' . $key);
+                        continue;
+                    }
+
+                    $current = (string) $current;
+                    $current_trim = trim($current);
+                    $target_trim  = trim((string) $spec['value']);
+
+                    if ($current_trim === $target_trim) {
+                        $stats['already']++;
+                        continue;
+                    }
+
+                    $is_empty = ($current_trim === '');
+                    $is_known = false;
+                    foreach ($spec['old'] as $old_value) {
+                        if ($current === $old_value || $current_trim === trim((string) $old_value)) {
+                            $is_known = true;
+                            break;
+                        }
+                    }
+
+                    if (!$is_empty && !$is_known) {
+                        $stats['custom']++;
+                        error_log('[hireai v3.11.24 hero copy sync] skipped custom value: page=' . $slug . ' key=' . $key . ' value=' . $current);
+                        continue;
+                    }
+
+                    update_post_meta($page_id, $key, $spec['value']);
+                    if ((string) get_post_meta($page_id, $key, true) !== (string) $spec['value']) {
+                        error_log('[hireai v3.11.24 hero copy sync] write failed: page=' . $slug . ' key=' . $key);
+                        continue;
+                    }
+                    $stats['written']++;
+                    $page_written++;
+                }
+
+                if ($page_written > 0) {
+                    clean_post_cache($page_id);
+                }
+
+                error_log('[hireai v3.11.24 hero copy sync] page=' . $slug . ' template=' . $template_name . ' written=' . $page_written);
+            }
+        }
+
+        if ($stats['written'] > 0) {
+            if (function_exists('wp_cache_delete_group')) {
+                wp_cache_delete_group('acf_field_values');
+            }
+            if (function_exists('acf_get_store')) {
+                $acf_values_store = acf_get_store('values');
+                if ($acf_values_store && method_exists($acf_values_store, 'reset')) {
+                    $acf_values_store->reset();
+                }
+            }
+        }
+    } catch (Throwable $exception) {
+        error_log('[hireai v3.11.24 hero copy sync] failed: ' . $exception->getMessage());
+        return;
+    }
+
+    try {
+        update_option('hireai_hero_copy_sync_v31122', 1);
+    } catch (Throwable $exception) {
+        error_log('[hireai v3.11.24 hero copy sync] option update failed: ' . $exception->getMessage());
+        return;
+    }
+    error_log('[hireai v3.11.24 hero copy sync] complete: ' . wp_json_encode($stats));
+}
+add_action('init', 'hireai_hero_copy_sync_v31122', 20);
 
 add_action('admin_menu', function () {
     add_management_page(
