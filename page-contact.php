@@ -44,7 +44,7 @@ $hero_kicker = function_exists('hireai_field_lang')
     ? hireai_field_lang('header_kicker', $language, $hero_kicker_default, $page_id)
     : hireai_field('header_kicker_' . $language, $hero_kicker_default, $page_id);
 
-// Bilingual title — Chinese page keeps both halves; English page renders EN only.
+// Single-language title — each page renders only its own language.
 $title_zh = function_exists('hireai_field_lang')
     ? hireai_field_lang('header_title', 'zh', '即刻对话，专属定制', $page_id)
     : hireai_field('header_title_zh', '即刻对话，专属定制', $page_id);
@@ -223,11 +223,7 @@ html body .hireai-c-form__actions .hireai-c-form__submit:hover,html body .hireai
   <section class="hireai-page-hero" aria-labelledby="hireai-c-title">
     <p class="kicker"><?php echo esc_html($hero_kicker); ?></p>
     <h1 id="hireai-c-title">
-      <?php if ($is_en): ?>
-        <span><?php echo esc_html($title_en); ?></span>
-      <?php else: ?>
-        <span><?php echo esc_html($title_zh); ?></span><span aria-hidden="true"> / </span><span><?php echo esc_html($title_en); ?></span>
-      <?php endif; ?>
+      <span><?php echo esc_html($is_en ? $title_en : $title_zh); ?></span>
     </h1>
     <p><?php echo esc_html($hero_subtitle); ?></p>
     <div style="width:1px;height:40px;background:linear-gradient(180deg,#775a19,transparent);margin:20px auto 0"></div>
