@@ -17,10 +17,7 @@ $page_id = get_the_ID();
 $hero_kicker       = hireai_field( 'header_kicker', $is_en ? 'BESPOKE SOLUTIONS' : 'BESPOKE SOLUTIONS', $page_id );
 $hero_title        = hireai_field( 'header_title', $is_en ? 'AI Solutions Marketplace' : 'AI方案商城', $page_id );
 $hero_subtitle     = hireai_field( 'header_subtitle', $is_en ? 'Hire elite digital minds to empower your business.' : '雇佣顶尖数字智脑，赋能企业未来。', $page_id );
-$hero_cta_primary  = hireai_field( 'hero_cta_primary_text', $is_en ? 'Custom Plan' : '定制方案', $page_id );
-$hero_cta_primary_link  = hireai_field( 'hero_cta_primary_link', $is_en ? '/contact/' : '/contact/', $page_id );
-$hero_cta_secondary    = hireai_field( 'hero_cta_secondary_text', $is_en ? 'View Cases' : '查看案例', $page_id );
-$hero_cta_secondary_link = hireai_field( 'hero_cta_secondary_link', $is_en ? '/category/cases/' : '/category/cases/', $page_id );
+/* v3.11.21: Hero 按钮不再渲染；ACF 字段 hero_cta_primary_* / hero_cta_secondary_* 保留，后续可直接恢复模板输出。 */
 
 $card_cta_text     = hireai_field( 'card_cta_text', $is_en ? 'Explore More' : '探索更多', $page_id );
 $empty_text        = hireai_field( 'empty_text', $is_en ? 'No solutions in this category yet.' : '该分类下暂无解决方案', $page_id );
@@ -49,6 +46,23 @@ if (($requested_page === 1 || $requested_page === '') && isset($_GET['solution_p
 $current_page = max(1, (int) (is_scalar($requested_page) ? $requested_page : 1));
 if ($active_tag === '' || !in_array($active_tag, $filter_slugs, true)) {
     $active_tag = '';
+}
+
+$solution_filter_href = function ( $slug ) {
+    return $slug === 'all'
+        ? remove_query_arg( [ 'solution_tag', 'solution_page' ] )
+        : add_query_arg( [ 'solution_tag' => $slug, 'solution_page' => false ] );
+};
+$active_filter_slug  = $active_tag === '' ? 'all' : $active_tag;
+$active_filter_label = '';
+foreach ( $filters as $filter ) {
+    if ( (string) $filter['slug'] === $active_filter_slug ) {
+        $active_filter_label = trim( (string) ( $is_en ? $filter['label_en'] : $filter['label_zh'] ) );
+        break;
+    }
+}
+if ( $active_filter_label === '' ) {
+    $active_filter_label = $is_en ? 'All' : '全部';
 }
 
 $solutions_result = function_exists('hireai_get_solution_products_result')
@@ -129,6 +143,146 @@ $pagination_links = $total_pages > 1 && function_exists('paginate_links')
     flex-wrap: wrap;
     gap: 16px;
     justify-content: center;
+}
+
+/* v3.11.21: 场景筛选——≥768px 用 .sols-tabs 横排 chip，<768px 切到本下拉。
+   Hello Elementor 父主题 reset.css 的 [type="button"]:hover/:focus,
+   button:hover/:focus { background-color:#c36 } 权重 (0,2,0)，这里统一用
+   .sols-tabs-wrap 作用域把各状态提到 (0,3,0)，不使用 !important。 */
+.sols-filter {
+    display: none;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+}
+.sols-tabs-wrap .sols-filter__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-height: 48px;
+    padding: 10px 16px;
+    border: 1px solid rgba(119, 90, 25, .65);
+    border-radius: 4px;
+    background-color: #775a19;
+    background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
+    color: #fff;
+    -webkit-text-fill-color: #fff;
+    font-family: var(--font-label, 'Inter', sans-serif);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    line-height: 1.3;
+    text-align: left;
+    cursor: pointer;
+    transition: box-shadow .2s ease, border-color .2s ease;
+}
+.sols-tabs-wrap .sols-filter__trigger:hover,
+.sols-tabs-wrap .sols-filter__trigger:focus,
+.sols-tabs-wrap .sols-filter__trigger:active,
+.sols-tabs-wrap .sols-filter__trigger[aria-expanded="true"] {
+    border-color: rgba(119, 90, 25, .65);
+    background-color: #775a19;
+    background-image: linear-gradient(135deg, #775a19 0%, #fed488 50%, #775a19 100%);
+    color: #fff;
+    -webkit-text-fill-color: #fff;
+    outline: 0;
+    box-shadow: 0 6px 18px rgba(119, 90, 25, .22);
+    text-decoration: none;
+}
+.sols-tabs-wrap .sols-filter__trigger:focus-visible {
+    outline: 2px solid #775a19;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(233, 193, 118, .35);
+}
+.sols-filter__value {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.sols-filter__icon {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    color: currentColor;
+    transition: transform .2s ease;
+}
+.sols-filter__trigger[aria-expanded="true"] .sols-filter__icon {
+    transform: rotate(180deg);
+}
+.sols-tabs-wrap .sols-filter__menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 60;
+    max-height: min(60vh, 360px);
+    margin: 0;
+    padding: 6px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: 1px solid rgba(119, 90, 25, .35);
+    border-radius: 4px;
+    background-color: #fff;
+    background-image: none;
+    box-shadow: 0 16px 40px rgba(26, 28, 28, .14);
+    box-sizing: border-box;
+}
+.sols-filter__menu[hidden] {
+    display: none;
+}
+.sols-tabs-wrap .sols-filter__option {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 3px;
+    background-color: transparent;
+    background-image: none;
+    color: #1a1c1c;
+    -webkit-text-fill-color: #1a1c1c;
+    font-family: var(--font-label, 'Inter', sans-serif);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: .02em;
+    line-height: 1.4;
+    text-align: left;
+    text-decoration: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    transition: background-color .2s ease, color .2s ease;
+}
+.sols-tabs-wrap .sols-filter__option:hover,
+.sols-tabs-wrap .sols-filter__option:focus,
+.sols-tabs-wrap .sols-filter__option:focus-visible,
+.sols-tabs-wrap .sols-filter__option:active {
+    background-color: rgba(233, 193, 118, .18);
+    background-image: none;
+    color: #1a1c1c;
+    -webkit-text-fill-color: #1a1c1c;
+    outline: 2px solid rgba(119, 90, 25, .55);
+    outline-offset: -2px;
+    box-shadow: none;
+}
+.sols-tabs-wrap .sols-filter__option.is-active,
+.sols-tabs-wrap .sols-filter__option[aria-selected="true"] {
+    background-color: rgba(233, 193, 118, .22);
+    background-image: none;
+    box-shadow: inset 3px 0 0 #775a19;
+    color: #775a19;
+    -webkit-text-fill-color: #775a19;
+    font-weight: 700;
+}
+@media (max-width: 767px) {
+    .sols-tabs { display: none; }
+    .sols-filter { display: block; }
+    .sols-tabs-wrap { margin-top: 24px; }
 }
 
 /* 卡片网格 */
@@ -335,27 +489,16 @@ $pagination_links = $total_pages > 1 && function_exists('paginate_links')
         <h1><?php echo esc_html( $hero_title ); ?></h1>
         <p><?php echo esc_html( $hero_subtitle ); ?></p>
         <div style="width:1px;height:40px;background:linear-gradient(180deg,#775a19,transparent);margin:20px auto 0"></div>
-        <div class="sols-page-hero__actions">
-            <a class="btn btn-solid" href="<?php echo esc_url( $hero_cta_primary_link ); ?>">
-                <?php echo esc_html( $hero_cta_primary ); ?>
-                <?php echo function_exists( 'hireai_svg' ) ? hireai_svg( 'arrow', 14 ) : ''; ?>
-            </a>
-            <a class="btn btn-outline" href="<?php echo esc_url( $hero_cta_secondary_link ); ?>">
-                <?php echo esc_html( $hero_cta_secondary ); ?>
-            </a>
-        </div>
     </header>
 
-    <!-- ============== 全局 ACF 商品标签筛选 ============== -->
-    <section class="sols-tabs-wrap" aria-label="<?php echo esc_attr( $is_en ? 'Filter by product tag' : '按商品标签筛选' ); ?>">
-        <nav class="sols-tabs" aria-label="<?php echo esc_attr( $is_en ? 'Product tag filters' : '商品标签筛选' ); ?>" data-sols-tabs>
+    <!-- ============== 场景筛选：≥768px 横排 chip / <768px 下拉 ============== -->
+    <section class="sols-tabs-wrap" aria-label="<?php echo esc_attr( $is_en ? 'Filter by solution category' : '按场景筛选方案' ); ?>">
+        <nav class="sols-tabs" aria-label="<?php echo esc_attr( $is_en ? 'Solution category filters' : '场景筛选' ); ?>" data-sols-tabs>
             <?php foreach ( $filters as $filter ) :
                 $chip_slug = (string) $filter['slug'];
                 $chip_label = $is_en ? $filter['label_en'] : $filter['label_zh'];
-                $chip_href = $chip_slug === 'all'
-                    ? remove_query_arg(['solution_tag', 'solution_page'])
-                    : add_query_arg(['solution_tag' => $chip_slug, 'solution_page' => false]);
-                $chip_active = $chip_slug === ($active_tag === '' ? 'all' : $active_tag);
+                $chip_href = $solution_filter_href( $chip_slug );
+                $chip_active = $chip_slug === $active_filter_slug;
             ?>
                 <a class="sols-tab<?php echo $chip_active ? ' is-active' : ''; ?>"
                    aria-current="<?php echo $chip_active ? 'true' : 'false'; ?>"
@@ -364,6 +507,45 @@ $pagination_links = $total_pages > 1 && function_exists('paginate_links')
                 </a>
             <?php endforeach; ?>
         </nav>
+
+        <div class="sols-filter" data-sols-filter>
+            <button type="button"
+                    class="sols-filter__trigger"
+                    id="sols-filter-trigger"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                    aria-controls="sols-filter-menu"
+                    aria-labelledby="sols-filter-label sols-filter-value"
+                    data-sols-filter-trigger>
+                <span class="screen-reader-text" id="sols-filter-label"><?php echo esc_html( $is_en ? 'Filter by solution category' : '按场景筛选方案' ); ?></span>
+                <span class="sols-filter__value" id="sols-filter-value" data-sols-filter-value><?php echo esc_html( $active_filter_label ); ?></span>
+                <svg class="sols-filter__icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                    <path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="sols-filter__menu"
+                 id="sols-filter-menu"
+                 role="listbox"
+                 aria-label="<?php echo esc_attr( $is_en ? 'Solution category filters' : '场景筛选' ); ?>"
+                 data-sols-filter-menu
+                 hidden>
+                <?php foreach ( $filters as $filter ) :
+                    $option_slug = (string) $filter['slug'];
+                    $option_label = $is_en ? $filter['label_en'] : $filter['label_zh'];
+                    $option_href = $solution_filter_href( $option_slug );
+                    $option_active = $option_slug === $active_filter_slug;
+                ?>
+                <a class="sols-filter__option<?php echo $option_active ? ' is-active' : ''; ?>"
+                   role="option"
+                   aria-selected="<?php echo $option_active ? 'true' : 'false'; ?>"
+                   tabindex="-1"
+                   href="<?php echo esc_url( $option_href ); ?>"
+                   data-sols-filter-option>
+                    <?php echo esc_html( $option_label ); ?>
+                </a>
+                <?php endforeach; ?>
+            </div>
+        </div>
     </section>
 
     <!-- ============== 商品列表：每页 9 个，顶部/底部翻页 ============== -->
@@ -441,6 +623,108 @@ $pagination_links = $total_pages > 1 && function_exists('paginate_links')
         </div>
     </div>
 </section>
+
+<script>
+(function () {
+    'use strict';
+
+    var filter = document.querySelector('[data-sols-filter]');
+    var trigger = document.querySelector('[data-sols-filter-trigger]');
+    var menu = document.querySelector('[data-sols-filter-menu]');
+    var options = Array.prototype.slice.call(document.querySelectorAll('[data-sols-filter-option]'));
+
+    if (!filter || !trigger || !menu || !options.length) {
+        return;
+    }
+
+    function isOpen() {
+        return trigger.getAttribute('aria-expanded') === 'true';
+    }
+
+    function activeOption() {
+        return options.filter(function (option) {
+            return option.getAttribute('aria-selected') === 'true';
+        })[0] || options[0];
+    }
+
+    function closeFilter(returnFocus) {
+        menu.setAttribute('hidden', '');
+        trigger.setAttribute('aria-expanded', 'false');
+        if (returnFocus) {
+            trigger.focus();
+        }
+    }
+
+    function openFilter() {
+        menu.removeAttribute('hidden');
+        trigger.setAttribute('aria-expanded', 'true');
+        var selected = activeOption();
+        if (selected) {
+            selected.focus();
+        }
+    }
+
+    trigger.addEventListener('click', function () {
+        if (isOpen()) {
+            closeFilter(false);
+        } else {
+            openFilter();
+        }
+    });
+
+    trigger.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && isOpen()) {
+            event.preventDefault();
+            closeFilter(true);
+            return;
+        }
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Home' || event.key === 'End') {
+            event.preventDefault();
+            openFilter();
+            if (event.key === 'Home') {
+                options[0].focus();
+            } else if (event.key === 'End') {
+                options[options.length - 1].focus();
+            }
+        }
+    });
+
+    menu.addEventListener('keydown', function (event) {
+        var currentIndex = options.indexOf(document.activeElement);
+
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeFilter(true);
+            return;
+        }
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            var direction = event.key === 'ArrowDown' ? 1 : -1;
+            var nextIndex = currentIndex < 0 ? 0 : (currentIndex + direction + options.length) % options.length;
+            options[nextIndex].focus();
+            return;
+        }
+        if (event.key === 'Home' || event.key === 'End') {
+            event.preventDefault();
+            options[event.key === 'Home' ? 0 : options.length - 1].focus();
+        }
+    });
+
+    document.addEventListener('click', function (event) {
+        if (isOpen() && !filter.contains(event.target)) {
+            closeFilter(false);
+        }
+    });
+
+    filter.addEventListener('focusout', function () {
+        window.setTimeout(function () {
+            if (isOpen() && !filter.contains(document.activeElement)) {
+                closeFilter(false);
+            }
+        }, 0);
+    });
+})();
+</script>
 
 
 <?php get_footer(); ?>

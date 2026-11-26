@@ -2711,6 +2711,27 @@ function hireai_get_solution_filter_state($page_id = 0) {
     $filters = array_values(array_filter($configured, function ($filter) {
         return !empty($filter['enabled']);
     }));
+
+    /* v3.11.21: 后台「站点设置 → 解决方案标签」没有启用行时回退到 6 个场景分类，
+       避免商城筛选区只剩「全部」。只要存在启用的配置行，就完全按 ACF 配置走。 */
+    if (empty($filters) && function_exists('hireai_list_solution_categories')) {
+        $configured = [];
+        $fallback_order = 0;
+        foreach (hireai_list_solution_categories() as $fallback_slug => $fallback_scene) {
+            if ($fallback_slug === '' || empty($fallback_scene['is_scene'])) {
+                continue;
+            }
+            $configured[$fallback_slug] = [
+                'slug' => (string) $fallback_slug,
+                'label_zh' => (string) ($fallback_scene['name_zh'] ?? ''),
+                'label_en' => (string) ($fallback_scene['name_en'] ?? ''),
+                'enabled' => true,
+                'order' => ++$fallback_order,
+            ];
+        }
+        $filters = array_values($configured);
+    }
+
     usort($filters, function ($left, $right) {
         if ($left['order'] === $right['order']) {
             return strcmp($left['slug'], $right['slug']);
@@ -2762,8 +2783,8 @@ function hireai_get_solution_filter_state($page_id = 0) {
 }
 
 /**
- * v3.5.7-p18 Task B: 7 个场景分类清单(用于 AI 解决方案商城 tab)
- *   - 全部 + 7 个场景,共 8 个选项
+ * v3.5.7-p18 Task B: 场景分类清单(用于 AI 解决方案商城 tab)
+ *   - v3.11.21: 对齐线上实际存在的 6 个 product_cat 父分类,全部 + 6 个场景共 7 个选项
  *   - name_zh / name_en 双语 fallback(ACF 未填值时回退到此处)
  *   - 调用 page-ai-solutions.php 渲染 tab UI
  *
@@ -2771,14 +2792,13 @@ function hireai_get_solution_filter_state($page_id = 0) {
  */
 function hireai_list_solution_categories() {
     return [
-        ''              => ['slug' => '',          'name_zh' => '全部',           'name_en' => 'All',           'is_scene' => false],
-        'brand-ip'      => ['slug' => 'brand-ip', 'name_zh' => '品牌&IP',        'name_en' => 'Brand & IP',    'is_scene' => true],
-        'marketing'     => ['slug' => 'marketing','name_zh' => '市场营销',       'name_en' => 'Marketing',     'is_scene' => true],
-        'visual-design' => ['slug' => 'visual-design','name_zh' => '视觉设计',   'name_en' => 'Visual Design', 'is_scene' => true],
-        'ecommerce'     => ['slug' => 'ecommerce','name_zh' => '电商&网站',      'name_en' => 'E-commerce & Website', 'is_scene' => true],
-        'crisis'        => ['slug' => 'crisis',   'name_zh' => '公关危机',       'name_en' => 'Crisis',        'is_scene' => true],
-        'copywriting'   => ['slug' => 'copywriting','name_zh' => '文案报告',     'name_en' => 'Copywriting',   'is_scene' => true],
-        'custom'        => ['slug' => 'custom',   'name_zh' => '定制方案',       'name_en' => 'Custom',        'is_scene' => true],
+        ''                => ['slug' => '',                'name_zh' => '全部',           'name_en' => 'All',                       'is_scene' => false],
+        'web-ecommerce'   => ['slug' => 'web-ecommerce',   'name_zh' => '网站与电商',     'name_en' => 'Website & E-commerce',      'is_scene' => true],
+        'visual-design'   => ['slug' => 'visual-design',   'name_zh' => '视觉设计创意',   'name_en' => 'Visual Design & Creative',  'is_scene' => true],
+        'content-video'   => ['slug' => 'content-video',   'name_zh' => '文案内容与视频', 'name_en' => 'Copy, Content & Video',     'is_scene' => true],
+        'pr-compliance'   => ['slug' => 'pr-compliance',   'name_zh' => '公关与合规',     'name_en' => 'PR & Compliance',           'is_scene' => true],
+        'brand-marketing' => ['slug' => 'brand-marketing', 'name_zh' => '品牌与营销',     'name_en' => 'Brand & Marketing',         'is_scene' => true],
+        'custom'          => ['slug' => 'custom',          'name_zh' => '定制',           'name_en' => 'Custom',                    'is_scene' => true],
     ];
 }
 
@@ -5151,22 +5171,22 @@ add_action('after_switch_theme', function () {
 });
 
 /* -------------------------------------------------------------------------
- * v3.5.7-p18 Task D: 7 个 product_cat term 自动创建（如不存在）
+ * v3.5.7-p18 Task D: product_cat term 自动创建（如不存在）
  *   - 仅在 WP 后台 init 钩子上跑一次(用 transient 标记避免重复查询)
- *   - 7 场景:brand-ip / marketing / visual-design / ecommerce / crisis / copywriting / custom
- *   - 已存在则跳过(wp_insert_term 不会覆盖)
+ *   - v3.11.21: 6 场景:web-ecommerce / visual-design / content-video /
+ *     pr-compliance / brand-marketing / custom
+ *   - 已存在则跳过(term_exists 检查,不覆盖线上已有 term 数据)
  * ---------------------------------------------------------------------- */
 add_action('init', function () {
     if (!taxonomy_exists('product_cat')) return;
     if (get_transient('hireai_p18_product_cat_seeded')) return;
     $scenes = [
-        'brand-ip'      => '品牌&IP',
-        'marketing'     => '市场营销',
-        'visual-design' => '视觉设计',
-        'ecommerce'     => '电商&网站',
-        'crisis'        => '公关危机',
-        'copywriting'   => '文案报告',
-        'custom'        => '定制方案',
+        'web-ecommerce'   => '网站与电商',
+        'visual-design'   => '视觉设计创意',
+        'content-video'   => '文案内容与视频',
+        'pr-compliance'   => '公关与合规',
+        'brand-marketing' => '品牌与营销',
+        'custom'          => '定制',
     ];
     foreach ($scenes as $slug => $name) {
         if (!term_exists($slug, 'product_cat')) {
