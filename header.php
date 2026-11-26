@@ -99,7 +99,7 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
     <!-- Right: actions -->
     <div class="hai-header__actions">
       <a class="hai-header__account"
-         href="<?php echo esc_url(hireai_localized_url(home_url('/my-account/'))); ?>">
+         href="<?php echo esc_url(function_exists('hireai_account_page_url') ? hireai_account_page_url() : hireai_localized_url(home_url('/my-account/'))); ?>">
         <?php echo hireai_svg("account", 24, "hai-header__icon"); ?>
         <?php echo esc_html($account_label); ?>
       </a>
@@ -140,7 +140,7 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
   </nav>
   <div class="mobile-drawer__actions">
     <a class="mobile-drawer__account"
-       href="<?php echo esc_url(hireai_localized_url(home_url('/my-account/'))); ?>">
+       href="<?php echo esc_url(function_exists('hireai_account_page_url') ? hireai_account_page_url() : hireai_localized_url(home_url('/my-account/'))); ?>">
       <?php echo hireai_svg("account", 20, "hai-header__icon"); ?>
       <?php echo esc_html($account_label); ?>
     </a>

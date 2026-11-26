@@ -6383,6 +6383,291 @@ function hireai_acf_diagnostics_page() {
 }
 
 /**
+ * Resolve the WooCommerce My Account page without requiring a public request.
+ *
+ * Front-end account links must point at the page WooCommerce actually uses.
+ * The option is authoritative; the slug lookup is only a recovery path.
+ */
+function hireai_account_page_id() {
+    static $page_id = null;
+
+    if ($page_id !== null) {
+        return $page_id;
+    }
+
+    $candidate = absint(get_option('woocommerce_myaccount_page_id'));
+    if ($candidate > 0) {
+        $page = get_post($candidate);
+        if ($page instanceof WP_Post && $page->post_type === 'page') {
+            $page_id = (int) $page->ID;
+            return $page_id;
+        }
+    }
+
+    $pages = get_posts([
+        'name'                   => 'my-account',
+        'post_type'              => 'page',
+        'post_status'            => ['publish', 'draft', 'pending', 'private', 'future', 'trash'],
+        'numberposts'            => 1,
+        'orderby'                => 'ID',
+        'order'                  => 'ASC',
+        'lang'                   => '',
+        'no_found_rows'          => true,
+        'update_post_meta_cache' => false,
+        'update_post_term_cache' => false,
+    ]);
+
+    if (!empty($pages[0]) && $pages[0] instanceof WP_Post) {
+        $page_id = (int) $pages[0]->ID;
+        return $page_id;
+    }
+
+    $page = get_page_by_path('my-account');
+    $page_id = $page instanceof WP_Post ? (int) $page->ID : 0;
+
+    return $page_id;
+}
+
+/**
+ * Resolve the My Account URL in the current language, preferring the real page.
+ */
+function hireai_account_page_url($lang = null) {
+    $lang = in_array($lang, ['zh', 'en'], true) ? $lang : hireai_current_lang();
+    $page_id = hireai_account_page_id();
+
+    if ($page_id > 0) {
+        $page = get_post($page_id);
+
+        /* The account page is a single physical bilingual page by design
+           (see hireai_is_single_physical_bilingual_post()). Build its URL from
+           the known slug so the link never depends on url_to_postid(), which
+           only resolves published pages. */
+        if ($page instanceof WP_Post && $page->post_name === 'my-account') {
+            return hireai_single_physical_url(['my-account'], $lang);
+        }
+
+        $permalink = get_permalink($page_id);
+        if (is_string($permalink) && $permalink !== '') {
+            $localized = hireai_localized_url($permalink, $lang);
+            return $localized !== '' ? $localized : $permalink;
+        }
+    }
+
+    return hireai_localized_url(home_url('/my-account/'), $lang);
+}
+
+/**
+ * v3.11.27: one-time repair for the WooCommerce My Account page.
+ *
+ * The page can exist while being non-public, which makes every guest request
+ * 404. This migration publishes the configured page, repairs an empty slug,
+ * points WooCommerce back at it, enables account registration, and flushes
+ * rewrite rules once. Translation pages are reported but never auto-created.
+ */
+function hireai_account_page_fix_v1() {
+    if (get_option('hireai_account_page_fix_v1')) {
+        return;
+    }
+
+    /* When no page exists yet, do not hit the database on every request. */
+    if (get_transient('hireai_account_fix_retry')) {
+        return;
+    }
+
+    $report = [
+        'option_page_id'   => absint(get_option('woocommerce_myaccount_page_id')),
+        'resolved_page_id' => 0,
+        'old_status'       => '',
+        'old_slug'         => '',
+        'new_status'       => '',
+        'new_slug'         => '',
+        'registration'     => (string) get_option('woocommerce_enable_myaccount_registration'),
+        'translations'     => [],
+        'candidates'       => [],
+        'template'         => '',
+        'parent'           => 0,
+        'content_length'   => 0,
+        'content_action'   => '',
+        'wc_pages'         => [],
+        'aliases'          => [],
+    ];
+
+    try {
+        $page_id = $report['option_page_id'];
+        $page = $page_id > 0 ? get_post($page_id) : null;
+
+        if (!($page instanceof WP_Post) || $page->post_type !== 'page') {
+            $pages = get_posts([
+                'name'                   => 'my-account',
+                'post_type'              => 'page',
+                'post_status'            => ['publish', 'draft', 'pending', 'private', 'future', 'trash', 'auto-draft'],
+                'numberposts'            => 5,
+                'orderby'                => 'ID',
+                'order'                  => 'ASC',
+                'lang'                   => '',
+                'no_found_rows'          => true,
+                'update_post_meta_cache' => false,
+                'update_post_term_cache' => false,
+            ]);
+
+            $page = !empty($pages[0]) && $pages[0] instanceof WP_Post ? $pages[0] : null;
+            $page_id = $page instanceof WP_Post ? (int) $page->ID : 0;
+        }
+
+        $report['resolved_page_id'] = (int) $page_id;
+
+        if (!($page instanceof WP_Post) || $page->post_type !== 'page') {
+            if (!get_transient('hireai_account_fix_notice')) {
+                error_log('[hireai account fix] no WooCommerce My Account page found; will retry on next request: ' . wp_json_encode($report));
+                set_transient('hireai_account_fix_notice', 1, HOUR_IN_SECONDS);
+            }
+            /* Do not mark the migration complete: a page may be created later. */
+            set_transient('hireai_account_fix_retry', 1, 10 * MINUTE_IN_SECONDS);
+            return;
+        }
+
+        $report['old_status'] = (string) $page->post_status;
+        $report['old_slug']   = (string) $page->post_name;
+        $report['has_account_shortcode'] = (
+            has_shortcode((string) $page->post_content, 'woocommerce_my_account')
+            || has_block('woocommerce/my-account', $page)
+        );
+        $report['template']       = (string) get_post_meta($page_id, '_wp_page_template', true);
+        $report['parent']         = (int) $page->post_parent;
+        $report['content_length'] = strlen(trim((string) $page->post_content));
+
+        /* Every page whose slug looks like the account page, for the zh/en
+           duplicate + translation report. Read-only; never modified. */
+        $same_slug_pages = get_posts([
+            'name'                   => 'my-account',
+            'post_type'              => 'page',
+            'post_status'            => ['publish', 'draft', 'pending', 'private', 'future', 'trash', 'auto-draft'],
+            'numberposts'            => 10,
+            'orderby'                => 'ID',
+            'order'                  => 'ASC',
+            'lang'                   => '',
+            'no_found_rows'          => true,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+        ]);
+        foreach ($same_slug_pages as $candidate) {
+            if (!($candidate instanceof WP_Post)) {
+                continue;
+            }
+            $report['candidates'][] = [
+                'id'        => (int) $candidate->ID,
+                'slug'      => (string) $candidate->post_name,
+                'status'    => (string) $candidate->post_status,
+                'parent'    => (int) $candidate->post_parent,
+                'language'  => function_exists('pll_get_post_language') ? (string) pll_get_post_language($candidate->ID) : '',
+                'permalink' => (string) get_permalink($candidate),
+            ];
+        }
+
+        /* Read-only snapshot of the other WooCommerce system pages and of the
+           slug variants seen in 404 reports. Never modified by this migration. */
+        foreach ([
+            'shop'     => 'woocommerce_shop_page_id',
+            'cart'     => 'woocommerce_cart_page_id',
+            'checkout' => 'woocommerce_checkout_page_id',
+            'terms'    => 'woocommerce_terms_page_id',
+        ] as $wc_key => $wc_option) {
+            $wc_id = absint(get_option($wc_option));
+            $wc_page = $wc_id > 0 ? get_post($wc_id) : null;
+            $report['wc_pages'][$wc_key] = $wc_page instanceof WP_Post
+                ? ['id' => (int) $wc_page->ID, 'status' => (string) $wc_page->post_status, 'slug' => (string) $wc_page->post_name]
+                : ['id' => $wc_id, 'status' => 'missing', 'slug' => ''];
+        }
+        foreach (['my-account-2', 'account'] as $alias) {
+            $alias_page = get_page_by_path($alias);
+            if ($alias_page instanceof WP_Post) {
+                $report['aliases'][$alias] = [
+                    'id'     => (int) $alias_page->ID,
+                    'status' => (string) $alias_page->post_status,
+                ];
+            }
+        }
+
+        if ($page->post_status !== 'publish') {
+            $updated = wp_update_post([
+                'ID'          => (int) $page_id,
+                'post_status' => 'publish',
+            ], true);
+            if (is_wp_error($updated)) {
+                throw new RuntimeException('publish failed: ' . $updated->get_error_message());
+            }
+        }
+
+        if (trim((string) $page->post_name) === '') {
+            $existing = get_page_by_path('my-account');
+            if ($existing instanceof WP_Post && (int) $existing->ID !== (int) $page_id) {
+                error_log('[hireai account fix] slug my-account already belongs to page #' . (int) $existing->ID . '; page #' . (int) $page_id . ' will use WordPress\'s unique slug result');
+            }
+
+            $updated = wp_update_post([
+                'ID'        => (int) $page_id,
+                'post_name' => 'my-account',
+            ], true);
+            if (is_wp_error($updated)) {
+                throw new RuntimeException('slug repair failed: ' . $updated->get_error_message());
+            }
+        }
+
+        /* A completely empty body would publish a blank account page. Only in
+           that case (and without the shortcode/block) write the canonical
+           WooCommerce shortcode; any existing content is left untouched. */
+        if (!$report['has_account_shortcode'] && $report['content_length'] === 0) {
+            $updated = wp_update_post([
+                'ID'           => (int) $page_id,
+                'post_content' => '[woocommerce_my_account]',
+            ], true);
+            if (is_wp_error($updated)) {
+                throw new RuntimeException('content repair failed: ' . $updated->get_error_message());
+            }
+            $report['content_action'] = 'inserted_shortcode';
+        } elseif (!$report['has_account_shortcode']) {
+            $report['content_action'] = 'left_untouched_non_empty';
+        } else {
+            $report['content_action'] = 'none';
+        }
+
+        clean_post_cache($page_id);
+        $page = get_post($page_id);
+        $report['new_status'] = $page instanceof WP_Post ? (string) $page->post_status : '';
+        $report['new_slug']   = $page instanceof WP_Post ? (string) $page->post_name : '';
+
+        if ((int) get_option('woocommerce_myaccount_page_id') !== (int) $page_id) {
+            update_option('woocommerce_myaccount_page_id', (int) $page_id);
+        }
+
+        if (get_option('woocommerce_enable_myaccount_registration') !== 'yes') {
+            update_option('woocommerce_enable_myaccount_registration', 'yes');
+        }
+        $report['registration'] = (string) get_option('woocommerce_enable_myaccount_registration');
+
+        if (function_exists('pll_get_post_language')) {
+            $report['translations']['source_language'] = (string) pll_get_post_language($page_id);
+        }
+        if (function_exists('pll_get_post_translations')) {
+            $translations = pll_get_post_translations($page_id);
+            $report['translations']['map'] = is_array($translations) ? $translations : [];
+            foreach (['zh', 'en'] as $lang) {
+                if (empty($translations[$lang])) {
+                    $report['translations']['missing'][] = $lang;
+                }
+            }
+        }
+
+        flush_rewrite_rules(false);
+        update_option('hireai_account_page_fix_v1', 1);
+        error_log('[hireai account fix] complete: ' . wp_json_encode($report));
+    } catch (Throwable $exception) {
+        error_log('[hireai account fix] failed: ' . $exception->getMessage() . ' report=' . wp_json_encode($report));
+    }
+}
+add_action('init', 'hireai_account_page_fix_v1', 20);
+
+/**
  * v3.11.24: one-time hero copy sync for the four bilingual page pairs.
  *
  * ACF stores page-level values in post meta, so changing a field's default_value
