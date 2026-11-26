@@ -104,9 +104,9 @@ while (have_posts()) :
 					<?php
 				};
 
-				// WooCommerce 默认按 10/30/40/50/60 输出标题、价格、摘要、购买表单和元数据。
-				// 这里保留模板 H1，并替换 30，保持“起步档 + 价格”的金色摘要排版。
-				remove_action('woocommerce_single_product_summary', 'woocommerce_template_single_title', 10);
+				// WooCommerce 11.x 在 woocommerce_single_product_summary 上以优先级 5 注册标题。
+				// 必须用同一优先级移除，否则原生 h1 会与模板 H1 重复。
+				remove_action('woocommerce_single_product_summary', 'woocommerce_template_single_title', 5);
 				remove_action('woocommerce_single_product_summary', 'woocommerce_template_single_price', 30);
 				add_action('woocommerce_single_product_summary', $render_retainer_with_price, 30);
 				add_action('woocommerce_single_product_summary', $render_product_features, 45);
