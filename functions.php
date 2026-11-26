@@ -2793,11 +2793,11 @@ function hireai_get_solution_filter_state($page_id = 0) {
 function hireai_list_solution_categories() {
     return [
         ''                => ['slug' => '',                'name_zh' => '全部',           'name_en' => 'All',                       'is_scene' => false],
+        'brand-marketing' => ['slug' => 'brand-marketing', 'name_zh' => '品牌与营销',     'name_en' => 'Brand & Marketing',         'is_scene' => true],
         'web-ecommerce'   => ['slug' => 'web-ecommerce',   'name_zh' => '网站与电商',     'name_en' => 'Website & E-commerce',      'is_scene' => true],
         'visual-design'   => ['slug' => 'visual-design',   'name_zh' => '视觉设计创意',   'name_en' => 'Visual Design & Creative',  'is_scene' => true],
         'content-video'   => ['slug' => 'content-video',   'name_zh' => '文案内容与视频', 'name_en' => 'Copy, Content & Video',     'is_scene' => true],
         'pr-compliance'   => ['slug' => 'pr-compliance',   'name_zh' => '公关与合规',     'name_en' => 'PR & Compliance',           'is_scene' => true],
-        'brand-marketing' => ['slug' => 'brand-marketing', 'name_zh' => '品牌与营销',     'name_en' => 'Brand & Marketing',         'is_scene' => true],
         'custom'          => ['slug' => 'custom',          'name_zh' => '定制',           'name_en' => 'Custom',                    'is_scene' => true],
     ];
 }
@@ -5181,11 +5181,11 @@ add_action('init', function () {
     if (!taxonomy_exists('product_cat')) return;
     if (get_transient('hireai_p18_product_cat_seeded')) return;
     $scenes = [
+        'brand-marketing' => '品牌与营销',
         'web-ecommerce'   => '网站与电商',
         'visual-design'   => '视觉设计创意',
         'content-video'   => '文案内容与视频',
         'pr-compliance'   => '公关与合规',
-        'brand-marketing' => '品牌与营销',
         'custom'          => '定制',
     ];
     foreach ($scenes as $slug => $name) {
