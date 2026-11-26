@@ -3035,12 +3035,300 @@ function hireai_get_ai_solutions_products($paged = 1, $per_page = 9, $category_s
 }
 
 /**
- * v3.5.7-p16/p25: 获取 Cases / Insights 文章 ID 列表
+ * v3.11.26: Cases / Insights 候选分类 token（slug + 名称 + Polylang 自动建的语言变体）
+ *
+ * @param string $type 'cases' | 'insights' (其他值原样作为 category slug)
+ * @return array<string>
+ */
+function hireai_cases_insights_terms($type) {
+    $type = trim((string) $type);
+    $map  = [
+        'cases'    => ['cases', '案例', 'cases-en'],
+        'insights' => ['insights', '洞察', 'insights-en'],
+    ];
+    return isset($map[$type]) ? $map[$type] : [$type];
+}
+
+/**
+ * v3.11.26: 用 slug / name 解析分类 term_id，作为 tax_query 的第二级兜底
+ *   - Polylang 可能改 slug 或只保留名称，单靠 slug IN 会漏
+ *   - 解析失败返回空数组，调用方继续走全语言兜底
+ *
+ * @param string $type 'cases' | 'insights'
+ * @return array<int> term IDs
+ */
+function hireai_cases_insights_term_ids($type) {
+    $ids = [];
+    foreach (hireai_cases_insights_terms($type) as $token) {
+        foreach (['slug', 'name'] as $field) {
+            $term = get_term_by($field, $token, 'category');
+            if ($term instanceof WP_Term && !is_wp_error($term)) {
+                $ids[(int) $term->term_id] = (int) $term->term_id;
+            }
+        }
+    }
+    return array_values($ids);
+}
+
+/**
+ * v3.11.26: 缓存基础 key（保留旧 key 名，便于诊断/清理）
+ *
+ * @param string $type 'cases' | 'insights'
+ * @return string
+ */
+function hireai_cases_insights_cache_base($type) {
+    $type = trim((string) $type);
+    $map  = [
+        'cases'    => 'hireai_cases_cache_v1',
+        'insights' => 'hireai_insights_cache_v1',
+    ];
+    return isset($map[$type]) ? $map[$type] : 'hireai_' . sanitize_key($type) . '_cache_v1';
+}
+
+/**
+ * v3.11.26: 语言隔离的缓存 key
+ *   - 旧版两个语言共用一个 transient，英文/后台/预览上下文写空会污染中文前台
+ *   - 新 key: hireai_cases_cache_v1_zh / _en；旧 key 不再读取，发版后即自愈
+ *
+ * @param string $type 'cases' | 'insights'
+ * @param string $lang 'zh' | 'en'；空则取当前语言
+ * @return string
+ */
+function hireai_cases_insights_cache_key($type, $lang = '') {
+    $lang = in_array($lang, ['zh', 'en'], true) ? $lang : hireai_current_lang();
+    return hireai_cases_insights_cache_base($type) . '_' . $lang;
+}
+
+/**
+ * v3.11.26: 清除 Cases / Insights 全部缓存（旧 key + 中英新 key）
+ */
+function hireai_delete_cases_insights_cache() {
+    foreach (['cases', 'insights'] as $type) {
+        $base = hireai_cases_insights_cache_base($type);
+        delete_transient($base);
+        delete_transient($base . '_zh');
+        delete_transient($base . '_en');
+    }
+    delete_transient('hireai_cases_insights_posts');
+}
+
+/**
+ * v3.11.26: Cases / Insights 三级查询链（不读写 transient）
+ *   ① tax_query + slug IN（cases/案例、insights/洞察）
+ *   ② get_term_by(slug|name) → term_id，再 tax_query field=term_id
+ *   ③ 'lang' => ''（Polylang 全语言）再跑 ①/②，避免语言上下文缺失导致空
+ *      第 3 级结果按「当前语言」二次过滤：英文页在没有英文文章时保持静态兜底，
+ *      不会被全语言查询塞进中文卡片（语言未知的旧文章放行）
+ *
+ * @param string     $type  'cases' | 'insights'
+ * @param int        $limit 拉取数量
+ * @param array|null $trace 传引用时写入每次 attempt 的 ID 列表（诊断用）
+ * @return array<int> post IDs
+ */
+function hireai_query_cases_insights_ids($type, $limit = 4, &$trace = null) {
+    $type  = trim((string) $type);
+    $limit = max(1, (int) $limit);
+    $trace = [];
+
+    $terms    = hireai_cases_insights_terms($type);
+    $term_ids = hireai_cases_insights_term_ids($type);
+
+    $base = [
+        'post_type'      => 'post',
+        'post_status'    => 'publish',
+        'posts_per_page' => $limit,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'no_found_rows'  => true,
+        'fields'         => 'ids',
+    ];
+
+    $run = static function (array $extra) use ($base) {
+        $query = new WP_Query(array_merge($base, $extra));
+        $ids   = (isset($query->posts) && is_array($query->posts))
+            ? array_values(array_filter(array_map('intval', $query->posts)))
+            : [];
+        wp_reset_postdata();
+        return $ids;
+    };
+
+    $attempts = [
+        [
+            'label' => '1:slug',
+            'args'  => ['tax_query' => [[
+                'taxonomy' => 'category',
+                'field'    => 'slug',
+                'terms'    => $terms,
+                'operator' => 'IN',
+            ]]],
+        ],
+    ];
+
+    if (!empty($term_ids)) {
+        $attempts[] = [
+            'label' => '2:term_id',
+            'args'  => ['tax_query' => [[
+                'taxonomy' => 'category',
+                'field'    => 'term_id',
+                'terms'    => $term_ids,
+                'operator' => 'IN',
+            ]]],
+        ];
+    }
+
+    $attempts[] = [
+        'label'      => '3:all-languages:slug',
+        'match_lang' => true,
+        'args'       => [
+            'lang'      => '',
+            'tax_query' => [[
+                'taxonomy' => 'category',
+                'field'    => 'slug',
+                'terms'    => $terms,
+                'operator' => 'IN',
+            ]],
+        ],
+    ];
+
+    if (!empty($term_ids)) {
+        $attempts[] = [
+            'label'      => '3b:all-languages:term_id',
+            'match_lang' => true,
+            'args'       => [
+                'lang'      => '',
+                'tax_query' => [[
+                    'taxonomy' => 'category',
+                    'field'    => 'term_id',
+                    'terms'    => $term_ids,
+                    'operator' => 'IN',
+                ]],
+            ],
+        ];
+    }
+
+    /* 全语言兜底只用于「当前语言上下文丢了」的请求，不能把中文内容搬到英文页。
+     * 因此第 3 级结果再按当前语言筛一遍；语言未知（未分配语言）的旧文章放行，
+     * 避免 Polylang 之前的老数据被误杀。 */
+    $current_lang = function_exists('hireai_current_lang') ? hireai_current_lang() : '';
+    $keep_lang    = static function (array $ids) use ($current_lang) {
+        if ($current_lang === '' || !function_exists('hireai_polylang_post_language')) {
+            return $ids;
+        }
+        return array_values(array_filter($ids, static function ($id) use ($current_lang) {
+            $post_lang = (string) hireai_polylang_post_language((int) $id);
+            return $post_lang === '' || $post_lang === $current_lang;
+        }));
+    };
+
+    foreach ($attempts as $attempt) {
+        $raw_ids = $run($attempt['args']);
+        $ids     = !empty($attempt['match_lang']) ? $keep_lang($raw_ids) : $raw_ids;
+        $trace[] = [
+            'attempt'        => $attempt['label'],
+            'posts_per_page' => $limit,
+            'ids'            => $ids,
+            'count'          => count($ids),
+            'raw_count'      => count($raw_ids),
+            'lang_guarded'   => !empty($attempt['match_lang']),
+        ];
+        if (!empty($ids)) {
+            return array_slice($ids, 0, $limit);
+        }
+    }
+
+    return [];
+}
+
+/**
+ * v3.11.26: 只读诊断数据（不写缓存、不改前台输出）
+ *   - 仅由 ?hireai_ci_diag=1 + manage_options 的 wp_footer 注释调用
+ *
+ * @param string $lang 'zh' | 'en'；空则取当前语言
+ * @return array
+ */
+function hireai_cases_insights_diag_payload($lang = '') {
+    $lang = in_array($lang, ['zh', 'en'], true) ? $lang : hireai_current_lang();
+
+    $payload = [
+        'version'              => '3.11.26',
+        'ci_lang'              => $lang,
+        'pll_current_language' => function_exists('pll_current_language') ? (string) pll_current_language('slug') : null,
+        'transients'           => [],
+        'terms'                => [],
+        'queries'              => [],
+    ];
+
+    foreach (['cases' => 4, 'insights' => 3] as $type => $limit) {
+        $base = hireai_cases_insights_cache_base($type);
+        $keys = array_values(array_unique([$base, $base . '_zh', $base . '_en']));
+
+        $payload['transients'][$type] = [
+            'cache_key_current' => hireai_cases_insights_cache_key($type, $lang),
+            'keys'              => [],
+        ];
+
+        foreach ($keys as $key) {
+            $value = get_transient($key);
+            $payload['transients'][$type]['keys'][$key] = [
+                'is_array' => is_array($value),
+                'count'    => is_array($value) ? count($value) : null,
+                'ids'      => is_array($value) ? array_values(array_map('intval', $value)) : null,
+            ];
+        }
+
+        $payload['terms'][$type] = [];
+        foreach (hireai_cases_insights_terms($type) as $token) {
+            foreach (['slug', 'name'] as $field) {
+                $term = get_term_by($field, $token, 'category');
+                $payload['terms'][$type][] = [
+                    'lookup'   => $field . ':' . $token,
+                    'term_id'  => ($term instanceof WP_Term) ? (int) $term->term_id : 0,
+                    'count'    => ($term instanceof WP_Term) ? (int) $term->count : null,
+                    'taxonomy' => ($term instanceof WP_Term) ? (string) $term->taxonomy : null,
+                    'slug'     => ($term instanceof WP_Term) ? (string) $term->slug : null,
+                    'name'     => ($term instanceof WP_Term) ? (string) $term->name : null,
+                ];
+            }
+        }
+
+        $trace = [];
+        hireai_query_cases_insights_ids($type, $limit, $trace);
+        $payload['queries'][$type] = $trace;
+    }
+
+    return $payload;
+}
+
+/* v3.11.26: 管理员诊断开关 — 只输出 HTML 注释，不参与前台渲染/缓存写入 */
+add_action('wp_footer', function () {
+    if (!isset($_GET['hireai_ci_diag']) || (string) wp_unslash($_GET['hireai_ci_diag']) !== '1') {
+        return;
+    }
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    if (!is_page_template('page-cases-insights.php')) {
+        return;
+    }
+
+    $json = wp_json_encode(
+        hireai_cases_insights_diag_payload(hireai_current_lang()),
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    );
+    if (!is_string($json) || $json === '') {
+        return;
+    }
+    echo "\n<!-- hireai-ci-diag " . str_replace('--', '- -', $json) . " -->\n";
+}, 999);
+
+/**
+ * v3.11.26: 获取 Cases / Insights 文章 ID 列表
  *   - 调用 page-cases-insights.php 消费
  *   - $type: 'cases' (拉 4 篇) | 'insights' (拉 3 篇) | 其他按需
- *   - v3.5.7-p25: 改用 tax_query 多 slug IN,覆盖 Polylang 自动建翻译 cat
- *     (例如 cases-en / insights-en,Polylang 重建时 ID 会变,slug 通常稳定)
- *   - 缓存 key: hireai_cases_cache_v1 / hireai_insights_cache_v1(与 save_post hook 一致)
+ *   - 缓存 key: hireai_cases_cache_v1_{zh|en} / hireai_insights_cache_v1_{zh|en}
+ *   - 空数组缓存视为未命中；查询空结果绝不写缓存（避免整区被锁死 5 分钟）
+ *   - 缓存 ID 失效（删除/下架）时自动重查
+ *   - 查询走 hireai_query_cases_insights_ids() 的三级兜底链
  *
  * @param string $type 'cases' | 'insights' (其他值原样作为 category slug)
  * @param int    $limit 拉取数量
@@ -3050,51 +3338,33 @@ function hireai_get_cases_insights_posts($type = 'cases', $limit = 4) {
     $type  = trim((string) $type);
     $limit = max(1, (int) $limit);
 
-    $cache_key_map = [
-        'cases'    => 'hireai_cases_cache_v1',
-        'insights' => 'hireai_insights_cache_v1',
-    ];
-    $cache_key = isset($cache_key_map[$type])
-        ? $cache_key_map[$type]
-        : 'hireai_' . sanitize_key($type) . '_cache_v1';
+    $cache_key = hireai_cases_insights_cache_key($type);
+    $cached    = get_transient($cache_key);
 
-    $cached = get_transient($cache_key);
-    if (is_array($cached)) {
-        return array_map('intval', array_slice($cached, 0, $limit));
+    if (is_array($cached) && $cached !== []) {
+        $cached_ids = array_slice(array_values(array_unique(array_map('intval', $cached))), 0, $limit);
+        $valid      = [];
+        foreach ($cached_ids as $id) {
+            if ($id > 0 && get_post_type($id) === 'post' && get_post_status($id) === 'publish') {
+                $valid[] = $id;
+            }
+        }
+        if (count($valid) === count($cached_ids)) {
+            return $valid;
+        }
+        delete_transient($cache_key);
+    } elseif (is_array($cached)) {
+        delete_transient($cache_key);
     }
 
-    /* v3.5.7-p25: 多 slug IN 关系覆盖 Polylang 自动建翻译 cat
-     *   - cases: cat 51 (cases EN) + cat 136 (cases-en Polylang ZH 翻译,ID 不固定)
-     *   - insights: cat 45 (洞察 ZH) + ?? (insights EN,如有)
-     *   - 用 slug 而非 cat ID 因为 Polylang 重建 ID 会变,slug 通常稳定
-     */
-    $slug_map = [
-        'cases'    => ['cases', '案例'],
-        'insights' => ['insights', '洞察'],
-    ];
-    $terms = isset($slug_map[$type]) ? $slug_map[$type] : [$type];
+    $ids = hireai_query_cases_insights_ids($type, $limit);
+    $ids = array_slice(array_values(array_unique(array_map('intval', $ids))), 0, $limit);
 
-    $q = new WP_Query([
-        'post_type'      => 'post',
-        'post_status'    => 'publish',
-        'posts_per_page' => $limit,
-        'tax_query'      => [[
-            'taxonomy' => 'category',
-            'field'    => 'slug',
-            'terms'    => $terms,
-            'operator' => 'IN',
-        ]],
-        'orderby'        => 'date',
-        'order'          => 'DESC',
-        'no_found_rows'  => true,
-        'fields'         => 'ids',
-    ]);
-    $ids = is_array($q->posts) ? $q->posts : [];
-    wp_reset_postdata();
+    if (!empty($ids)) {
+        set_transient($cache_key, $ids, 5 * MINUTE_IN_SECONDS);
+    }
 
-    $ids = array_map('intval', $ids);
-    set_transient($cache_key, $ids, 5 * MINUTE_IN_SECONDS);
-    return array_slice($ids, 0, $limit);
+    return $ids;
 }
 
 /* -------------------------------------------------------------------------
@@ -4988,24 +5258,29 @@ add_action('transition_post_status', function ($new, $old, $post) {
 
 add_action('save_post', function ($post_id, $post) {
     if (wp_is_post_revision($post_id) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) return;
-    if ($post->post_status !== 'publish') return;
-    if ($post->post_type !== 'post') return;
+    if (!($post instanceof WP_Post) || $post->post_type !== 'post') return;
     // 仅清当文章位于 case/insight/ai-employee 时
-    /* v3.5.7-p25: cache 白名单从 slug 改成 cat ID
-     *   - 之前 'cases' slug 命中 cat 51 但 Polylang 建的 'cases-en' (cat 136) 不命中
-     *   - '洞察' 不在白名单 -> Sasha 发洞察文章 Codex cache 不刷新
-     *   - cat ID 数组 [44, 45, 51, 136, 137, 138] 覆盖所有可能的 case/insight cat
-     *   - Polylang 重建 ID 范围大概率在这区间
-     *   - 如发现新 Polylang 自动 cat(如 cat 150),直接加进数组
+    /* v3.11.26: 白名单同时覆盖 Polylang 语言变体，且不再要求 post_status=publish
+     *   - 'cases-en' (cat 165) / 'insights-en' (cat 171) 也是案例/洞察分类
+     *   - 文章下架/移入回收站也要清，否则缓存里的旧 ID 会继续输出到静态兜底
+     *   - 兼容 slug 前缀，Polylang 重建出 cases-2 / insights-2 也能命中
      */
     $cats = wp_get_post_terms($post_id, 'category', ['fields' => 'slugs']);
-    $case_insight_cat_slugs = ['cases', '案例', 'insights', '洞察'];
-    if (array_intersect((array)$cats, $case_insight_cat_slugs)) {
+    $case_insight_cat_slugs = ['cases', '案例', 'insights', '洞察', 'cases-en', 'insights-en'];
+    $is_ci_post = false;
+    foreach ((array) $cats as $cat_slug) {
+        $cat_slug = strtolower((string) $cat_slug);
+        if (in_array($cat_slug, $case_insight_cat_slugs, true)
+            || strpos($cat_slug, 'cases-') === 0
+            || strpos($cat_slug, 'insights-') === 0) {
+            $is_ci_post = true;
+            break;
+        }
+    }
+    if ($is_ci_post) {
         delete_site_transient('update_themes');
-        delete_transient('hireai_cases_insights_posts');
-        /* v3.5.7-p15: 拆分为 cases/insights 独立 cache,确保 WP 后台发布后即时同步 */
-        delete_transient('hireai_cases_cache_v1');
-        delete_transient('hireai_insights_cache_v1');
+        /* v3.11.26: 同时清旧 key + 中英语言隔离 key */
+        hireai_delete_cases_insights_cache();
         if (function_exists('acf_get_store')) {
             $s = acf_get_store('fields');         if ($s) { $s->reset(); }
             $g = acf_get_store('field-groups');   if ($g) { $g->reset(); }
