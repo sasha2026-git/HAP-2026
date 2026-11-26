@@ -16,7 +16,7 @@
 | 仓库 | `git@github.com:sasha2026-git/HAP-2026.git` |
 | 工作分支 | **main**（WordPress 跟踪 main，不是 dev） |
 | 本地工作副本 | `/tmp/codex-projects/hireaipeople-theme`（**仓库根 = 主题根**） |
-| 当前版本 | v3.11.18（工作区，待发布；以 `style.css` 的 `Version:` 为唯一来源；2026-11-24 FAQ 移动端下拉配色修复） |
+| 当前版本 | v3.11.20（工作区，待发布；以 `style.css` 的 `Version:` 为唯一来源；2026-11-26 商品页重复 price 修复） |
 | 线上实际生效版本 | **v3.11.17**（2026-11-24 实测 `/zh/faq/` 输出 `style.css?ver=3.11.17`；v3.11.18 尚未发布）。**每次发版后请回填此字段**（Echo 修改 2026-11-13，Codex 回填 2026-11-24） |
 | 部署环境 | 阿里云香港 ECS + 宝塔面板（IP / SSH / 面板凭据**只找 Sasha**，禁止写进仓库） |
 | 负责人 | Sasha（决策/发布）；Echo（内容/运营）；Codex CLI（代码） |
@@ -204,7 +204,7 @@ sudo systemctl reload php-fpm-84.service
 | FAQ 页 hero 大图横向贴边满屏 | 共享 `.container` 在 `@media (min-width:768px)` 被统一改成 `padding-inline:0`，页内 hero 直接用了它 | 页内 hero 改用自有容器（`max-width:1440px` + `padding-inline:24px`，对齐 about 容器）；FAQ 页内 `.container` 单独补回 24px（见 `page-faq.php` v3.11.16） |
 | FAQ 移动端分类筛选要横向滑动/溢出屏幕 | `@media (max-width:899px)` 把分类列表改成 `flex-wrap:nowrap` + `overflow-x:auto` | ≤767px 隐藏横排列表，改用 `.hireai-faq-filter` 自定义下拉；768px 以上保持原横排按钮（见 `page-faq.php` v3.11.17） |
 | FAQ 移动端下拉触发器 tap 后变玫红/洋红底白字 | 父主题 Hello Elementor `assets/css/reset.css` 的 `[type="button"]:hover/:focus, button:hover/:focus { background-color:#c36; color:#fff }`（`#c36` = `#CC3366`，权重 0,2,0）压过页面内单类选择器，且 reset.css 在子主题 CSS 之后加载；iOS 的 `:hover` 会粘滞 | 下拉相关规则统一加 `.hireai-faq-page` 作用域，hover/focus/active 用 (0,3,0) 覆盖并显式写 `background-image`；不要用 `!important`（见 `page-faq.php` v3.11.18） |
-| 商品详情页写了 `remove_action` 仍输出原生标题/价格 | `remove_action()` 只按“同 callback + 同优先级”移除；WooCommerce 11.1.0 标题注册在 5、价格在 10，模板却按 10 / 30 移除，全部落空 | `remove_action` 的优先级必须与核心真实注册一致（标题 5、价格 10）；见 `woocommerce/single-product.php:109` |
+| 商品详情页写了 `remove_action` 仍输出原生标题/价格 | `remove_action()` 只按“同 callback + 同优先级”移除；WooCommerce 11.1.0 标题注册在 5、价格在 10，模板却按 10 / 30 移除，全部落空 | `remove_action` 的优先级必须与核心真实注册一致（标题 5、价格 10）；见 `woocommerce/single-product.php:109-110` |
 
 ---
 
@@ -270,5 +270,6 @@ Codex 调试产生的临时文件（`*-SUMMARY.md`、`specs-review/`、`*.bak`�
 | 2026-11-24 | **v3.11.17 FAQ 移动端分类下拉（未发布）**：①≤767px 分类筛选由横向滑动按钮改为自定义下拉（触发器 + 纵向面板 + 内联 SVG 箭头），768px 以上桌面/平板横排按钮保持不变 ②下拉复用 `$all_label` / `$faq_categories[*]['label']` 与既有筛选 JS，同步桌面按钮、移动选项和触发器文案 ③支持点击外部/Esc 收起、方向键/Home/End、`aria-haspopup/expanded/controls`，选项触点 ≥48px ④不改 `functions.php` 与 ACF 字段；`style.css` 版本 3.11.16→3.11.17 | Codex |
 | 2026-11-24 | **v3.11.18 FAQ 移动端下拉配色修复（未发布）**：①根因 = Hello Elementor 父主题 `assets/css/reset.css` 的 `[type="button"]:hover/:focus, button:hover/:focus`（`background-color:#c36`，即 `#CC3366`；权重 0,2,0）压过原 `.hireai-faq-filter__trigger`（0,1,0），iOS tap 后 `:hover` 粘滞就显示玫红 ②下拉全部规则加 `.hireai-faq-page` 作用域，hover/focus/active 提到 (0,3,0)，全程不用 `!important` ③触发器统一 PC 选中态金色渐变 `linear-gradient(135deg,#775a19 0%,#fed488 50%,#775a19 100%)` + 白字；面板白底 + 金边 `rgba(119,90,25,.35)`；选中项浅金底 `rgba(233,193,118,.22)` + 深金字 `#775a19` + 3px 金色左竖条 ④仅动 ≤767px 下拉，1440px 下 PC 横排按钮 computed style 不变 ⑤Playwright 390×844 验证 idle/hover/expanded/选中后均无 `rgb(204,51,102)`；`php -l` 165 个文件全过，`^function` 117→117；`style.css` 3.11.17→3.11.18 | Codex |
 | 2026-11-26 | **商品详情页重复 H1 修复（未发版，建议 v3.11.19）**：`woocommerce/single-product.php:109` 的 `remove_action` 优先级 10→5，与 WooCommerce 11.1.0 核心注册一致；保留模板第 64 行金色装饰 H1 为唯一标题，不改结构/样式/文案。全仓 h1 行数 22→22（无新增遗漏），`php -l` 通过，钩子模拟旧写法 h1=2、新写法 h1=1。另发现价格重复（核心价格 10 未移除 + 手动调用一次），不在本次范围，未改 | Codex |
+| 2026-11-26 | **v3.11.20 商品详情页重复 price 修复（未发版）**：①`woocommerce/single-product.php:110` 的 `remove_action('woocommerce_single_product_summary','woocommerce_template_single_price')` 优先级 30→10，与 WooCommerce 11.1.0 核心注册一致 ②保留 `product-single__price-line`（起步档 + 金色价格）为唯一价格输出，位置/字号/样式不变 ③钩子仿真：改前 `class="price"`=2，改后=1；加购按钮、`product_meta`、ACF 特色卡、相关商品均 =1，core tabs/upsell/related 仍为 0（其 remove_action 优先级 10/15/20 本就正确）④`php -l` 通过，全仓 `woocommerce_template_single_price` 仅手动调用 1 处 + remove_action 1 处 ⑤`style.css` 3.11.19→3.11.20 | Codex |
 
 - v3.11.19（2026-11-26）：商品详情页重复 H1 修复（woocommerce_template_single_title 移除优先级 10→5，WC 11.x 实际注册在 5）
