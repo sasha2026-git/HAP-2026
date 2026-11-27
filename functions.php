@@ -6433,6 +6433,10 @@ function hireai_account_page_id() {
  */
 function hireai_account_page_url($lang = null) {
     $lang = in_array($lang, ['zh', 'en'], true) ? $lang : hireai_current_lang();
+    $physical_base = hireai_single_physical_url(['my-account'], 'zh');
+    $localize = static function ($url) use ($lang) {
+        return $lang === 'en' ? add_query_arg(['lang' => 'en'], $url) : $url;
+    };
     $page_id = hireai_account_page_id();
 
     if ($page_id > 0) {
@@ -6441,9 +6445,14 @@ function hireai_account_page_url($lang = null) {
         /* The account page is a single physical bilingual page by design
            (see hireai_is_single_physical_bilingual_post()). Build its URL from
            the known slug so the link never depends on url_to_postid(), which
-           only resolves published pages. */
+           only resolves published pages.
+
+           The physical page lives at /zh/my-account/ (Polylang's zh prefix is
+           forced), and WP redirects /my-account/?lang=en to /zh/my-account/.
+           A form POST to the redirecting URL loses its body, so the English
+           URL must keep the /zh/ path and switch language with ?lang=en. */
         if ($page instanceof WP_Post && $page->post_name === 'my-account') {
-            return hireai_single_physical_url(['my-account'], $lang);
+            return $localize($physical_base);
         }
 
         $permalink = get_permalink($page_id);
@@ -6453,7 +6462,44 @@ function hireai_account_page_url($lang = null) {
         }
     }
 
-    return hireai_localized_url(home_url('/my-account/'), $lang);
+    return $localize($physical_base);
+}
+
+/**
+ * URL the My Account auth forms should post to.
+ *
+ * WordPress canonical redirects turn POST into GET when the target answers
+ * with a 301, dropping the submitted body. Posting back to the exact URL that
+ * rendered this request is the only target known to answer 200, so prefer it
+ * and fall back to the resolved account URL outside a normal web request.
+ */
+function hireai_account_form_action() {
+    $fallback = hireai_account_page_url();
+
+    if (is_admin() || (function_exists('wp_doing_ajax') && wp_doing_ajax())) {
+        return $fallback;
+    }
+
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash((string) $_SERVER['REQUEST_URI']) : '';
+    $path  = (string) wp_parse_url($request_uri, PHP_URL_PATH);
+    $query = (string) wp_parse_url($request_uri, PHP_URL_QUERY);
+
+    if ($path === '' || $path[0] !== '/' || strpos($path, '..') !== false) {
+        return $fallback;
+    }
+
+    $home_path = untrailingslashit((string) wp_parse_url(home_url('/'), PHP_URL_PATH));
+    if ($home_path !== '' && strpos($path, $home_path) === 0) {
+        $path = substr($path, strlen($home_path));
+        $path = $path === '' ? '/' : $path;
+    }
+
+    $url = home_url($path);
+    if ($query !== '') {
+        $url .= '?' . $query;
+    }
+
+    return $url;
 }
 
 /**
@@ -6954,3 +7000,394 @@ add_action('admin_menu', function () {
         'hireai_acf_diagnostics_page'
     );
 });
+
+/* ==========================================================================
+   v3.11.28 — Email + password registration, password reset links, abuse guard
+   --------------------------------------------------------------------------
+   WooCommerce 11.1.0 reads the *option* woocommerce_registration_generate_password
+   in WC_Form_Handler::process_registration() (wp_loaded:20); it does not call the
+   woocommerce_registration_generate_password filter. Setting the option to "no"
+   makes core take the submitted password, so wc_create_new_customer() never
+   generates one and the new-account email omits the set-password link.
+   ========================================================================== */
+
+/**
+ * Whether the current request is a My Account registration POST.
+ */
+function hireai_registration_is_post() {
+    if (!isset($_SERVER['REQUEST_METHOD']) || strtoupper((string) $_SERVER['REQUEST_METHOD']) !== 'POST') {
+        return false;
+    }
+    return isset($_POST['register']);
+}
+
+/**
+ * Pick the Chinese or English copy for registration-side messages.
+ */
+function hireai_registration_message($zh, $en) {
+    $is_en = function_exists('hireai_lang_suffix') && hireai_lang_suffix() === '_en';
+    return $is_en ? $en : $zh;
+}
+
+/**
+ * Verify the WooCommerce registration nonce outside WC's own handler.
+ */
+function hireai_registration_nonce_ok() {
+    if (!isset($_POST['woocommerce-register-nonce'])) {
+        return false;
+    }
+    $nonce = wp_unslash($_POST['woocommerce-register-nonce']);
+    return is_string($nonce) && $nonce !== '' && (bool) wp_verify_nonce($nonce, 'woocommerce-register');
+}
+
+/**
+ * Client IP used for registration throttling. REMOTE_ADDR is deliberate: the
+ * site is served directly by nginx/PHP-FPM without a CDN, and forwarding
+ * headers are client-controlled.
+ */
+function hireai_registration_client_ip() {
+    $ip = isset($_SERVER['REMOTE_ADDR']) ? trim((string) wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+    return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : 'unknown';
+}
+
+/**
+ * Maximum registration submissions per IP per rolling hour.
+ */
+function hireai_registration_rate_limit() {
+    $limit = (int) apply_filters('hireai_registration_rate_limit', 5);
+    return $limit > 0 ? $limit : 5;
+}
+
+function hireai_registration_rate_key() {
+    return 'hireai_reg_' . substr(wp_hash(hireai_registration_client_ip() . '|' . home_url('/')), 0, 32);
+}
+
+function hireai_registration_rate_state() {
+    $now   = time();
+    $state = get_transient(hireai_registration_rate_key());
+
+    if (!is_array($state) || !isset($state['count'], $state['reset']) || (int) $state['reset'] <= $now) {
+        return ['count' => 0, 'reset' => $now + HOUR_IN_SECONDS];
+    }
+
+    return ['count' => max(0, (int) $state['count']), 'reset' => (int) $state['reset']];
+}
+
+function hireai_registration_rate_hit() {
+    $state = hireai_registration_rate_state();
+    $state['count']++;
+    set_transient(hireai_registration_rate_key(), $state, max(MINUTE_IN_SECONDS, $state['reset'] - time()));
+    return $state['count'];
+}
+
+/**
+ * Disposable email domains. Extend through the
+ * hireai_registration_blocked_email_domains filter.
+ */
+function hireai_registration_blocked_email_domains() {
+    $domains = [
+        '10minutemail.com',
+        'dispostable.com',
+        'emailondeck.com',
+        'fakeinbox.com',
+        'getnada.com',
+        'grr.la',
+        'guerrillamail.com',
+        'guerrillamailblock.com',
+        'maildrop.cc',
+        'mailinator.com',
+        'mintemail.com',
+        'mohmal.com',
+        'pokemail.net',
+        'sharklasers.com',
+        'spam.la',
+        'spam4.me',
+        'temp-mail.org',
+        'tempmail.com',
+        'throwawaymail.com',
+        'trashmail.com',
+        'yopmail.com',
+    ];
+
+    return (array) apply_filters('hireai_registration_blocked_email_domains', $domains);
+}
+
+function hireai_registration_email_domain($email) {
+    $email = trim((string) $email);
+    $at    = strrpos($email, '@');
+
+    if ($at === false) {
+        return '';
+    }
+
+    return strtolower(trim(substr($email, $at + 1), ". \t\n\r\0\x0B"));
+}
+
+/**
+ * Runs at wp_loaded:19, before WooCommerce processes the registration at
+ * wp_loaded:20. Enforces the registration options and silently drops
+ * honeypot hits.
+ */
+function hireai_registration_preflight() {
+    if (is_admin() || (function_exists('wp_doing_ajax') && wp_doing_ajax()) || !hireai_registration_is_post()) {
+        return;
+    }
+
+    if ('no' !== get_option('woocommerce_registration_generate_password')) {
+        update_option('woocommerce_registration_generate_password', 'no');
+    }
+    if ('yes' !== get_option('woocommerce_registration_generate_username')) {
+        update_option('woocommerce_registration_generate_username', 'yes');
+    }
+
+    $honeypot = isset($_POST['hireai_hp']) ? wp_unslash($_POST['hireai_hp']) : '';
+    if (is_string($honeypot) && trim($honeypot) !== '') {
+        hireai_registration_rate_hit();
+        error_log('[hireai registration] honeypot hit ip_hash=' . substr(wp_hash(hireai_registration_client_ip()), 0, 12));
+
+        $redirect = function_exists('hireai_account_page_url') ? hireai_account_page_url() : home_url('/my-account/');
+        wp_safe_redirect($redirect);
+        exit;
+    }
+}
+add_action('wp_loaded', 'hireai_registration_preflight', 19);
+
+/**
+ * Throttle by IP and reject known disposable email domains. This filter is
+ * applied by WC_Form_Handler::process_registration() before any account is
+ * created, so returning errors stops registration entirely.
+ */
+function hireai_registration_guard($errors, $username = '', $password = '', $email = '') {
+    if (!($errors instanceof WP_Error)) {
+        return $errors;
+    }
+    if (!hireai_registration_is_post() || !hireai_registration_nonce_ok()) {
+        return $errors;
+    }
+
+    if (hireai_registration_rate_state()['count'] >= hireai_registration_rate_limit()) {
+        $errors->add(
+            'hireai_registration_rate_limited',
+            hireai_registration_message('尝试过于频繁，请稍后再试。', 'Too many attempts. Please try again later.')
+        );
+        return $errors;
+    }
+
+    /* Count every accepted submission, including ones rejected below, so a
+       bot cannot probe the disposable-domain list for free. */
+    hireai_registration_rate_hit();
+
+    $domain = hireai_registration_email_domain($email);
+    if ($domain !== '') {
+        foreach (hireai_registration_blocked_email_domains() as $blocked) {
+            $blocked = strtolower(trim((string) $blocked));
+            if ($blocked === '' || strpos($blocked, '.') === false) {
+                continue;
+            }
+
+            $is_match = $domain === $blocked
+                || substr($domain, -1 * (strlen($blocked) + 1)) === '.' . $blocked;
+
+            if ($is_match) {
+                error_log('[hireai registration] blocked disposable email domain=' . $domain);
+                $errors->add(
+                    'hireai_registration_disposable_email',
+                    hireai_registration_message('请使用其他邮箱地址。', 'Please use a different email address.')
+                );
+                return $errors;
+            }
+        }
+    }
+
+    return $errors;
+}
+add_filter('woocommerce_process_registration_errors', 'hireai_registration_guard', 10, 4);
+
+/**
+ * Validate the password pair. Runs inside wc_create_new_customer() before
+ * wp_insert_user(), so errors here prevent account creation. A missing
+ * password is rejected explicitly: otherwise core would generate a random one.
+ */
+function hireai_registration_validate_password($username = '', $email = '', $errors = null) {
+    if (!($errors instanceof WP_Error)) {
+        return;
+    }
+    if (!hireai_registration_is_post() || !hireai_registration_nonce_ok()) {
+        return;
+    }
+
+    /* Validation runs on the human-visible value (quotes and backslashes
+       un-slashed) so length and comparison checks match what was typed.
+       Storage keeps the slashed value, see hireai_registration_customer_data(). */
+    $password = isset($_POST['password']) ? (string) wp_unslash($_POST['password']) : '';
+    $confirm  = isset($_POST['password_confirm']) ? (string) wp_unslash($_POST['password_confirm']) : '';
+    $issues   = [];
+
+    if ($password === '' || $confirm === '') {
+        $issues[] = hireai_registration_message('请填写密码并再次确认。', 'Enter a password and confirm it.');
+    } else {
+        if (!hash_equals($password, $confirm)) {
+            $issues[] = hireai_registration_message('两次输入的密码不一致。', 'The passwords do not match.');
+        }
+
+        $length = function_exists('mb_strlen') ? mb_strlen($password, 'UTF-8') : strlen($password);
+        if ($length < 8) {
+            $issues[] = hireai_registration_message('密码至少需要 8 位。', 'Use at least 8 characters.');
+        }
+
+        $local = strstr((string) $email, '@', true);
+        $local = is_string($local) ? strtolower(trim($local)) : '';
+        if ($local !== '' && strtolower($password) === $local) {
+            $issues[] = hireai_registration_message('密码不能与邮箱名前缀相同。', 'The password cannot match your email name.');
+        }
+
+        if (preg_match('/^\d+$/', $password)) {
+            $issues[] = hireai_registration_message('密码不能是纯数字，请混合使用字母和数字。', 'Do not use digits only; mix letters and numbers.');
+        }
+    }
+
+    if ($issues) {
+        $errors->add('hireai_registration_password', implode(' ', $issues));
+    }
+}
+add_action('woocommerce_register_post', 'hireai_registration_validate_password', 10, 3);
+
+/**
+ * Build a unique user_login from the email local part (suffix -2, -3, ...).
+ */
+function hireai_registration_unique_username($email) {
+    $local = strstr((string) $email, '@', true);
+    $base  = sanitize_user(is_string($local) ? $local : '', true);
+    $base  = trim(strtolower(trim((string) $base)), '-_.');
+
+    if ($base === '') {
+        $base = 'customer';
+    }
+
+    $base = function_exists('mb_substr') ? mb_substr($base, 0, 40, 'UTF-8') : substr($base, 0, 40);
+    $base = trim($base, '-_.');
+
+    if ($base === '') {
+        $base = 'customer';
+    }
+
+    $illegal = (array) apply_filters('illegal_user_logins', []);
+    $illegal = array_map('strtolower', array_filter(array_map('strval', $illegal)));
+    $candidate = $base;
+
+    for ($i = 2; $i <= 50; $i++) {
+        if (!username_exists($candidate) && !in_array(strtolower($candidate), $illegal, true)) {
+            return $candidate;
+        }
+        $candidate = $base . '-' . $i;
+    }
+
+    return 'customer-' . strtolower(wp_generate_password(10, false, false));
+}
+
+/**
+ * Inject the submitted password and derived username into the customer data.
+ * This is the only place the password reaches wp_insert_user().
+ */
+function hireai_registration_customer_data($data) {
+    if (!is_array($data) || !hireai_registration_is_post() || !hireai_registration_nonce_ok()) {
+        return $data;
+    }
+
+    /* Do not unslash the password: WooCommerce passes password fields
+       slashed on purpose (woocommerce/woocommerce#23922). wp_insert_user()
+       hashes the value it receives and wp_signon() compares the slashed
+       $_POST value, so un-slashing here would lock out any account whose
+       password contains a quote or a backslash. */
+    $password = isset($_POST['password']) && is_string($_POST['password']) ? $_POST['password'] : '';
+    if ($password !== '') {
+        $data['user_pass'] = $password;
+    }
+
+    $email = isset($data['user_email']) ? (string) $data['user_email'] : '';
+    if ($email === '' && isset($_POST['email'])) {
+        $email = sanitize_email(wp_unslash($_POST['email']));
+    }
+    if ($email !== '') {
+        $data['user_login'] = hireai_registration_unique_username($email);
+    }
+
+    return $data;
+}
+add_filter('woocommerce_new_customer_data', 'hireai_registration_customer_data', 10, 1);
+
+/**
+ * Remove the "default generated password" nag if another plugin forces
+ * password generation despite the options above.
+ */
+function hireai_registration_clear_default_password_nag($customer_id, $new_customer_data = [], $password_generated = false) {
+    if (!hireai_registration_is_post() || !hireai_registration_nonce_ok()) {
+        return;
+    }
+
+    $customer_id = absint($customer_id);
+    if ($customer_id > 0) {
+        delete_user_option($customer_id, 'default_password_nag', true);
+    }
+}
+add_action('woocommerce_created_customer', 'hireai_registration_clear_default_password_nag', 10, 3);
+
+/**
+ * One-time option migration: take the password from the form instead of
+ * generating one and emailing a set-password link. The guard is written only
+ * after the values read back correctly.
+ */
+function hireai_registration_settings_v1() {
+    if (get_option('hireai_registration_settings_v31128')) {
+        return;
+    }
+
+    $old_password = get_option('woocommerce_registration_generate_password');
+    $old_username = get_option('woocommerce_registration_generate_username');
+
+    try {
+        update_option('woocommerce_registration_generate_password', 'no');
+        update_option('woocommerce_registration_generate_username', 'yes');
+    } catch (Throwable $exception) {
+        error_log('[hireai registration settings] update failed: ' . $exception->getMessage());
+        return;
+    }
+
+    if ('no' !== get_option('woocommerce_registration_generate_password') || 'yes' !== get_option('woocommerce_registration_generate_username')) {
+        error_log('[hireai registration settings] verification failed; will retry');
+        return;
+    }
+
+    update_option('hireai_registration_settings_v31128', 1);
+    error_log('[hireai registration settings] complete: ' . wp_json_encode([
+        'old_generate_password' => $old_password,
+        'new_generate_password' => 'no',
+        'old_generate_username' => $old_username,
+        'new_generate_username' => 'yes',
+    ]));
+}
+add_action('init', 'hireai_registration_settings_v1', 20);
+
+/**
+ * Compatibility shim for plugins that consult the filter. WooCommerce 11.1.0
+ * core itself reads the option, not this filter.
+ */
+add_filter('woocommerce_registration_generate_password', '__return_false');
+
+/**
+ * Lost-password URL on the localized My Account page. wc_get_endpoint_url()
+ * keeps an existing ?lang= query string intact.
+ */
+function hireai_lost_password_url() {
+    if (function_exists('wc_get_endpoint_url')) {
+        $base = function_exists('hireai_account_page_url')
+            ? hireai_account_page_url()
+            : (function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : '');
+
+        if (is_string($base) && $base !== '') {
+            return wc_get_endpoint_url('lost-password', '', $base);
+        }
+    }
+
+    return function_exists('wp_lostpassword_url') ? wp_lostpassword_url() : home_url('/wp-login.php?action=lostpassword');
+}

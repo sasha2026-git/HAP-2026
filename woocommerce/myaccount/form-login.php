@@ -15,6 +15,9 @@ if (!defined('ABSPATH')) {
 
 $is_en = function_exists('hireai_lang_suffix') && hireai_lang_suffix() === '_en';
 $registration_enabled = 'yes' === get_option('woocommerce_enable_myaccount_registration');
+$account_url = function_exists('hireai_account_page_url') ? hireai_account_page_url() : wc_get_page_permalink('myaccount');
+$register_action = function_exists('hireai_account_form_action') ? hireai_account_form_action() : $account_url;
+$lost_password_url = function_exists('hireai_lost_password_url') ? hireai_lost_password_url() : wp_lostpassword_url();
 
 do_action('woocommerce_before_customer_login_form');
 ?>
@@ -22,7 +25,7 @@ do_action('woocommerce_before_customer_login_form');
 <div class="hireai-account hireai-account--auth">
 <?php if ($registration_enabled) : ?>
 <div class="hireai-account-auth u-columns col2-set" id="customer_login">
-    <div class="hireai-account-auth__column u-column1 col-1">
+    <div class="hireai-account-auth__column u-column1 col-1" id="hireai-login">
 <?php else : ?>
 <div class="hireai-account-auth hireai-account-auth--single">
     <div class="hireai-account-auth__column">
@@ -53,7 +56,7 @@ do_action('woocommerce_before_customer_login_form');
                 <button type="submit" class="woocommerce-button button woocommerce-form-login__submit<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?>" name="login" value="<?php echo esc_attr($is_en ? 'Log in' : '登录'); ?>"><?php echo esc_html($is_en ? 'Log in' : '登录'); ?></button>
             </p>
             <p class="woocommerce-LostPassword lost_password">
-                <a href="<?php echo esc_url(wp_lostpassword_url()); ?>"><?php echo esc_html($is_en ? 'Lost your password?' : '忘记密码？'); ?></a>
+                <a href="<?php echo esc_url($lost_password_url); ?>"><?php echo esc_html($is_en ? 'Lost your password?' : '忘记密码？'); ?></a>
             </p>
 
             <?php do_action('woocommerce_login_form_end'); ?>
@@ -67,43 +70,40 @@ do_action('woocommerce_before_customer_login_form');
 
         <h2><?php echo esc_html($is_en ? 'Register' : '注册'); ?></h2>
 
-        <form method="post" class="woocommerce-form woocommerce-form-register register" <?php do_action('woocommerce_register_form_tag'); ?>>
+        <form method="post" action="<?php echo esc_url($register_action); ?>" class="woocommerce-form woocommerce-form-register register" <?php do_action('woocommerce_register_form_tag'); ?>>
 
             <?php do_action('woocommerce_register_form_start'); ?>
 
-            <?php if ('no' === get_option('woocommerce_registration_generate_username')) : ?>
-
-                <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
-                    <label for="reg_username"><?php echo esc_html($is_en ? 'Username' : '用户名'); ?>&nbsp;<span class="required" aria-hidden="true">*</span><span class="screen-reader-text"><?php echo esc_html($is_en ? 'Required' : '必填'); ?></span></label>
-                    <input type="text" class="woocommerce-Input woocommerce-Input--text input-text" name="username" id="reg_username" autocomplete="username" value="<?php echo (!empty($_POST['username'])) ? esc_attr(wp_unslash($_POST['username'])) : ''; ?>" required aria-required="true" /><?php // @codingStandardsIgnoreLine ?>
-                </p>
-
-            <?php endif; ?>
-
+            <?php /* The account name is derived from the email local part by
+            hireai_registration_customer_data(); no separate username field. */ ?>
             <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
                 <label for="reg_email"><?php echo esc_html($is_en ? 'Email address' : '邮箱地址'); ?>&nbsp;<span class="required" aria-hidden="true">*</span><span class="screen-reader-text"><?php echo esc_html($is_en ? 'Required' : '必填'); ?></span></label>
-                <input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" value="<?php echo (!empty($_POST['email'])) ? esc_attr(wp_unslash($_POST['email'])) : ''; ?>" required aria-required="true" /><?php // @codingStandardsIgnoreLine ?>
+                <input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" spellcheck="false" autocapitalize="none" enterkeyhint="next" value="<?php echo (!empty($_POST['email']) && is_string($_POST['email'])) ? esc_attr(wp_unslash($_POST['email'])) : ''; ?>" required aria-required="true" /><?php // @codingStandardsIgnoreLine ?>
             </p>
 
-            <?php if ('no' === get_option('woocommerce_registration_generate_password')) : ?>
+            <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+                <label for="reg_password"><?php echo esc_html($is_en ? 'Password' : '密码'); ?>&nbsp;<span class="required" aria-hidden="true">*</span><span class="screen-reader-text"><?php echo esc_html($is_en ? 'Required' : '必填'); ?></span></label>
+                <input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password" id="reg_password" autocomplete="new-password" minlength="8" enterkeyhint="next" required aria-required="true" aria-describedby="reg_password_hint" />
+                <span class="hireai-account-auth__field-hint" id="reg_password_hint"><?php echo esc_html($is_en ? 'At least 8 characters. Avoid all numbers or your email name.' : '至少 8 位，避免纯数字或与邮箱名前缀相同。'); ?></span>
+            </p>
+            <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+                <label for="reg_password_confirm"><?php echo esc_html($is_en ? 'Confirm password' : '确认密码'); ?>&nbsp;<span class="required" aria-hidden="true">*</span><span class="screen-reader-text"><?php echo esc_html($is_en ? 'Required' : '必填'); ?></span></label>
+                <input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password_confirm" id="reg_password_confirm" autocomplete="new-password" minlength="8" enterkeyhint="done" required aria-required="true" />
+            </p>
 
-                <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
-                    <label for="reg_password"><?php echo esc_html($is_en ? 'Password' : '密码'); ?>&nbsp;<span class="required" aria-hidden="true">*</span><span class="screen-reader-text"><?php echo esc_html($is_en ? 'Required' : '必填'); ?></span></label>
-                    <input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password" id="reg_password" autocomplete="new-password" required aria-required="true" />
-                </p>
-
-            <?php else : ?>
-
-                <p class="hireai-account-auth__hint"><?php echo esc_html($is_en ? 'A link to set a new password will be sent to your email address.' : '设置新密码的链接将发送到您的邮箱。'); ?></p>
-
-            <?php endif; ?>
+            <p class="hireai-account-hp" aria-hidden="true">
+                <label for="hireai_hp"><?php echo esc_html($is_en ? 'Leave this field empty' : '请留空此栏'); ?></label>
+                <input type="text" name="hireai_hp" id="hireai_hp" value="" tabindex="-1" autocomplete="off" />
+            </p>
 
             <?php do_action('woocommerce_register_form'); ?>
 
-            <p class="woocommerce-form-row form-row">
+            <p class="woocommerce-form-row form-row hireai-account-auth__submit-row">
                 <?php wp_nonce_field('woocommerce-register', 'woocommerce-register-nonce'); ?>
                 <button type="submit" class="woocommerce-Button woocommerce-button button<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?> woocommerce-form-register__submit" name="register" value="<?php echo esc_attr($is_en ? 'Register' : '注册'); ?>"><?php echo esc_html($is_en ? 'Register' : '注册'); ?></button>
             </p>
+
+            <p class="hireai-account-auth__switch"><?php echo esc_html($is_en ? 'Already have an account?' : '已有账户？'); ?> <a href="#hireai-login"><?php echo esc_html($is_en ? 'Log in' : '登录'); ?></a></p>
 
             <?php do_action('woocommerce_register_form_end'); ?>
 

@@ -4,7 +4,7 @@ Theme URI:    https://github.com/sasha2026-git/HAP-2026
 Template:     hello-elementor
 Description:  聘AI (Hire AI People) — AI 数字员工与 AI 解决方案平台。Aether Luxe AI — Minimalist Luxury。
 Author:       sasha
-Version: 3.11.27
+Version: 3.11.28
 Text Domain:  hireaipeople
 */
 
@@ -5491,6 +5491,77 @@ body.woocommerce-account .hireai-account-auth .woocommerce-privacy-policy-text {
   color: #4d4635;
   font-size: 13px;
   line-height: 1.6;
+}
+
+/* --- Registration + password reset (v3.11.28) --- */
+body.woocommerce-account .hireai-account-auth .hireai-account-auth__column {
+  min-width: 0;
+}
+body.woocommerce-account .hireai-account-auth .form-row-first,
+body.woocommerce-account .hireai-account-auth .form-row-last {
+  float: none;
+  width: 100%;
+}
+body.woocommerce-account #hireai-login {
+  scroll-margin-top: 96px;
+}
+body.woocommerce-account .hireai-account-hp {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+body.woocommerce-account .hireai-account-auth__field-hint {
+  display: block;
+  margin: 6px 0 0;
+  color: #4d4635;
+  font-size: 12px;
+  line-height: 1.5;
+}
+body.woocommerce-account .hireai-account-auth__switch {
+  margin: 18px 0 0;
+  color: #4d4635;
+  font-size: 14px;
+  line-height: 1.5;
+}
+body.woocommerce-account .hireai-account-auth__switch a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #775a19;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+body.woocommerce-account .hireai-account-auth .hireai-account-auth__submit-row {
+  text-align: right;
+}
+body.woocommerce-account .hireai-account-auth .woocommerce-ResetPassword .button {
+  width: 100%;
+}
+body.woocommerce-account .hireai-account .hireai-account-auth .button {
+  min-height: 48px;
+}
+body.woocommerce-account .hireai-account-auth .woocommerce-form-login__rememberme {
+  min-height: 44px;
+}
+body.woocommerce-account .hireai-account-auth .lost_password a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+body.woocommerce-account .hireai-account-auth input:user-invalid {
+  border-color: #a4402f;
+}
+body.woocommerce-account .woocommerce-error,
+body.woocommerce-account .woocommerce-error li {
+  overflow-wrap: anywhere;
 }
 
 /* --- Empty state --- */
