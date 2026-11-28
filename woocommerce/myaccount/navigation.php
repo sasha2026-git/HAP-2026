@@ -22,6 +22,7 @@ $hireai_account_labels = [
 	'downloads'       => $is_en ? 'Downloads' : '下载',
 	'edit-address'    => $is_en ? 'Addresses' : '地址',
 	'payment-methods' => $is_en ? 'Payment methods' : '支付方式',
+	'invoice'         => $is_en ? 'Invoices' : '发票申请',
 	'edit-account'    => $is_en ? 'Account details' : '账户详情',
 	'customer-logout' => $is_en ? 'Log out' : '退出',
 ];

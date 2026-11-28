@@ -47,12 +47,18 @@ $nav_aria_primary = function_exists('hireai_field_lang')
         $is_en ? 'Primary navigation' : '主导航', 'option')
     : ($is_en ? 'Primary navigation' : '主导航');
 
-/* 我的账户按钮：hireai_field_lang 中英文 fallback */
-/* v3.5.7-p9: 英文从 "MY ACCOUNT" 缩为 "Account"（缩短字符，节省横向空间） */
+/* 我的账户按钮：hireai_field_lang 中英文 fallback
+   v3.11.29: desktop now always prints the label (see .hai-header__account in
+   style.css). ACF can legitimately return an empty string, so trim and fall
+   back to the default copy per language before it reaches the markup. */
+$account_label_default = $is_en ? 'MY ACCOUNT' : '我的账户';
 $account_label = function_exists('hireai_field_lang')
-    ? hireai_field_lang('header_account_label', $is_en ? 'en' : 'zh',
-        $is_en ? 'Account' : '我的账户', 'option')
-    : ($is_en ? 'Account' : '我的账户');
+    ? hireai_field_lang('header_account_label', $is_en ? 'en' : 'zh', $account_label_default, 'option')
+    : $account_label_default;
+$account_label = is_scalar($account_label) ? trim((string) $account_label) : '';
+if ($account_label === '') {
+    $account_label = $account_label_default;
+}
 
 /* 汉堡菜单按钮 aria */
 $menu_toggle_aria = function_exists('hireai_field_lang')
@@ -99,9 +105,10 @@ $nav_aria_mobile = function_exists('hireai_field_lang')
     <!-- Right: actions -->
     <div class="hai-header__actions">
       <a class="hai-header__account"
-         href="<?php echo esc_url(function_exists('hireai_account_page_url') ? hireai_account_page_url() : hireai_localized_url(home_url('/my-account/'))); ?>">
+         href="<?php echo esc_url(function_exists('hireai_account_page_url') ? hireai_account_page_url() : hireai_localized_url(home_url('/my-account/'))); ?>"
+         aria-label="<?php echo esc_attr($account_label); ?>">
         <?php echo hireai_svg("account", 24, "hai-header__icon"); ?>
-        <?php echo esc_html($account_label); ?>
+        <span class="hai-header__account-text"><?php echo esc_html($account_label); ?></span>
       </a>
 
       <button class="hai-header__lang" type="button" data-hireai-lang-switch="<?php echo esc_attr($switch_lang); ?>" data-hireai-lang-url="<?php echo esc_url($switch_url); ?>">

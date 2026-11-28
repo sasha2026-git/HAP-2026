@@ -7391,3 +7391,929 @@ function hireai_lost_password_url() {
 
     return function_exists('wp_lostpassword_url') ? wp_lostpassword_url() : home_url('/wp-login.php?action=lostpassword');
 }
+
+/* ==========================================================================
+ * v3.11.29 — My Account 发票申请（endpoint: invoice）
+ *
+ * 子页地址（中/英同一物理页，靠 ?lang=en 切语言）：
+ *   /zh/my-account/invoice/          列表 + 申请表单
+ *   /zh/my-account/invoice/{id}/     单张申请详情
+ *
+ * 数据存自定义文章类型 hireai_invoice（public=false / show_ui=false），
+ * 作者即申请用户；管理员通过 WooCommerce → 发票申请 管理。
+ * ========================================================================== */
+
+define('HIREAI_INVOICE_VERSION', '1.0.0');
+
+/**
+ * 发票状态表（前台 + 后台共用）
+ */
+function hireai_invoice_statuses() {
+    return [
+        'pending'  => ['zh' => '待处理', 'en' => 'Pending',  'admin' => '待处理'],
+        'issued'   => ['zh' => '已开票', 'en' => 'Issued',   'admin' => '已开票'],
+        'rejected' => ['zh' => '已驳回', 'en' => 'Rejected', 'admin' => '已驳回'],
+    ];
+}
+
+/**
+ * 发票状态显示文案
+ */
+function hireai_invoice_status_label($status, $is_en = null) {
+    if ($is_en === null) {
+        $is_en = function_exists('hireai_current_lang') && hireai_current_lang() === 'en';
+    }
+    $statuses = hireai_invoice_statuses();
+    if (!isset($statuses[$status])) {
+        return $is_en ? 'Pending' : '待处理';
+    }
+    return $is_en ? $statuses[$status]['en'] : $statuses[$status]['zh'];
+}
+
+/**
+ * 发票类型显示文案
+ */
+function hireai_invoice_type_label($type, $is_en = null) {
+    if ($is_en === null) {
+        $is_en = function_exists('hireai_current_lang') && hireai_current_lang() === 'en';
+    }
+    if ('vat_special' === $type) {
+        return $is_en ? 'VAT special invoice (electronic)' : '电子专票';
+    }
+    return $is_en ? 'VAT normal invoice (electronic)' : '电子普票';
+}
+
+/**
+ * 注册 CPT。不公开、不进 REST、不参与搜索；后台列表由自定义页面接管。
+ */
+function hireai_invoice_register_post_type() {
+    register_post_type('hireai_invoice', [
+        'labels'              => [
+            'name'          => '发票申请',
+            'singular_name' => '发票申请',
+        ],
+        'public'              => false,
+        'publicly_queryable'  => false,
+        'exclude_from_search' => true,
+        'show_ui'             => false,
+        'show_in_menu'        => false,
+        'show_in_nav_menus'   => false,
+        'show_in_rest'        => false,
+        'query_var'           => false,
+        'rewrite'             => false,
+        'capability_type'     => 'post',
+        'map_meta_cap'        => true,
+        'supports'            => ['title', 'author'],
+        'delete_with_user'    => true,
+        'can_export'          => false,
+    ]);
+}
+add_action('init', 'hireai_invoice_register_post_type', 5);
+
+/**
+ * 注册 My Account 子页 endpoint。
+ *
+ * 解析方式：/my-account/invoice/ → invoice='' ，/my-account/invoice/12/ → invoice='12'。
+ * WooCommerce 的 woocommerce_account_content() 会遍历 $wp->query_vars，
+ * 命中 woocommerce_account_invoice_endpoint 动作后停止，因此不需要改动 WC 核心。
+ */
+function hireai_invoice_register_endpoint() {
+    add_rewrite_endpoint('invoice', EP_ROOT | EP_PAGES);
+}
+add_action('init', 'hireai_invoice_register_endpoint', 10);
+
+/**
+ * 把 invoice 注册为公开 query var（get_query_var / WP_Query 都能读到）。
+ */
+function hireai_invoice_query_vars($vars) {
+    if (!in_array('invoice', $vars, true)) {
+        $vars[] = 'invoice';
+    }
+    return $vars;
+}
+add_filter('query_vars', 'hireai_invoice_query_vars');
+
+/**
+ * 只在 endpoint 版本变化时 flush 一次 rewrite（绝不在每次请求里 flush）。
+ */
+function hireai_invoice_maybe_flush_rewrites() {
+    if (get_option('hireai_invoice_rewrite_version') === HIREAI_INVOICE_VERSION) {
+        return;
+    }
+    flush_rewrite_rules(false);
+    update_option('hireai_invoice_rewrite_version', HIREAI_INVOICE_VERSION, false);
+    error_log('[hireai invoice] rewrite rules flushed for ' . HIREAI_INVOICE_VERSION);
+}
+add_action('init', 'hireai_invoice_maybe_flush_rewrites', 99);
+
+/* 换主题后版本守卫失效，下次请求重新 flush 一次。 */
+add_action('after_switch_theme', static function () {
+    delete_option('hireai_invoice_rewrite_version');
+});
+
+/**
+ * 侧边导航插入「发票申请」，排在「账户详情」之前。
+ */
+function hireai_invoice_menu_items($items) {
+    if (!is_array($items)) {
+        return $items;
+    }
+    $is_en = function_exists('hireai_current_lang') && hireai_current_lang() === 'en';
+    $label = $is_en ? 'Invoices' : '发票申请';
+    $sorted = [];
+    $inserted = false;
+    foreach ($items as $key => $value) {
+        if ('edit-account' === $key) {
+            $sorted['invoice'] = $label;
+            $inserted = true;
+        }
+        $sorted[$key] = $value;
+    }
+    if (!$inserted) {
+        $sorted['invoice'] = $label;
+    }
+    return $sorted;
+}
+add_filter('woocommerce_account_menu_items', 'hireai_invoice_menu_items', 20);
+
+/**
+ * 发票 endpoint URL（保留当前语言：英文页带 ?lang=en）。
+ */
+function hireai_invoice_endpoint_url($invoice_id = 0) {
+    $invoice_id = absint($invoice_id);
+    if (function_exists('wc_get_endpoint_url')) {
+        $base = function_exists('hireai_account_page_url')
+            ? hireai_account_page_url()
+            : (function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : '');
+        if (is_string($base) && $base !== '') {
+            return wc_get_endpoint_url('invoice', $invoice_id ? $invoice_id : '', $base);
+        }
+    }
+    $url = home_url('/my-account/invoice/');
+    if ($invoice_id) {
+        $url .= $invoice_id . '/';
+    }
+    return $url;
+}
+
+/**
+ * 申请人可选的订单（completed / processing）。
+ */
+function hireai_invoice_customer_orders($user_id) {
+    if (!function_exists('wc_get_orders')) {
+        return [];
+    }
+    $orders = wc_get_orders([
+        'customer' => absint($user_id),
+        'status'   => ['completed', 'processing'],
+        'limit'    => 50,
+        'orderby'  => 'date',
+        'order'    => 'DESC',
+        'return'   => 'objects',
+    ]);
+    return is_array($orders) ? $orders : [];
+}
+
+/**
+ * 订单显示文案：#编号 · 日期 · 金额
+ */
+function hireai_invoice_order_label($order) {
+    if (!is_object($order) || !method_exists($order, 'get_id')) {
+        return '';
+    }
+    $date = $order->get_date_created();
+    return sprintf(
+        '#%s · %s · %s',
+        $order->get_order_number(),
+        $date ? wc_format_datetime($date) : '',
+        wp_strip_all_tags($order->get_formatted_order_total())
+    );
+}
+
+/**
+ * 取发票申请（校验 post_type）。
+ */
+function hireai_invoice_get($invoice_id) {
+    $invoice_id = absint($invoice_id);
+    if (!$invoice_id) {
+        return null;
+    }
+    $post = get_post($invoice_id);
+    if (!$post instanceof WP_Post || 'hireai_invoice' !== $post->post_type) {
+        return null;
+    }
+    return $post;
+}
+
+/**
+ * 权限第一/二道防线：作者本人或 manage_woocommerce 管理员。
+ */
+function hireai_invoice_user_can_view($post) {
+    if (!$post instanceof WP_Post || 'hireai_invoice' !== $post->post_type) {
+        return false;
+    }
+    $user_id = get_current_user_id();
+    if (!$user_id) {
+        return false;
+    }
+    if ((int) $post->post_author === $user_id) {
+        return true;
+    }
+    return current_user_can('manage_woocommerce');
+}
+
+/**
+ * 当前用户可读的发票申请；无权/不存在返回 null。
+ */
+function hireai_invoice_get_for_current_user($invoice_id) {
+    $post = hireai_invoice_get($invoice_id);
+    if (!$post || !hireai_invoice_user_can_view($post)) {
+        return null;
+    }
+    return $post;
+}
+
+/**
+ * 当前用户发票列表（分页）。
+ */
+function hireai_invoice_get_user_invoices($user_id, $paged = 1, $per_page = 10) {
+    $query = new WP_Query([
+        'post_type'      => 'hireai_invoice',
+        'post_status'    => 'publish',
+        'author'         => absint($user_id),
+        'posts_per_page' => absint($per_page),
+        'paged'          => max(1, absint($paged)),
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'lang'           => '',
+        'no_found_rows'  => false,
+    ]);
+    return [
+        'posts' => $query->posts,
+        'total' => (int) $query->found_posts,
+        'pages' => (int) $query->max_num_pages,
+    ];
+}
+
+/**
+ * 第三道防线：直接访问他人 ID 时把请求改成 404（模板层还会再校验一次）。
+ */
+function hireai_invoice_guard_detail() {
+    if (is_admin() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        return;
+    }
+    $value = get_query_var('invoice');
+    if ('' === $value || null === $value) {
+        return;
+    }
+    if (!preg_match('/^\d+$/', (string) $value) || !hireai_invoice_get_for_current_user($value)) {
+        global $wp_query;
+        $wp_query->set_404();
+        status_header(404);
+        nocache_headers();
+    }
+}
+add_action('template_redirect', 'hireai_invoice_guard_detail', 9);
+
+/**
+ * 5 分钟内最多 3 次申请（transient 计数）。超限返回 true。
+ */
+function hireai_invoice_rate_limited($user_id) {
+    $user_id = absint($user_id);
+    if (!$user_id) {
+        return true;
+    }
+    $key  = 'hireai_invoice_rl_' . $user_id;
+    $now  = time();
+    $hits = get_transient($key);
+    $hits = is_array($hits) ? array_map('intval', $hits) : [];
+    $hits = array_values(array_filter($hits, static function ($timestamp) use ($now) {
+        return $timestamp > ($now - 300);
+    }));
+    if (count($hits) >= 3) {
+        return true;
+    }
+    $hits[] = $now;
+    set_transient($key, $hits, 300);
+    return false;
+}
+
+/**
+ * 校验失败时暂存已填内容，回跳后表单不丢值。
+ */
+function hireai_invoice_store_draft($user_id, array $values) {
+    set_transient('hireai_invoice_draft_' . absint($user_id), $values, 15 * MINUTE_IN_SECONDS);
+}
+
+function hireai_invoice_take_draft() {
+    $user_id = get_current_user_id();
+    if (!$user_id) {
+        return [];
+    }
+    $key   = 'hireai_invoice_draft_' . $user_id;
+    $draft = get_transient($key);
+    if (false !== $draft) {
+        delete_transient($key);
+    }
+    return is_array($draft) ? $draft : [];
+}
+
+/**
+ * 表单校验。返回 [清洗后的 values, 错误文案数组]。
+ */
+function hireai_invoice_validate($input, $user_id) {
+    $is_en = function_exists('hireai_current_lang') && hireai_current_lang() === 'en';
+    $errors = [];
+
+    $type = isset($input['invoice_type']) ? sanitize_key(wp_unslash($input['invoice_type'])) : '';
+    if (!in_array($type, ['vat_special', 'vat_normal'], true)) {
+        $errors[] = $is_en ? 'Please choose an invoice type.' : '请选择发票类型。';
+        $type = 'vat_special';
+    }
+    $is_special = 'vat_special' === $type;
+
+    $company_name = isset($input['company_name']) ? sanitize_text_field(wp_unslash($input['company_name'])) : '';
+    if ($company_name === '') {
+        $errors[] = $is_en ? 'Company name is required.' : '请填写公司名称。';
+    } elseif ((function_exists('mb_strlen') ? mb_strlen($company_name) : strlen($company_name)) > 120) {
+        $errors[] = $is_en ? 'Company name is too long.' : '公司名称过长。';
+    }
+
+    $tax_id = isset($input['tax_id']) ? strtoupper(preg_replace('/\s+/', '', sanitize_text_field(wp_unslash($input['tax_id'])))) : '';
+    if ($tax_id === '') {
+        $errors[] = $is_en ? 'Tax ID is required.' : '请填写统一社会信用代码/纳税人识别号。';
+    } elseif (!preg_match('/^[0-9A-Z]{15,20}$/', $tax_id)) {
+        $errors[] = $is_en
+            ? 'Tax ID must be 15–20 letters or digits.'
+            : '统一社会信用代码/纳税人识别号须为 15–20 位字母或数字。';
+    }
+
+    $invoice_email = isset($input['invoice_email']) ? sanitize_email(wp_unslash($input['invoice_email'])) : '';
+    if ($invoice_email === '' || !is_email($invoice_email)) {
+        $errors[] = $is_en ? 'A valid receiving email is required.' : '请填写有效的收票邮箱。';
+        $invoice_email = '';
+    }
+
+    $company_address = isset($input['company_address']) ? sanitize_text_field(wp_unslash($input['company_address'])) : '';
+    $company_phone   = isset($input['company_phone']) ? sanitize_text_field(wp_unslash($input['company_phone'])) : '';
+    $bank_name       = isset($input['bank_name']) ? sanitize_text_field(wp_unslash($input['bank_name'])) : '';
+    $bank_account    = isset($input['bank_account']) ? sanitize_text_field(wp_unslash($input['bank_account'])) : '';
+
+    if ($is_special) {
+        if ($company_address === '') {
+            $errors[] = $is_en ? 'Registered address is required for a special VAT invoice.' : '开具电子专票需填写注册地址。';
+        }
+        if ($company_phone === '') {
+            $errors[] = $is_en ? 'Registered phone is required for a special VAT invoice.' : '开具电子专票需填写注册电话。';
+        } elseif (!preg_match('/^[0-9+\-()\s]{6,30}$/', $company_phone)) {
+            $errors[] = $is_en ? 'Registered phone format looks invalid.' : '注册电话格式不正确。';
+        }
+        if ($bank_name === '') {
+            $errors[] = $is_en ? 'Bank name is required for a special VAT invoice.' : '开具电子专票需填写开户银行。';
+        }
+        if ($bank_account === '') {
+            $errors[] = $is_en ? 'Bank account is required for a special VAT invoice.' : '开具电子专票需填写银行账号。';
+        } elseif (!preg_match('/^[0-9\-\s]{6,40}$/', $bank_account)) {
+            $errors[] = $is_en ? 'Bank account format looks invalid.' : '银行账号格式不正确。';
+        }
+    } else {
+        /* 普票不保存专票专属字段 */
+        $company_address = '';
+        $company_phone   = '';
+        $bank_name       = '';
+        $bank_account    = '';
+    }
+
+    $order_id = isset($input['order_id']) ? absint($input['order_id']) : 0;
+    if ($order_id) {
+        $allowed = [];
+        foreach (hireai_invoice_customer_orders($user_id) as $order) {
+            $allowed[] = (int) $order->get_id();
+        }
+        if (!in_array($order_id, $allowed, true)) {
+            $errors[] = $is_en ? 'The selected order is not available.' : '所选订单不可用。';
+            $order_id = 0;
+        }
+    }
+
+    $note = isset($input['note']) ? sanitize_textarea_field(wp_unslash($input['note'])) : '';
+    if ((function_exists('mb_strlen') ? mb_strlen($note) : strlen($note)) > 500) {
+        $note = function_exists('mb_substr') ? mb_substr($note, 0, 500) : substr($note, 0, 500);
+    }
+
+    return [[
+        'invoice_type'    => $type,
+        'company_name'    => $company_name,
+        'tax_id'          => $tax_id,
+        'company_address' => $company_address,
+        'company_phone'   => $company_phone,
+        'bank_name'       => $bank_name,
+        'bank_account'    => $bank_account,
+        'invoice_email'   => $invoice_email,
+        'order_id'        => $order_id,
+        'note'            => $note,
+    ], $errors];
+}
+
+/**
+ * 写入申请记录，返回 post ID（失败返回 0）。
+ */
+function hireai_invoice_create($user_id, array $values) {
+    $post_id = wp_insert_post([
+        'post_type'    => 'hireai_invoice',
+        'post_status'  => 'publish',
+        'post_author'  => absint($user_id),
+        'post_title'   => '发票申请 · ' . $values['company_name'],
+        'post_content' => '',
+        'post_excerpt' => '',
+        'meta_input'   => [],
+    ], true);
+
+    if (is_wp_error($post_id) || !$post_id) {
+        if (is_wp_error($post_id)) {
+            error_log('[hireai invoice] insert failed: ' . $post_id->get_error_message());
+        }
+        return 0;
+    }
+
+    $post_id = (int) $post_id;
+    wp_update_post([
+        'ID'         => $post_id,
+        'post_title' => sprintf('发票申请 #%d · %s', $post_id, $values['company_name']),
+    ]);
+
+    $meta = [
+        'invoice_type'    => $values['invoice_type'],
+        'invoice_company' => $values['company_name'],
+        'invoice_tax_id'  => $values['tax_id'],
+        'invoice_address' => $values['company_address'],
+        'invoice_phone'   => $values['company_phone'],
+        'invoice_bank'    => $values['bank_name'],
+        'invoice_account' => $values['bank_account'],
+        'invoice_email'   => $values['invoice_email'],
+        'invoice_order_id'=> $values['order_id'],
+        'invoice_note'    => $values['note'],
+        'invoice_status'  => 'pending',
+        'invoice_lang'    => function_exists('hireai_current_lang') ? hireai_current_lang() : 'zh',
+    ];
+    foreach ($meta as $key => $value) {
+        update_post_meta($post_id, $key, $value);
+    }
+
+    return $post_id;
+}
+
+/**
+ * 简单 HTML 邮件外壳（内联样式，表格布局）。
+ */
+function hireai_invoice_mail_html($heading, $intro, array $rows, $footer = '') {
+    $html  = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1c1c;line-height:1.65;">';
+    $html .= '<h2 style="margin:0 0 12px;font-size:18px;color:#1a1c1c;">' . esc_html($heading) . '</h2>';
+    if ($intro !== '') {
+        $html .= '<p style="margin:0 0 16px;">' . esc_html($intro) . '</p>';
+    }
+    $html .= '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:560px;">';
+    foreach ($rows as $label => $value) {
+        if ($value === '' || $value === null) {
+            continue;
+        }
+        $html .= '<tr>';
+        $html .= '<th style="text-align:left;padding:8px 12px;background:#f4f3f3;border:1px solid #e8e5df;width:170px;font-weight:600;vertical-align:top;">' . esc_html($label) . '</th>';
+        $html .= '<td style="padding:8px 12px;border:1px solid #e8e5df;vertical-align:top;">' . nl2br(esc_html((string) $value)) . '</td>';
+        $html .= '</tr>';
+    }
+    $html .= '</table>';
+    if ($footer !== '') {
+        $html .= '<p style="margin:18px 0 0;color:#775a19;">' . esc_html($footer) . '</p>';
+    }
+    $html .= '</div>';
+    return $html;
+}
+
+/**
+ * wp_mail 包装：失败只记日志，不阻断流程。
+ */
+function hireai_invoice_send_mail($to, $subject, $html) {
+    if (!is_email($to)) {
+        error_log('[hireai invoice] mail skipped, invalid recipient: ' . $to . ' / ' . $subject);
+        return false;
+    }
+    $sent = wp_mail($to, $subject, $html, ['Content-Type: text/html; charset=UTF-8']);
+    if (!$sent) {
+        error_log('[hireai invoice] wp_mail failed: ' . $to . ' / ' . $subject);
+    }
+    return (bool) $sent;
+}
+
+/**
+ * 新申请：通知管理员 + 给用户回执。
+ */
+function hireai_invoice_send_new_emails($invoice_id) {
+    $post = hireai_invoice_get($invoice_id);
+    if (!$post) {
+        return;
+    }
+    $lang = (string) get_post_meta($invoice_id, 'invoice_lang', true);
+    $is_en = 'en' === $lang;
+    $order_id = absint(get_post_meta($invoice_id, 'invoice_order_id', true));
+    $rows = [
+        ($is_en ? 'Reference' : '申请编号')   => '#' . $invoice_id,
+        ($is_en ? 'Type' : '发票类型')        => hireai_invoice_type_label(get_post_meta($invoice_id, 'invoice_type', true), $is_en),
+        ($is_en ? 'Company' : '公司名称')     => (string) get_post_meta($invoice_id, 'invoice_company', true),
+        ($is_en ? 'Tax ID' : '税号')          => (string) get_post_meta($invoice_id, 'invoice_tax_id', true),
+        ($is_en ? 'Order' : '关联订单')       => $order_id ? '#' . $order_id : '',
+        ($is_en ? 'Receiving email' : '收票邮箱') => (string) get_post_meta($invoice_id, 'invoice_email', true),
+        ($is_en ? 'Note' : '备注')            => (string) get_post_meta($invoice_id, 'invoice_note', true),
+    ];
+
+    $admin_email = get_option('admin_email');
+    hireai_invoice_send_mail(
+        $admin_email,
+        sprintf('[聘AI] 新发票申请 #%d · %s', $invoice_id, (string) get_post_meta($invoice_id, 'invoice_company', true)),
+        hireai_invoice_mail_html(
+            '收到新的发票申请',
+            '请登录后台 WooCommerce → 发票申请 处理。',
+            $rows,
+            admin_url('admin.php?page=hireai-invoices&invoice=' . $invoice_id)
+        )
+    );
+
+    $customer_email = (string) get_post_meta($invoice_id, 'invoice_email', true);
+    hireai_invoice_send_mail(
+        $customer_email,
+        sprintf($is_en ? '[Hire AI People] Invoice request #%d received' : '[聘AI] 已收到您的发票申请 #%d', $invoice_id),
+        hireai_invoice_mail_html(
+            $is_en ? 'We have received your invoice request' : '已收到您的发票申请',
+            $is_en
+                ? 'Our team will review it and issue the invoice. You will get another email once the status changes.'
+                : '我们已收到申请，将在核实后为您开票。状态变更时会再次邮件通知。',
+            $rows
+        )
+    );
+}
+
+/**
+ * 状态变更（issued / rejected）通知用户。
+ */
+function hireai_invoice_send_status_email($invoice_id, $status) {
+    $post = hireai_invoice_get($invoice_id);
+    if (!$post) {
+        return;
+    }
+    if (!in_array($status, ['issued', 'rejected'], true)) {
+        return;
+    }
+    $lang  = (string) get_post_meta($invoice_id, 'invoice_lang', true);
+    $is_en = 'en' === $lang;
+    $to    = (string) get_post_meta($invoice_id, 'invoice_email', true);
+    if (!is_email($to)) {
+        $author = get_userdata((int) $post->post_author);
+        $to = $author ? (string) $author->user_email : '';
+    }
+
+    $rows = [
+        ($is_en ? 'Reference' : '申请编号') => '#' . $invoice_id,
+        ($is_en ? 'Company' : '公司名称')   => (string) get_post_meta($invoice_id, 'invoice_company', true),
+        ($is_en ? 'Type' : '发票类型')      => hireai_invoice_type_label(get_post_meta($invoice_id, 'invoice_type', true), $is_en),
+        ($is_en ? 'Status' : '当前状态')    => hireai_invoice_status_label($status, $is_en),
+        ($is_en ? 'Note from our team' : '处理备注') => (string) get_post_meta($invoice_id, 'invoice_admin_note', true),
+    ];
+
+    hireai_invoice_send_mail(
+        $to,
+        sprintf(
+            $is_en ? '[Hire AI People] Invoice request #%d: %s' : '[聘AI] 发票申请 #%d：%s',
+            $invoice_id,
+            hireai_invoice_status_label($status, $is_en)
+        ),
+        hireai_invoice_mail_html(
+            $is_en ? 'Your invoice request has been updated' : '您的发票申请状态已更新',
+            $is_en
+                ? 'Here is the latest status of your invoice request.'
+                : '以下是您的发票申请最新状态，如有疑问可直接回复本邮件。',
+            $rows
+        )
+    );
+}
+
+/**
+ * 前台提交处理：校验 nonce → 限速 → 校验 → 入库 → 发信 → 回跳。
+ */
+function hireai_invoice_handle_submission() {
+    if (is_admin() || !function_exists('wc_add_notice')) {
+        return;
+    }
+    if (!isset($_POST['hireai_invoice_action']) || 'submit' !== $_POST['hireai_invoice_action']) {
+        return;
+    }
+    if (!is_user_logged_in()) {
+        return;
+    }
+
+    $is_en  = function_exists('hireai_current_lang') && hireai_current_lang() === 'en';
+    $user_id = get_current_user_id();
+    $back    = hireai_invoice_endpoint_url();
+
+    $nonce = isset($_POST['hireai_invoice_nonce']) ? sanitize_text_field(wp_unslash($_POST['hireai_invoice_nonce'])) : '';
+    if (!wp_verify_nonce($nonce, 'hireai_invoice_submit')) {
+        wc_add_notice($is_en ? 'The form expired. Please try again.' : '表单已过期，请重新提交。', 'error');
+        wp_safe_redirect($back);
+        exit;
+    }
+
+    list($values, $errors) = hireai_invoice_validate($_POST, $user_id);
+    if (!empty($errors)) {
+        hireai_invoice_store_draft($user_id, $values);
+        foreach ($errors as $error) {
+            wc_add_notice($error, 'error');
+        }
+        wp_safe_redirect($back);
+        exit;
+    }
+
+    /* 校验通过后再计数：只有真正会入库的提交才消耗 5 分钟 3 次的配额，
+       用户改错重填不会无谓被拦。 */
+    if (hireai_invoice_rate_limited($user_id)) {
+        wc_add_notice($is_en ? 'Too many requests. Please wait a few minutes.' : '提交过于频繁，请 5 分钟后再试。', 'error');
+        wp_safe_redirect($back);
+        exit;
+    }
+
+    $invoice_id = hireai_invoice_create($user_id, $values);
+    if (!$invoice_id) {
+        wc_add_notice($is_en ? 'Something went wrong. Please try again later.' : '提交失败，请稍后重试。', 'error');
+        wp_safe_redirect($back);
+        exit;
+    }
+
+    hireai_invoice_send_new_emails($invoice_id);
+    wc_add_notice($is_en ? 'Your invoice request has been submitted.' : '发票申请已提交，我们会尽快处理。', 'success');
+    wp_safe_redirect(hireai_invoice_endpoint_url($invoice_id));
+    exit;
+}
+/* 优先级 1：赶在 redirect_canonical(10) 之前处理 POST，避免 301 丢表单体。 */
+add_action('template_redirect', 'hireai_invoice_handle_submission', 1);
+
+/**
+ * endpoint 渲染入口。
+ */
+function hireai_invoice_render_endpoint($value = '') {
+    $invoice = null;
+    $invoice_id = absint($value);
+    if ($invoice_id) {
+        $invoice = hireai_invoice_get_for_current_user($invoice_id);
+        if (!$invoice) {
+            echo '<p>' . esc_html(function_exists('hireai_current_lang') && hireai_current_lang() === 'en'
+                ? 'This invoice request could not be found.'
+                : '未找到该发票申请。') . '</p>';
+            return;
+        }
+    }
+
+    wc_get_template('myaccount/invoice.php', [
+        'invoice' => $invoice,
+        'draft'   => $invoice ? [] : hireai_invoice_take_draft(),
+    ]);
+}
+add_action('woocommerce_account_invoice_endpoint', 'hireai_invoice_render_endpoint');
+
+function hireai_invoice_admin_url(array $args = []) {
+    return add_query_arg(array_merge(['page' => 'hireai-invoices'], $args), admin_url('admin.php'));
+}
+
+/**
+ * 后台菜单：WooCommerce → 发票申请。
+ */
+function hireai_invoice_admin_menu() {
+    $cap  = 'manage_woocommerce';
+    if (class_exists('WooCommerce')) {
+        $hook = add_submenu_page('woocommerce', '发票申请', '发票申请', $cap, 'hireai-invoices', 'hireai_invoice_admin_page');
+    } else {
+        $hook = add_menu_page('发票申请', '发票申请', 'manage_options', 'hireai-invoices', 'hireai_invoice_admin_page', 'dashicons-media-text', 56);
+    }
+    if ($hook) {
+        add_action('load-' . $hook, 'hireai_invoice_admin_handle_post');
+    }
+}
+add_action('admin_menu', 'hireai_invoice_admin_menu', 20);
+
+/**
+ * 后台保存状态 / 备注（在 load-{hook} 里处理，确保 redirect 前无输出）。
+ */
+function hireai_invoice_admin_handle_post() {
+    if (!current_user_can('manage_woocommerce')) {
+        return;
+    }
+    if ('POST' !== strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? ''))) {
+        return;
+    }
+    if (!isset($_POST['hireai_invoice_admin_action'])) {
+        return;
+    }
+
+    $invoice_id = isset($_POST['invoice_id']) ? absint($_POST['invoice_id']) : 0;
+    check_admin_referer('hireai_invoice_admin_' . $invoice_id, 'hireai_invoice_admin_nonce');
+
+    $post = hireai_invoice_get($invoice_id);
+    if (!$post) {
+        wp_safe_redirect(hireai_invoice_admin_url(['error' => 'not_found']));
+        exit;
+    }
+
+    $statuses = hireai_invoice_statuses();
+    $status   = isset($_POST['invoice_status']) ? sanitize_key(wp_unslash($_POST['invoice_status'])) : '';
+    $note     = isset($_POST['invoice_admin_note']) ? sanitize_textarea_field(wp_unslash($_POST['invoice_admin_note'])) : '';
+    if (!isset($statuses[$status])) {
+        wp_safe_redirect(hireai_invoice_admin_url(['invoice' => $invoice_id, 'error' => 'status']));
+        exit;
+    }
+
+    $old_status = (string) get_post_meta($invoice_id, 'invoice_status', true);
+    if ($old_status === '') {
+        $old_status = 'pending';
+    }
+
+    update_post_meta($invoice_id, 'invoice_status', $status);
+    update_post_meta($invoice_id, 'invoice_admin_note', $note);
+    update_post_meta($invoice_id, 'invoice_updated_at', current_time('mysql'));
+
+    if ($old_status !== $status) {
+        hireai_invoice_send_status_email($invoice_id, $status);
+    }
+
+    wp_safe_redirect(hireai_invoice_admin_url(['invoice' => $invoice_id, 'updated' => '1']));
+    exit;
+}
+
+/**
+ * 后台：列表 + 详情。
+ */
+function hireai_invoice_admin_page() {
+    if (!current_user_can('manage_woocommerce')) {
+        wp_die('无权限访问。');
+    }
+
+    $invoice_id = isset($_GET['invoice']) ? absint($_GET['invoice']) : 0;
+    if ($invoice_id) {
+        hireai_invoice_admin_detail($invoice_id);
+        return;
+    }
+
+    $statuses = hireai_invoice_statuses();
+    $filter   = isset($_GET['status']) ? sanitize_key(wp_unslash($_GET['status'])) : '';
+    if (!isset($statuses[$filter])) {
+        $filter = '';
+    }
+
+    $paged = isset($_GET['paged']) ? max(1, absint($_GET['paged'])) : 1;
+    $args = [
+        'post_type'      => 'hireai_invoice',
+        'post_status'    => 'publish',
+        'posts_per_page' => 30,
+        'paged'          => $paged,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'lang'           => '',
+    ];
+    if ($filter !== '') {
+        $args['meta_query'] = [[
+            'key'   => 'invoice_status',
+            'value' => $filter,
+        ]];
+    }
+    $query = new WP_Query($args);
+
+    echo '<div class="wrap">';
+    echo '<h2 class="wp-heading-inline" style="font-size:23px;font-weight:400;line-height:1.3;margin:.67em 0;">发票申请</h2>';
+
+    if (isset($_GET['updated'])) {
+        echo '<div class="notice notice-success is-dismissible"><p>已保存并通知用户。</p></div>';
+    }
+
+    $tabs = ['' => '全部'] + array_map(static function ($row) {
+        return $row['admin'];
+    }, $statuses);
+    echo '<ul class="subsubsub">';
+    $tab_html = [];
+    foreach ($tabs as $key => $label) {
+        $url = hireai_invoice_admin_url($key === '' ? [] : ['status' => $key]);
+        $current = $filter === $key ? ' class="current"' : '';
+        $tab_html[] = '<li><a href="' . esc_url($url) . '"' . $current . '>' . esc_html($label) . '</a></li>';
+    }
+    echo implode(' | ', $tab_html); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo '</ul>';
+
+    echo '<table class="widefat striped" style="margin-top:12px;">';
+    echo '<thead><tr><th>ID</th><th>用户</th><th>公司</th><th>类型</th><th>订单</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+
+    if (empty($query->posts)) {
+        echo '<tr><td colspan="8">暂无发票申请。</td></tr>';
+    }
+
+    foreach ($query->posts as $post) {
+        $user = get_userdata((int) $post->post_author);
+        $status = (string) get_post_meta($post->ID, 'invoice_status', true);
+        $order_id = absint(get_post_meta($post->ID, 'invoice_order_id', true));
+        echo '<tr>';
+        echo '<td>#' . esc_html((string) $post->ID) . '</td>';
+        echo '<td>' . esc_html($user ? $user->user_login : '—') . '</td>';
+        echo '<td>' . esc_html((string) get_post_meta($post->ID, 'invoice_company', true)) . '</td>';
+        echo '<td>' . esc_html(hireai_invoice_type_label(get_post_meta($post->ID, 'invoice_type', true), false)) . '</td>';
+        echo '<td>' . ($order_id ? '<a href="' . esc_url(admin_url('post.php?post=' . $order_id . '&action=edit')) . '">#' . esc_html((string) $order_id) . '</a>' : '—') . '</td>';
+        echo '<td>' . esc_html(hireai_invoice_status_label($status, false)) . '</td>';
+        echo '<td>' . esc_html(get_date_from_gmt($post->post_date_gmt, 'Y-m-d H:i')) . '</td>';
+        echo '<td><a class="button button-small" href="' . esc_url(hireai_invoice_admin_url(['invoice' => $post->ID])) . '">查看</a></td>';
+        echo '</tr>';
+    }
+    echo '</tbody></table>';
+
+    if ($query->max_num_pages > 1) {
+        $links = paginate_links([
+            'base'      => add_query_arg('paged', '%#%', hireai_invoice_admin_url($filter === '' ? [] : ['status' => $filter])),
+            'format'    => '',
+            'current'   => $paged,
+            'total'     => (int) $query->max_num_pages,
+            'prev_text' => '«',
+            'next_text' => '»',
+        ]);
+        if ($links) {
+            echo '<div class="tablenav"><div class="tablenav-pages">' . wp_kses_post($links) . '</div></div>';
+        }
+    }
+
+    echo '</div>';
+}
+
+/**
+ * 后台：单张申请详情 + 状态表单。
+ */
+function hireai_invoice_admin_detail($invoice_id) {
+    $post = hireai_invoice_get($invoice_id);
+    if (!$post) {
+        echo '<div class="wrap"><h2 class="wp-heading-inline" style="font-size:23px;font-weight:400;line-height:1.3;margin:.67em 0;">发票申请</h2><p>未找到该申请。</p></div>';
+        return;
+    }
+
+    $statuses = hireai_invoice_statuses();
+    $status   = (string) get_post_meta($invoice_id, 'invoice_status', true);
+    if (!isset($statuses[$status])) {
+        $status = 'pending';
+    }
+    $user = get_userdata((int) $post->post_author);
+    $order_id = absint(get_post_meta($invoice_id, 'invoice_order_id', true));
+    $note = (string) get_post_meta($invoice_id, 'invoice_admin_note', true);
+
+    $rows = [
+        '申请编号' => '#' . $invoice_id,
+        '提交时间' => get_date_from_gmt($post->post_date_gmt, 'Y-m-d H:i'),
+        '用户'     => $user ? $user->user_login . '（' . $user->user_email . '）' : '—',
+        '发票类型' => hireai_invoice_type_label(get_post_meta($invoice_id, 'invoice_type', true), false),
+        '公司名称' => (string) get_post_meta($invoice_id, 'invoice_company', true),
+        '税号'     => (string) get_post_meta($invoice_id, 'invoice_tax_id', true),
+        '注册地址' => (string) get_post_meta($invoice_id, 'invoice_address', true),
+        '注册电话' => (string) get_post_meta($invoice_id, 'invoice_phone', true),
+        '开户银行' => (string) get_post_meta($invoice_id, 'invoice_bank', true),
+        '银行账号' => (string) get_post_meta($invoice_id, 'invoice_account', true),
+        '收票邮箱' => (string) get_post_meta($invoice_id, 'invoice_email', true),
+        '关联订单' => $order_id ? '#' . $order_id : '—',
+        '用户备注' => (string) get_post_meta($invoice_id, 'invoice_note', true),
+    ];
+
+    echo '<div class="wrap">';
+    echo '<h2 class="wp-heading-inline" style="font-size:23px;font-weight:400;line-height:1.3;margin:.67em 0;">发票申请 #' . esc_html((string) $invoice_id) . '</h2>';
+    echo '<p><a href="' . esc_url(hireai_invoice_admin_url()) . '">← 返回列表</a></p>';
+    if (isset($_GET['updated'])) {
+        echo '<div class="notice notice-success is-dismissible"><p>已保存并通知用户。</p></div>';
+    }
+
+    echo '<table class="widefat striped" style="max-width:760px;margin-bottom:24px;"><tbody>';
+    foreach ($rows as $label => $value) {
+        if ($value === '') {
+            continue;
+        }
+        echo '<tr><th style="width:140px;">' . esc_html($label) . '</th><td>' . nl2br(esc_html($value)) . '</td></tr>';
+    }
+    echo '</tbody></table>';
+
+    echo '<form method="post" action="' . esc_url(hireai_invoice_admin_url(['invoice' => $invoice_id])) . '" style="max-width:760px;">';
+    wp_nonce_field('hireai_invoice_admin_' . $invoice_id, 'hireai_invoice_admin_nonce');
+    echo '<input type="hidden" name="hireai_invoice_admin_action" value="save" />';
+    echo '<input type="hidden" name="invoice_id" value="' . esc_attr((string) $invoice_id) . '" />';
+
+    echo '<table class="form-table" role="presentation"><tbody>';
+    echo '<tr><th scope="row"><label for="hireai-invoice-status">状态</label></th><td>';
+    echo '<select id="hireai-invoice-status" name="invoice_status">';
+    foreach ($statuses as $key => $row) {
+        echo '<option value="' . esc_attr($key) . '"' . selected($key, $status, false) . '>' . esc_html($row['admin']) . '</option>';
+    }
+    echo '</select></td></tr>';
+
+    echo '<tr><th scope="row"><label for="hireai-invoice-admin-note">开票备注</label></th><td>';
+    echo '<textarea id="hireai-invoice-admin-note" name="invoice_admin_note" rows="4" class="large-text">' . esc_textarea($note) . '</textarea>';
+    echo '<p class="description">保存为「已开票」或「已驳回」且状态发生变化时，会邮件通知用户。</p></td></tr>';
+    echo '</tbody></table>';
+
+    submit_button('保存', 'primary', 'submit', false);
+    echo '</form>';
+    echo '</div>';
+}
